@@ -1,0 +1,18 @@
+modelRoleStorage: project
+
+modelRoles:
+  default: zhipu-coding-plan/glm-5.3:high
+  slow: zhipu-coding-plan/glm-5.3:max
+  smol: zhipu-coding-plan/glm-5.3-flash
+  task: zhipu-coding-plan/glm-5.3:high
+  commit: zhipu-coding-plan/glm-5.3-flash
+
+  plan: openai-codex/gpt-6.1-sol:high
+  review: openai-codex/gpt-6.1-sol:high
+
+plan:
+  enabled: true
+  defaultOnStartup: false
+
+compaction:
+  thresholdPercent: 80
