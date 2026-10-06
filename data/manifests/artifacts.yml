@@ -1,0 +1,4 @@
+schema_version: "1"
+# No real data artifacts have been obtained in P00. This list stays empty until
+# files exist with verified rights, real SHA-256 digests and full provenance.
+artifacts: []

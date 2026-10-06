@@ -1,0 +1,69 @@
+{
+  "schema_version": "1",
+  "baseline_version": "1.1",
+  "expected_baseline_sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+  "core_start": "1957Q1",
+  "core_end": "1985Q4",
+  "reserved_start": "1986Q1",
+  "reserved_end": "1988Q4",
+  "regions": [
+    {"region_id": "budapest", "display_name": "Budapest"},
+    {"region_id": "pest", "display_name": "Pest"},
+    {"region_id": "borsod_abauj_zemplen", "display_name": "Borsod-Abaúj-Zemplén"},
+    {"region_id": "heves", "display_name": "Heves"},
+    {"region_id": "nograd", "display_name": "Nógrád"},
+    {"region_id": "fejer", "display_name": "Fejér"},
+    {"region_id": "komarom", "display_name": "Komárom"},
+    {"region_id": "veszprem", "display_name": "Veszprém"},
+    {"region_id": "gyor_sopron", "display_name": "Győr-Sopron"},
+    {"region_id": "vas", "display_name": "Vas"},
+    {"region_id": "zala", "display_name": "Zala"},
+    {"region_id": "baranya", "display_name": "Baranya"},
+    {"region_id": "somogy", "display_name": "Somogy"},
+    {"region_id": "tolna", "display_name": "Tolna"},
+    {"region_id": "hajdu_bihar", "display_name": "Hajdú-Bihar"},
+    {"region_id": "szabolcs_szatmar", "display_name": "Szabolcs-Szatmár"},
+    {"region_id": "szolnok", "display_name": "Szolnok"},
+    {"region_id": "bacs_kiskun", "display_name": "Bács-Kiskun"},
+    {"region_id": "bekes", "display_name": "Békés"},
+    {"region_id": "csongrad", "display_name": "Csongrád"}
+  ],
+  "macroregions": [
+    {
+      "macroregion_id": "budapest_pest_metropolitan_core",
+      "display_name": "Budapest–Pest Metropolitan Core",
+      "member_region_ids": ["budapest", "pest"]
+    },
+    {
+      "macroregion_id": "northern_industrial_belt",
+      "display_name": "Northern Industrial Belt",
+      "member_region_ids": ["borsod_abauj_zemplen", "heves", "nograd"]
+    },
+    {
+      "macroregion_id": "central_western_transdanubia",
+      "display_name": "Central–Western Transdanubia",
+      "member_region_ids": ["fejer", "komarom", "veszprem", "gyor_sopron", "vas", "zala"]
+    },
+    {
+      "macroregion_id": "southern_transdanubia",
+      "display_name": "Southern Transdanubia",
+      "member_region_ids": ["baranya", "somogy", "tolna"]
+    },
+    {
+      "macroregion_id": "northern_great_plain",
+      "display_name": "Northern Great Plain",
+      "member_region_ids": ["hajdu_bihar", "szabolcs_szatmar", "szolnok"]
+    },
+    {
+      "macroregion_id": "southern_great_plain",
+      "display_name": "Southern Great Plain",
+      "member_region_ids": ["bacs_kiskun", "bekes", "csongrad"]
+    }
+  ],
+  "political_modes": ["historical_replay", "endogenous_politics", "counterfactual"],
+  "output_policies": ["research_full", "ensemble_compact"],
+  "research_warnings": [
+    "Simulation is an argument, not evidence.",
+    "A probability produced by an agent or decision model is not a historical probability."
+  ]
+}

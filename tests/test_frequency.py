@@ -1,0 +1,104 @@
+"""D3: frequency-boundary aggregation with concrete numeric examples."""
+
+from __future__ import annotations
+
+import polars as pl
+import pytest
+
+from hsm_lab.contract.schemas import ConfigError, ResearchGateError
+from hsm_lab.data.frequency import monthly_to_quarterly, quarterly_to_annual, validate_period
+
+
+def frame(periods: list[str], values: list[float], variable: str = "oil") -> pl.DataFrame:
+    return pl.DataFrame(
+        {
+            "variable_id": [variable] * len(periods),
+            "period": periods,
+            "value": values,
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    ("aggregation", "expected"),
+    [("mean", 20.0), ("sum", 60.0), ("end_of_period", 30.0)],
+)
+def test_monthly_to_quarterly_numeric(aggregation, expected) -> None:
+    result = monthly_to_quarterly(
+        frame(["1970-01", "1970-02", "1970-03"], [10.0, 20.0, 30.0]), aggregation
+    )
+    assert result["period"].to_list() == ["1970Q1"]
+    assert result["value"].to_list() == [expected]
+
+
+@pytest.mark.parametrize(
+    ("aggregation", "expected"),
+    [("mean", 2.5), ("sum", 10.0), ("end_of_period", 4.0)],
+)
+def test_quarterly_to_annual_numeric(aggregation, expected) -> None:
+    result = quarterly_to_annual(
+        frame(["1970Q1", "1970Q2", "1970Q3", "1970Q4"], [1.0, 2.0, 3.0, 4.0]), aggregation
+    )
+    assert result["period"].to_list() == ["1970"]
+    assert result["value"].to_list() == [expected]
+
+
+def test_missing_month_fails() -> None:
+    with pytest.raises(ResearchGateError, match="incomplete"):
+        monthly_to_quarterly(frame(["1970-01", "1970-02"], [1.0, 2.0]), "sum")
+
+
+def test_missing_quarter_fails() -> None:
+    with pytest.raises(ResearchGateError, match="incomplete"):
+        quarterly_to_annual(frame(["1970Q1", "1970Q2", "1970Q3"], [1.0, 2.0, 3.0]), "mean")
+
+
+def test_duplicate_period_fails() -> None:
+    with pytest.raises(ResearchGateError, match="duplicate"):
+        monthly_to_quarterly(
+            frame(["1970-01", "1970-01", "1970-02"], [1.0, 5.0, 2.0]), "sum"
+        )
+
+
+def test_unordered_quarters_end_of_period_uses_period_order() -> None:
+    result = quarterly_to_annual(
+        frame(["1970Q3", "1970Q1", "1970Q2", "1970Q4"], [30.0, 10.0, 20.0, 40.0]),
+        "end_of_period",
+    )
+    assert result["value"].to_list() == [40.0]
+
+
+def test_groups_aggregate_independently() -> None:
+    mixed = pl.DataFrame(
+        {
+            "variable_id": ["a", "a", "a", "b", "b", "b"],
+            "period": ["1970-01", "1970-02", "1970-03",
+                       "1970-01", "1970-02", "1970-03"],
+            "value": [1.0, 2.0, 3.0, 10.0, 20.0, 30.0],
+        }
+    )
+    result = monthly_to_quarterly(mixed, "sum").sort("variable_id")
+    assert result["variable_id"].to_list() == ["a", "b"]
+    assert result["value"].to_list() == [6.0, 60.0]
+
+
+def test_cross_year_boundary_not_merged() -> None:
+    with pytest.raises(ResearchGateError, match="incomplete"):
+        monthly_to_quarterly(
+            frame(["1970-11", "1970-12", "1971-01"], [1.0, 2.0, 3.0]), "sum"
+        )
+
+
+def test_period_format_validation() -> None:
+    from hsm_lab.contract.schemas import Frequency
+
+    validate_period("1970-01", Frequency.MONTHLY)
+    validate_period("1970Q1", Frequency.QUARTERLY)
+    validate_period("1970", Frequency.ANNUAL)
+    validate_period("1970-01-01", Frequency.DATED)
+    with pytest.raises(ConfigError):
+        validate_period("1970-13", Frequency.MONTHLY)
+    with pytest.raises(ConfigError):
+        validate_period("1970Q0", Frequency.QUARTERLY)
+    with pytest.raises(ConfigError):
+        validate_period("1970-02-30", Frequency.DATED)

@@ -1,0 +1,3261 @@
+{
+  "benchmark_kind": "scaling",
+  "cases": [
+    {
+      "case_id": "scale_n1000_t10",
+      "compute_aggregate_median_s": 0.0013399609888438135,
+      "deterministic_replay_digest": "1fda99b1a923320d722d15be3760d94127a27a561a8bef4fb1269e1614804996",
+      "duckdb_bytes": 798720,
+      "enterprises": 50,
+      "events_per_second": 54.079863888848266,
+      "events_written": 10,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 1000,
+      "max_peak_rss_bytes": 182960128,
+      "median_cpu_s": 0.16859499999999997,
+      "median_wall_s": 0.1849117079982534,
+      "median_worker_elapsed_s": 0.4329332500055898,
+      "output_hashes": {
+        "aggregates.parquet": "cfce88898232e2ac02740f955cbe446e52cbbc385d3b1c476bc2b41a9142ef7f",
+        "summary.json": "939ce65b413dd300909524be975cd5e648eb0e624e8439524d0c9f236a6a964e",
+        "trajectory.duckdb": "75020165320ef60d93ee3464b91322c8dd3d5e4c60969227152adc4a8339f843"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 28206,
+      "peak_rss_gb": 0.182960128,
+      "peak_rss_gib": 0.1703948974609375,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n1000_t10",
+          "cpu_s": 0.16859499999999997,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "1fda99b1a923320d722d15be3760d94127a27a561a8bef4fb1269e1614804996",
+            "output_hashes": {
+              "aggregates.parquet": "cfce88898232e2ac02740f955cbe446e52cbbc385d3b1c476bc2b41a9142ef7f",
+              "summary.json": "939ce65b413dd300909524be975cd5e648eb0e624e8439524d0c9f236a6a964e",
+              "trajectory.duckdb": "75020165320ef60d93ee3464b91322c8dd3d5e4c60969227152adc4a8339f843"
+            },
+            "rng_draws_count": 42000,
+            "run_id": "a26dcc56c15844239edf8fed02fdbfa8",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28206,
+            "manifest.json": 2781,
+            "summary.json": 46848,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28206,
+          "peak_rss_bytes": 182829056,
+          "performance": {
+            "aggregate_wall_s": 0.0010747939959401265,
+            "compute_wall_s": 0.00026516699290368706,
+            "io_wall_s": 0.15869645900966134
+          },
+          "pid": 42558,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876555,
+          "wall_s": 0.1849117079982534,
+          "worker_elapsed_s": 0.4329332500055898
+        },
+        {
+          "case_id": "scale_n1000_t10",
+          "cpu_s": 0.175475,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "1fda99b1a923320d722d15be3760d94127a27a561a8bef4fb1269e1614804996",
+            "output_hashes": {
+              "aggregates.parquet": "cfce88898232e2ac02740f955cbe446e52cbbc385d3b1c476bc2b41a9142ef7f",
+              "summary.json": "b24a69aa91b8802baa2ad328702538fde5f3761624f6b4b26e1e613134dfb385",
+              "trajectory.duckdb": "75020165320ef60d93ee3464b91322c8dd3d5e4c60969227152adc4a8339f843"
+            },
+            "rng_draws_count": 42000,
+            "run_id": "15c39d4b4c5348e288107bc5ce788986",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28206,
+            "manifest.json": 2781,
+            "summary.json": 46846,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28206,
+          "peak_rss_bytes": 182960128,
+          "performance": {
+            "aggregate_wall_s": 0.001073875988367945,
+            "compute_wall_s": 0.00026945897843688726,
+            "io_wall_s": 0.1652639999956591
+          },
+          "pid": 42561,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876553,
+          "wall_s": 0.1912840419972781,
+          "worker_elapsed_s": 0.4492169579898473
+        },
+        {
+          "case_id": "scale_n1000_t10",
+          "cpu_s": 0.166535,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "1fda99b1a923320d722d15be3760d94127a27a561a8bef4fb1269e1614804996",
+            "output_hashes": {
+              "aggregates.parquet": "cfce88898232e2ac02740f955cbe446e52cbbc385d3b1c476bc2b41a9142ef7f",
+              "summary.json": "82e28fcb77a564215023eacd5cde21c58b7b8edd48c259b8bc3933e55817be02",
+              "trajectory.duckdb": "75020165320ef60d93ee3464b91322c8dd3d5e4c60969227152adc4a8339f843"
+            },
+            "rng_draws_count": 42000,
+            "run_id": "5f4366d2b7a845ca95d8b66092c14b77",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28206,
+            "manifest.json": 2781,
+            "summary.json": 46848,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28206,
+          "peak_rss_bytes": 182829056,
+          "performance": {
+            "aggregate_wall_s": 0.0010586689895717427,
+            "compute_wall_s": 0.00027153997507411987,
+            "io_wall_s": 0.15629933300078847
+          },
+          "pid": 42565,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876555,
+          "wall_s": 0.1825329590064939,
+          "worker_elapsed_s": 0.4322795829939423
+        }
+      ],
+      "rng_draws_count": 42000,
+      "scalar_updates": 42000,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 10,
+      "total_output_bytes": 876555,
+      "updates_per_second": 227135.42833316274,
+      "warmups": [
+        {
+          "case_id": "scale_n1000_t10",
+          "cpu_s": 0.168773,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "1fda99b1a923320d722d15be3760d94127a27a561a8bef4fb1269e1614804996",
+            "output_hashes": {
+              "aggregates.parquet": "cfce88898232e2ac02740f955cbe446e52cbbc385d3b1c476bc2b41a9142ef7f",
+              "summary.json": "2d7e5e361a2166abeaeed52ea8883b15887f7cf6fa1c9a0ee9a604cc8aacbfda",
+              "trajectory.duckdb": "75020165320ef60d93ee3464b91322c8dd3d5e4c60969227152adc4a8339f843"
+            },
+            "rng_draws_count": 42000,
+            "run_id": "d6142204cf95462189c63aa207e819d8",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28206,
+            "manifest.json": 2781,
+            "summary.json": 46846,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28206,
+          "peak_rss_bytes": 182747136,
+          "performance": {
+            "aggregate_wall_s": 0.0010203329875366762,
+            "compute_wall_s": 0.0002662479819264263,
+            "io_wall_s": 0.1586751249997178
+          },
+          "pid": 42555,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876553,
+          "wall_s": 0.1844577500014566,
+          "worker_elapsed_s": 0.43308866600273177
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n1000_t116",
+      "compute_aggregate_median_s": 0.009744929920998402,
+      "deterministic_replay_digest": "b1d6107887c2af633cc34f91cd722a90b9d2231ec5089f397ba35affca355524",
+      "duckdb_bytes": 1060864,
+      "enterprises": 50,
+      "events_per_second": 544.7738982915054,
+      "events_written": 116,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 1000,
+      "max_peak_rss_bytes": 206831616,
+      "median_cpu_s": 0.19599199999999997,
+      "median_wall_s": 0.21293237499776296,
+      "median_worker_elapsed_s": 0.464256999999634,
+      "output_hashes": {
+        "aggregates.parquet": "90dbecb2b140ed0cad3db652066815ef096a488c8371c13a819fcfe06ee32587",
+        "summary.json": "d8a903569ff935d0117da5914faed326aa57d2e4ea8085984dfd7cfff98fded1",
+        "trajectory.duckdb": "3762150845d8988bbe6fb52f867e5ff8d72428687776bb4f54f8e638fb035e84"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 283905,
+      "peak_rss_gb": 0.206831616,
+      "peak_rss_gib": 0.192626953125,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n1000_t116",
+          "cpu_s": 0.19655599999999998,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "b1d6107887c2af633cc34f91cd722a90b9d2231ec5089f397ba35affca355524",
+            "output_hashes": {
+              "aggregates.parquet": "90dbecb2b140ed0cad3db652066815ef096a488c8371c13a819fcfe06ee32587",
+              "summary.json": "d8a903569ff935d0117da5914faed326aa57d2e4ea8085984dfd7cfff98fded1",
+              "trajectory.duckdb": "3762150845d8988bbe6fb52f867e5ff8d72428687776bb4f54f8e638fb035e84"
+            },
+            "rng_draws_count": 487200,
+            "run_id": "073392703f2a40d28974e05f1c498a45",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283905,
+            "manifest.json": 2785,
+            "summary.json": 47218,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283905,
+          "peak_rss_bytes": 206831616,
+          "performance": {
+            "aggregate_wall_s": 0.007756717983284034,
+            "compute_wall_s": 0.001896582980407402,
+            "io_wall_s": 0.17732087499462068
+          },
+          "pid": 42571,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394772,
+          "wall_s": 0.2130813749972731,
+          "worker_elapsed_s": 0.4640521249966696
+        },
+        {
+          "case_id": "scale_n1000_t116",
+          "cpu_s": 0.19599199999999997,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "b1d6107887c2af633cc34f91cd722a90b9d2231ec5089f397ba35affca355524",
+            "output_hashes": {
+              "aggregates.parquet": "90dbecb2b140ed0cad3db652066815ef096a488c8371c13a819fcfe06ee32587",
+              "summary.json": "ac25392cff282622c7c55ea01095f530363321ac1f2726d658ea00f347755d69",
+              "trajectory.duckdb": "02c8c793ed5cc46749c25981881f65549506455d4c1beb8094ab32ff2a0aea2d"
+            },
+            "rng_draws_count": 487200,
+            "run_id": "bdc0b0a3285e4f4dae400ff297861fc4",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283905,
+            "manifest.json": 2785,
+            "summary.json": 47218,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283905,
+          "peak_rss_bytes": 206077952,
+          "performance": {
+            "aggregate_wall_s": 0.007826675006072037,
+            "compute_wall_s": 0.001918254914926365,
+            "io_wall_s": 0.17635766600142233
+          },
+          "pid": 42574,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394772,
+          "wall_s": 0.21293237499776296,
+          "worker_elapsed_s": 0.464256999999634
+        },
+        {
+          "case_id": "scale_n1000_t116",
+          "cpu_s": 0.19407699999999997,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "b1d6107887c2af633cc34f91cd722a90b9d2231ec5089f397ba35affca355524",
+            "output_hashes": {
+              "aggregates.parquet": "90dbecb2b140ed0cad3db652066815ef096a488c8371c13a819fcfe06ee32587",
+              "summary.json": "bf0bdb6008892459925747c3726ad09adbee4467278df0972c778c6704aba6d2",
+              "trajectory.duckdb": "d5f23be4d808776df050027f6688153c7735d547212b33c8568215a7599fda99"
+            },
+            "rng_draws_count": 487200,
+            "run_id": "61152ebefa254de3ab2d4dc73787f420",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283905,
+            "manifest.json": 2785,
+            "summary.json": 47218,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283905,
+          "peak_rss_bytes": 205930496,
+          "performance": {
+            "aggregate_wall_s": 0.00789433608588297,
+            "compute_wall_s": 0.0018737599166342989,
+            "io_wall_s": 0.17561420799756888
+          },
+          "pid": 42577,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394772,
+          "wall_s": 0.21093195799039677,
+          "worker_elapsed_s": 0.46816304200910963
+        }
+      ],
+      "rng_draws_count": 487200,
+      "scalar_updates": 487200,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 116,
+      "total_output_bytes": 1394772,
+      "updates_per_second": 2288050.3728243224,
+      "warmups": [
+        {
+          "case_id": "scale_n1000_t116",
+          "cpu_s": 0.19404400000000002,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "b1d6107887c2af633cc34f91cd722a90b9d2231ec5089f397ba35affca355524",
+            "output_hashes": {
+              "aggregates.parquet": "90dbecb2b140ed0cad3db652066815ef096a488c8371c13a819fcfe06ee32587",
+              "summary.json": "9f1c00140d30d8f9d42e02e040cd5ed8dff4d154e89eca5c7090917dfb532b34",
+              "trajectory.duckdb": "8580897b446de1a14debbda6795a04e92755d0234b3c14a6967e7e10dd7cc9db"
+            },
+            "rng_draws_count": 487200,
+            "run_id": "51dd76cefe3c490b98f6f5d1702d174b",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283905,
+            "manifest.json": 2785,
+            "summary.json": 47220,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283905,
+          "peak_rss_bytes": 206159872,
+          "performance": {
+            "aggregate_wall_s": 0.0077642050018766895,
+            "compute_wall_s": 0.0018966250063385814,
+            "io_wall_s": 0.17551724999793805
+          },
+          "pid": 42568,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394774,
+          "wall_s": 0.21129487500002142,
+          "worker_elapsed_s": 0.4655073750036536
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n5000_t10",
+      "compute_aggregate_median_s": 0.0021214159933151677,
+      "deterministic_replay_digest": "2a4da0dc17f3fef64bac14fdf11ad2f40f363a489edf2e5d4c6191110ac00e4c",
+      "duckdb_bytes": 798720,
+      "enterprises": 100,
+      "events_per_second": 52.595592488607416,
+      "events_written": 10,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 5000,
+      "max_peak_rss_bytes": 183123968,
+      "median_cpu_s": 0.173017,
+      "median_wall_s": 0.1901300000026822,
+      "median_worker_elapsed_s": 0.4428653749928344,
+      "output_hashes": {
+        "aggregates.parquet": "966e5b0e55f723ec9da7a098bde102ad57acbd473ee85e30d37f3f9551544881",
+        "summary.json": "56e9128dc0f304cabca2dc98e838da2656eec83950b3685ede9d10d4bc9fdc54",
+        "trajectory.duckdb": "72eef42ea11f1110d63aca0e14f9ef95b2ee18eb1257e79a1746fa889e3eebbe"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 28100,
+      "peak_rss_gb": 0.183123968,
+      "peak_rss_gib": 0.1705474853515625,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n5000_t10",
+          "cpu_s": 0.173017,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "2a4da0dc17f3fef64bac14fdf11ad2f40f363a489edf2e5d4c6191110ac00e4c",
+            "output_hashes": {
+              "aggregates.parquet": "966e5b0e55f723ec9da7a098bde102ad57acbd473ee85e30d37f3f9551544881",
+              "summary.json": "56e9128dc0f304cabca2dc98e838da2656eec83950b3685ede9d10d4bc9fdc54",
+              "trajectory.duckdb": "72eef42ea11f1110d63aca0e14f9ef95b2ee18eb1257e79a1746fa889e3eebbe"
+            },
+            "rng_draws_count": 204000,
+            "run_id": "e7008f444252405cb0c8728a3242dbd9",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28100,
+            "manifest.json": 2784,
+            "summary.json": 47023,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28100,
+          "peak_rss_bytes": 183123968,
+          "performance": {
+            "aggregate_wall_s": 0.0013822489854646847,
+            "compute_wall_s": 0.0007391670078504831,
+            "io_wall_s": 0.1624828750063898
+          },
+          "pid": 42588,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876627,
+          "wall_s": 0.1901300000026822,
+          "worker_elapsed_s": 0.4431488749978598
+        },
+        {
+          "case_id": "scale_n5000_t10",
+          "cpu_s": 0.17475200000000002,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "2a4da0dc17f3fef64bac14fdf11ad2f40f363a489edf2e5d4c6191110ac00e4c",
+            "output_hashes": {
+              "aggregates.parquet": "966e5b0e55f723ec9da7a098bde102ad57acbd473ee85e30d37f3f9551544881",
+              "summary.json": "0818061ef171f69b190d003a08880b44643063946540550aef99e39ee801baf1",
+              "trajectory.duckdb": "72eef42ea11f1110d63aca0e14f9ef95b2ee18eb1257e79a1746fa889e3eebbe"
+            },
+            "rng_draws_count": 204000,
+            "run_id": "5c022bd7d0854cb4973b623dfa69e360",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28100,
+            "manifest.json": 2784,
+            "summary.json": 47024,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28100,
+          "peak_rss_bytes": 183042048,
+          "performance": {
+            "aggregate_wall_s": 0.0014099599939072505,
+            "compute_wall_s": 0.0007519170176237822,
+            "io_wall_s": 0.16404554100881796
+          },
+          "pid": 42592,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876628,
+          "wall_s": 0.19098912499612197,
+          "worker_elapsed_s": 0.4428653749928344
+        },
+        {
+          "case_id": "scale_n5000_t10",
+          "cpu_s": 0.170013,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "2a4da0dc17f3fef64bac14fdf11ad2f40f363a489edf2e5d4c6191110ac00e4c",
+            "output_hashes": {
+              "aggregates.parquet": "966e5b0e55f723ec9da7a098bde102ad57acbd473ee85e30d37f3f9551544881",
+              "summary.json": "c8ce660a5b794413fbb379238acc397004b7a895f8bfc2436860c0786d5172bc",
+              "trajectory.duckdb": "72eef42ea11f1110d63aca0e14f9ef95b2ee18eb1257e79a1746fa889e3eebbe"
+            },
+            "rng_draws_count": 204000,
+            "run_id": "2fd65ced55d74e8ca3430004748f6ba9",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28100,
+            "manifest.json": 2784,
+            "summary.json": 47021,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28100,
+          "peak_rss_bytes": 183107584,
+          "performance": {
+            "aggregate_wall_s": 0.001348082980257459,
+            "compute_wall_s": 0.000751582978409715,
+            "io_wall_s": 0.1590028749924386
+          },
+          "pid": 42595,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876625,
+          "wall_s": 0.18738674999622162,
+          "worker_elapsed_s": 0.44157279199862387
+        }
+      ],
+      "rng_draws_count": 204000,
+      "scalar_updates": 204000,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 10,
+      "total_output_bytes": 876628,
+      "updates_per_second": 1072950.0867675913,
+      "warmups": [
+        {
+          "case_id": "scale_n5000_t10",
+          "cpu_s": 0.16953300000000002,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "2a4da0dc17f3fef64bac14fdf11ad2f40f363a489edf2e5d4c6191110ac00e4c",
+            "output_hashes": {
+              "aggregates.parquet": "966e5b0e55f723ec9da7a098bde102ad57acbd473ee85e30d37f3f9551544881",
+              "summary.json": "a36bbab994196164e846e136b78d5a6022053cbf455fe12c2952ea4aa91ff0b4",
+              "trajectory.duckdb": "72eef42ea11f1110d63aca0e14f9ef95b2ee18eb1257e79a1746fa889e3eebbe"
+            },
+            "rng_draws_count": 204000,
+            "run_id": "61adcc817d3b4fde8de9af0d12df88dc",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28100,
+            "manifest.json": 2784,
+            "summary.json": 47022,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28100,
+          "peak_rss_bytes": 183025664,
+          "performance": {
+            "aggregate_wall_s": 0.001308790990151465,
+            "compute_wall_s": 0.0007457509927917272,
+            "io_wall_s": 0.1585133750049863
+          },
+          "pid": 42585,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876626,
+          "wall_s": 0.1858759999886388,
+          "worker_elapsed_s": 0.43730987500748597
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n5000_t116",
+      "compute_aggregate_median_s": 0.019782329080044292,
+      "deterministic_replay_digest": "0709a938ad25f8bc9658afb63bae39ab9c408a08e4587b6011f5c876ea25f595",
+      "duckdb_bytes": 1060864,
+      "enterprises": 100,
+      "events_per_second": 515.5668224069434,
+      "events_written": 116,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 5000,
+      "max_peak_rss_bytes": 207273984,
+      "median_cpu_s": 0.208178,
+      "median_wall_s": 0.2249950830009766,
+      "median_worker_elapsed_s": 0.48202945799857844,
+      "output_hashes": {
+        "aggregates.parquet": "1eb11dc97751f52b710cb5188a5a73e2a33d524e7da6e93c6a8ec4f3d44c9869",
+        "summary.json": "51dc47713f32a701313d7e0364f5e07738b9d0898f3492a1b4c5e7ce6ac0cd0b",
+        "trajectory.duckdb": "1db32f89c65a98f371815b47b85faea7769f1866c5e531acf3a4763dafffd570"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 283163,
+      "peak_rss_gb": 0.207273984,
+      "peak_rss_gib": 0.1930389404296875,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n5000_t116",
+          "cpu_s": 0.208805,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "0709a938ad25f8bc9658afb63bae39ab9c408a08e4587b6011f5c876ea25f595",
+            "output_hashes": {
+              "aggregates.parquet": "1eb11dc97751f52b710cb5188a5a73e2a33d524e7da6e93c6a8ec4f3d44c9869",
+              "summary.json": "51dc47713f32a701313d7e0364f5e07738b9d0898f3492a1b4c5e7ce6ac0cd0b",
+              "trajectory.duckdb": "1db32f89c65a98f371815b47b85faea7769f1866c5e531acf3a4763dafffd570"
+            },
+            "rng_draws_count": 2366400,
+            "run_id": "d7c08c71007946b992c9b60157ad28ce",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283163,
+            "manifest.json": 2788,
+            "summary.json": 47369,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283163,
+          "peak_rss_bytes": 206274560,
+          "performance": {
+            "aggregate_wall_s": 0.011919796146685258,
+            "compute_wall_s": 0.007862532933359034,
+            "io_wall_s": 0.1802467079978669
+          },
+          "pid": 42601,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394184,
+          "wall_s": 0.2264999170001829,
+          "worker_elapsed_s": 0.48202945799857844
+        },
+        {
+          "case_id": "scale_n5000_t116",
+          "cpu_s": 0.20572400000000002,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "0709a938ad25f8bc9658afb63bae39ab9c408a08e4587b6011f5c876ea25f595",
+            "output_hashes": {
+              "aggregates.parquet": "1eb11dc97751f52b710cb5188a5a73e2a33d524e7da6e93c6a8ec4f3d44c9869",
+              "summary.json": "239c4064df5dd838393ecce5671e522cba133bb15b68efd6d045246ed3877603",
+              "trajectory.duckdb": "1db32f89c65a98f371815b47b85faea7769f1866c5e531acf3a4763dafffd570"
+            },
+            "rng_draws_count": 2366400,
+            "run_id": "7fe701fa7f83456fb1dddbbebe44a268",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283163,
+            "manifest.json": 2788,
+            "summary.json": 47370,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283163,
+          "peak_rss_bytes": 207273984,
+          "performance": {
+            "aggregate_wall_s": 0.011984376047621481,
+            "compute_wall_s": 0.007853545102989301,
+            "io_wall_s": 0.17709258300601505
+          },
+          "pid": 42604,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394185,
+          "wall_s": 0.2233008329931181,
+          "worker_elapsed_s": 0.47710695800196845
+        },
+        {
+          "case_id": "scale_n5000_t116",
+          "cpu_s": 0.208178,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "0709a938ad25f8bc9658afb63bae39ab9c408a08e4587b6011f5c876ea25f595",
+            "output_hashes": {
+              "aggregates.parquet": "1eb11dc97751f52b710cb5188a5a73e2a33d524e7da6e93c6a8ec4f3d44c9869",
+              "summary.json": "eb90eeaa79b50aff34e20bc0451936ad7ee8040dfc5a7f69dea52d648473bee5",
+              "trajectory.duckdb": "1db32f89c65a98f371815b47b85faea7769f1866c5e531acf3a4763dafffd570"
+            },
+            "rng_draws_count": 2366400,
+            "run_id": "c84d09ed6efa4654ab72ce283933731a",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283163,
+            "manifest.json": 2788,
+            "summary.json": 47370,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283163,
+          "peak_rss_bytes": 206127104,
+          "performance": {
+            "aggregate_wall_s": 0.011824091896414757,
+            "compute_wall_s": 0.007865047984523699,
+            "io_wall_s": 0.17935441600275226
+          },
+          "pid": 42607,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394185,
+          "wall_s": 0.2249950830009766,
+          "worker_elapsed_s": 0.48571162500593346
+        }
+      ],
+      "rng_draws_count": 2366400,
+      "scalar_updates": 2366400,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 116,
+      "total_output_bytes": 1394185,
+      "updates_per_second": 10517563.177101646,
+      "warmups": [
+        {
+          "case_id": "scale_n5000_t116",
+          "cpu_s": 0.203728,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "0709a938ad25f8bc9658afb63bae39ab9c408a08e4587b6011f5c876ea25f595",
+            "output_hashes": {
+              "aggregates.parquet": "1eb11dc97751f52b710cb5188a5a73e2a33d524e7da6e93c6a8ec4f3d44c9869",
+              "summary.json": "47ddc1da15e7ef809957fb37c4838b27f5a0632536ed9c0fe2b1b58d1af75fd8",
+              "trajectory.duckdb": "1db32f89c65a98f371815b47b85faea7769f1866c5e531acf3a4763dafffd570"
+            },
+            "rng_draws_count": 2366400,
+            "run_id": "5a7052fc2dfc4d48ae9de17fd8432006",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283163,
+            "manifest.json": 2788,
+            "summary.json": 47370,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283163,
+          "peak_rss_bytes": 205766656,
+          "performance": {
+            "aggregate_wall_s": 0.011807042959844694,
+            "compute_wall_s": 0.0077926250523887575,
+            "io_wall_s": 0.1752554590057116
+          },
+          "pid": 42598,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394185,
+          "wall_s": 0.22072141700482462,
+          "worker_elapsed_s": 0.4758260000089649
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n10000_t10",
+      "compute_aggregate_median_s": 0.0032010870054364204,
+      "deterministic_replay_digest": "6809d4b043695011686581d8de0f4212ae1956567cbea036d48942e0873107e2",
+      "duckdb_bytes": 798720,
+      "enterprises": 200,
+      "events_per_second": 52.07044020400285,
+      "events_written": 10,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 10000,
+      "max_peak_rss_bytes": 183517184,
+      "median_cpu_s": 0.175944,
+      "median_wall_s": 0.19204754100064747,
+      "median_worker_elapsed_s": 0.4498850000090897,
+      "output_hashes": {
+        "aggregates.parquet": "8ccc414c04054fb0d291252aa6415934603ebd1ca109ae2f18d8620eceb6d335",
+        "summary.json": "627e5317751bebe2ed62a2382d5538ceb1fed6d44a6022827d45b94dac8aae40",
+        "trajectory.duckdb": "df142835e0ed6e84f5baeead2f1b4eba022d818d6273e220a55fe3528d38bfe2"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 28037,
+      "peak_rss_gb": 0.183517184,
+      "peak_rss_gib": 0.1709136962890625,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n10000_t10",
+          "cpu_s": 0.17469500000000002,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "6809d4b043695011686581d8de0f4212ae1956567cbea036d48942e0873107e2",
+            "output_hashes": {
+              "aggregates.parquet": "8ccc414c04054fb0d291252aa6415934603ebd1ca109ae2f18d8620eceb6d335",
+              "summary.json": "627e5317751bebe2ed62a2382d5538ceb1fed6d44a6022827d45b94dac8aae40",
+              "trajectory.duckdb": "df142835e0ed6e84f5baeead2f1b4eba022d818d6273e220a55fe3528d38bfe2"
+            },
+            "rng_draws_count": 408000,
+            "run_id": "48a00b45eb0c4df7a0670dfb4520ffe7",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28037,
+            "manifest.json": 2785,
+            "summary.json": 47136,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28037,
+          "peak_rss_bytes": 183517184,
+          "performance": {
+            "aggregate_wall_s": 0.0017377509793732315,
+            "compute_wall_s": 0.0013456279993988574,
+            "io_wall_s": 0.16305104100320023
+          },
+          "pid": 42614,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876678,
+          "wall_s": 0.19149391700921115,
+          "worker_elapsed_s": 0.45068287500180304
+        },
+        {
+          "case_id": "scale_n10000_t10",
+          "cpu_s": 0.17598000000000003,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "6809d4b043695011686581d8de0f4212ae1956567cbea036d48942e0873107e2",
+            "output_hashes": {
+              "aggregates.parquet": "8ccc414c04054fb0d291252aa6415934603ebd1ca109ae2f18d8620eceb6d335",
+              "summary.json": "f0b25e85b350d9402ac74f3e9fac5e2d4a7024ce33200c013db1636766b5b3a0",
+              "trajectory.duckdb": "df142835e0ed6e84f5baeead2f1b4eba022d818d6273e220a55fe3528d38bfe2"
+            },
+            "rng_draws_count": 408000,
+            "run_id": "a8dd64ab0d4d4a879f92a5b5fa93b84e",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28037,
+            "manifest.json": 2785,
+            "summary.json": 47136,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28037,
+          "peak_rss_bytes": 183386112,
+          "performance": {
+            "aggregate_wall_s": 0.0018165020155720413,
+            "compute_wall_s": 0.0013845849898643792,
+            "io_wall_s": 0.16358045898959972
+          },
+          "pid": 42617,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876678,
+          "wall_s": 0.19286658299097326,
+          "worker_elapsed_s": 0.4498850000090897
+        },
+        {
+          "case_id": "scale_n10000_t10",
+          "cpu_s": 0.175944,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "6809d4b043695011686581d8de0f4212ae1956567cbea036d48942e0873107e2",
+            "output_hashes": {
+              "aggregates.parquet": "8ccc414c04054fb0d291252aa6415934603ebd1ca109ae2f18d8620eceb6d335",
+              "summary.json": "a92f3bdefab3e3fdcff4cc81c234d3e2b9df675587badeb7f3803dcd8d20daa5",
+              "trajectory.duckdb": "df142835e0ed6e84f5baeead2f1b4eba022d818d6273e220a55fe3528d38bfe2"
+            },
+            "rng_draws_count": 408000,
+            "run_id": "1986f689ee2b49be9347601f50c634ea",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28037,
+            "manifest.json": 2785,
+            "summary.json": 47136,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28037,
+          "peak_rss_bytes": 183287808,
+          "performance": {
+            "aggregate_wall_s": 0.0018437079997966066,
+            "compute_wall_s": 0.0013829570089001209,
+            "io_wall_s": 0.16426595899974927
+          },
+          "pid": 42620,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876678,
+          "wall_s": 0.19204754100064747,
+          "worker_elapsed_s": 0.4464782919967547
+        }
+      ],
+      "rng_draws_count": 408000,
+      "scalar_updates": 408000,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 10,
+      "total_output_bytes": 876678,
+      "updates_per_second": 2124473.9603233165,
+      "warmups": [
+        {
+          "case_id": "scale_n10000_t10",
+          "cpu_s": 0.17169800000000002,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "6809d4b043695011686581d8de0f4212ae1956567cbea036d48942e0873107e2",
+            "output_hashes": {
+              "aggregates.parquet": "8ccc414c04054fb0d291252aa6415934603ebd1ca109ae2f18d8620eceb6d335",
+              "summary.json": "63460d15b20b6e30498f7aa8b8ea3bb1b3ea43c455b2a14efa8ac0bf71c7df6e",
+              "trajectory.duckdb": "df142835e0ed6e84f5baeead2f1b4eba022d818d6273e220a55fe3528d38bfe2"
+            },
+            "rng_draws_count": 408000,
+            "run_id": "172298f331654ce08de36b4bdd80766a",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28037,
+            "manifest.json": 2785,
+            "summary.json": 47136,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28037,
+          "peak_rss_bytes": 183271424,
+          "performance": {
+            "aggregate_wall_s": 0.0017485819989815354,
+            "compute_wall_s": 0.0013740430295001715,
+            "io_wall_s": 0.16009558299265336
+          },
+          "pid": 42611,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876678,
+          "wall_s": 0.18834458300261758,
+          "worker_elapsed_s": 0.4416737080027815
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n10000_t116",
+      "compute_aggregate_median_s": 0.03180287707073148,
+      "deterministic_replay_digest": "0e0b52731fb889c723a8601ab24721a50d386229883c5cd55f1a6be665ee937e",
+      "duckdb_bytes": 1060864,
+      "enterprises": 200,
+      "events_per_second": 493.20051239067317,
+      "events_written": 116,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 10000,
+      "max_peak_rss_bytes": 207880192,
+      "median_cpu_s": 0.218192,
+      "median_wall_s": 0.23519845800183248,
+      "median_worker_elapsed_s": 0.4935271249996731,
+      "output_hashes": {
+        "aggregates.parquet": "2eab795b43d3aa70ebde90cb0ca119c9824bf7ba0fc872884a96c1bb5adc8024",
+        "summary.json": "3dbd28d477c81f76d0c3fa1e13de90cf02e6d797b0e7e001fe01e0c56d9af873",
+        "trajectory.duckdb": "2c16c300bb09754b6c6802da669d797f7a66ab81609018b1e354f6ba7b8c1269"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 283191,
+      "peak_rss_gb": 0.207880192,
+      "peak_rss_gib": 0.193603515625,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n10000_t116",
+          "cpu_s": 0.218192,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "0e0b52731fb889c723a8601ab24721a50d386229883c5cd55f1a6be665ee937e",
+            "output_hashes": {
+              "aggregates.parquet": "2eab795b43d3aa70ebde90cb0ca119c9824bf7ba0fc872884a96c1bb5adc8024",
+              "summary.json": "3dbd28d477c81f76d0c3fa1e13de90cf02e6d797b0e7e001fe01e0c56d9af873",
+              "trajectory.duckdb": "2c16c300bb09754b6c6802da669d797f7a66ab81609018b1e354f6ba7b8c1269"
+            },
+            "rng_draws_count": 4732800,
+            "run_id": "b27e18eb94b34fbf87c922ffce20c4c6",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283191,
+            "manifest.json": 2789,
+            "summary.json": 47450,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283191,
+          "peak_rss_bytes": 207847424,
+          "performance": {
+            "aggregate_wall_s": 0.016988334959023632,
+            "compute_wall_s": 0.015358708900748752,
+            "io_wall_s": 0.17688670799543615
+          },
+          "pid": 42626,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394294,
+          "wall_s": 0.23519845800183248,
+          "worker_elapsed_s": 0.49434333298995625
+        },
+        {
+          "case_id": "scale_n10000_t116",
+          "cpu_s": 0.219224,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "0e0b52731fb889c723a8601ab24721a50d386229883c5cd55f1a6be665ee937e",
+            "output_hashes": {
+              "aggregates.parquet": "2eab795b43d3aa70ebde90cb0ca119c9824bf7ba0fc872884a96c1bb5adc8024",
+              "summary.json": "3a24de5dc1ad5af92517e2803d7823d6145de90d2e411be3c74a8cda1a64da50",
+              "trajectory.duckdb": "2c16c300bb09754b6c6802da669d797f7a66ab81609018b1e354f6ba7b8c1269"
+            },
+            "rng_draws_count": 4732800,
+            "run_id": "69c82f96384f4037bf323acda806fd2c",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283191,
+            "manifest.json": 2789,
+            "summary.json": 47450,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283191,
+          "peak_rss_bytes": 207683584,
+          "performance": {
+            "aggregate_wall_s": 0.016572171050938778,
+            "compute_wall_s": 0.015230706019792706,
+            "io_wall_s": 0.17726200001197867
+          },
+          "pid": 42629,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394294,
+          "wall_s": 0.23716791700280737,
+          "worker_elapsed_s": 0.4935271249996731
+        },
+        {
+          "case_id": "scale_n10000_t116",
+          "cpu_s": 0.21685900000000002,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "0e0b52731fb889c723a8601ab24721a50d386229883c5cd55f1a6be665ee937e",
+            "output_hashes": {
+              "aggregates.parquet": "2eab795b43d3aa70ebde90cb0ca119c9824bf7ba0fc872884a96c1bb5adc8024",
+              "summary.json": "5dd4f193f905bb5dc0fc09a455540944a36edf55b8579c6cd9cc0be461d05167",
+              "trajectory.duckdb": "2c16c300bb09754b6c6802da669d797f7a66ab81609018b1e354f6ba7b8c1269"
+            },
+            "rng_draws_count": 4732800,
+            "run_id": "31d217d8c5534ad89dca394193b6b9bf",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283191,
+            "manifest.json": 2789,
+            "summary.json": 47450,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283191,
+          "peak_rss_bytes": 207880192,
+          "performance": {
+            "aggregate_wall_s": 0.016365457995561883,
+            "compute_wall_s": 0.015024167980300263,
+            "io_wall_s": 0.17635333399812225
+          },
+          "pid": 42633,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394294,
+          "wall_s": 0.23391124999034218,
+          "worker_elapsed_s": 0.49031904099683743
+        }
+      ],
+      "rng_draws_count": 4732800,
+      "scalar_updates": 4732800,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 116,
+      "total_output_bytes": 1394294,
+      "updates_per_second": 20122580.905539464,
+      "warmups": [
+        {
+          "case_id": "scale_n10000_t116",
+          "cpu_s": 0.21910000000000002,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "0e0b52731fb889c723a8601ab24721a50d386229883c5cd55f1a6be665ee937e",
+            "output_hashes": {
+              "aggregates.parquet": "2eab795b43d3aa70ebde90cb0ca119c9824bf7ba0fc872884a96c1bb5adc8024",
+              "summary.json": "4d7198d873f5f026827b135c4df85f079d0e922b85d6ea50217a64435fd499d4",
+              "trajectory.duckdb": "2c16c300bb09754b6c6802da669d797f7a66ab81609018b1e354f6ba7b8c1269"
+            },
+            "rng_draws_count": 4732800,
+            "run_id": "2c72a458eb5242618084831f7f69eb77",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283191,
+            "manifest.json": 2789,
+            "summary.json": 47450,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283191,
+          "peak_rss_bytes": 207781888,
+          "performance": {
+            "aggregate_wall_s": 0.016737840007408522,
+            "compute_wall_s": 0.015221292997011915,
+            "io_wall_s": 0.17798008301178925
+          },
+          "pid": 42623,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394294,
+          "wall_s": 0.23558500000217464,
+          "worker_elapsed_s": 0.4907229160016868
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n20000_t10",
+      "compute_aggregate_median_s": 0.00529658401501365,
+      "deterministic_replay_digest": "51e58249bd472cbc436c6fe243579b47d730043c439d851fcda81e8f8bbba553",
+      "duckdb_bytes": 798720,
+      "enterprises": 300,
+      "events_per_second": 51.67288804704712,
+      "events_written": 10,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 20000,
+      "max_peak_rss_bytes": 183975936,
+      "median_cpu_s": 0.17691500000000002,
+      "median_wall_s": 0.19352508400334045,
+      "median_worker_elapsed_s": 0.4475933750072727,
+      "output_hashes": {
+        "aggregates.parquet": "efa5f4fe0464a5f58f8acea9b54d2788d541367a91b7c400b9ef1f03a67d8134",
+        "summary.json": "51f59ee94ee5ad6f44c7b856010697d6bc6401f29056b1f4426179e448670d3e",
+        "trajectory.duckdb": "f4bdd292f2dca993c84612bb1b4b5c84d121c3601891e19e1d8ea92c588f21db"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 28034,
+      "peak_rss_gb": 0.183975936,
+      "peak_rss_gib": 0.1713409423828125,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n20000_t10",
+          "cpu_s": 0.174529,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "51e58249bd472cbc436c6fe243579b47d730043c439d851fcda81e8f8bbba553",
+            "output_hashes": {
+              "aggregates.parquet": "efa5f4fe0464a5f58f8acea9b54d2788d541367a91b7c400b9ef1f03a67d8134",
+              "summary.json": "51f59ee94ee5ad6f44c7b856010697d6bc6401f29056b1f4426179e448670d3e",
+              "trajectory.duckdb": "f4bdd292f2dca993c84612bb1b4b5c84d121c3601891e19e1d8ea92c588f21db"
+            },
+            "rng_draws_count": 812000,
+            "run_id": "ac3d552184414f838f266b28b27ba5d0",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28034,
+            "manifest.json": 2786,
+            "summary.json": 47225,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28034,
+          "peak_rss_bytes": 183975936,
+          "performance": {
+            "aggregate_wall_s": 0.002651624017744325,
+            "compute_wall_s": 0.002644959997269325,
+            "io_wall_s": 0.160284416997456
+          },
+          "pid": 42639,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876765,
+          "wall_s": 0.1912869999941904,
+          "worker_elapsed_s": 0.4449495000008028
+        },
+        {
+          "case_id": "scale_n20000_t10",
+          "cpu_s": 0.17886499999999997,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "51e58249bd472cbc436c6fe243579b47d730043c439d851fcda81e8f8bbba553",
+            "output_hashes": {
+              "aggregates.parquet": "efa5f4fe0464a5f58f8acea9b54d2788d541367a91b7c400b9ef1f03a67d8134",
+              "summary.json": "ddfe9a057a9fab0d1f7eb4a74deee9353bdd8e2d6a69c64c89347c3b1582aeec",
+              "trajectory.duckdb": "f4bdd292f2dca993c84612bb1b4b5c84d121c3601891e19e1d8ea92c588f21db"
+            },
+            "rng_draws_count": 812000,
+            "run_id": "5cbdfe3dbccb492e86df858c3b7d2fc9",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28034,
+            "manifest.json": 2786,
+            "summary.json": 47228,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28034,
+          "peak_rss_bytes": 183975936,
+          "performance": {
+            "aggregate_wall_s": 0.0026079150120494887,
+            "compute_wall_s": 0.0026183770096395165,
+            "io_wall_s": 0.1648062089952873
+          },
+          "pid": 42642,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876768,
+          "wall_s": 0.19518266701197717,
+          "worker_elapsed_s": 0.4530113749933662
+        },
+        {
+          "case_id": "scale_n20000_t10",
+          "cpu_s": 0.17691500000000002,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "51e58249bd472cbc436c6fe243579b47d730043c439d851fcda81e8f8bbba553",
+            "output_hashes": {
+              "aggregates.parquet": "efa5f4fe0464a5f58f8acea9b54d2788d541367a91b7c400b9ef1f03a67d8134",
+              "summary.json": "8b7014c8e12c057f79c7464aed2113dc47810d6bfd885cc160818a42155a5029",
+              "trajectory.duckdb": "f4bdd292f2dca993c84612bb1b4b5c84d121c3601891e19e1d8ea92c588f21db"
+            },
+            "rng_draws_count": 812000,
+            "run_id": "a61dfd51cc8e4cb8873ce08cb9527b5b",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28034,
+            "manifest.json": 2786,
+            "summary.json": 47226,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28034,
+          "peak_rss_bytes": 183943168,
+          "performance": {
+            "aggregate_wall_s": 0.0026881260273512453,
+            "compute_wall_s": 0.00268491699534934,
+            "io_wall_s": 0.1627779590053251
+          },
+          "pid": 42645,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876766,
+          "wall_s": 0.19352508400334045,
+          "worker_elapsed_s": 0.4475933750072727
+        }
+      ],
+      "rng_draws_count": 812000,
+      "scalar_updates": 812000,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 10,
+      "total_output_bytes": 876768,
+      "updates_per_second": 4195838.509420225,
+      "warmups": [
+        {
+          "case_id": "scale_n20000_t10",
+          "cpu_s": 0.17984799999999998,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "51e58249bd472cbc436c6fe243579b47d730043c439d851fcda81e8f8bbba553",
+            "output_hashes": {
+              "aggregates.parquet": "efa5f4fe0464a5f58f8acea9b54d2788d541367a91b7c400b9ef1f03a67d8134",
+              "summary.json": "4d635cd623345b62d8550dfe5f67af8cc940e0a998b7cb061760b7340e108cf5",
+              "trajectory.duckdb": "f4bdd292f2dca993c84612bb1b4b5c84d121c3601891e19e1d8ea92c588f21db"
+            },
+            "rng_draws_count": 812000,
+            "run_id": "6b58caf8a0554387aae6d269a5cfd98b",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28034,
+            "manifest.json": 2786,
+            "summary.json": 47228,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28034,
+          "peak_rss_bytes": 183877632,
+          "performance": {
+            "aggregate_wall_s": 0.0025767080078367144,
+            "compute_wall_s": 0.002657417004229501,
+            "io_wall_s": 0.16573762499319855
+          },
+          "pid": 42636,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876768,
+          "wall_s": 0.1972359169885749,
+          "worker_elapsed_s": 0.4530975420057075
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n20000_t116",
+      "compute_aggregate_median_s": 0.05655629681132268,
+      "deterministic_replay_digest": "6b753b656c8296cf50bfe03221123a9ca59b5c2108af2f01db85fa8f4bc55c1c",
+      "duckdb_bytes": 1060864,
+      "enterprises": 300,
+      "events_per_second": 444.2202782957283,
+      "events_written": 116,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 20000,
+      "max_peak_rss_bytes": 207863808,
+      "median_cpu_s": 0.24486200000000002,
+      "median_wall_s": 0.261131708000903,
+      "median_worker_elapsed_s": 0.5198813329916447,
+      "output_hashes": {
+        "aggregates.parquet": "8bbc9539c13fd07cc98f3a94b08085e78e1df6938f77a806265caadfd9191589",
+        "summary.json": "d1593a4d2331b68a0accf3815ec0767529e38f4522e45b0467f4efcef5aa9043",
+        "trajectory.duckdb": "1a74a4b598dc2ad7c989640024774cfad390c303ed8156c58edc318116252e33"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 283225,
+      "peak_rss_gb": 0.207863808,
+      "peak_rss_gib": 0.1935882568359375,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n20000_t116",
+          "cpu_s": 0.24486200000000002,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "6b753b656c8296cf50bfe03221123a9ca59b5c2108af2f01db85fa8f4bc55c1c",
+            "output_hashes": {
+              "aggregates.parquet": "8bbc9539c13fd07cc98f3a94b08085e78e1df6938f77a806265caadfd9191589",
+              "summary.json": "d1593a4d2331b68a0accf3815ec0767529e38f4522e45b0467f4efcef5aa9043",
+              "trajectory.duckdb": "1a74a4b598dc2ad7c989640024774cfad390c303ed8156c58edc318116252e33"
+            },
+            "rng_draws_count": 9419200,
+            "run_id": "a31870e67b1943feb559c1e50a14f0a4",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283225,
+            "manifest.json": 2790,
+            "summary.json": 47606,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283225,
+          "peak_rss_bytes": 207618048,
+          "performance": {
+            "aggregate_wall_s": 0.026480337110115215,
+            "compute_wall_s": 0.030001082981470972,
+            "io_wall_s": 0.1792384169966681
+          },
+          "pid": 42652,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394485,
+          "wall_s": 0.261131708000903,
+          "worker_elapsed_s": 0.5199005839967867
+        },
+        {
+          "case_id": "scale_n20000_t116",
+          "cpu_s": 0.246107,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "6b753b656c8296cf50bfe03221123a9ca59b5c2108af2f01db85fa8f4bc55c1c",
+            "output_hashes": {
+              "aggregates.parquet": "8bbc9539c13fd07cc98f3a94b08085e78e1df6938f77a806265caadfd9191589",
+              "summary.json": "00fb5a51f22a3539018634693a5e4e60a62fb9a9fc8c4b8d2e5c47a92446df65",
+              "trajectory.duckdb": "1a74a4b598dc2ad7c989640024774cfad390c303ed8156c58edc318116252e33"
+            },
+            "rng_draws_count": 9419200,
+            "run_id": "b1d4fd56d68d41d39b636a18656d75b7",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283225,
+            "manifest.json": 2790,
+            "summary.json": 47606,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283225,
+          "peak_rss_bytes": 207781888,
+          "performance": {
+            "aggregate_wall_s": 0.026625127022271045,
+            "compute_wall_s": 0.03017978598654736,
+            "io_wall_s": 0.18010845899698325
+          },
+          "pid": 42660,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394485,
+          "wall_s": 0.2640370000008261,
+          "worker_elapsed_s": 0.519262665999122
+        },
+        {
+          "case_id": "scale_n20000_t116",
+          "cpu_s": 0.24384899999999998,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "6b753b656c8296cf50bfe03221123a9ca59b5c2108af2f01db85fa8f4bc55c1c",
+            "output_hashes": {
+              "aggregates.parquet": "8bbc9539c13fd07cc98f3a94b08085e78e1df6938f77a806265caadfd9191589",
+              "summary.json": "9a36d1124845e87e59724275db0c46444aae8585c6a1798065b135d9c4c03b7a",
+              "trajectory.duckdb": "1a74a4b598dc2ad7c989640024774cfad390c303ed8156c58edc318116252e33"
+            },
+            "rng_draws_count": 9419200,
+            "run_id": "6ff32a721397412790a375a96b9bf85c",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283225,
+            "manifest.json": 2790,
+            "summary.json": 47604,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283225,
+          "peak_rss_bytes": 207863808,
+          "performance": {
+            "aggregate_wall_s": 0.02651545988919679,
+            "compute_wall_s": 0.03004083692212589,
+            "io_wall_s": 0.1775568330049282
+          },
+          "pid": 42663,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394483,
+          "wall_s": 0.25972316700790543,
+          "worker_elapsed_s": 0.5198813329916447
+        }
+      ],
+      "rng_draws_count": 9419200,
+      "scalar_updates": 9419200,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 116,
+      "total_output_bytes": 1394485,
+      "updates_per_second": 36070686.59761314,
+      "warmups": [
+        {
+          "case_id": "scale_n20000_t116",
+          "cpu_s": 0.24752600000000002,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "6b753b656c8296cf50bfe03221123a9ca59b5c2108af2f01db85fa8f4bc55c1c",
+            "output_hashes": {
+              "aggregates.parquet": "8bbc9539c13fd07cc98f3a94b08085e78e1df6938f77a806265caadfd9191589",
+              "summary.json": "19f84a74dde0dd85c92c6c4cb8e6ba97a3e4eb085e9f5207ee99b16e50a79d33",
+              "trajectory.duckdb": "1a74a4b598dc2ad7c989640024774cfad390c303ed8156c58edc318116252e33"
+            },
+            "rng_draws_count": 9419200,
+            "run_id": "c87e563da6b44866bfdc01d6467c90f5",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283225,
+            "manifest.json": 2790,
+            "summary.json": 47607,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283225,
+          "peak_rss_bytes": 207568896,
+          "performance": {
+            "aggregate_wall_s": 0.026553379895631224,
+            "compute_wall_s": 0.030162625043885782,
+            "io_wall_s": 0.18185525000444613
+          },
+          "pid": 42648,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394486,
+          "wall_s": 0.26439408300211653,
+          "worker_elapsed_s": 0.522882417004439
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n30000_t10",
+      "compute_aggregate_median_s": 0.007467208008165471,
+      "deterministic_replay_digest": "777daf0b474e91eda33e97e827ed0d62c4dca9f36bb76917227e06f25d2da8b2",
+      "duckdb_bytes": 798720,
+      "enterprises": 300,
+      "events_per_second": 51.46421057161716,
+      "events_written": 10,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 30000,
+      "max_peak_rss_bytes": 185532416,
+      "median_cpu_s": 0.178019,
+      "median_wall_s": 0.19430979099706747,
+      "median_worker_elapsed_s": 0.45366395798919257,
+      "output_hashes": {
+        "aggregates.parquet": "572584b6c4edc7caaa5beb373bb2c6e55e14b9071a44be8872e0da2bcaed3e65",
+        "summary.json": "16b52e36a3ef8efbf98f3d9dfa228ebd2a0342c01e3a8b80832a243601a9df05",
+        "trajectory.duckdb": "e18ecb25d7d5abd083e2dde8befcd30c6c2168dd7959cea84a09b2a156c34196"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 28016,
+      "peak_rss_gb": 0.185532416,
+      "peak_rss_gib": 0.17279052734375,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n30000_t10",
+          "cpu_s": 0.178019,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "777daf0b474e91eda33e97e827ed0d62c4dca9f36bb76917227e06f25d2da8b2",
+            "output_hashes": {
+              "aggregates.parquet": "572584b6c4edc7caaa5beb373bb2c6e55e14b9071a44be8872e0da2bcaed3e65",
+              "summary.json": "16b52e36a3ef8efbf98f3d9dfa228ebd2a0342c01e3a8b80832a243601a9df05",
+              "trajectory.duckdb": "e18ecb25d7d5abd083e2dde8befcd30c6c2168dd7959cea84a09b2a156c34196"
+            },
+            "rng_draws_count": 1212000,
+            "run_id": "7cc4a19ce24f4325a41e1391c1470076",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28016,
+            "manifest.json": 2788,
+            "summary.json": 47233,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28016,
+          "peak_rss_bytes": 185384960,
+          "performance": {
+            "aggregate_wall_s": 0.0035685440234374255,
+            "compute_wall_s": 0.0039531660004286095,
+            "io_wall_s": 0.1614490000065416
+          },
+          "pid": 42669,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876757,
+          "wall_s": 0.19408695900347084,
+          "worker_elapsed_s": 0.45366395798919257
+        },
+        {
+          "case_id": "scale_n30000_t10",
+          "cpu_s": 0.179203,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "777daf0b474e91eda33e97e827ed0d62c4dca9f36bb76917227e06f25d2da8b2",
+            "output_hashes": {
+              "aggregates.parquet": "572584b6c4edc7caaa5beb373bb2c6e55e14b9071a44be8872e0da2bcaed3e65",
+              "summary.json": "93a4a43e72c8b41481921ba97b5fe8a4a8e79741a8d0ff38906d1c76a3561a61",
+              "trajectory.duckdb": "e18ecb25d7d5abd083e2dde8befcd30c6c2168dd7959cea84a09b2a156c34196"
+            },
+            "rng_draws_count": 1212000,
+            "run_id": "f72acb1df6c6414caeaad35215705536",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28016,
+            "manifest.json": 2788,
+            "summary.json": 47233,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28016,
+          "peak_rss_bytes": 185499648,
+          "performance": {
+            "aggregate_wall_s": 0.003328460021293722,
+            "compute_wall_s": 0.0038737069990020245,
+            "io_wall_s": 0.16294441699574236
+          },
+          "pid": 42672,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876757,
+          "wall_s": 0.19558329200663138,
+          "worker_elapsed_s": 0.4572673330112593
+        },
+        {
+          "case_id": "scale_n30000_t10",
+          "cpu_s": 0.17797200000000002,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "777daf0b474e91eda33e97e827ed0d62c4dca9f36bb76917227e06f25d2da8b2",
+            "output_hashes": {
+              "aggregates.parquet": "572584b6c4edc7caaa5beb373bb2c6e55e14b9071a44be8872e0da2bcaed3e65",
+              "summary.json": "cd7016884bb1435255694989d4055934372e31fe0dcdb63c885aef8ee678213a",
+              "trajectory.duckdb": "e18ecb25d7d5abd083e2dde8befcd30c6c2168dd7959cea84a09b2a156c34196"
+            },
+            "rng_draws_count": 1212000,
+            "run_id": "3f985134514843199c7216b9f7d4cc83",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28016,
+            "manifest.json": 2788,
+            "summary.json": 47231,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28016,
+          "peak_rss_bytes": 185532416,
+          "performance": {
+            "aggregate_wall_s": 0.003572123998310417,
+            "compute_wall_s": 0.0038950840098550543,
+            "io_wall_s": 0.160891375009669
+          },
+          "pid": 42676,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876755,
+          "wall_s": 0.19430979099706747,
+          "worker_elapsed_s": 0.45126116699248087
+        }
+      ],
+      "rng_draws_count": 1212000,
+      "scalar_updates": 1212000,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 10,
+      "total_output_bytes": 876757,
+      "updates_per_second": 6237462.32128,
+      "warmups": [
+        {
+          "case_id": "scale_n30000_t10",
+          "cpu_s": 0.17926700000000004,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "777daf0b474e91eda33e97e827ed0d62c4dca9f36bb76917227e06f25d2da8b2",
+            "output_hashes": {
+              "aggregates.parquet": "572584b6c4edc7caaa5beb373bb2c6e55e14b9071a44be8872e0da2bcaed3e65",
+              "summary.json": "404cf85ce9e786fc4e57915416e93b4ebf3cf56804bd46096e9b0427a93e1999",
+              "trajectory.duckdb": "e18ecb25d7d5abd083e2dde8befcd30c6c2168dd7959cea84a09b2a156c34196"
+            },
+            "rng_draws_count": 1212000,
+            "run_id": "c37d69246cc34f6f90f0650ca7111f96",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28016,
+            "manifest.json": 2788,
+            "summary.json": 47232,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28016,
+          "peak_rss_bytes": 185384960,
+          "performance": {
+            "aggregate_wall_s": 0.0036235849984223023,
+            "compute_wall_s": 0.003964125004131347,
+            "io_wall_s": 0.1623833339981502
+          },
+          "pid": 42666,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876756,
+          "wall_s": 0.1958546250098152,
+          "worker_elapsed_s": 0.4553477500012377
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n30000_t116",
+      "compute_aggregate_median_s": 0.08064725709846243,
+      "deterministic_replay_digest": "5955174a6fcf9d638e631c264ba6b1ea4ba1a0882c12fc19431d155b1f03e68d",
+      "duckdb_bytes": 1060864,
+      "enterprises": 300,
+      "events_per_second": 407.16356270296916,
+      "events_written": 116,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 30000,
+      "max_peak_rss_bytes": 207896576,
+      "median_cpu_s": 0.268031,
+      "median_wall_s": 0.2848977920075413,
+      "median_worker_elapsed_s": 0.5433593339985237,
+      "output_hashes": {
+        "aggregates.parquet": "b488a152cffe686cbf9fedb541cb0c8f391267382e9f3f0c214054e3727ff93f",
+        "summary.json": "73dfa6ff83a29e4b6f1f5d0945aef3cf0fb2cc35874389e20641da93a96c3594",
+        "trajectory.duckdb": "b86e40352ad79ae3897ee190291f9e7ab3a0951d8223754c621c8097e13c1e90"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 283113,
+      "peak_rss_gb": 0.207896576,
+      "peak_rss_gib": 0.1936187744140625,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n30000_t116",
+          "cpu_s": 0.267581,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "5955174a6fcf9d638e631c264ba6b1ea4ba1a0882c12fc19431d155b1f03e68d",
+            "output_hashes": {
+              "aggregates.parquet": "b488a152cffe686cbf9fedb541cb0c8f391267382e9f3f0c214054e3727ff93f",
+              "summary.json": "73dfa6ff83a29e4b6f1f5d0945aef3cf0fb2cc35874389e20641da93a96c3594",
+              "trajectory.duckdb": "b86e40352ad79ae3897ee190291f9e7ab3a0951d8223754c621c8097e13c1e90"
+            },
+            "rng_draws_count": 14059200,
+            "run_id": "d7027451499247d98ce3686736aa7aa8",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283113,
+            "manifest.json": 2792,
+            "summary.json": 47573,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283113,
+          "peak_rss_bytes": 207896576,
+          "performance": {
+            "aggregate_wall_s": 0.03606967096857261,
+            "compute_wall_s": 0.044577586129889823,
+            "io_wall_s": 0.17757775000063702
+          },
+          "pid": 42682,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394342,
+          "wall_s": 0.2840568750107195,
+          "worker_elapsed_s": 0.5407217089959886
+        },
+        {
+          "case_id": "scale_n30000_t116",
+          "cpu_s": 0.27434800000000004,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "5955174a6fcf9d638e631c264ba6b1ea4ba1a0882c12fc19431d155b1f03e68d",
+            "output_hashes": {
+              "aggregates.parquet": "b488a152cffe686cbf9fedb541cb0c8f391267382e9f3f0c214054e3727ff93f",
+              "summary.json": "3d7f9fada8e4f7e275744c9262d16e7d9c245f726cb1324278a95e528d8b881f",
+              "trajectory.duckdb": "7af125dd8680af0fcc933352dd66a4c4112777f1a50e80b249acf8973a3efb03"
+            },
+            "rng_draws_count": 14059200,
+            "run_id": "3df507407ad04a40966e653d1ee938af",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283113,
+            "manifest.json": 2792,
+            "summary.json": 47572,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283113,
+          "peak_rss_bytes": 207896576,
+          "performance": {
+            "aggregate_wall_s": 0.03588592588494066,
+            "compute_wall_s": 0.04450224911852274,
+            "io_wall_s": 0.18568229200900532
+          },
+          "pid": 42685,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394341,
+          "wall_s": 0.29242512499331497,
+          "worker_elapsed_s": 0.5511695419991156
+        },
+        {
+          "case_id": "scale_n30000_t116",
+          "cpu_s": 0.268031,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "5955174a6fcf9d638e631c264ba6b1ea4ba1a0882c12fc19431d155b1f03e68d",
+            "output_hashes": {
+              "aggregates.parquet": "b488a152cffe686cbf9fedb541cb0c8f391267382e9f3f0c214054e3727ff93f",
+              "summary.json": "9ceeb2fc0a32b0592bf39e0f77bc328bc86492d66411c07b6e22e9c06f5cd43a",
+              "trajectory.duckdb": "b86e40352ad79ae3897ee190291f9e7ab3a0951d8223754c621c8097e13c1e90"
+            },
+            "rng_draws_count": 14059200,
+            "run_id": "f5eafde860e54cbea50bde04286cff09",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283113,
+            "manifest.json": 2792,
+            "summary.json": 47574,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283113,
+          "peak_rss_bytes": 207749120,
+          "performance": {
+            "aggregate_wall_s": 0.036058542944374494,
+            "compute_wall_s": 0.044907631949172355,
+            "io_wall_s": 0.17759837499761488
+          },
+          "pid": 42689,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394343,
+          "wall_s": 0.2848977920075413,
+          "worker_elapsed_s": 0.5433593339985237
+        }
+      ],
+      "rng_draws_count": 14059200,
+      "scalar_updates": 14059200,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 116,
+      "total_output_bytes": 1394343,
+      "updates_per_second": 49348223.79959986,
+      "warmups": [
+        {
+          "case_id": "scale_n30000_t116",
+          "cpu_s": 0.270031,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "5955174a6fcf9d638e631c264ba6b1ea4ba1a0882c12fc19431d155b1f03e68d",
+            "output_hashes": {
+              "aggregates.parquet": "b488a152cffe686cbf9fedb541cb0c8f391267382e9f3f0c214054e3727ff93f",
+              "summary.json": "456590a721d2ea5e0cdea8a40d7a4bdf7b4d1844a7ff221c8e52e5c9c5637b03",
+              "trajectory.duckdb": "7af125dd8680af0fcc933352dd66a4c4112777f1a50e80b249acf8973a3efb03"
+            },
+            "rng_draws_count": 14059200,
+            "run_id": "565d3ae6039e4a19b99f46eb0a29d372",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283113,
+            "manifest.json": 2792,
+            "summary.json": 47573,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283113,
+          "peak_rss_bytes": 207896576,
+          "performance": {
+            "aggregate_wall_s": 0.03599862795090303,
+            "compute_wall_s": 0.044887283962452784,
+            "io_wall_s": 0.18020820899982937
+          },
+          "pid": 42679,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394342,
+          "wall_s": 0.28721929200401064,
+          "worker_elapsed_s": 0.5478182080114493
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n50000_t10",
+      "compute_aggregate_median_s": 0.01184191596985329,
+      "deterministic_replay_digest": "f3ad24716d1b38d7e3c94a582e192bdf201666b0974d0cd71d479b943ffa53f4",
+      "duckdb_bytes": 798720,
+      "enterprises": 500,
+      "events_per_second": 49.3597526754677,
+      "events_written": 10,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": true,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 50000,
+      "max_peak_rss_bytes": 185696256,
+      "median_cpu_s": 0.185983,
+      "median_wall_s": 0.2025942079926608,
+      "median_worker_elapsed_s": 0.46303341699240264,
+      "output_hashes": {
+        "aggregates.parquet": "92dd1725f50248380c54885ffe43d02e6809d9dadc78bb95f22d9645a1cb066f",
+        "summary.json": "e9d0eb350281adb3bd1daa5c5544e2a7b7e53f0af19799eafff42fd9e6c9ff6c",
+        "trajectory.duckdb": "766d21265adef4a0c2e31e6ea979b35500c51f722c8cb62f7bb9de4bd8d6f38d"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 28002,
+      "peak_rss_gb": 0.185696256,
+      "peak_rss_gib": 0.172943115234375,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n50000_t10",
+          "cpu_s": 0.18363000000000002,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "f3ad24716d1b38d7e3c94a582e192bdf201666b0974d0cd71d479b943ffa53f4",
+            "output_hashes": {
+              "aggregates.parquet": "92dd1725f50248380c54885ffe43d02e6809d9dadc78bb95f22d9645a1cb066f",
+              "summary.json": "e9d0eb350281adb3bd1daa5c5544e2a7b7e53f0af19799eafff42fd9e6c9ff6c",
+              "trajectory.duckdb": "766d21265adef4a0c2e31e6ea979b35500c51f722c8cb62f7bb9de4bd8d6f38d"
+            },
+            "rng_draws_count": 2020000,
+            "run_id": "c57a6feda6f149e08b78ca2cab84f863",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28002,
+            "manifest.json": 2788,
+            "summary.json": 47359,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28002,
+          "peak_rss_bytes": 185548800,
+          "performance": {
+            "aggregate_wall_s": 0.005248790985206142,
+            "compute_wall_s": 0.00664058598340489,
+            "io_wall_s": 0.16269495799497236
+          },
+          "pid": 42696,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876869,
+          "wall_s": 0.19975583300401922,
+          "worker_elapsed_s": 0.4604935410025064
+        },
+        {
+          "case_id": "scale_n50000_t10",
+          "cpu_s": 0.185983,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "f3ad24716d1b38d7e3c94a582e192bdf201666b0974d0cd71d479b943ffa53f4",
+            "output_hashes": {
+              "aggregates.parquet": "92dd1725f50248380c54885ffe43d02e6809d9dadc78bb95f22d9645a1cb066f",
+              "summary.json": "b4e34e84ebc7c5e5621048ad534adf82ce98f48c15113a1f405e6fe3e0f81ab6",
+              "trajectory.duckdb": "766d21265adef4a0c2e31e6ea979b35500c51f722c8cb62f7bb9de4bd8d6f38d"
+            },
+            "rng_draws_count": 2020000,
+            "run_id": "b95bfd64a4974d1a95b93ddf94863aad",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28002,
+            "manifest.json": 2788,
+            "summary.json": 47359,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28002,
+          "peak_rss_bytes": 185647104,
+          "performance": {
+            "aggregate_wall_s": 0.005145791990798898,
+            "compute_wall_s": 0.006316916027572006,
+            "io_wall_s": 0.1656696669961093
+          },
+          "pid": 42699,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876869,
+          "wall_s": 0.2025942079926608,
+          "worker_elapsed_s": 0.46303341699240264
+        },
+        {
+          "case_id": "scale_n50000_t10",
+          "cpu_s": 0.18708899999999998,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "f3ad24716d1b38d7e3c94a582e192bdf201666b0974d0cd71d479b943ffa53f4",
+            "output_hashes": {
+              "aggregates.parquet": "92dd1725f50248380c54885ffe43d02e6809d9dadc78bb95f22d9645a1cb066f",
+              "summary.json": "10164afa796e85a2e095f26121a93dcb1a19cca4d071b3dd52f9c510aff0a03b",
+              "trajectory.duckdb": "766d21265adef4a0c2e31e6ea979b35500c51f722c8cb62f7bb9de4bd8d6f38d"
+            },
+            "rng_draws_count": 2020000,
+            "run_id": "02c00f70eb60498a9390d15582f58438",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28002,
+            "manifest.json": 2788,
+            "summary.json": 47359,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28002,
+          "peak_rss_bytes": 185696256,
+          "performance": {
+            "aggregate_wall_s": 0.005285915991407819,
+            "compute_wall_s": 0.00655599997844547,
+            "io_wall_s": 0.17250270799559075
+          },
+          "pid": 42702,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876869,
+          "wall_s": 0.20991474999755155,
+          "worker_elapsed_s": 0.466078124998603
+        }
+      ],
+      "rng_draws_count": 2020000,
+      "scalar_updates": 2020000,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 10,
+      "total_output_bytes": 876869,
+      "updates_per_second": 9970670.040444477,
+      "warmups": [
+        {
+          "case_id": "scale_n50000_t10",
+          "cpu_s": 0.188663,
+          "duckdb_bytes": 798720,
+          "duckdb_threads": 1,
+          "events_written": 10,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "f3ad24716d1b38d7e3c94a582e192bdf201666b0974d0cd71d479b943ffa53f4",
+            "output_hashes": {
+              "aggregates.parquet": "92dd1725f50248380c54885ffe43d02e6809d9dadc78bb95f22d9645a1cb066f",
+              "summary.json": "dfd0f3a1837f11c93ab65c201b778d4a5cbf7bb6b893a3feb466ffff6d2f2532",
+              "trajectory.duckdb": "766d21265adef4a0c2e31e6ea979b35500c51f722c8cb62f7bb9de4bd8d6f38d"
+            },
+            "rng_draws_count": 2020000,
+            "run_id": "31e3a74e784449d1950942ffcf6e10e2",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 28002,
+            "manifest.json": 2788,
+            "summary.json": 47360,
+            "trajectory.duckdb": 798720
+          },
+          "parquet_bytes": 28002,
+          "peak_rss_bytes": 185663488,
+          "performance": {
+            "aggregate_wall_s": 0.0052118739986326545,
+            "compute_wall_s": 0.006513249027193524,
+            "io_wall_s": 0.1675272090069484
+          },
+          "pid": 42692,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 1600,
+            "enterprises_micro": null,
+            "events": 10,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 876870,
+          "wall_s": 0.20565933400939684,
+          "worker_elapsed_s": 0.46414808300323784
+        }
+      ],
+      "workers": 1
+    },
+    {
+      "case_id": "scale_n50000_t116",
+      "compute_aggregate_median_s": 0.12970363505883142,
+      "deterministic_replay_digest": "edd76606d742ffd2e8917fcc66c41c7acc26352cbd66657116f2c023d5f50abf",
+      "duckdb_bytes": 1060864,
+      "enterprises": 500,
+      "events_per_second": 345.26177237292495,
+      "events_written": 116,
+      "failed_repeats": 0,
+      "gates": {
+        "all_repeats_ok": true,
+        "measurement_too_short": false,
+        "peak_rss_ok": true,
+        "peak_rss_warning": false
+      },
+      "households": 50000,
+      "max_peak_rss_bytes": 209207296,
+      "median_cpu_s": 0.31958499999999995,
+      "median_wall_s": 0.33597695801290683,
+      "median_worker_elapsed_s": 0.5947610000002896,
+      "output_hashes": {
+        "aggregates.parquet": "7a44b5ad434ae9f394bc56f90a3dcb38a19e99d098b805f50d53d2122d40c418",
+        "summary.json": "81eec8a623ed2bc0c0c0113e37f8662c474dc367e2f88f14399933465e8304e6",
+        "trajectory.duckdb": "ebe6da4309a3eb9172d8bf27206371ca7ac01d1ab3eae468dae4b681635b2a00"
+      },
+      "output_policy": "ensemble_compact",
+      "parquet_bytes": 283262,
+      "peak_rss_gb": 0.209207296,
+      "peak_rss_gib": 0.1948394775390625,
+      "repeat_count": 3,
+      "repeats": [
+        {
+          "case_id": "scale_n50000_t116",
+          "cpu_s": 0.32146600000000003,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "edd76606d742ffd2e8917fcc66c41c7acc26352cbd66657116f2c023d5f50abf",
+            "output_hashes": {
+              "aggregates.parquet": "7a44b5ad434ae9f394bc56f90a3dcb38a19e99d098b805f50d53d2122d40c418",
+              "summary.json": "81eec8a623ed2bc0c0c0113e37f8662c474dc367e2f88f14399933465e8304e6",
+              "trajectory.duckdb": "ebe6da4309a3eb9172d8bf27206371ca7ac01d1ab3eae468dae4b681635b2a00"
+            },
+            "rng_draws_count": 23432000,
+            "run_id": "1dab18f61f474da6b6cd9836cfbbd1ce",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283262,
+            "manifest.json": 2792,
+            "summary.json": 47705,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283262,
+          "peak_rss_bytes": 209207296,
+          "performance": {
+            "aggregate_wall_s": 0.0552690060576424,
+            "compute_wall_s": 0.0746477141365176,
+            "io_wall_s": 0.18189312498725485
+          },
+          "pid": 42708,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394623,
+          "wall_s": 0.3389009999955306,
+          "worker_elapsed_s": 0.5966915000026347
+        },
+        {
+          "case_id": "scale_n50000_t116",
+          "cpu_s": 0.317846,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-1",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "edd76606d742ffd2e8917fcc66c41c7acc26352cbd66657116f2c023d5f50abf",
+            "output_hashes": {
+              "aggregates.parquet": "7a44b5ad434ae9f394bc56f90a3dcb38a19e99d098b805f50d53d2122d40c418",
+              "summary.json": "9c085f8f28ba414a861e53dc8ce64ce1b4a5303e34f451d10c87bc050ef1624f",
+              "trajectory.duckdb": "ebe6da4309a3eb9172d8bf27206371ca7ac01d1ab3eae468dae4b681635b2a00"
+            },
+            "rng_draws_count": 23432000,
+            "run_id": "20afd5f30a394a69838d12f5c295bf9d",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283262,
+            "manifest.json": 2792,
+            "summary.json": 47707,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283262,
+          "peak_rss_bytes": 209092608,
+          "performance": {
+            "aggregate_wall_s": 0.05504409103014041,
+            "compute_wall_s": 0.07465954402869102,
+            "io_wall_s": 0.17823341599432752
+          },
+          "pid": 42711,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394625,
+          "wall_s": 0.33415295800659806,
+          "worker_elapsed_s": 0.5909237500018207
+        },
+        {
+          "case_id": "scale_n50000_t116",
+          "cpu_s": 0.31958499999999995,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": false,
+          "label": "repeat-2",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "edd76606d742ffd2e8917fcc66c41c7acc26352cbd66657116f2c023d5f50abf",
+            "output_hashes": {
+              "aggregates.parquet": "7a44b5ad434ae9f394bc56f90a3dcb38a19e99d098b805f50d53d2122d40c418",
+              "summary.json": "ab736098c985b0b05f01ec95ff12355559171b46a9657c4203ab3435b6bdf50d",
+              "trajectory.duckdb": "ebe6da4309a3eb9172d8bf27206371ca7ac01d1ab3eae468dae4b681635b2a00"
+            },
+            "rng_draws_count": 23432000,
+            "run_id": "f2c9e67d7dca4abcb622003d876b64ee",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283262,
+            "manifest.json": 2792,
+            "summary.json": 47707,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283262,
+          "peak_rss_bytes": 209125376,
+          "performance": {
+            "aggregate_wall_s": 0.05512237997027114,
+            "compute_wall_s": 0.07448408399068285,
+            "io_wall_s": 0.18059483300021384
+          },
+          "pid": 42715,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394625,
+          "wall_s": 0.33597695801290683,
+          "worker_elapsed_s": 0.5947610000002896
+        }
+      ],
+      "rng_draws_count": 23432000,
+      "scalar_updates": 23432000,
+      "seed": 1729,
+      "status": "pass",
+      "ticks": 116,
+      "total_output_bytes": 1394625,
+      "updates_per_second": 69742878.01933084,
+      "warmups": [
+        {
+          "case_id": "scale_n50000_t116",
+          "cpu_s": 0.31752500000000006,
+          "duckdb_bytes": 1060864,
+          "duckdb_threads": 1,
+          "events_written": 116,
+          "excluded": true,
+          "label": "warmup-0",
+          "machine": "arm64",
+          "manifest": {
+            "deterministic_replay_digest": "edd76606d742ffd2e8917fcc66c41c7acc26352cbd66657116f2c023d5f50abf",
+            "output_hashes": {
+              "aggregates.parquet": "7a44b5ad434ae9f394bc56f90a3dcb38a19e99d098b805f50d53d2122d40c418",
+              "summary.json": "f15392c5e8cf5dd091b63f2da8ca28ecdcd8f0f70048e54ebfc1a9ed28d4c83b",
+              "trajectory.duckdb": "d29863e31e53993eca2e0db394752cf9f5c6dd9baa6ab2e563ec2aace25216b4"
+            },
+            "rng_draws_count": 23432000,
+            "run_id": "f722fe6d1eae4f09a6f4b5bd96b7d56c",
+            "status": "completed"
+          },
+          "output_file_sizes": {
+            "aggregates.parquet": 283262,
+            "manifest.json": 2792,
+            "summary.json": 47708,
+            "trajectory.duckdb": 1060864
+          },
+          "parquet_bytes": 283262,
+          "peak_rss_bytes": 210239488,
+          "performance": {
+            "aggregate_wall_s": 0.054928422046941705,
+            "compute_wall_s": 0.07394566691073123,
+            "io_wall_s": 0.17879537500266451
+          },
+          "pid": 42705,
+          "platform": "darwin",
+          "python": "3.12.14",
+          "row_counts": {
+            "aggregates": 18560,
+            "enterprises_micro": null,
+            "events": 116,
+            "households_micro": null
+          },
+          "rss_source": "resource.getrusage(RUSAGE_SELF).ru_maxrss",
+          "rss_units": "bytes (darwin native; linux x1024)",
+          "status": "ok",
+          "thread_env": {
+            "MKL_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "POLARS_MAX_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+          },
+          "total_output_bytes": 1394626,
+          "wall_s": 0.33419312500336673,
+          "worker_elapsed_s": 0.5923092919983901
+        }
+      ],
+      "workers": 1
+    }
+  ],
+  "config": {
+    "commodities": [
+      "energy",
+      "capital_goods",
+      "food",
+      "consumer_goods"
+    ],
+    "regions": 20,
+    "repeats": 3,
+    "schema_version": "1",
+    "seed": 1729,
+    "warmups": 1,
+    "workers": 1
+  },
+  "notes": [
+    "workload=synthetic_array_rng_aggregation_storage: probe arrays, RNG draws, region x commodity aggregation and Parquet/DuckDB output only",
+    "not an F2 historical-model benchmark; no economic mechanism executes here",
+    "repeats are timing repetitions of one fixed seed, not stochastic replicates",
+    "peak RSS is the worker process high-water mark (includes imports), not the parent's RSS and not an end-of-run snapshot"
+  ],
+  "overall_gate": "pass",
+  "resource_gates": {
+    "hard_peak_rss_bytes": 22000000000,
+    "normal_peak_rss_bytes": 16000000000,
+    "note": "decimal GB gates; report shows bytes, GB and GiB"
+  },
+  "scaling_ratios": [
+    {
+      "base": "n10000_vs_n20000",
+      "compute_aggregate_ratio": 1.6546204479973328,
+      "needs_profile": false,
+      "threshold": 3.5,
+      "ticks": 10
+    },
+    {
+      "base": "n10000_vs_n20000",
+      "compute_aggregate_ratio": 1.7783390064219071,
+      "needs_profile": false,
+      "threshold": 3.5,
+      "ticks": 116
+    }
+  ],
+  "schema_version": "1",
+  "thread_policy": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "POLARS_MAX_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1",
+    "duckdb_threads": 1
+  },
+  "workload": "synthetic_array_rng_aggregation_storage"
+}

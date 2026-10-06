@@ -1,0 +1,382 @@
+schema_version: "1"
+sources:
+  - source_id: ksh_gdp
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT GDP / consumption / capital formation (gdp0002)"
+    locator: "https://www.ksh.hu/stadat_files/gdp/en/gdp0002.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "metadata_checked"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Source: HCSO/ksh.hu; active link required. Files supplied on specific request fall under CC BY-NC and are not covered by this grant."
+    coverage_notes: "Long series from 1960. This is a 1960-onward TARGET, not a 1957 observation."
+    notes: "Directly machine-readable per BASELINE §22.1."
+  - source_id: ksh_labour_wages
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT long-run labour / wages / real wage index (qli001)"
+    locator: "https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_qli001.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "metadata_checked"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Source: HCSO/ksh.hu; active link required. Specific-request files (CC BY-NC) not covered."
+    coverage_notes: "Economically active population, average gross earnings, real wage index from 1960."
+    notes: "Directly machine-readable per BASELINE §22.1."
+  - source_id: ksh_cpi_long
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT long-run consumer price index (qsf001)"
+    locator: "https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_qsf001.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Website terms verified; table-level coverage still unverified."
+    coverage_notes: "unverified — confirm first: table coverage/format from 1960/1961."
+    notes: "Administrative CPI is a price TARGET, never a scarcity measure (BASELINE §21 error 4)."
+  - source_id: ksh_cpi_groups
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT CPI by commodity group (ara0002)"
+    locator: "https://www.ksh.hu/stadat_files/ara/en/ara0002.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Website terms verified; table-level coverage still unverified."
+    coverage_notes: "unverified — confirm first: commodity-group breakdown (food, clothing, durables, fuel, services) coverage/format."
+    notes: "Relative-price anchors for the household commodity basket."
+  - source_id: ksh_trade
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT long-run external trade (qkt001)"
+    locator: "https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_qkt001.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "metadata_checked"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Source: HCSO/ksh.hu; active link required. Specific-request files not covered."
+    coverage_notes: "External trade long series from 1960."
+    notes: "Historical trade outcome TARGET; must never be forced into simulated state (BASELINE §20C)."
+  - source_id: ksh_industry
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT industry / representative products (ipa0002)"
+    locator: "https://www.ksh.hu/stadat_files/ipa/en/ipa0002.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "metadata_checked"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Source: HCSO/ksh.hu; active link required. Specific-request files not covered."
+    coverage_notes: "Representative products (electricity, coal, gas, bauxite, steel, cement, buses, TV sets, etc.) long series."
+    notes: "Future G1 commodity ontology / G2 mapping source; not a single aggregated 'goods' column (BASELINE §22.1)."
+  - source_id: ksh_agriculture_a
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT agriculture long-run tables (omf001a)"
+    locator: "https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_omf001a.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Website terms verified; table-level coverage still unverified."
+    coverage_notes: "unverified — confirm first: table coverage/format."
+    notes: ""
+  - source_id: ksh_agriculture_b
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT agriculture long-run tables (omf001b)"
+    locator: "https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_omf001b.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Website terms verified; table-level coverage still unverified."
+    coverage_notes: "unverified — confirm first: table coverage/format."
+    notes: ""
+  - source_id: ksh_agriculture_c
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT agriculture long-run tables (omf001c)"
+    locator: "https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_omf001c.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Website terms verified; table-level coverage still unverified."
+    coverage_notes: "unverified — confirm first: table coverage/format."
+    notes: ""
+  - source_id: ksh_retail
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "STADAT long-run retail trade (okfa001, Hungarian interface)"
+    locator: "https://www.ksh.hu/docs/hun/xstadat/xstadat_hosszu/h_okfa001.html"
+    expected_format: ["HTML", "XLSX", "CSV"]
+    expected_roles: ["target"]
+    retrieval_method: "browser download from public STADAT table page"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Website terms verified; table-level coverage still unverified."
+    coverage_notes: "unverified — confirm first: table coverage/format; Hungarian-language interface."
+    notes: ""
+  - source_id: ksh_census_regional
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "Census regional tables (nepszamlalas/tables_regional_00)"
+    locator: "https://www.ksh.hu/nepszamlalas/tables_regional_00"
+    expected_format: ["HTML", "XLSX"]
+    expected_roles: ["initial_state", "target"]
+    retrieval_method: "browser access to public census table pages"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Website terms verified; county-level matrix coverage still unverified."
+    coverage_notes: "unverified — confirm first: county x variable x census-year coverage matrix."
+    notes: "Census stocks are anchors at their true census dates only (BASELINE §24)."
+  - source_id: ksh_census_detailed
+    institution: "KSH (Hungarian Central Statistical Office)"
+    dataset: "Census detailed tables (nepszamlalas/detailed_tables)"
+    locator: "https://www.ksh.hu/nepszamlalas/detailed_tables"
+    expected_format: ["HTML", "XLSX"]
+    expected_roles: ["initial_state", "target"]
+    retrieval_method: "browser access to public census table pages"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "verified"
+      license_name: "CC BY 4.0"
+      terms_locator: "https://www.ksh.hu/copyright_eng"
+      evidence_quote: "all of the content available on the Website – including tables, figures and infographics … can be copied, reproduced and redistributed without limitations"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "Website terms verified; detailed-table coverage still unverified."
+    coverage_notes: "unverified — confirm first: detailed census coverage by year and county."
+    notes: "Anchors at true census dates only."
+  - source_id: worldbank_pink_sheet
+    institution: "World Bank"
+    dataset: "Pink Sheet commodity price data"
+    locator: "https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/"
+    expected_format: ["XLSX"]
+    expected_roles: ["exogenous_forcing"]
+    retrieval_method: "browser download of monthly/annual XLSX from public doc page"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "unknown"
+      license_name: null
+      terms_locator: "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets"
+      evidence_quote: null
+      checked_at: null
+      download_allowed: null
+      redistribution_allowed: null
+      notes: "Terms page read during P00 planning: CC BY 4.0 applies to Data Catalog datasets, with third-party rights exceptions; whether the Pink Sheet is in scope was NOT confirmed. No download performed."
+    coverage_notes: "Monthly/annual XLSX links seen on the page; not downloaded."
+    notes: "World Bank != blanket CC BY for every dataset; verify scope before admission."
+  - source_id: fred_fedfunds
+    institution: "Federal Reserve Bank of St. Louis"
+    dataset: "FEDFUNDS effective federal funds rate"
+    locator: "https://fred.stlouisfed.org/series/FEDFUNDS"
+    expected_format: ["HTML", "CSV"]
+    expected_roles: ["exogenous_forcing"]
+    retrieval_method: "candidate: FRED API or CSV download (NOT executed)"
+    access_status: "public_metadata"
+    audit_status: "blocked"
+    rights:
+      license_status: "restricted"
+      license_name: null
+      terms_locator: "https://fred.stlouisfed.org/legal/"
+      evidence_quote: "Series tag: 'Public Domain: Citation Requested'. FRED legal terms prohibit use of FRED Services/Content 'in connection with the development or training of any software program or system or machine learning, including … artificial intelligence'."
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: null
+      redistribution_allowed: null
+      notes: "Project-use applicability unconfirmed; P00 registers metadata only, fetches no CSV, trains/calibrates no AI on it."
+    coverage_notes: "Monthly percent, 1954-07 onward (catalogue metadata)."
+    notes: "Usage clause must be resolved before any future ingestion."
+  - source_id: mnb_official_fx
+    institution: "Magyar Nemzeti Bank (MNB)"
+    dataset: "Current and historic exchange rates (web service documentation)"
+    locator: "https://www.mnb.hu/letoltes/documentation-on-the-mnb-s-web-service-on-current-and-historic-exchange-rates.pdf"
+    expected_format: ["PDF", "SOAP/XML"]
+    expected_roles: ["exogenous_forcing"]
+    retrieval_method: "candidate: SOAP GetExchangeRates (NOT executed)"
+    access_status: "public_metadata"
+    audit_status: "pending"
+    rights:
+      license_status: "restricted"
+      license_name: null
+      terms_locator: "https://www.mnb.hu/a-jegybank/informaciok-a-jegybankrol/gyakorlati-tudnivalok/jogi-nyilatkozat"
+      evidence_quote: "§1: 'változatlan tartalommal, a forrás megjelölésével szabadon terjeszthetők' (absent other regulation, distributable unchanged with source attribution)."
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: null
+      redistribution_allowed: null
+      notes: "Attribution-only grant covers unchanged distribution; download and transformed-redistribution permissions remain unconfirmed (null)."
+    coverage_notes: "unverified — confirm first: live SOAP coverage for 1957-1988 historic rates."
+    notes: "Official FX channel only; never the sole trade exchange rate (BASELINE §21 error 3)."
+  - source_id: imf_hungary_external
+    institution: "International Monetary Fund"
+    dataset: "Hungary external-sector historical tables (elibrary book chapter)"
+    locator: "https://www.elibrary.imf.org/display/book/9781451963830/ch003.xml"
+    expected_format: ["HTML", "XML"]
+    expected_roles: ["target"]
+    retrieval_method: "candidate: automated read (NOT executed)"
+    access_status: "access_restricted"
+    audit_status: "blocked"
+    rights:
+      license_status: "unknown"
+      license_name: null
+      terms_locator: null
+      evidence_quote: null
+      checked_at: null
+      download_allowed: null
+      redistribution_allowed: null
+      notes: "Automated access hits anti-bot; rights unknown. No data obtained."
+    coverage_notes: "Catalogue metadata only."
+    notes: "Do not treat a reachable page as obtained data."
+  - source_id: tarki_catalogue
+    institution: "TÁRKI Social Research Institute"
+    dataset: "TÁRKI data catalogue (Hungarian interface)"
+    locator: "https://adatbanktest.tarki.hu/cgi-bin/katalogus/tarkiker_hun.pl"
+    expected_format: ["HTML"]
+    expected_roles: ["initial_state", "target"]
+    retrieval_method: "browser catalogue metadata read only"
+    access_status: "catalogue_only"
+    audit_status: "pending"
+    rights:
+      license_status: "unknown"
+      license_name: null
+      terms_locator: null
+      evidence_quote: null
+      checked_at: null
+      download_allowed: null
+      redistribution_allowed: null
+      notes: "Microdata rights unknown; production host to be confirmed. No microdata requested or downloaded."
+    coverage_notes: "Catalogue metadata only; no observed availability claimed."
+    notes: "User-institution agreement required before any access (P00 does not need it)."
+  - source_id: osa_public_opinion
+    institution: "Open Society Archives (Archivum)"
+    dataset: "Public-opinion survey records (catalog jD7w7oYw)"
+    locator: "https://catalog.archivum.org/catalog/jD7w7oYw"
+    expected_format: ["HTML"]
+    expected_roles: ["target"]
+    retrieval_method: "browser catalogue metadata read only"
+    access_status: "catalogue_only"
+    audit_status: "pending"
+    rights:
+      license_status: "unknown"
+      license_name: null
+      terms_locator: null
+      evidence_quote: null
+      checked_at: null
+      download_allowed: null
+      redistribution_allowed: null
+      notes: "'Not Restricted' refers to on-site access; reading-room SPSS workstation mentioned in catalogue. Remote download/redistribution rights unknown; no remote-access authorisation found. No microdata downloaded."
+    coverage_notes: "Catalogue metadata only; machine-readability unassessed."
+    notes: "On-site access possibility is not remote download permission."
+  - source_id: cmea_energy_reconstruction
+    institution: "internal (reconstruction requirement, BASELINE §22.4)"
+    dataset: "CMEA energy import quantity / contract-price reconstruction (planned)"
+    locator: "BASELINE.md §22.4 (local requirement definition)"
+    expected_format: ["internal_reconstruction"]
+    expected_roles: ["exogenous_forcing"]
+    retrieval_method: "planned historical reconstruction from rule/price anchors (not yet available)"
+    access_status: "unavailable"
+    audit_status: "blocked"
+    rights:
+      license_status: "unknown"
+      license_name: null
+      terms_locator: null
+      evidence_quote: null
+      checked_at: null
+      download_allowed: null
+      redistribution_allowed: null
+      notes: "Real rule/price anchor sources not obtained. Fabricating a CSV or claiming observed status is forbidden."
+    coverage_notes: "No coverage: reconstruction inputs unresolved."
+    notes: "Registered as requirement + uncertainty only; no reconstruction function implemented in P00."
