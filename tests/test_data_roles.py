@@ -132,7 +132,7 @@ def test_annual_target_claiming_quarterly_observed_rejected(tmp_path) -> None:
         make_registry(
             tmp_path,
             sources=[source_spec()],
-            variables=[variable_spec("gdp", "outcome", "target")],
+            variables=[variable_spec("gdp", "outcome", "target", aggregation="sum")],
             artifacts=[artifact],
         )
 def _parameter_artifact(tmp_path, *, evidence: str, literature=None, bounds=None) -> dict:
@@ -267,7 +267,7 @@ def test_same_source_different_roles_allowed(tmp_path) -> None:
     registry = make_registry(
         tmp_path,
         sources=[source_spec(expected_roles=["initial_state", "target"])],
-        variables=POP_VARIABLE + [variable_spec("gdp", "outcome", "target")],
+        variables=POP_VARIABLE + [variable_spec("gdp", "outcome", "target", aggregation="sum")],
         artifacts=[anchor, target],
     )
     assert set(registry.artifacts) == {"census_1960", "gdp_target"}

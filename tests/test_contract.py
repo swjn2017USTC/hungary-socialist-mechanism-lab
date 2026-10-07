@@ -129,7 +129,7 @@ def _target_artifact(tmp_path: Path, *, use: str, periods: list[str], values: li
     }
 
 
-GDP_VARIABLES = [variable_spec("gdp", "outcome", "target")]
+GDP_VARIABLES = [variable_spec("gdp", "outcome", "target", aggregation="sum")]
 GDP_SOURCE = [source_spec()]
 
 
@@ -639,6 +639,27 @@ def test_target_comparison_aggregation_disagreement_rejected(tmp_path) -> None:
         tmp_path, sources=GDP_SOURCE, variables=variables, artifacts=[artifact]
     )
     with pytest.raises(ResearchGateError, match="comparison_aggregation"):
+        registry.load_targets(
+            registry.artifacts["art_target_calibration"], TargetUse.CALIBRATION
+        )
+
+
+@pytest.mark.parametrize("comparison", ["sum", "mean", "end_of_period"])
+def test_target_without_declared_variable_rule_refused(tmp_path, comparison) -> None:
+    """Round-4 D1: an undeclared variable aggregation blocks numeric target
+    admission for every comparison operator - the rule is not the artifact's
+    to choose."""
+    artifact = _target_artifact(
+        tmp_path, use="calibration", periods=["1970", "1971"], values=[1.0, 2.0]
+    )
+    artifact["comparison_aggregation"] = comparison
+    variables = [
+        variable_spec("gdp", "outcome", "target", aggregation=None)
+    ]
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=variables, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="declares no aggregation rule"):
         registry.load_targets(
             registry.artifacts["art_target_calibration"], TargetUse.CALIBRATION
         )

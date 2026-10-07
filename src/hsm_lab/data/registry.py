@@ -521,16 +521,23 @@ class DataRegistry:
                     f"{artifact.provenance.transformation.aggregation!r} disagrees with "
                     f"the variable declaration {variable.aggregation!r}"
                 )
-        if (
-            isinstance(artifact, TargetArtifact)
-            and variable.aggregation is not None
-            and artifact.comparison_aggregation != variable.aggregation
-        ):
-            raise ResearchGateError(
-                f"artifact {aid}: comparison_aggregation "
-                f"{artifact.comparison_aggregation!r} disagrees with the variable "
-                f"declaration {variable.aggregation!r}"
-            )
+        if isinstance(artifact, TargetArtifact):
+            # The comparison rule belongs to the variable (BASELINE §24), not
+            # to whoever declares the artifact; an undeclared rule blocks
+            # numeric target admission entirely.
+            if variable.aggregation is None:
+                raise ResearchGateError(
+                    f"artifact {aid}: variable {variable.variable_id} declares no "
+                    "aggregation rule; numeric target admission requires the "
+                    "comparison rule to be declared by the variable, not chosen "
+                    "by the artifact"
+                )
+            if artifact.comparison_aggregation != variable.aggregation:
+                raise ResearchGateError(
+                    f"artifact {aid}: comparison_aggregation "
+                    f"{artifact.comparison_aggregation!r} disagrees with the variable "
+                    f"declaration {variable.aggregation!r}"
+                )
         periods = frame["period"].to_list()
         reserved_years = range(
             self.contract.reserved_start.year, self.contract.reserved_end.year + 1

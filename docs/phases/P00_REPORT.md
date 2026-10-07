@@ -258,3 +258,18 @@ mixed-precision grade-A refusals, impossible calendar date, transformation-rule
 disagreement/undeclared/match, comparison-rule disagreement, overflow refusals);
 `ruff` and strict `mypy` pass; CLI smoke digest unchanged
 (`1fda99b1a923320d…`); doctor with real SocioVerse store smoke passes.
+
+## 13. Revision 4 — round-4 review patch (D1)
+
+Round-4 review verified N1/N2/N4 closed and N3 partially (one remaining edge), verdict
+**PATCH** with the single defect D1: numeric TARGET admission with an undeclared
+variable aggregation rule. Repair: `TargetArtifact` numeric admission now *requires*
+the variable to declare its aggregation rule and `comparison_aggregation` to equal it
+(BASELINE §24: the comparison rule belongs to the variable, not the artifact
+declarer). Legitimate target fixtures now declare `sum` explicitly; unacquired
+real-data candidates in `data/manifests/variables.yml` keep `aggregation: null` and
+therefore remain numerically inadmissible until someone declares the rule.
+
+Re-verification: `pytest -q` → **132 passed** (+3: undeclared-rule refusal for each
+of sum/mean/end_of_period); `ruff`/strict `mypy` pass; CLI smoke digest unchanged
+(`1fda99b1a923320d…`, 42,000 draws).
