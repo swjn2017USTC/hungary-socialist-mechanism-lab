@@ -274,3 +274,50 @@ def test_io_failure_manifest_records_real_draws(contract, registry, tmp_path, mo
     }
     assert payload["rng_draws_by_module"]["smoke.households"] == 40_000
     assert payload["deterministic_replay_digest"] == ""
+
+
+def test_setup_failure_writes_failed_manifest(contract, registry, tmp_path, monkeypatch) -> None:
+    """Failures before the first tick must still convert 'running' -> 'failed'."""
+    import hsm_lab.engine.smoke as smoke_module
+
+    def no_allocate(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise MemoryError("review allocation failure")
+
+    monkeypatch.setattr(smoke_module.np, "zeros", no_allocate)
+    with pytest.raises(MemoryError):
+        run_smoke(smoke_spec(contract), tmp_path / "setup-fail", contract, registry)
+    payload = load_json(tmp_path / "setup-fail" / "manifest.json")
+    assert payload["status"] == "failed"
+    assert "MemoryError" in payload["failure_message"]
+    assert payload["rng_draws_count"] == 0  # genuinely zero: no draw happened
+    assert payload["deterministic_replay_digest"] == ""
+
+
+def test_second_writer_failure_writes_failed_manifest(
+    contract, registry, tmp_path, monkeypatch
+) -> None:
+    """A full-policy run failing while opening the second micro writer fails closed."""
+    import hsm_lab.engine.smoke as smoke_module
+    from hsm_lab.storage.output import MicroWriter
+
+    real_writer = MicroWriter
+    calls = {"n": 0}
+
+    def flaky_second(path):  # noqa: ANN001
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise OSError("second writer could not open")
+        return real_writer(path)
+
+    monkeypatch.setattr(smoke_module, "MicroWriter", flaky_second)
+    with pytest.raises(OSError, match="second writer"):
+        run_smoke(
+            smoke_spec(contract, output_policy="research_full"),
+            tmp_path / "writer-fail",
+            contract,
+            registry,
+        )
+    payload = load_json(tmp_path / "writer-fail" / "manifest.json")
+    assert payload["status"] == "failed"
+    assert "second writer" in payload["failure_message"]
+    assert payload["rng_draws_count"] == 0

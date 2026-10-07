@@ -410,3 +410,16 @@ def test_prior_file_field_disagreements_rejected(tmp_path) -> None:
     )
     with pytest.raises(ResearchGateError, match="literature_refs"):
         registry3.validate_parameter(registry3.artifacts["param_sbc"])
+
+
+def test_within_month_later_observation_requires_grade_B(tmp_path) -> None:
+    """1960-01-31 observed data may not pose as a 1960-01-01 observed state."""
+    from hsm_lab.contract.schemas import ConfigError as ContractConfigError
+
+    near = _anchor_artifact(tmp_path)
+    near["initial_at"] = "1960-01-01"
+    near["observation_at"] = "1960-01-31"
+    with pytest.raises(ContractConfigError, match="grade B"):
+        make_registry(
+            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[near]
+        )

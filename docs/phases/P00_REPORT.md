@@ -220,3 +220,22 @@ The reviewer's original counterexamples (validation TARGET through
 raw digest with wrong attribution; self-anchored grade B; prior-file bounds
 [20,30] vs [0,1]; failed manifest reporting zero draws; corrupted
 metrics.parquet flagged as matching) all now fail closed.
+
+## 11. Revision 2 — round-2 review patches (R1–R5)
+
+Round-2 independent review verdict: **PATCH** (4 major, 1 minor). Repairs:
+
+| Repair | Change |
+|---|---|
+| R1 explicit purpose | `load_targets` refuses `None` and non-`TargetUse` purposes at runtime before admission — numeric target access without a declared purpose is impossible, and invalid types get a gate error instead of `AttributeError`. |
+| R2 complete rights agreement | Provenance rights must match source rights on every field except free-text `notes` (license_status/name, terms_locator, evidence_quote, checked_at, download_allowed, redistribution_allowed). |
+| R3 full failure lifecycle | All fallible setup (RNG construction, array allocation, micro-writer construction) moved inside the protected region; any setup failure converts the `running` manifest into an honest `failed` one (real zero-draw accounting when no draw happened, absent replay digest), and opened writers are closed. |
+| R4 complete observations | Frequency-boundary aggregations require Float64, non-null, finite values; undeclared aggregation names raise instead of silently behaving like end-of-period. A complete set of period labels is no longer treated as complete observations. |
+| R5 anchor chronology | Anchor comparison keys keep full (year, month, day) granularity — a dated observation on 1960-01-31 is strictly later than 1960-01-01, so posing it as an earlier "observed" state requires grade B reconstruction. No implicit near-date tolerance exists. |
+
+Re-verification after Revision 2: `pytest -q` → **117 passed** (+14 adversarial tests:
+purpose None/invalid/type confusion, four rights-field drifts, null/all-null/NaN/Inf/
+non-numeric values, undeclared aggregation fallback, within-month chronology, setup
+MemoryError, second-writer failure); `ruff` and strict `mypy` pass; CLI smoke digest
+unchanged (`1fda99b1a923320d…` — the workload itself is untouched); doctor with the
+real SocioVerse store smoke and the offline data audit behave exactly as before.

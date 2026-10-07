@@ -87,12 +87,40 @@ def _value_expr(aggregation: Aggregation) -> pl.Expr:
     return pl.col(VALUE_COLUMN).sort_by(pl.col(PERIOD_COLUMN)).last()
 
 
+SUPPORTED_AGGREGATIONS = ("sum", "mean", "end_of_period")
+
+
+def _validate_aggregation(aggregation: Aggregation) -> None:
+    if aggregation not in SUPPORTED_AGGREGATIONS:
+        raise ConfigError(
+            f"unsupported aggregation {aggregation!r}; choose one of "
+            f"{SUPPORTED_AGGREGATIONS} - undeclared methods never fall back silently"
+        )
+
+
 def _validate_frame(frame: pl.DataFrame, frequency: Frequency) -> list[str]:
     if PERIOD_COLUMN not in frame.columns or VALUE_COLUMN not in frame.columns:
         raise ConfigError("frame must contain 'period' and 'value' columns")
     for period in frame[PERIOD_COLUMN].to_list():
         validate_period(period, frequency)
     _check_duplicates(frame)
+    # A complete set of period labels is not a complete observation set:
+    # null, non-finite or non-numeric values are refused before aggregating.
+    values = frame[VALUE_COLUMN]
+    if values.dtype != pl.Float64:
+        raise ResearchGateError(
+            f"value column must be Float64, got {values.dtype}"
+        )
+    nulls = values.null_count()
+    if nulls:
+        raise ResearchGateError(
+            f"{nulls} null value(s): complete observations are required for "
+            "frequency-boundary aggregation (missing months are never imputed)"
+        )
+    if not values.is_finite().all():
+        raise ResearchGateError(
+            "non-finite value(s): NaN/Inf observations are refused"
+        )
     return _key_columns(frame)
 
 
@@ -101,6 +129,7 @@ def monthly_to_quarterly(frame: pl.DataFrame, aggregation: Aggregation) -> pl.Da
 
     Duplicate periods or missing months fail; nothing is implicitly filled.
     """
+    _validate_aggregation(aggregation)
     keys = _validate_frame(frame, Frequency.MONTHLY)
     enriched = frame.with_columns(
         pl.col(PERIOD_COLUMN).str.slice(0, 4).alias("_year"),
@@ -129,6 +158,7 @@ def monthly_to_quarterly(frame: pl.DataFrame, aggregation: Aggregation) -> pl.Da
 
 def quarterly_to_annual(frame: pl.DataFrame, aggregation: Aggregation) -> pl.DataFrame:
     """Aggregate quarterly rows to annual; each year must have exactly 4 quarters."""
+    _validate_aggregation(aggregation)
     keys = _validate_frame(frame, Frequency.QUARTERLY)
     enriched = frame.with_columns(
         pl.col(PERIOD_COLUMN).str.slice(0, 4).alias("_year"),

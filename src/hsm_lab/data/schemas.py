@@ -276,14 +276,19 @@ def _check_repo_relative(path: str, artifact_id: str) -> None:
         )
 
 
-def _anchor_key(text: str) -> tuple[int, int]:
-    """Comparable (year, month-ordinal) for YYYY, YYYYQn and YYYY-MM-DD anchors."""
+def _anchor_key(text: str) -> tuple[int, int, int]:
+    """Comparable (year, month, day) for YYYY, YYYYQn and YYYY-MM-DD anchors.
+
+    Full calendar granularity, no implicit near-date tolerance: a dated
+    observation on 1960-01-31 is strictly later than 1960-01-01. Quarters map
+    to their end month; year-only anchors sit at month zero.
+    """
     if re.fullmatch(r"\d{4}Q[1-4]", text):
-        return int(text[:4]), int(text[-1]) * 3
+        return int(text[:4]), int(text[-1]) * 3, 0
     if re.fullmatch(r"\d{4}", text):
-        return int(text), 0
+        return int(text), 0, 0
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
-        return int(text[:4]), int(text[5:7])
+        return int(text[:4]), int(text[5:7]), int(text[8:10])
     raise ConfigError(f"invalid anchor date/period {text!r}")
 
 

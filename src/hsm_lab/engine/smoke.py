@@ -155,34 +155,41 @@ def run_smoke(
     output_dir.mkdir(parents=True)
     write_manifest_atomic(output_dir, running)
 
-    rng = RngRegistry(spec.seed) if spec.stochastic else None
-    n_regions = len(spec.region_ids)
-    n_commodities = len(spec.commodities)
-    household_ids = np.arange(spec.households, dtype=np.int64)
-    enterprise_ids = np.arange(spec.enterprises, dtype=np.int64)
-    household_region = household_ids % n_regions
-    enterprise_region = enterprise_ids % n_regions
-    household_weights = np.ones(spec.households, dtype=np.float64)
-    enterprise_weights = np.ones(spec.enterprises, dtype=np.float64)
-    household_probes = np.zeros((spec.households, n_commodities), dtype=np.float64)
-    enterprise_probes = np.zeros((spec.enterprises, n_commodities), dtype=np.float64)
-
-    aggregate_rows: list[dict[str, Any]] = []
-    event_rows: list[dict[str, Any]] = []
-    compute_s = 0.0
-    aggregate_s = 0.0
-    household_writer = (
-        MicroWriter(output_dir / "households.parquet")
-        if spec.output_policy is OutputPolicy.RESEARCH_FULL
-        else None
-    )
-    enterprise_writer = (
-        MicroWriter(output_dir / "enterprises.parquet")
-        if spec.output_policy is OutputPolicy.RESEARCH_FULL
-        else None
-    )
+    # All fallible setup happens inside the protected region so that any
+    # setup failure still converts the running manifest into an honest
+    # failed manifest with whatever RNG evidence exists at that point.
+    rng: RngRegistry | None = None
+    household_writer: MicroWriter | None = None
+    enterprise_writer: MicroWriter | None = None
 
     try:
+        rng = RngRegistry(spec.seed) if spec.stochastic else None
+        n_regions = len(spec.region_ids)
+        n_commodities = len(spec.commodities)
+        household_ids = np.arange(spec.households, dtype=np.int64)
+        enterprise_ids = np.arange(spec.enterprises, dtype=np.int64)
+        household_region = household_ids % n_regions
+        enterprise_region = enterprise_ids % n_regions
+        household_weights = np.ones(spec.households, dtype=np.float64)
+        enterprise_weights = np.ones(spec.enterprises, dtype=np.float64)
+        household_probes = np.zeros((spec.households, n_commodities), dtype=np.float64)
+        enterprise_probes = np.zeros((spec.enterprises, n_commodities), dtype=np.float64)
+
+        aggregate_rows: list[dict[str, Any]] = []
+        event_rows: list[dict[str, Any]] = []
+        compute_s = 0.0
+        aggregate_s = 0.0
+        household_writer = (
+            MicroWriter(output_dir / "households.parquet")
+            if spec.output_policy is OutputPolicy.RESEARCH_FULL
+            else None
+        )
+        enterprise_writer = (
+            MicroWriter(output_dir / "enterprises.parquet")
+            if spec.output_policy is OutputPolicy.RESEARCH_FULL
+            else None
+        )
+
         for tick in range(spec.ticks):
             quarter = spec.start.advance(tick)
             started = time.perf_counter()

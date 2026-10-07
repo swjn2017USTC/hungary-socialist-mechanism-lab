@@ -259,17 +259,20 @@ class DataRegistry:
                         f"artifact {aid}: provenance {field} {actual!r} does not match "
                         f"source {source.source_id} ({declared!r})"
                     )
-        rights_pairs: tuple[tuple[str, object, object], ...] = (
-            ("license_status", source.rights.license_status, prov.rights.license_status),
-            ("license_name", source.rights.license_name, prov.rights.license_name),
-            ("terms_locator", source.rights.terms_locator, prov.rights.terms_locator),
-        )
-        for rights_field, rights_declared, rights_actual in rights_pairs:
-            if rights_actual != rights_declared:
-                raise ResearchGateError(
-                    f"artifact {aid}: provenance rights.{rights_field} "
-                    f"{rights_actual!r} does not match source rights ({rights_declared!r})"
-                )
+        # Research-relevant rights must agree between the source record and
+        # the artifact provenance on every field except free-text notes.
+        prov_rights = prov.rights.model_dump(exclude={"notes"})
+        source_rights = source.rights.model_dump(exclude={"notes"})
+        if prov_rights != source_rights:
+            differing = sorted(
+                key
+                for key in prov_rights
+                if prov_rights[key] != source_rights.get(key)
+            )
+            raise ResearchGateError(
+                f"artifact {aid}: provenance rights disagree with source rights on "
+                f"{differing}; provenance: {prov_rights}; source: {source_rights}"
+            )
         if prov.raw_sha256 is None:
             raise ResearchGateError(
                 f"artifact {aid}: admission requires a real raw digest; candidates "
@@ -586,6 +589,11 @@ class DataRegistry:
 
     def load_targets(self, artifact: TargetArtifact, purpose: TargetUse) -> pl.DataFrame:
         self._require_role(artifact, TargetArtifact, "load_targets")
+        if not isinstance(purpose, TargetUse):
+            raise ResearchGateError(
+                f"load_targets requires an explicit TargetUse purpose; got {purpose!r}. "
+                "Numeric target access without a declared purpose is refused."
+            )
         path = self.admit_artifact(artifact, numeric=True, purpose=purpose)
         return self._read_long_table(
             artifact, path, artifact.provenance.original_frequency

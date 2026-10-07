@@ -102,3 +102,54 @@ def test_period_format_validation() -> None:
         validate_period("1970Q0", Frequency.QUARTERLY)
     with pytest.raises(ConfigError):
         validate_period("1970-02-30", Frequency.DATED)
+
+
+# ----------------------------------------------------------------------
+# Review round 2 (R4): complete observations and declared aggregations only.
+# ----------------------------------------------------------------------
+def _strict_frame(periods, values):
+    return pl.DataFrame(
+        {"variable_id": ["oil"] * len(periods), "period": periods, "value": values},
+        schema={"variable_id": pl.String, "period": pl.String, "value": pl.Float64},
+    )
+
+
+MONTHS = ["1970-01", "1970-02", "1970-03"]
+QUARTERS = ["1970Q1", "1970Q2", "1970Q3", "1970Q4"]
+
+
+def test_null_value_rejected() -> None:
+    with pytest.raises(ResearchGateError, match="null value"):
+        monthly_to_quarterly(_strict_frame(MONTHS, [10.0, None, 30.0]), "sum")
+
+
+def test_all_null_values_rejected() -> None:
+    with pytest.raises(ResearchGateError, match="null value"):
+        quarterly_to_annual(_strict_frame(QUARTERS, [None] * 4), "mean")
+
+
+def test_nan_value_rejected() -> None:
+    with pytest.raises(ResearchGateError, match="non-finite"):
+        quarterly_to_annual(_strict_frame(QUARTERS, [1.0, float("nan"), 3.0, 4.0]), "mean")
+
+
+def test_inf_value_rejected() -> None:
+    with pytest.raises(ResearchGateError, match="non-finite"):
+        monthly_to_quarterly(_strict_frame(MONTHS, [1.0, float("inf"), 3.0]), "sum")
+
+
+def test_non_numeric_value_column_rejected() -> None:
+    frame = pl.DataFrame(
+        {"variable_id": ["oil"] * 3, "period": MONTHS, "value": ["a", "b", "c"]}
+    )
+    with pytest.raises(ResearchGateError, match="Float64"):
+        monthly_to_quarterly(frame, "sum")
+
+
+def test_undeclared_aggregation_rejected_without_fallback() -> None:
+    good = _strict_frame(MONTHS, [10.0, 20.0, 30.0])
+    with pytest.raises(ConfigError, match="unsupported aggregation"):
+        monthly_to_quarterly(good, "interpolate")  # type: ignore[arg-type]
+    good_q = _strict_frame(QUARTERS, [1.0, 2.0, 3.0, 4.0])
+    with pytest.raises(ConfigError, match="unsupported aggregation"):
+        quarterly_to_annual(good_q, "interpolate")  # type: ignore[arg-type]

@@ -486,3 +486,52 @@ def test_source_attribution_drift_rejected(tmp_path) -> None:
     )
     with pytest.raises(ResearchGateError, match="locator"):
         registry2.load_forcing(registry2.artifacts["art_forcing"])
+
+
+# ----------------------------------------------------------------------
+# Review round 2 (R1/R2): explicit purpose and full rights agreement.
+# ----------------------------------------------------------------------
+def test_target_numeric_access_requires_explicit_valid_purpose(tmp_path, monkeypatch) -> None:
+    import hsm_lab.data.registry as registry_module
+
+    def no_read(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise AssertionError("numeric table read attempted without a valid purpose")
+
+    monkeypatch.setattr(registry_module.pl, "read_parquet", no_read)
+    artifact = _target_artifact(
+        tmp_path, use="holdout", periods=["1979"], values=[5.0]
+    )
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=GDP_VARIABLES, artifacts=[artifact]
+    )
+    target = registry.artifacts["art_target_holdout"]
+    with pytest.raises(ResearchGateError, match="explicit TargetUse purpose"):
+        registry.load_targets(target, None)  # type: ignore[arg-type]
+    with pytest.raises(ResearchGateError, match="explicit TargetUse purpose"):
+        registry.load_targets(target, "calibration")  # type: ignore[arg-type]
+    with pytest.raises(ResearchGateError, match="calibration may not consume"):
+        registry.load_targets(target, TargetUse.CALIBRATION)
+    monkeypatch.undo()
+    assert registry.load_targets(target, TargetUse.HOLDOUT).height == 1
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("download_allowed", False),
+        ("redistribution_allowed", False),
+        ("evidence_quote", "contradictory licence text"),
+        ("checked_at", "2025-01-01T00:00:00Z"),
+    ],
+)
+def test_provenance_rights_field_drift_rejected(tmp_path, field, value) -> None:
+    artifact = _good_forcing_fixture(tmp_path)
+    artifact["provenance"]["rights"] = {
+        **artifact["provenance"]["rights"],
+        field: value,
+    }
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=FORCING_VARIABLES, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="rights disagree"):
+        registry.load_forcing(registry.artifacts["art_forcing"])
