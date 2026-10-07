@@ -87,6 +87,16 @@ def _value_expr(aggregation: Aggregation) -> pl.Expr:
     return pl.col(VALUE_COLUMN).sort_by(pl.col(PERIOD_COLUMN)).last()
 
 
+def _assert_finite_result(result: pl.DataFrame) -> None:
+    """Overflowed aggregations are refused, never emitted as infinities."""
+    values = result[VALUE_COLUMN]
+    if values.null_count() or not values.is_finite().all():
+        raise ResearchGateError(
+            "aggregation produced a non-finite or unrepresentable result "
+            "(numerical overflow); refusing to emit Inf/NaN"
+        )
+
+
 SUPPORTED_AGGREGATIONS = ("sum", "mean", "end_of_period")
 
 
@@ -152,6 +162,7 @@ def monthly_to_quarterly(frame: pl.DataFrame, aggregation: Aggregation) -> pl.Da
     aggregated = enriched.group_by(keys + ["_year", "_quarter"]).agg(
         _value_expr(aggregation)
     )
+    _assert_finite_result(aggregated)
     return aggregated.with_columns(
         (pl.col("_year") + "Q" + pl.col("_quarter").cast(pl.Utf8)).alias(PERIOD_COLUMN)
     ).drop("_year", "_quarter")
@@ -175,4 +186,5 @@ def quarterly_to_annual(frame: pl.DataFrame, aggregation: Aggregation) -> pl.Dat
             f"{(1, 2, 3, 4)} per year): {bad.drop('_distinct', '_rows').head(3).to_dicts()}"
         )
     aggregated = enriched.group_by(keys + ["_year"]).agg(_value_expr(aggregation))
+    _assert_finite_result(aggregated)
     return aggregated.with_columns(pl.col("_year").alias(PERIOD_COLUMN)).drop("_year")

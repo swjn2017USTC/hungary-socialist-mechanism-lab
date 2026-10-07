@@ -279,16 +279,25 @@ def _check_repo_relative(path: str, artifact_id: str) -> None:
 def _anchor_key(text: str) -> tuple[int, int, int]:
     """Comparable (year, month, day) for YYYY, YYYYQn and YYYY-MM-DD anchors.
 
-    Full calendar granularity, no implicit near-date tolerance: a dated
-    observation on 1960-01-31 is strictly later than 1960-01-01. Quarters map
-    to their end month; year-only anchors sit at month zero.
+    Stock-anchor convention with real calendar endpoints: a quarter maps to
+    its actual end date, a year to December 31, and dated anchors must be
+    real calendar dates. No day-zero sentinels, no implicit near-date
+    tolerance, no invented precision.
     """
+    from datetime import date
+
+    quarter_end = {"1": (3, 31), "2": (6, 30), "3": (9, 30), "4": (12, 31)}
     if re.fullmatch(r"\d{4}Q[1-4]", text):
-        return int(text[:4]), int(text[-1]) * 3, 0
+        month, day = quarter_end[text[-1]]
+        return int(text[:4]), month, day
     if re.fullmatch(r"\d{4}", text):
-        return int(text), 0, 0
+        return int(text), 12, 31
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
-        return int(text[:4]), int(text[5:7]), int(text[8:10])
+        try:
+            parsed = date.fromisoformat(text)
+        except ValueError as exc:
+            raise ConfigError(f"invalid anchor date/period {text!r}: {exc}") from exc
+        return parsed.year, parsed.month, parsed.day
     raise ConfigError(f"invalid anchor date/period {text!r}")
 
 
@@ -371,21 +380,37 @@ class InitialArtifact(_ArtifactBase):
                 f"artifact {self.artifact_id}: grade B requires anchor_ids of the "
                 "historical anchors used for reconstruction"
             )
-        if self.observation_at is not None and _anchor_key(self.observation_at) > _anchor_key(
-            self.initial_at
-        ):
-            if self.grade is not InitialGrade.B:
-                raise ConfigError(
-                    f"artifact {self.artifact_id}: observation_at {self.observation_at} is "
-                    f"later than initial_at {self.initial_at}; only grade B (reconstructed) "
-                    "may bridge anchors - never rename a later observation as earlier "
-                    "'observed'"
-                )
-            if self.provenance.evidence_status is not EvidenceStatus.RECONSTRUCTED:
-                raise ConfigError(
-                    f"artifact {self.artifact_id}: anchor bridging requires reconstructed "
-                    "evidence"
-                )
+        if self.observation_at is not None:
+            observation_key = _anchor_key(self.observation_at)
+            initial_key = _anchor_key(self.initial_at)
+            if self.grade is InitialGrade.A:
+                # BASELINE §5.3: "observed at / very near". With no declared
+                # near-date tolerance, "very near" is not ours to invent: the
+                # observation must coincide exactly with the initial instant.
+                # Any temporal distance - earlier or later - is a
+                # reconstruction and needs grade B/C/S.
+                if observation_key != initial_key:
+                    raise ConfigError(
+                        f"artifact {self.artifact_id}: grade A requires observation_at "
+                        f"{self.observation_at!r} to coincide exactly with initial_at "
+                        f"{self.initial_at!r} (no near-date tolerance is assumed); a "
+                        "temporally distant observation must be grade B "
+                        "(reconstructed), C or S"
+                    )
+            elif observation_key > initial_key:
+                if self.grade is not InitialGrade.B:
+                    raise ConfigError(
+                        f"artifact {self.artifact_id}: observation_at "
+                        f"{self.observation_at} is later than initial_at "
+                        f"{self.initial_at}; only grade B (reconstructed) may bridge "
+                        "anchors - never rename a later observation as earlier "
+                        "'observed'"
+                    )
+                if self.provenance.evidence_status is not EvidenceStatus.RECONSTRUCTED:
+                    raise ConfigError(
+                        f"artifact {self.artifact_id}: anchor bridging requires "
+                        "reconstructed evidence"
+                    )
         return self
 
 

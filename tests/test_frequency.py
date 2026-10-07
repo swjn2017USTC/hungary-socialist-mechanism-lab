@@ -153,3 +153,23 @@ def test_undeclared_aggregation_rejected_without_fallback() -> None:
     good_q = _strict_frame(QUARTERS, [1.0, 2.0, 3.0, 4.0])
     with pytest.raises(ConfigError, match="unsupported aggregation"):
         quarterly_to_annual(good_q, "interpolate")  # type: ignore[arg-type]
+
+
+def test_overflowed_aggregations_refused_without_fabrication() -> None:
+    """1e308 inputs: the sum overflows; polars' mean goes through the same
+    overflowing sum, so both are refused rather than emitted as Inf or
+    silently replaced by a fabricated finite value."""
+    huge = 1e308
+    monthly = _strict_frame(["1970-01", "1970-02", "1970-03"], [huge, huge, huge])
+    with pytest.raises(ResearchGateError, match="non-finite or unrepresentable"):
+        monthly_to_quarterly(monthly, "sum")
+    with pytest.raises(ResearchGateError, match="non-finite or unrepresentable"):
+        monthly_to_quarterly(monthly, "mean")
+    quarterly = _strict_frame(
+        ["1970Q1", "1970Q2", "1970Q3", "1970Q4"], [huge, huge, huge, huge]
+    )
+    with pytest.raises(ResearchGateError, match="non-finite or unrepresentable"):
+        quarterly_to_annual(quarterly, "sum")
+    # representable arithmetic still passes exactly
+    normal = _strict_frame(["1970-01", "1970-02", "1970-03"], [10.0, 20.0, 30.0])
+    assert monthly_to_quarterly(normal, "mean")["value"].to_list() == [20.0]

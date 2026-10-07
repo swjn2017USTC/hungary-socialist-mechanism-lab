@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from hsm_lab.contract.schemas import ConfigError
+from hsm_lab.contract.schemas import ConfigError, ResearchGateError
 from tests.conftest import (
     VERIFIED_RIGHTS,
     base_rows,
@@ -423,3 +423,124 @@ def test_within_month_later_observation_requires_grade_B(tmp_path) -> None:
         make_registry(
             tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[near]
         )
+
+
+# ----------------------------------------------------------------------
+# Review round 3 (N1/N2): transitive anchor admission and grade-A chronology.
+# ----------------------------------------------------------------------
+def _chain_fixture(tmp_path):
+    """grade-A census 1960 <- grade-B 1958 bridge <- grade-B 1957 reconstruction."""
+    anchor = _anchor_artifact(tmp_path)
+    bridge = _initial_artifact(
+        tmp_path, grade="B", evidence="reconstructed", observation_at="1960-01-01",
+        anchor_ids=["census_1960"],
+    )
+    bridge["artifact_id"] = "bridge_1958"
+    bridge["path"] = "fixtures/bridge_1958.parquet"
+    bridge["initial_at"] = "1958-01-01"
+    bridge_file = tmp_path / "fixtures" / "bridge_1958.parquet"
+    digest = write_long_parquet(
+        bridge_file, base_rows(["1958-01-01"], [7.3], variable_id="population_anchor")
+    )
+    bridge["provenance"]["artifact_sha256"] = digest
+    bridge["provenance"]["raw_sha256"] = digest
+    top = _initial_artifact(
+        tmp_path, grade="B", evidence="reconstructed", observation_at="1958-01-01",
+        anchor_ids=["bridge_1958"],
+    )
+    top["artifact_id"] = "top_1957"
+    top["path"] = "fixtures/top_1957.parquet"
+    top_file = tmp_path / "fixtures" / "top_1957.parquet"
+    digest2 = write_long_parquet(
+        top_file, base_rows(["1957-01-01"], [7.25], variable_id="population_anchor")
+    )
+    top["provenance"]["artifact_sha256"] = digest2
+    top["provenance"]["raw_sha256"] = digest2
+    return anchor, bridge, top
+
+
+def test_valid_multilevel_reconstruction_chain_loads(tmp_path) -> None:
+    anchor, bridge, top = _chain_fixture(tmp_path)
+    registry = make_registry(
+        tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+        artifacts=[anchor, bridge, top],
+    )
+    frame = registry.load_initial(registry.artifacts["top_1957"])
+    assert frame.height == 1
+
+
+def test_descendant_refused_when_anchor_file_missing(tmp_path) -> None:
+    anchor, bridge, top = _chain_fixture(tmp_path)
+    (tmp_path / "fixtures" / "census_1960.parquet").unlink()
+    registry = make_registry(
+        tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+        artifacts=[anchor, bridge, top],
+    )
+    with pytest.raises(ResearchGateError, match="file not found"):
+        registry.load_initial(registry.artifacts["top_1957"])
+
+
+def test_descendant_refused_when_anchor_rights_denied(tmp_path) -> None:
+    anchor, bridge, top = _chain_fixture(tmp_path)
+    denied = {**VERIFIED_RIGHTS, "download_allowed": False}
+    # the anchor chain hangs off a denied source; the descendant itself is fine
+    for artifact in (anchor, bridge):
+        artifact["source_id"] = "src_denied"
+        artifact["provenance"]["source_id"] = "src_denied"
+        artifact["provenance"]["rights"] = denied
+    registry = make_registry(
+        tmp_path,
+        sources=[source_spec(), source_spec(source_id="src_denied", rights=denied)],
+        variables=POP_VARIABLE,
+        artifacts=[anchor, bridge, top],
+    )
+    with pytest.raises(ResearchGateError, match="download permission"):
+        registry.load_initial(registry.artifacts["top_1957"])
+
+
+def test_descendant_refused_when_anchor_payload_corrupted(tmp_path) -> None:
+    anchor, bridge, top = _chain_fixture(tmp_path)
+    (tmp_path / "fixtures" / "bridge_1958.parquet").write_bytes(b"tampered")
+    registry = make_registry(
+        tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+        artifacts=[anchor, bridge, top],
+    )
+    with pytest.raises(ResearchGateError, match="digest mismatch"):
+        registry.load_initial(registry.artifacts["top_1957"])
+
+
+def test_ancient_observation_cannot_be_grade_a(tmp_path) -> None:
+    stale = _anchor_artifact(tmp_path)
+    stale["initial_at"] = "1957-01-01"
+    stale["observation_at"] = "1900-01-01"
+    stale_file = tmp_path / "fixtures" / "census_1960.parquet"
+    digest = write_long_parquet(
+        stale_file, base_rows(["1900-01-01"], [7.5], variable_id="population_anchor")
+    )
+    stale["provenance"]["artifact_sha256"] = digest
+    stale["provenance"]["raw_sha256"] = digest
+    with pytest.raises(Exception, match="coincide exactly with initial_at"):
+        make_registry(
+            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[stale]
+        )
+
+
+def test_mixed_precision_grade_a_rejected(tmp_path) -> None:
+    mixed = _anchor_artifact(tmp_path)
+    mixed["initial_at"] = "1960-03-01"
+    mixed["observation_at"] = "1960Q1"  # quarter end = 1960-03-31, not equal
+    with pytest.raises(Exception, match="coincide exactly"):
+        make_registry(
+            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[mixed]
+        )
+
+
+def test_impossible_calendar_date_rejected(tmp_path) -> None:
+    bad = _anchor_artifact(tmp_path)
+    bad["initial_at"] = "1960-02-31"
+    bad["observation_at"] = "1960-02-31"
+    with pytest.raises(Exception, match="invalid anchor date"):
+        make_registry(
+            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[bad]
+        )
+

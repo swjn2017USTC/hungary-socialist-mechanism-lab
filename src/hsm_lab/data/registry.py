@@ -504,6 +504,33 @@ class DataRegistry:
                 f"artifact {aid}: table unit {table_unit!r} does not match the declared "
                 f"variable unit {variable.unit!r}"
             )
+        # Frequency-changing artifacts must aggregate exactly the way the
+        # variable declares (BASELINE §24: aggregation is per variable
+        # nature); identity artifacts aggregate nothing and are exempt.
+        method = artifact.provenance.transformation.method
+        if method in ("monthly_to_quarterly", "quarterly_to_annual"):
+            if variable.aggregation is None:
+                raise ResearchGateError(
+                    f"artifact {aid}: variable {variable.variable_id} declares no "
+                    "aggregation rule; frequency-changing artifacts cannot be "
+                    "numerically admitted without one"
+                )
+            if artifact.provenance.transformation.aggregation != variable.aggregation:
+                raise ResearchGateError(
+                    f"artifact {aid}: transformation aggregation "
+                    f"{artifact.provenance.transformation.aggregation!r} disagrees with "
+                    f"the variable declaration {variable.aggregation!r}"
+                )
+        if (
+            isinstance(artifact, TargetArtifact)
+            and variable.aggregation is not None
+            and artifact.comparison_aggregation != variable.aggregation
+        ):
+            raise ResearchGateError(
+                f"artifact {aid}: comparison_aggregation "
+                f"{artifact.comparison_aggregation!r} disagrees with the variable "
+                f"declaration {variable.aggregation!r}"
+            )
         periods = frame["period"].to_list()
         reserved_years = range(
             self.contract.reserved_start.year, self.contract.reserved_end.year + 1
@@ -583,6 +610,17 @@ class DataRegistry:
     def load_initial(self, artifact: InitialArtifact) -> pl.DataFrame:
         self._require_role(artifact, InitialArtifact, "load_initial")
         path = self.admit_artifact(artifact, numeric=True)
+        # A reconstruction is only as admissible as its anchor evidence:
+        # every anchor (transitively) passes the same admission and payload
+        # gates before the descendant's numbers are returned.
+        for anchor_id in artifact.anchor_ids:
+            anchor = self.artifacts.get(anchor_id)
+            if not isinstance(anchor, InitialArtifact):
+                raise ResearchGateError(
+                    f"artifact {artifact.artifact_id}: anchor {anchor_id!r} is not an "
+                    "admissible initial-state artifact"
+                )
+            self.load_initial(anchor)
         return self._read_long_table(
             artifact, path, self._expected_table_frequency(artifact.provenance)
         )

@@ -239,3 +239,22 @@ non-numeric values, undeclared aggregation fallback, within-month chronology, se
 MemoryError, second-writer failure); `ruff` and strict `mypy` pass; CLI smoke digest
 unchanged (`1fda99b1a923320d…` — the workload itself is untouched); doctor with the
 real SocioVerse store smoke and the offline data audit behave exactly as before.
+
+## 12. Revision 3 — round-3 review patches (N1–N4)
+
+Round-3 independent review verified all five round-2 repairs (R1–R5) as closed and
+returned **PATCH** with four new defects. Repairs:
+
+| Repair | Change |
+|---|---|
+| N1 transitive anchor admission | `load_initial` recursively passes every anchor through the full admission and payload gates (role, rights, raw/artifact digests, payload binding) before returning a reconstruction's numbers. A missing/corrupted/rights-denied anchor anywhere in the chain refuses the descendant. |
+| N2 grade-A chronology | Anchor comparison keys now use real calendar endpoints (quarter → its end date, year → Dec 31, dated → validated real dates; `1960-02-31` is refused). Grade A requires the observation to coincide *exactly* with the initial instant — no near-date tolerance is invented; any temporal distance (earlier or later, including mixed-precision pairs like `1960Q1` vs `1960-03-01`) requires grade B/C/S. |
+| N3 declared aggregation binding | Frequency-changing artifacts require the variable to declare an aggregation rule, and the transformation's aggregation must equal it; target `comparison_aggregation` must equal a declared variable rule. Identity artifacts are exempt (they aggregate nothing). |
+| N4 finite aggregation results | Overflowed aggregations (e.g. summing three 1e308 values) are refused instead of emitting Inf; polars' mean traverses the same overflowing sum and is refused likewise — no fabricated finite substitutes. Representable arithmetic is unchanged. |
+
+Re-verification after Revision 3: `pytest -q` → **129 passed** (+12: multilevel
+chain positive, missing/denied/corrupted anchor refusals, ancient and
+mixed-precision grade-A refusals, impossible calendar date, transformation-rule
+disagreement/undeclared/match, comparison-rule disagreement, overflow refusals);
+`ruff` and strict `mypy` pass; CLI smoke digest unchanged
+(`1fda99b1a923320d…`); doctor with real SocioVerse store smoke passes.

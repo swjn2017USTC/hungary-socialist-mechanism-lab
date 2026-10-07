@@ -535,3 +535,110 @@ def test_provenance_rights_field_drift_rejected(tmp_path, field, value) -> None:
     )
     with pytest.raises(ResearchGateError, match="rights disagree"):
         registry.load_forcing(registry.artifacts["art_forcing"])
+
+
+# ----------------------------------------------------------------------
+# Review round 3 (N3): declared aggregation rules bind derived artifacts.
+# ----------------------------------------------------------------------
+def _derived_forcing_fixture(tmp_path, *, transformation_aggregation):
+    monthly_rows = [
+        {
+            "variable_id": "world_oil_price",
+            "period": period,
+            "region_id": None,
+            "commodity_id": None,
+            "value": 10.0,
+            "unit": "fixture-unit",
+        }
+        for period in ("1970-01", "1970-02", "1970-03")
+    ]
+    raw_path = tmp_path / "fixtures" / "raw_monthly.parquet"
+    raw_digest = write_long_parquet(raw_path, monthly_rows)
+    derived_rows = [
+        {
+            "variable_id": "world_oil_price",
+            "period": "1970Q1",
+            "region_id": None,
+            "commodity_id": None,
+            "value": 30.0,
+            "unit": "fixture-unit",
+        }
+    ]
+    derived_path = tmp_path / "fixtures" / "derived_quarterly.parquet"
+    derived_digest = write_long_parquet(derived_path, derived_rows)
+    return {
+        "artifact_id": "art_derived_forcing",
+        "variable_id": "world_oil_price",
+        "path": "fixtures/derived_quarterly.parquet",
+        "provenance": provenance(
+            variable="world_oil_price",
+            role="exogenous_forcing",
+            evidence_status="observed",
+            original_frequency="monthly",
+            model_frequency="quarterly",
+            method="monthly_to_quarterly",
+            aggregation=transformation_aggregation,
+            artifact_sha256=derived_digest,
+            raw_sha256=raw_digest,
+            raw_path="fixtures/raw_monthly.parquet",
+        ),
+        "source_id": "src_fixture",
+        "role": "exogenous_forcing",
+        "period": {"start": "1970Q1", "end": "1970Q1", "frequency": "quarterly"},
+    }
+
+
+def test_transformation_aggregation_disagreement_rejected(tmp_path) -> None:
+    artifact = _derived_forcing_fixture(tmp_path, transformation_aggregation="sum")
+    variables = [
+        variable_spec("world_oil_price", "external", "exogenous_forcing",
+                      original_frequency="monthly", aggregation="mean")
+    ]
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=variables, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="transformation aggregation"):
+        registry.load_forcing(registry.artifacts["art_derived_forcing"])
+
+
+def test_undeclared_variable_aggregation_blocks_derived_admission(tmp_path) -> None:
+    artifact = _derived_forcing_fixture(tmp_path, transformation_aggregation="sum")
+    variables = [
+        variable_spec("world_oil_price", "external", "exogenous_forcing",
+                      original_frequency="monthly", aggregation=None)
+    ]
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=variables, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="declares no aggregation rule"):
+        registry.load_forcing(registry.artifacts["art_derived_forcing"])
+
+
+def test_matching_aggregation_rule_loads(tmp_path) -> None:
+    artifact = _derived_forcing_fixture(tmp_path, transformation_aggregation="sum")
+    variables = [
+        variable_spec("world_oil_price", "external", "exogenous_forcing",
+                      original_frequency="monthly", aggregation="sum")
+    ]
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=variables, artifacts=[artifact]
+    )
+    frame = registry.load_forcing(registry.artifacts["art_derived_forcing"])
+    assert frame.height == 1
+    assert frame["period"].to_list() == ["1970Q1"]
+
+
+def test_target_comparison_aggregation_disagreement_rejected(tmp_path) -> None:
+    artifact = _target_artifact(
+        tmp_path, use="calibration", periods=["1970", "1971"], values=[1.0, 2.0]
+    )
+    variables = [
+        variable_spec("gdp", "outcome", "target", aggregation="mean")
+    ]
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=variables, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="comparison_aggregation"):
+        registry.load_targets(
+            registry.artifacts["art_target_calibration"], TargetUse.CALIBRATION
+        )
