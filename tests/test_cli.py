@@ -123,7 +123,6 @@ def test_data_audit_offline() -> None:
     payload = json.loads(proc.stdout)
     assert payload["registry_valid"] is True
     assert payload["sources_ready"] is False
-    assert payload["artifacts_registered"] == 0
     assert "fred_fedfunds" in payload["blocked_or_unverified"]
     report = json.loads(Path(payload["report_path"]).read_text(encoding="utf-8"))
     assert report["gaps"][0]["status"] == "not_audited"
@@ -143,3 +142,62 @@ def test_cli_needs_no_api_keys(tmp_path) -> None:
         cwd=REPO_ROOT, env=env, capture_output=True, text=True, timeout=120,
     )
     assert proc.returncode == 0
+
+
+def test_toy4_json_error_surface_for_bad_option(tmp_path) -> None:
+    """Invalid option ranges must still emit one JSON object on stdout (exit 2),
+    never a bare human Typer error."""
+    proc = hsm(
+        "run", "--scenario", "toy4", "--households", "999",
+        "--output-dir", str(tmp_path / "n"), "--json",
+    )
+    assert proc.returncode == 2
+    payload = json.loads(proc.stdout)
+    assert payload["status"] == "error"
+    assert payload["exit_code"] == 2
+    assert "households" in payload["error"]
+    assert not (tmp_path / "n").exists()
+
+
+def test_toy4_resume_with_override_refused(tmp_path) -> None:
+    paused = hsm(
+        "run", "--scenario", "toy4", "--until", "1960Q4",
+        "--output-dir", str(tmp_path / "p"), "--json",
+    )
+    assert paused.returncode == 0
+    payload = json.loads(paused.stdout)
+    assert payload["status"] == "paused"
+    ckpt = Path(payload["checkpoint_paths"][-1])
+    conflict = hsm(
+        "run", "--scenario", "toy4", "--resume", str(ckpt),
+        "--seed", "9", "--output-dir", str(tmp_path / "r"), "--json",
+    )
+    assert conflict.returncode == 2
+    assert "--resume" in json.loads(conflict.stdout)["error"]
+
+
+def test_toy4_summary_refuses_tampered_economic_field(tmp_path) -> None:
+    run = hsm("run", "--scenario", "toy4", "--until", "1959Q4",
+              "--output-dir", str(tmp_path / "s"), "--json")
+    assert run.returncode == 0
+    summary_path = tmp_path / "s" / "summary.json"
+    payload = json.loads(summary_path.read_text())
+    payload["by_commodity"]["food"]["production"] = 123456789.0
+    summary_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    proc = hsm("summary", "--run-dir", str(tmp_path / "s"), "--json")
+    assert proc.returncode == 1
+    assert "recorded output hash" in json.loads(proc.stdout)["error"]
+
+
+def test_toy4_summary_reads_authentic_run(tmp_path) -> None:
+    run = hsm("run", "--scenario", "toy4", "--until", "1959Q4",
+              "--output-dir", str(tmp_path / "ok"), "--json")
+    assert run.returncode == 0
+    proc = hsm("summary", "--run-dir", str(tmp_path / "ok"), "--json")
+    assert proc.returncode == 0
+    payload = json.loads(proc.stdout)
+    assert payload["run_kind"] == "toy4_f0_simulation"
+    assert payload["completed_ticks"] == 12
+    human = hsm("summary", "--run-dir", str(tmp_path / "ok"))
+    assert human.returncode == 0
+    assert "food" in human.stdout and "closing stocks" in human.stdout

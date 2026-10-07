@@ -22,7 +22,7 @@ from hsm_lab.contract.schemas import (
 )
 
 BASELINE_FILENAME = "BASELINE.md"
-AVAILABLE_SCENARIOS = ("smoke",)
+AVAILABLE_SCENARIOS = ("smoke", "toy4")
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -60,11 +60,10 @@ def load_research_contract(root: Path) -> ResearchContract:
 
 
 def load_scenario(root: Path, scenario_id: str) -> ScenarioSpec:
-    """Load ``config/scenarios/<scenario_id>.json`` under ``root``."""
     if scenario_id not in AVAILABLE_SCENARIOS:
         raise ConfigError(
-            f"unsupported scenario {scenario_id!r}; available: {', '.join(AVAILABLE_SCENARIOS)}. "
-            "P00 implements no historical simulator."
+            f"unsupported scenario {scenario_id!r}; available: "
+            f"{', '.join(AVAILABLE_SCENARIOS)}"
         )
     path = root / "config" / "scenarios" / f"{scenario_id}.json"
     if not path.is_file():

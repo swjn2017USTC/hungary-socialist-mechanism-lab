@@ -29,6 +29,7 @@ THREAD_ENV_KEYS = (
 NORMAL_PEAK_RSS_BYTES = 16_000_000_000
 HARD_PEAK_RSS_BYTES = 22_000_000_000
 WORKER_TIMEOUT_S = 1200.0
+TOY4_WALL_GATE_S = 30.0
 
 SCALING_CASES: tuple[tuple[int, int], ...] = (
     (1000, 50),
@@ -50,8 +51,9 @@ _BENCHMARK_NOTES = (
 )
 
 
-def _load_config(root: Path) -> dict[str, Any]:
-    path = root / "config" / "benchmarks" / "p00.json"
+def _load_config(root: Path, kind: str) -> dict[str, Any]:
+    name = "toy4" if kind == "toy4" else "p00"
+    path = root / "config" / "benchmarks" / f"{name}.json"
     if not path.is_file():
         raise RuntimeError(f"benchmark config not found: {path}")
     config: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
@@ -76,6 +78,7 @@ def _case_definitions(kind: str, config: dict[str, Any]) -> list[dict[str, Any]]
             cases.append(
                 {
                     "case_id": f"smoke_{policy}",
+                    "kind": "smoke",
                     "policy": policy,
                     "households": 1000,
                     "enterprises": 50,
@@ -83,12 +86,40 @@ def _case_definitions(kind: str, config: dict[str, Any]) -> list[dict[str, Any]]
                     "seed": seed,
                 }
             )
+    elif kind == "toy4":
+        for households in (1000, 1600, 2000):
+            for ticks in (10, 116):
+                cases.append(
+                    {
+                        "case_id": f"toy4_n{households}_t{ticks}",
+                        "kind": "toy4",
+                        "policy": "ensemble_compact",
+                        "households": households,
+                        "enterprises": 40,
+                        "ticks": ticks,
+                        "seed": seed,
+                        "checkpoint_every": 0,
+                    }
+                )
+        cases.append(
+            {
+                "case_id": "toy4_n1600_t116_ckpt",
+                "kind": "toy4",
+                "policy": "ensemble_compact",
+                "households": 1600,
+                "enterprises": 40,
+                "ticks": 116,
+                "seed": seed,
+                "checkpoint_every": 1,
+            }
+        )
     else:
         for households, enterprises in SCALING_CASES:
             for ticks in SCALING_TICKS:
                 cases.append(
                     {
                         "case_id": f"scale_n{households}_t{ticks}",
+                        "kind": "scaling",
                         "policy": "ensemble_compact",
                         "households": households,
                         "enterprises": enterprises,
@@ -107,32 +138,63 @@ def _worker_main(case_path: Path, output_dir: Path) -> int:
     case = json.loads(case_path.read_text(encoding="utf-8"))
     from hsm_lab.cli.app import _repo_root  # noqa: PLC2701 - worker shares CLI root rules
     from hsm_lab.contract.guards import load_research_contract, load_scenario
-    from hsm_lab.contract.schemas import OutputPolicy
+    from hsm_lab.contract.schemas import OutputPolicy, ScenarioSpec
     from hsm_lab.data.registry import DataRegistry
-    from hsm_lab.engine.smoke import run_smoke
 
     root = _repo_root()
     contract = load_research_contract(root)
-    spec = load_scenario(root, "smoke").model_copy(
-        update={
-            "households": case["households"],
-            "enterprises": case["enterprises"],
-            "ticks": case["ticks"],
-            "seed": case["seed"],
-            "output_policy": OutputPolicy(case["policy"]),
-        }
-    )
-    registry = DataRegistry.load(root)
     started_wall = time.perf_counter()
     started_cpu = time.process_time()
-    manifest = run_smoke(spec, output_dir, contract, registry)
+    if case.get("kind") == "toy4":
+        from hsm_lab.engine.toy4 import run_toy4
+
+        spec = ScenarioSpec.model_validate(
+            load_scenario(root, "toy4")
+            .model_copy(
+                update={
+                    "households": case["households"],
+                    "enterprises": case["enterprises"],
+                    "ticks": case["ticks"],
+                    "seed": case["seed"],
+                    "output_policy": OutputPolicy(case["policy"]),
+                }
+            )
+            .model_dump()
+        )
+        registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
+        manifest = run_toy4(
+            spec,
+            output_dir,
+            contract,
+            registry,
+            checkpoint_every=int(case.get("checkpoint_every", 0)),
+        )
+    else:
+        from hsm_lab.engine.smoke import run_smoke
+
+        spec = load_scenario(root, "smoke").model_copy(
+            update={
+                "households": case["households"],
+                "enterprises": case["enterprises"],
+                "ticks": case["ticks"],
+                "seed": case["seed"],
+                "output_policy": OutputPolicy(case["policy"]),
+            }
+        )
+        registry = DataRegistry.load(root)
+        manifest = run_smoke(spec, output_dir, contract, registry)
     wall_s = time.perf_counter() - started_wall
     cpu_s = time.process_time() - started_cpu
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     peak_rss_bytes = rss if sys.platform == "darwin" else rss * 1024
     sizes = {
-        entry.name: entry.stat().st_size for entry in sorted(output_dir.iterdir())
+        entry.relative_to(output_dir).as_posix(): entry.stat().st_size
+        for entry in sorted(output_dir.rglob("*"))
+        if entry.is_file()
     }
+    checkpoint_bytes = sum(
+        size for name, size in sizes.items() if name.startswith("checkpoints/")
+    )
     summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
     result = {
         "status": "ok",
@@ -151,6 +213,7 @@ def _worker_main(case_path: Path, output_dir: Path) -> int:
         "output_file_sizes": sizes,
         "duckdb_bytes": sizes.get("trajectory.duckdb", 0),
         "parquet_bytes": sum(size for name, size in sizes.items() if name.endswith(".parquet")),
+        "checkpoint_bytes": checkpoint_bytes,
         "total_output_bytes": sum(sizes.values()),
         "manifest": {
             "run_id": manifest.run_id,
@@ -163,6 +226,8 @@ def _worker_main(case_path: Path, output_dir: Path) -> int:
         "row_counts": summary["row_counts"],
         "events_written": summary["row_counts"]["events"],
     }
+    if case.get("kind") == "toy4":
+        result["invariants"] = summary["invariants"]
     print(json.dumps(result, sort_keys=True))
     return 0
 
@@ -243,6 +308,14 @@ def _case_report(case: dict[str, Any], measurements: list[dict[str, Any]]) -> di
         "compute_aggregate_median_s": statistics.median(compute_agg) if compute_agg else None,
         "duckdb_bytes": max((m["duckdb_bytes"] for m in ok), default=0),
         "parquet_bytes": max((m["parquet_bytes"] for m in ok), default=0),
+        "checkpoint_bytes": max((m.get("checkpoint_bytes", 0) for m in ok), default=0),
+        "checkpoint_wall_s": (
+            statistics.median(
+                [m["performance"].get("checkpoint_wall_s", 0.0) for m in ok]
+            )
+            if ok
+            else None
+        ),
         "total_output_bytes": max((m["total_output_bytes"] for m in ok), default=0),
         "rng_draws_count": ok[0]["manifest"]["rng_draws_count"] if ok else None,
         "deterministic_replay_digest": (
@@ -258,15 +331,40 @@ def _case_report(case: dict[str, Any], measurements: list[dict[str, Any]]) -> di
             ),
         },
     }
-    report["status"] = (
-        "pass"
-        if report["gates"]["peak_rss_ok"] and report["gates"]["all_repeats_ok"]
-        else "fail"
-    )
+    if case.get("kind") == "toy4":
+        digests = {
+            m["manifest"]["deterministic_replay_digest"] for m in ok
+        }
+        ratios = [
+            max(
+                m["invariants"]["max_material_tolerance_ratio"],
+                m["invariants"]["max_cash_tolerance_ratio"],
+            )
+            for m in ok
+        ]
+        max_ratio = max(ratios) if ratios else None
+        report["invariant_max_tolerance_ratio"] = max_ratio
+        report["gates"]["digest_stable"] = len(digests) == 1
+        report["gates"]["invariants_ok"] = max_ratio is not None and max_ratio <= 1.0
+        if not case.get("checkpoint_every") and ticks == 116:
+            report["gates"]["wall_s_ok"] = bool(
+                median_wall is not None and median_wall <= TOY4_WALL_GATE_S
+            )
+    required = ["peak_rss_ok", "all_repeats_ok"]
+    if case.get("kind") == "toy4":
+        required += ["digest_stable", "invariants_ok"]
+        if not case.get("checkpoint_every") and ticks == 116:
+            required.append("wall_s_ok")
+    report["status"] = "pass" if all(report["gates"][key] for key in required) else "fail"
     return report
 
 
-def _scaling_ratio(case_reports: list[dict[str, Any]], ticks: int) -> dict[str, Any] | None:
+def _scaling_ratio(
+    case_reports: list[dict[str, Any]],
+    ticks: int,
+    small_n: int = 10000,
+    large_n: int = 20000,
+) -> dict[str, Any] | None:
     def find(households: int) -> dict[str, Any] | None:
         for report in case_reports:
             if (
@@ -277,24 +375,25 @@ def _scaling_ratio(case_reports: list[dict[str, Any]], ticks: int) -> dict[str, 
                 return report
         return None
 
-    small, large = find(10000), find(20000)
+    small, large = find(small_n), find(large_n)
     if small is None or large is None:
         return None
     ratio = large["compute_aggregate_median_s"] / small["compute_aggregate_median_s"]
     return {
-        "base": "n10000_vs_n20000",
+        "base": f"n{small_n}_vs_n{large_n}",
         "ticks": ticks,
         "compute_aggregate_ratio": ratio,
         "needs_profile": ratio >= 3.5,
         "threshold": 3.5,
+        "unavailable": False,
     }
 
 
 def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
     """Run all cases of ``kind``; write benchmark.json + summary.md; return report."""
-    if kind not in ("smoke", "scaling"):
+    if kind not in ("smoke", "scaling", "toy4"):
         raise ValueError(f"unknown benchmark kind {kind!r}")
-    config = _load_config(root)
+    config = _load_config(root, kind)
     cases = _case_definitions(kind, config)
     output_root.mkdir(parents=True)
     case_dir = output_root / "cases"
@@ -332,10 +431,24 @@ def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
         )
         case_reports[-1]["warmups"] = [m for m in measurements if m["excluded"]]
 
+    workload = (
+        "toy4_material_balance_household_rationing_storage"
+        if kind == "toy4"
+        else "synthetic_array_rng_aggregation_storage"
+    )
+    base_notes = (
+        list(_BENCHMARK_NOTES)
+        if kind != "toy4"
+        else [
+            "repeats are timing repetitions of one fixed seed, not stochastic replicates",
+            "peak RSS is the worker process high-water mark (includes imports), not the "
+            "parent's RSS and not an end-of-run snapshot",
+        ]
+    )
     report: dict[str, Any] = {
         "schema_version": "1",
         "benchmark_kind": kind,
-        "workload": "synthetic_array_rng_aggregation_storage",
+        "workload": workload,
         "config": config,
         "thread_policy": {key: "1" for key in THREAD_ENV_KEYS} | {"duckdb_threads": 1},
         "resource_gates": {
@@ -344,9 +457,49 @@ def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
             "note": "decimal GB gates; report shows bytes, GB and GiB",
         },
         "cases": case_reports,
-        "notes": list(_BENCHMARK_NOTES),
+        "notes": base_notes,
     }
-    if kind == "scaling":
+    if kind == "toy4":
+        report["notes"] = report["notes"] + [
+            "toy4 workload executes the real economic loop: material balance, "
+            "household rationing and compact storage",
+            "actor-commodity-updates/sec is an engineering throughput measure, "
+            "not an instruction count",
+        ]
+        ratios = []
+        for ticks in (10, 116):
+            ratio = _scaling_ratio(case_reports, ticks, 1000, 2000)
+            if ratio is None:
+                continue
+            too_short = any(
+                case["ticks"] == ticks
+                and not case["case_id"].endswith("_ckpt")
+                and case["gates"]["measurement_too_short"]
+                for case in case_reports
+            )
+            if too_short:
+                ratio = {**ratio, "compute_aggregate_ratio": None, "unavailable": True}
+            ratios.append(ratio)
+        report["scaling_ratios"] = ratios
+        ckpt = next(
+            (case for case in case_reports if case["case_id"].endswith("_ckpt")), None
+        )
+        base = next(
+            (
+                case
+                for case in case_reports
+                if case["case_id"] == "toy4_n1600_t116" and case["median_wall_s"]
+            ),
+            None,
+        )
+        if ckpt is not None and base is not None and base["median_wall_s"]:
+            report["checkpoint_overhead"] = {
+                "wall_ratio_vs_n1600_t116": ckpt["median_wall_s"] / base["median_wall_s"],
+                "checkpoint_bytes": ckpt["checkpoint_bytes"],
+                "total_output_bytes": ckpt["total_output_bytes"],
+                "max_peak_rss_bytes": ckpt["max_peak_rss_bytes"],
+            }
+    elif kind == "scaling":
         ratios = [
             ratio
             for ticks in SCALING_TICKS
@@ -361,13 +514,32 @@ def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
     report["overall_gate"] = (
         "pass" if all(case["status"] == "pass" for case in case_reports) else "fail"
     )
+    if kind == "toy4":
+        bad = [
+            ratio
+            for ratio in report["scaling_ratios"]
+            if ratio.get("compute_aggregate_ratio") is not None
+            and ratio["compute_aggregate_ratio"] > 3.5
+        ]
+        if bad:
+            report["overall_gate"] = "fail"
+            report["notes"] = report["notes"] + [
+                "needs_profile: n1000->n2000 compute+aggregate ratio > 3.5; profile the "
+                "kernel hotspots before accepting P01"
+            ]
     (output_root / "benchmark.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    title = "P01 toy4 benchmark" if kind == "toy4" else f"P00 benchmark: {kind}"
+    workload_note = (
+        "real economic loop (material balance + rationing + storage)"
+        if kind == "toy4"
+        else "synthetic probe load, not a historical model"
+    )
     lines = [
-        f"# P00 benchmark: {kind}",
+        f"# {title}",
         "",
-        f"- workload: {report['workload']} (synthetic probe load, not a historical model)",
+        f"- workload: {report['workload']} ({workload_note})",
         f"- overall gate: {report['overall_gate']}",
         "",
         "| case | policy | N | E | T | median wall s | median cpu s | peak RSS GiB | "

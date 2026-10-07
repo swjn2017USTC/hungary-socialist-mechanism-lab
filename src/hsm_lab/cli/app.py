@@ -32,6 +32,7 @@ from hsm_lab.contract.schemas import (
     ConfigError,
     OutputPolicy,
     ResearchGateError,
+    ScenarioSpec,
 )
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
@@ -275,68 +276,187 @@ def data_audit(
 
 @app.command()
 def run(
-    scenario: str = typer.Option("smoke", "--scenario", help="Scenario id (P00: smoke only)."),
+    scenario: str = typer.Option("smoke", "--scenario", help="Scenario id (smoke | toy4)."),
     seed: int | None = typer.Option(None, "--seed", min=0, help="RNG seed override."),
     output_policy: str | None = typer.Option(
         None, "--output-policy", help="research_full | ensemble_compact."
     ),
     output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    households: int | None = typer.Option(
+        None, "--households", help="Toy-4 household count override (1000-2000)."
+    ),
+    until: str | None = typer.Option(
+        None, "--until", help="Toy-4 inclusive stop quarter YYYYQn (pauses before horizon)."
+    ),
+    checkpoint_every: int = typer.Option(
+        0, "--checkpoint-every", min=0, help="Save a Toy-4 checkpoint every k completed ticks."
+    ),
+    resume: Path | None = typer.Option(
+        None, "--resume", help="Toy-4 checkpoint directory to resume from."
+    ),
     json_mode: bool = JsonOption,
 ) -> None:
-    """Run the synthetic engine smoke with full validation and a manifest."""
+    """Run a scenario (smoke probe load or the Toy-4 economic slice)."""
 
     def action() -> None:
         from hsm_lab.data.registry import DataRegistry
-        from hsm_lab.engine.smoke import run_smoke
 
         root = _repo_root()
         contract = load_research_contract(root)
         spec = load_scenario(root, scenario)
-        overrides: dict[str, Any] = {}
-        if seed is not None:
-            overrides["seed"] = seed
-        if output_policy is not None:
-            try:
-                overrides["output_policy"] = OutputPolicy(output_policy)
-            except ValueError as exc:
-                raise ConfigError(
-                    f"unknown output policy {output_policy!r}: use research_full or "
-                    "ensemble_compact"
-                ) from exc
-        if overrides:
-            spec = spec.model_copy(update=overrides)
-        registry = DataRegistry.load(root)
-        target = _fresh_output_dir(output_dir, "run")
-        manifest = run_smoke(spec, target, contract, registry)
-        payload = {
-            "status": "ok",
-            "command": "run",
-            "run_id": manifest.run_id,
-            "run_kind": manifest.run_kind,
-            "output_dir": str(target),
-            "manifest_path": str(Path(target) / "manifest.json"),
-            "seed": manifest.seed,
-            "output_policy": manifest.output_policy.value,
-            "ticks": manifest.ticks,
-            "rng_draws_count": manifest.rng_draws_count,
-            "rng_draws_by_module": manifest.rng_draws_by_module,
-            "stochastic_modules_active": manifest.stochastic_modules_active,
-            "deterministic_replay_digest": manifest.deterministic_replay_digest,
-            "research_warnings": manifest.research_warnings,
+        toy4_only = {
+            "--households": households,
+            "--until": until,
+            "--checkpoint-every": checkpoint_every if checkpoint_every else None,
+            "--resume": resume,
         }
-        _emit(
-            payload,
-            json_mode,
-            [
+        if spec.kind == "smoke":
+            used = [flag for flag, value in toy4_only.items() if value is not None]
+            if used:
+                raise ConfigError(
+                    f"option(s) {used} only apply to --scenario toy4, not smoke"
+                )
+        target = None
+        if spec.kind == "smoke":
+            from hsm_lab.engine.smoke import run_smoke
+
+            overrides: dict[str, Any] = {}
+            if seed is not None:
+                overrides["seed"] = seed
+            if output_policy is not None:
+                try:
+                    overrides["output_policy"] = OutputPolicy(output_policy)
+                except ValueError as exc:
+                    raise ConfigError(
+                        f"unknown output policy {output_policy!r}: use research_full or "
+                        "ensemble_compact"
+                    ) from exc
+            if overrides:
+                spec = _revalidated_copy(spec, overrides)
+            registry = DataRegistry.load(root)
+            target = _fresh_output_dir(output_dir, "run")
+            manifest = run_smoke(spec, target, contract, registry)
+            payload = {
+                "status": "ok",
+                "command": "run",
+                "run_id": manifest.run_id,
+                "run_kind": manifest.run_kind,
+                "output_dir": str(target),
+                "manifest_path": str(Path(target) / "manifest.json"),
+                "seed": manifest.seed,
+                "output_policy": manifest.output_policy.value,
+                "ticks": manifest.ticks,
+                "completed_ticks": manifest.completed_ticks,
+                "last_completed_quarter": manifest.last_completed_quarter,
+                "horizon_reached": True,
+                "checkpoint_paths": [],
+                "rng_draws_count": manifest.rng_draws_count,
+                "rng_draws_by_module": manifest.rng_draws_by_module,
+                "stochastic_modules_active": manifest.stochastic_modules_active,
+                "deterministic_replay_digest": manifest.deterministic_replay_digest,
+                "research_warnings": manifest.research_warnings,
+            }
+            human = [
                 f"run {manifest.run_id} completed: {manifest.run_kind}",
                 f"output: {target}",
                 f"digest: {manifest.deterministic_replay_digest}",
                 f"rng draws: {manifest.rng_draws_count} "
                 f"({manifest.rng_draws_by_module})",
-            ],
-        )
+            ]
+        else:
+            from hsm_lab.engine.toy4 import run_toy4
+
+            if resume is not None:
+                if scenario != "toy4":
+                    raise ConfigError("--resume requires --scenario toy4")
+                conflicts = [
+                    flag
+                    for flag, value in (
+                        ("--seed", seed),
+                        ("--households", households),
+                        ("--output-policy", output_policy),
+                    )
+                    if value is not None
+                ]
+                if conflicts:
+                    raise ConfigError(
+                        f"option(s) {conflicts} are refused together with --resume: "
+                        "seed/households/policy come from the checkpoint scenario"
+                    )
+            toy4_overrides: dict[str, Any] = {}
+            if households is not None:
+                if not 1000 <= households <= 2000:
+                    raise ConfigError(
+                        f"--households must lie in [1000, 2000], got {households}"
+                    )
+                toy4_overrides["households"] = households
+            if seed is not None:
+                toy4_overrides["seed"] = seed
+            if output_policy is not None:
+                try:
+                    toy4_overrides["output_policy"] = OutputPolicy(output_policy)
+                except ValueError as exc:
+                    raise ConfigError(
+                        f"unknown output policy {output_policy!r}: use research_full or "
+                        "ensemble_compact"
+                    ) from exc
+            if toy4_overrides:
+                spec = _revalidated_copy(spec, toy4_overrides)
+            registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
+            target = _fresh_output_dir(output_dir, "run")
+            manifest = run_toy4(
+                spec,
+                target,
+                contract,
+                registry,
+                until=until,
+                checkpoint_every=checkpoint_every,
+                resume_from=resume,
+            )
+            paused = manifest.status == "paused"
+            payload = {
+                "status": "paused" if paused else "ok",
+                "command": "run",
+                "run_id": manifest.run_id,
+                "run_kind": manifest.run_kind,
+                "output_dir": str(target),
+                "manifest_path": str(Path(target) / "manifest.json"),
+                "seed": manifest.seed,
+                "output_policy": manifest.output_policy.value,
+                "ticks": manifest.ticks,
+                "completed_ticks": manifest.completed_ticks,
+                "last_completed_quarter": manifest.last_completed_quarter,
+                "horizon_reached": manifest.completed_ticks == manifest.ticks,
+                "checkpoint_paths": [
+                    str(target / path.rsplit("/metadata.json", 1)[0])
+                    for path in sorted(manifest.output_hashes)
+                    if path.startswith("checkpoints/")
+                    and path.endswith("/metadata.json")
+                ],
+                "rng_draws_count": manifest.rng_draws_count,
+                "rng_draws_by_module": manifest.rng_draws_by_module,
+                "stochastic_modules_active": manifest.stochastic_modules_active,
+                "deterministic_replay_digest": manifest.deterministic_replay_digest,
+                "research_warnings": manifest.research_warnings,
+            }
+            human = [
+                f"run {manifest.run_id} {'paused' if paused else 'completed'}: "
+                f"{manifest.run_kind}",
+                f"output: {target}",
+                f"completed ticks: {manifest.completed_ticks}/{manifest.ticks} "
+                f"(last quarter {manifest.last_completed_quarter})",
+                f"digest: {manifest.deterministic_replay_digest}",
+                f"rng draws: {manifest.rng_draws_count} "
+                f"({manifest.rng_draws_by_module})",
+            ]
+        _emit(payload, json_mode, human)
 
     _guard(action, json_mode)
+
+
+def _revalidated_copy(spec: ScenarioSpec, overrides: dict[str, Any]) -> ScenarioSpec:
+    """Apply overrides and re-run full model validation (never widen quietly)."""
+    return ScenarioSpec.model_validate(spec.model_copy(update=overrides).model_dump())
 
 
 def _run_benchmark(kind: str, output_dir: Path | None, json_mode: bool) -> None:
@@ -379,6 +499,116 @@ def benchmark_scaling(
 ) -> None:
     """Six-scale x {10,116} ticks scaling benchmark (compact policy)."""
     _run_benchmark("scaling", output_dir, json_mode)
+
+
+@app.command()
+def summary(
+    run_dir: Path = typer.Option(..., "--run-dir", help="Completed or paused Toy-4 run directory."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Read back a finished/paused Toy-4 run summary (never starts a simulation)."""
+
+    def action() -> None:
+        from hsm_lab.engine.toy4 import TOY4_ENGINE_VERSION
+        from hsm_lab.provenance.manifest import RunManifest
+
+        manifest_path = run_dir / "manifest.json"
+        summary_path = run_dir / "summary.json"
+        if not manifest_path.is_file() or not summary_path.is_file():
+            raise ResearchGateError(
+                f"no manifest.json/summary.json under {run_dir}: not a finished run"
+            )
+        try:
+            manifest = RunManifest.model_validate(
+                json.loads(manifest_path.read_text(encoding="utf-8"))
+            )
+            payload = json.loads(summary_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise ResearchGateError(f"unreadable run outputs under {run_dir}: {exc}") from exc
+        if manifest.run_kind != "toy4_f0_simulation":
+            raise ResearchGateError(
+                f"summary only reads toy4_f0_simulation runs, got {manifest.run_kind!r}"
+            )
+        if manifest.status not in ("completed", "paused"):
+            raise ResearchGateError(
+                f"run {manifest.run_id} has status {manifest.status!r}; only completed "
+                "or paused runs can be summarized"
+            )
+        if payload.get("run_id") != manifest.run_id:
+            raise ResearchGateError(
+                "summary run_id does not match the manifest: refusing divergent records"
+            )
+        if payload.get("deterministic_replay_digest") != manifest.deterministic_replay_digest:
+            raise ResearchGateError(
+                "summary digest disagrees with the manifest: refusing divergent records"
+            )
+        if payload.get("completed_ticks") != manifest.completed_ticks:
+            raise ResearchGateError(
+                "summary completed_ticks disagrees with the manifest boundary"
+            )
+        import hashlib
+
+        recorded = manifest.output_hashes.get("summary.json")
+        actual = hashlib.sha256(summary_path.read_bytes()).hexdigest()
+        if recorded is None or recorded != actual:
+            raise ResearchGateError(
+                "summary.json bytes do not match the manifest's recorded output hash: "
+                "refusing to read back tampered summaries"
+            )
+        _emit(
+            payload,
+            json_mode,
+            _summary_human(payload, manifest.engine_version or TOY4_ENGINE_VERSION),
+        )
+
+    _guard(action, json_mode)
+
+
+def _summary_human(payload: dict[str, Any], engine_version: str) -> list[str]:
+    lines = [
+        f"toy4 summary ({engine_version}): scenario {payload.get('scenario_id')} "
+        f"seed {payload.get('seed')}",
+        f"quarters: {payload.get('completed_ticks')}/{payload.get('planned_ticks')} "
+        f"completed (last {payload.get('last_completed_quarter')}, "
+        f"horizon_reached={payload.get('horizon_reached')})",
+        f"digest: {payload.get('deterministic_replay_digest')}",
+    ]
+    for commodity, stats in sorted((payload.get("by_commodity") or {}).items()):
+        lines.append(
+            f"  {commodity}: production {stats['production']:.1f}, imports "
+            f"{stats['imports']:.1f}, used {stats['used_input']:.1f}, exports "
+            f"{stats['exports']:.1f}, consumption {stats['consumption']:.1f}"
+        )
+        lines.append(
+            f"    unmet budget {stats['budget_unmet']:.1f} / availability "
+            f"{stats['availability_unmet']:.1f} / total {stats['total_unmet']:.1f} "
+            f"(availability rate {stats['cumulative_availability_shortage_rate']:.3f})"
+        )
+        lines.append(
+            f"    closing stocks: wholesale {stats['final_wholesale_inventory']:.1f}, "
+            f"organization input {stats['final_organization_input_inventory']:.1f}, "
+            f"retail {stats['final_retail_inventory']:.1f}"
+        )
+    invariants = payload.get("invariants") or {}
+    lines.append(
+        f"  invariants ({invariants.get('checked_ticks')} ticks): max material "
+        f"residual {invariants.get('max_material_abs_residual')}, ratio "
+        f"{invariants.get('max_material_tolerance_ratio')}; max cash residual "
+        f"{invariants.get('max_cash_abs_residual')}, ratio "
+        f"{invariants.get('max_cash_tolerance_ratio')}"
+    )
+    return lines
+
+
+@benchmark_app.command("toy4")
+def benchmark_toy4(
+    output_dir: Path | None = typer.Option(
+        None, "--output-dir", help="Fresh directory for the benchmark report."
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Toy-4 economic-loop scaling benchmark (N in {1000,1600,2000} x {10,116})."""
+    _run_benchmark("toy4", output_dir, json_mode)
 
 
 def main() -> None:  # console entry: hsm = hsm_lab.cli.app:main

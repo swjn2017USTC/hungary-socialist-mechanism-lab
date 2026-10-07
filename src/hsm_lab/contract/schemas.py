@@ -11,6 +11,7 @@ Error semantics (used by the CLI for exit codes):
 
 from __future__ import annotations
 
+import math
 import re
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -244,15 +245,177 @@ class ResearchContract(StrictModel):
         )
 
 
+
+TOY4_COMMODITY_IDS = ("energy", "capital_goods", "food", "consumer_goods")
+# The research contract fixes exactly 20 region nodes; the Toy-4 access
+# multiplier vector carries one entry per contract region, in that order.
+TOY4_REGION_COUNT = 20
+
+TOY4_FORCING_ARTIFACT_IDS = (
+    "p01_toy4_import_supply",
+    "p01_toy4_export_orders",
+)
+
+
+def _finite_vector(value: list[float], name: str) -> list[float]:
+    if not all(math.isfinite(x) for x in value):
+        raise ConfigError(f"{name} must contain only finite numbers")
+    return value
+
+
+class Toy4Parameters(StrictModel):
+    """Toy-4 model constants. Structural assumptions, never calibrated values.
+
+    Every number is a synthetic engineering fixture: BASELINE §9.3–9.7 supplies
+    concepts (vector inputs/outputs, shortage accounting), not coefficients.
+    """
+
+    role: Literal["latent_parameter"] = "latent_parameter"
+    evidence_status: Literal["structural_assumption"] = "structural_assumption"
+    calibration_status: Literal["not_calibrated"] = "not_calibrated"
+    sensitivity_status: Literal["not_assessed"] = "not_assessed"
+    notes: str = (
+        "Synthetic Toy-4 engineering constants; not historical Hungarian "
+        "magnitudes and not calibrated against any observed series."
+    )
+    equivalent_households: FiniteFloat = Field(default=1600.0, gt=0)
+    prices: list[FiniteFloat] = Field(
+        default=[1.0, 4.0, 2.0, 3.0], min_length=4, max_length=4
+    )
+    desired_per_person: list[FiniteFloat] = Field(
+        default=[0.4, 0.0, 2.0, 1.0], min_length=4, max_length=4
+    )
+    income_per_person: FiniteFloat = Field(default=6.0, ge=0)
+    sector_capacity_totals: list[FiniteFloat] = Field(
+        default=[2500.0, 600.0, 3500.0, 2300.0], min_length=4, max_length=4
+    )
+    target_utilization: FiniteFloat = Field(default=0.9, ge=0, le=1)
+    input_coefficients: list[list[FiniteFloat]] = Field(
+        default=[
+            [0.05, 0.02, 0.0, 0.0],
+            [0.4, 0.05, 0.0, 0.0],
+            [0.2, 0.04, 0.0, 0.0],
+            [0.35, 0.08, 0.1, 0.0],
+        ],
+        min_length=4,
+        max_length=4,
+    )
+    retail_release_fraction: list[FiniteFloat] = Field(
+        default=[0.2, 0.0, 1.0, 1.0], min_length=4, max_length=4
+    )
+    regional_access_multiplier: list[FiniteFloat] = Field(
+        default=[0.5, 1.5] + [1.0] * 18, min_length=20, max_length=20
+    )
+
+    @model_validator(mode="after")
+    def _check_shapes(self) -> Self:
+        g = len(TOY4_COMMODITY_IDS)
+        for name in ("prices", "desired_per_person", "sector_capacity_totals",
+                     "retail_release_fraction"):
+            vector = getattr(self, name)
+            _finite_vector(vector, name)
+            if len(vector) != g:
+                raise ConfigError(
+                    f"{name} must have exactly {g} entries (one per Toy-4 commodity)"
+                )
+        if any(price <= 0 for price in self.prices):
+            raise ConfigError("prices must be strictly positive")
+        if any(value < 0 for value in self.desired_per_person):
+            raise ConfigError("desired_per_person must be non-negative")
+        if any(value < 0 for value in self.sector_capacity_totals):
+            raise ConfigError("sector_capacity_totals must be non-negative")
+        if any(not 0 <= fraction <= 1 for fraction in self.retail_release_fraction):
+            raise ConfigError("retail_release_fraction entries must lie in [0, 1]")
+        matrix = self.input_coefficients
+        if len(matrix) != g or any(len(row) != g for row in matrix):
+            raise ConfigError(
+                f"input_coefficients must be a {g}x{g} matrix "
+                "(output-sector rows x input-commodity columns)"
+            )
+        _finite_vector([x for row in matrix for x in row], "input_coefficients")
+        if any(x < 0 for row in matrix for x in row):
+            raise ConfigError("input_coefficients must be non-negative")
+        multipliers = _finite_vector(self.regional_access_multiplier,
+                                     "regional_access_multiplier")
+        if len(multipliers) != TOY4_REGION_COUNT:
+            raise ConfigError(
+                f"regional_access_multiplier must have exactly {TOY4_REGION_COUNT} "
+                "entries (one per contract region, in contract order)"
+            )
+        if any(m < 0 for m in multipliers) or sum(multipliers) <= 0:
+            raise ConfigError(
+                "regional_access_multiplier entries must be non-negative with a "
+                "positive sum"
+            )
+        return self
+
+    def flatten(self) -> dict[str, float]:
+        """Field/index-path flattening for the run's parameter hash."""
+        vector: dict[str, float] = {
+            "equivalent_households": self.equivalent_households,
+            "income_per_person": self.income_per_person,
+            "target_utilization": self.target_utilization,
+        }
+        for name in ("prices", "desired_per_person", "sector_capacity_totals",
+                     "retail_release_fraction", "regional_access_multiplier"):
+            for index, value in enumerate(getattr(self, name)):
+                vector[f"{name}.{index}"] = value
+        for row, sector_row in enumerate(self.input_coefficients):
+            for col, value in enumerate(sector_row):
+                vector[f"input_coefficients.{row}.{col}"] = value
+        return vector
+
+
+class Toy4InitialRecipe(StrictModel):
+    """Declared synthetic initial state (grade S: structural assumption)."""
+
+    role: Literal["initial_state"] = "initial_state"
+    grade: Literal["S"] = "S"
+    evidence_status: Literal["structural_assumption"] = "structural_assumption"
+    observation_at: None = None
+    wholesale_inventory: list[FiniteFloat] = Field(
+        default=[2000.0, 700.0, 0.0, 0.0], min_length=4, max_length=4
+    )
+    retail_inventory_totals: list[FiniteFloat] = Field(
+        default=[300.0, 0.0, 1000.0, 800.0], min_length=4, max_length=4
+    )
+    input_stock_target_quarters: FiniteFloat = Field(default=1.0, gt=0)
+    household_cash: FiniteFloat = Field(default=0.0, ge=0)
+
+    @model_validator(mode="after")
+    def _check_shapes(self) -> Self:
+        g = len(TOY4_COMMODITY_IDS)
+        for name in ("wholesale_inventory", "retail_inventory_totals"):
+            vector = getattr(self, name)
+            _finite_vector(vector, name)
+            if len(vector) != g:
+                raise ConfigError(
+                    f"{name} must have exactly {g} entries (one per Toy-4 commodity)"
+                )
+            if any(value < 0 for value in vector):
+                raise ConfigError(f"{name} must be non-negative")
+        return self
+
+    def flatten(self) -> dict[str, float]:
+        """Recipe numeric fields for the run's parameter hash."""
+        vector: dict[str, float] = {
+            "input_stock_target_quarters": self.input_stock_target_quarters,
+            "household_cash": self.household_cash,
+        }
+        for name in ("wholesale_inventory", "retail_inventory_totals"):
+            for index, value in enumerate(getattr(self, name)):
+                vector[f"initial.{name}.{index}"] = value
+        return vector
+
 FORBIDDEN_COMMODITY_IDS = {"goods"}
 
 
 class ScenarioSpec(StrictModel):
-    """A synthetic smoke scenario. P00 implements exactly one: ``smoke``."""
+    """A synthetic scenario. P00 ships ``smoke``; P01 adds the Toy-4 slice."""
 
     schema_version: Literal["1"] = "1"
     scenario_id: str = Field(min_length=1)
-    kind: Literal["smoke"]
+    kind: Literal["smoke", "toy4"]
     start: QuarterLike
     ticks: StrictInt = Field(ge=1)
     households: StrictInt = Field(ge=1)
@@ -265,6 +428,8 @@ class ScenarioSpec(StrictModel):
     forcing_ids: list[str]
     initial_ids: list[str]
     parameter_ids: list[str]
+    toy4_parameters: Toy4Parameters | None = None
+    toy4_initial: Toy4InitialRecipe | None = None
 
     @model_validator(mode="after")
     def _check_lists(self) -> Self:
@@ -277,6 +442,16 @@ class ScenarioSpec(StrictModel):
             )
         if len(set(self.region_ids)) != len(self.region_ids):
             raise ConfigError("region_ids must be unique")
+        if self.kind == "smoke":
+            if self.toy4_parameters is not None or self.toy4_initial is not None:
+                raise ConfigError(
+                    "smoke scenarios must not carry toy4_parameters/toy4_initial"
+                )
+        else:
+            if self.toy4_parameters is None or self.toy4_initial is None:
+                raise ConfigError(
+                    "toy4 scenarios must declare both toy4_parameters and toy4_initial"
+                )
         return self
 
     def validate_for_run(self, contract: ResearchContract) -> None:
@@ -291,8 +466,46 @@ class ScenarioSpec(StrictModel):
                 f"scenario window {self.start}..{end} leaves the core window "
                 f"{contract.core_start}..{contract.core_end}"
             )
-        for name in ("forcing_ids", "initial_ids", "parameter_ids"):
-            if getattr(self, name):
-                raise ConfigError(
-                    f"{name} must be empty: the P00 smoke workload takes no data inputs"
-                )
+        if self.kind == "smoke":
+            for name in ("forcing_ids", "initial_ids", "parameter_ids"):
+                if getattr(self, name):
+                    raise ConfigError(
+                        f"{name} must be empty: the smoke workload takes no data inputs"
+                    )
+            return
+        self._validate_toy4_for_run(contract)
+
+    def _validate_toy4_for_run(self, contract: ResearchContract) -> None:
+        if self.commodities != list(TOY4_COMMODITY_IDS):
+            raise ConfigError(
+                "toy4 commodity ids and order must equal "
+                f"{list(TOY4_COMMODITY_IDS)}"
+            )
+        if self.start.to_ordinal() != contract.core_start.to_ordinal():
+            raise ConfigError(
+                f"toy4 scenarios must start at the core window start {contract.core_start}"
+            )
+        if not 1 <= self.ticks <= contract.core_ticks:
+            raise ConfigError(
+                f"toy4 ticks must lie in [1, {contract.core_ticks}] "
+                "(116 = full horizon; shorter windows are benchmark-only)"
+            )
+        if not 1000 <= self.households <= 2000:
+            raise ConfigError("toy4 households must lie in [1000, 2000]")
+        if not 30 <= self.enterprises <= 50:
+            raise ConfigError("toy4 enterprises must lie in [30, 50]")
+        if self.output_policy is OutputPolicy.RESEARCH_FULL:
+            raise ConfigError(
+                "toy4 runs support ensemble_compact only in P01; research_full is "
+                "not silently downgraded"
+            )
+        if self.forcing_ids != list(TOY4_FORCING_ARTIFACT_IDS):
+            raise ConfigError(
+                "toy4 forcing_ids must be exactly "
+                f"{list(TOY4_FORCING_ARTIFACT_IDS)}"
+            )
+        if self.initial_ids or self.parameter_ids:
+            raise ConfigError(
+                "toy4 initialization is a declared synthetic recipe: initial_ids "
+                "and parameter_ids must be empty"
+            )

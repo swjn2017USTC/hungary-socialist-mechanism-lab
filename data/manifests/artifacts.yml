@@ -1,4 +1,88 @@
 schema_version: "1"
-# No real data artifacts have been obtained in P00. This list stays empty until
-# files exist with verified rights, real SHA-256 digests and full provenance.
-artifacts: []
+# Only synthetic local fixtures are registered so far; no historical data
+# artifacts have been obtained yet (rights still unresolved for real sources).
+artifacts:
+  - artifact_id: "p01_toy4_import_supply"
+    variable_id: "toy4_import_supply"
+    path: "data/fixtures/p01_toy4_import_supply.parquet"
+    source_id: "p01_toy4_fixture"
+    allow_missing: false
+    role: "exogenous_forcing"
+    period:
+      start: "1957Q1"
+      end: "1985Q4"
+      frequency: "quarterly"
+    provenance:
+      variable: "toy4_import_supply"
+      role: "exogenous_forcing"
+      source_institution: "HSM Lab local fixture"
+      dataset: "P01 Toy-4 deterministic import supply"
+      locator: "fixture:p01-toy4"
+      retrieved_at: "2026-10-07T00:00:00Z"
+      raw_sha256: "6952130ad0b26633206a0647d65138dd10268a27c9c54ac112def72fc57de8fc"
+      original_frequency: "quarterly"
+      model_frequency: "quarterly"
+      transformation:
+        method: "synthetic_generation"
+        source_frequency: "quarterly"
+        result_frequency: "quarterly"
+        aggregation: null
+        description: "Local deterministic Toy-4 fixture generation; no historical observations"
+      evidence_status: "synthetic_fixture"
+      rights:
+        license_status: "verified"
+        license_name: "Locally generated synthetic fixture (no third-party rights)"
+        terms_locator: "fixture:p01-toy4"
+        evidence_quote: "generated locally by this repository; contains no third-party data"
+        checked_at: "2026-10-07T00:00:00Z"
+        download_allowed: true
+        redistribution_allowed: true
+        notes: "synthetic fixture rights block; no external dataset involved"
+      notes: "Deterministic engineering forcing; not a historical trade reconstruction."
+      source_id: "p01_toy4_fixture"
+      source_period: null
+      raw_path: null
+      derived_from: []
+      artifact_sha256: "6952130ad0b26633206a0647d65138dd10268a27c9c54ac112def72fc57de8fc"
+  - artifact_id: "p01_toy4_export_orders"
+    variable_id: "toy4_export_orders"
+    path: "data/fixtures/p01_toy4_export_orders.parquet"
+    source_id: "p01_toy4_fixture"
+    allow_missing: false
+    role: "exogenous_forcing"
+    period:
+      start: "1957Q1"
+      end: "1985Q4"
+      frequency: "quarterly"
+    provenance:
+      variable: "toy4_export_orders"
+      role: "exogenous_forcing"
+      source_institution: "HSM Lab local fixture"
+      dataset: "P01 Toy-4 deterministic export orders"
+      locator: "fixture:p01-toy4"
+      retrieved_at: "2026-10-07T00:00:00Z"
+      raw_sha256: "01237e7fc3cadc9a2c73e47a2acf8f5de5c98ebf4682290eacc4c00196def6f9"
+      original_frequency: "quarterly"
+      model_frequency: "quarterly"
+      transformation:
+        method: "synthetic_generation"
+        source_frequency: "quarterly"
+        result_frequency: "quarterly"
+        aggregation: null
+        description: "Local deterministic Toy-4 fixture generation; no historical observations"
+      evidence_status: "synthetic_fixture"
+      rights:
+        license_status: "verified"
+        license_name: "Locally generated synthetic fixture (no third-party rights)"
+        terms_locator: "fixture:p01-toy4"
+        evidence_quote: "generated locally by this repository; contains no third-party data"
+        checked_at: "2026-10-07T00:00:00Z"
+        download_allowed: true
+        redistribution_allowed: true
+        notes: "synthetic fixture rights block; no external dataset involved"
+      notes: "Deterministic engineering forcing; not a historical trade reconstruction."
+      source_id: "p01_toy4_fixture"
+      source_period: null
+      raw_path: null
+      derived_from: []
+      artifact_sha256: "01237e7fc3cadc9a2c73e47a2acf8f5de5c98ebf4682290eacc4c00196def6f9"

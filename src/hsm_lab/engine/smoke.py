@@ -158,6 +158,7 @@ def run_smoke(
     # All fallible setup happens inside the protected region so that any
     # setup failure still converts the running manifest into an honest
     # failed manifest with whatever RNG evidence exists at that point.
+    completed_ticks = 0
     rng: RngRegistry | None = None
     household_writer: MicroWriter | None = None
     enterprise_writer: MicroWriter | None = None
@@ -177,6 +178,7 @@ def run_smoke(
 
         aggregate_rows: list[dict[str, Any]] = []
         event_rows: list[dict[str, Any]] = []
+
         compute_s = 0.0
         aggregate_s = 0.0
         household_writer = (
@@ -255,7 +257,7 @@ def run_smoke(
                     enterprise_weights,
                     enterprise_probes,
                 )
-
+            completed_ticks += 1
         io_started = time.perf_counter()
         if household_writer is not None:
             household_writer.close()
@@ -273,7 +275,11 @@ def run_smoke(
                 "households_micro": output_dir / "households.parquet",
                 "enterprises_micro": output_dir / "enterprises.parquet",
             }
-        write_duckdb(output_dir, aggregates_frame, events_frame, micro_paths)
+        write_duckdb(
+            output_dir,
+            {"aggregates": aggregates_frame, "events": events_frame},
+            micro_paths,
+        )
 
         quarters = [str(spec.start.advance(tick)) for tick in range(spec.ticks)]
         digest = replay_digest(
@@ -368,6 +374,8 @@ def run_smoke(
             rng_draws_by_module=draws_by_module,
             stochastic_modules_active=modules_active,
             deterministic_replay_digest=digest,
+            completed_ticks=completed_ticks,
+            last_completed_quarter=quarters[-1],
         )
         write_manifest_atomic(output_dir, final)
         return final
@@ -393,6 +401,10 @@ def run_smoke(
             ],
             deterministic_replay_digest="",
             failure_message=f"{type(exc).__name__}: {exc}",
+            completed_ticks=completed_ticks,
+            last_completed_quarter=(
+                str(spec.start.advance(completed_ticks - 1)) if completed_ticks else None
+            ),
         )
         try:
             write_manifest_atomic(output_dir, failed)

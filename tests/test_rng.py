@@ -68,3 +68,71 @@ def test_validation_failures() -> None:
 
 def test_scheme_version_exposed() -> None:
     assert RngRegistry(0).scheme_version == RNG_SCHEME_VERSION
+
+
+def test_snapshot_restores_exact_continuation() -> None:
+    """7 draws -> snapshot -> 5 more == restore -> 5 more; counts reach 12."""
+    rng = RngRegistry(1729)
+    rng.uniform("toy4.initial_households", 7)
+    snapshot = rng.snapshot()
+    live_tail = rng.uniform("toy4.initial_households", 5)
+    restored = RngRegistry.from_snapshot(snapshot)
+    restored_tail = restored.uniform("toy4.initial_households", 5)
+    np.testing.assert_array_equal(live_tail, restored_tail)
+    assert restored.draws_by_module() == {"toy4.initial_households": 12}
+    assert restored.draws_count() == rng.draws_count() == 12
+    assert restored.seed == 1729
+    assert restored.scheme_version == RNG_SCHEME_VERSION
+    # A second snapshot of the restored registry equals the live one.
+    assert restored.snapshot() == rng.snapshot()
+
+
+def test_snapshot_survives_json_roundtrip() -> None:
+    import json
+
+    rng = RngRegistry(3)
+    rng.uniform("a", 5)
+    rng.uniform("b", 3)
+    through_json = json.loads(json.dumps(rng.snapshot()))
+    restored = RngRegistry.from_snapshot(through_json)
+    np.testing.assert_array_equal(
+        restored.uniform("a", 4), rng.uniform("a", 4)
+    )
+
+
+def test_from_snapshot_rejects_bad_payloads() -> None:
+    rng = RngRegistry(11)
+    rng.uniform("m", 2)
+    snapshot = rng.snapshot()
+    with pytest.raises(ConfigError, match="dict"):
+        RngRegistry.from_snapshot(None)  # type: ignore[arg-type]
+    with pytest.raises(ConfigError, match="seed"):
+        RngRegistry.from_snapshot({**snapshot, "seed": -1})
+    with pytest.raises(ConfigError, match="scheme"):
+        RngRegistry.from_snapshot({**snapshot, "scheme_version": "xorshift-v0"})
+    with pytest.raises(ConfigError, match="modules"):
+        RngRegistry.from_snapshot({**snapshot, "modules": []})
+    module = snapshot["modules"]["m"]
+    assert isinstance(module, dict)
+    with pytest.raises(ConfigError, match="PCG64"):
+        RngRegistry.from_snapshot(
+            {**snapshot, "modules": {"m": {**module, "bit_generator": "MT19937"}}}
+        )
+    with pytest.raises(ConfigError, match="draw_count"):
+        RngRegistry.from_snapshot(
+            {**snapshot, "modules": {"m": {**module, "draw_count": -1}}}
+        )
+    with pytest.raises(ConfigError, match="draw_count"):
+        RngRegistry.from_snapshot(
+            {**snapshot, "modules": {"m": {**module, "draw_count": True}}}
+        )
+    with pytest.raises(ConfigError, match="state"):
+        RngRegistry.from_snapshot(
+            {**snapshot, "modules": {"m": {**module, "state": {"junk": 1}}}}
+        )
+
+
+def test_empty_snapshot_restores_empty_registry() -> None:
+    restored = RngRegistry.from_snapshot(RngRegistry(42).snapshot())
+    assert restored.draws_count() == 0
+    assert restored.draws_by_module() == {}

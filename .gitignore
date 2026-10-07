@@ -18,3 +18,5 @@ data/private/
 *.duckdb
 *.duckdb.wal
 *.parquet
+!data/fixtures/p01_toy4_import_supply.parquet
+!data/fixtures/p01_toy4_export_orders.parquet

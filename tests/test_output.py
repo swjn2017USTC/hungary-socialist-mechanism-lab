@@ -321,3 +321,25 @@ def test_second_writer_failure_writes_failed_manifest(
     assert payload["status"] == "failed"
     assert "second writer" in payload["failure_message"]
     assert payload["rng_draws_count"] == 0
+
+
+def test_rng_constructor_failure_writes_failed_manifest(
+    contract, registry, tmp_path, monkeypatch
+) -> None:
+    """A failure constructing the RNG (before any draw) must still convert a
+    running manifest into an honest failed manifest - never an UnboundLocalError
+    that leaves the manifest 'running'."""
+    import hsm_lab.engine.smoke as smoke_module
+
+    def boom(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise RuntimeError("review injected RNG setup failure")
+
+    monkeypatch.setattr(smoke_module, "RngRegistry", boom)
+    with pytest.raises(RuntimeError, match="RNG setup failure"):
+        run_smoke(smoke_spec(contract), tmp_path / "rng-fail", contract, registry)
+    payload = load_json(tmp_path / "rng-fail" / "manifest.json")
+    assert payload["status"] == "failed"
+    assert "RNG setup failure" in payload["failure_message"]
+    assert payload["finished_at"] is not None
+    assert payload["rng_draws_count"] == 0
+    assert payload["deterministic_replay_digest"] == ""

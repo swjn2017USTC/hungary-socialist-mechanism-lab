@@ -77,3 +77,63 @@ class RngRegistry:
 
     def active_modules(self) -> list[str]:
         return [module for module, count in self._counts.items() if count > 0]
+
+    def snapshot(self) -> dict[str, object]:
+        """Full state: seed, scheme and per-module PCG64 state + draw counts."""
+        modules: dict[str, object] = {}
+        for module in sorted(self._streams):
+            generator = self._streams[module]
+            modules[module] = {
+                "bit_generator": "PCG64",
+                "state": dict(generator.bit_generator.state),
+                "draw_count": self._counts[module],
+            }
+        return {
+            "seed": self._seed,
+            "scheme_version": self._scheme_version,
+            "modules": modules,
+        }
+
+    @classmethod
+    def from_snapshot(cls, snapshot: dict[str, object]) -> RngRegistry:
+        """Restore a snapshot without re-drawing history; strict validation."""
+        if not isinstance(snapshot, dict):
+            raise ConfigError("RNG snapshot must be a dict")
+        seed = snapshot.get("seed")
+        if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+            raise ConfigError(f"RNG snapshot seed must be a non-negative int, got {seed!r}")
+        scheme = snapshot.get("scheme_version")
+        if scheme not in _KNOWN_SCHEMES:
+            raise ConfigError(f"unknown RNG scheme version {scheme!r}")
+        modules = snapshot.get("modules")
+        if not isinstance(modules, dict):
+            raise ConfigError("RNG snapshot modules must be a dict")
+        registry = cls(int(seed), str(scheme))
+        for module in sorted(modules):
+            if not isinstance(module, str) or not module:
+                raise ConfigError(f"invalid module name in RNG snapshot: {module!r}")
+            entry = modules[module]
+            if not isinstance(entry, dict):
+                raise ConfigError(f"RNG snapshot entry for {module!r} must be a dict")
+            if entry.get("bit_generator") != "PCG64":
+                raise ConfigError(
+                    f"RNG snapshot module {module!r} must use the PCG64 bit generator"
+                )
+            count = entry.get("draw_count")
+            if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+                raise ConfigError(
+                    f"RNG snapshot draw_count for {module!r} must be a non-negative int"
+                )
+            state = entry.get("state")
+            if not isinstance(state, dict):
+                raise ConfigError(f"RNG snapshot state for {module!r} must be a dict")
+            generator = Generator(PCG64(seed))
+            try:
+                generator.bit_generator.state = state
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ConfigError(
+                    f"RNG snapshot state for {module!r} is not a valid PCG64 state: {exc}"
+                ) from exc
+            registry._streams[module] = generator
+            registry._counts[module] = int(count)
+        return registry

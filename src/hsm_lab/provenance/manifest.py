@@ -144,23 +144,35 @@ def compute_parameter_hash(parameter_vector: dict[str, float]) -> str:
 
 
 def hash_output_tree(run_dir: Path) -> dict[str, str]:
-    """SHA-256 per output file name; the manifest itself is excluded."""
+    """SHA-256 per output file (recursive); root manifest and staging excluded.
+
+    Keys are repo-relative POSIX paths, so nested checkpoint payload files are
+    hashed individually. Directory inodes and half-written ``.tmp-*`` staging
+    directories never enter the map.
+    """
     hashes: dict[str, str] = {}
-    for entry in sorted(run_dir.iterdir()):
-        if entry.name == MANIFEST_FILENAME or not entry.is_file():
+    for path in sorted(run_dir.rglob("*")):
+        if not path.is_file():
             continue
-        hashes[entry.name] = sha256_file(entry)
+        if path == run_dir / MANIFEST_FILENAME:
+            continue
+        if any(part.startswith(".tmp-") for part in path.relative_to(run_dir).parts):
+            continue
+        key = path.relative_to(run_dir).as_posix()
+        hashes[key] = sha256_file(path)
     return hashes
 
 
 class RunManifest(StrictModel):
-    """BASELINE §35 fields plus P00 extensions. Synthetic smoke only."""
+    """BASELINE §35 fields plus P00/P01 extensions."""
 
     schema_version: Literal["1"] = "1"
     run_id: str
-    run_kind: Literal["synthetic_engine_smoke"] = "synthetic_engine_smoke"
+    run_kind: Literal["synthetic_engine_smoke", "toy4_f0_simulation"] = (
+        "synthetic_engine_smoke"
+    )
     political_mode: None = None
-    status: Literal["running", "completed", "failed"]
+    status: Literal["running", "completed", "paused", "failed"]
     failure_message: str | None = None
     started_at: datetime
     finished_at: datetime | None = None
@@ -190,6 +202,13 @@ class RunManifest(StrictModel):
     deterministic_replay_digest: str = ""
     dependency_versions: dict[str, str]
     research_warnings: list[str]
+    engine_version: str | None = None
+    completed_ticks: int = 0
+    last_completed_quarter: str | None = None
+    input_artifact_hashes: dict[str, str] = {}
+    initial_recipe_hash: str | None = None
+    parent_run_id: str | None = None
+    resumed_from_checkpoint: str | None = None
 
 
 def write_manifest_atomic(run_dir: Path, manifest: RunManifest) -> Path:
@@ -209,12 +228,22 @@ def manifest_preamble(
     contract: ResearchContract,
     root: Path,
     baseline_hash: str,
+    run_kind: Literal["synthetic_engine_smoke", "toy4_f0_simulation"] = (
+        "synthetic_engine_smoke"
+    ),
+    parameter_vector: dict[str, float] | None = None,
+    input_artifact_hashes: dict[str, str] | None = None,
+    initial_recipe_hash: str | None = None,
+    engine_version: str | None = None,
+    parent_run_id: str | None = None,
+    resumed_from_checkpoint: str | None = None,
 ) -> RunManifest:
     """Assemble the status=running manifest right after the run directory exists."""
     env = capture_environment()
     git = capture_git(root)
     return RunManifest(
         run_id=run_id,
+        run_kind=run_kind,
         status="running",
         started_at=datetime.now(UTC),
         baseline_version=contract.baseline_version,
@@ -227,7 +256,7 @@ def manifest_preamble(
         lock_hash=compute_lock_hash(root),
         scenario_hash=compute_scenario_hash(spec),
         data_manifest_hash=compute_data_manifest_hash(root),
-        parameter_hash=compute_parameter_hash({}),
+        parameter_hash=compute_parameter_hash(parameter_vector or {}),
         seed=spec.seed,
         households=spec.households,
         enterprises=spec.enterprises,
@@ -238,21 +267,34 @@ def manifest_preamble(
         rng_scheme_version="pcg64-sha256-module-v1",
         dependency_versions=env["dependency_versions"],
         research_warnings=list(contract.research_warnings),
+        engine_version=engine_version,
+        input_artifact_hashes=dict(input_artifact_hashes or {}),
+        initial_recipe_hash=initial_recipe_hash,
+        parent_run_id=parent_run_id,
+        resumed_from_checkpoint=resumed_from_checkpoint,
     )
 
 
 def finalize_manifest(
     running: RunManifest,
     *,
-    status: Literal["completed", "failed"],
+    status: Literal["completed", "paused", "failed"],
     output_hashes: dict[str, str],
     rng_draws_count: int,
     rng_draws_by_module: dict[str, int],
     stochastic_modules_active: list[str],
     deterministic_replay_digest: str,
     failure_message: str | None = None,
+    completed_ticks: int | None = None,
+    last_completed_quarter: str | None = None,
 ) -> RunManifest:
-    """Return the terminal manifest with evidence fields filled in."""
+    """Return the terminal manifest with evidence fields filled in.
+
+    ``paused`` may carry a valid prefix digest; ``failed`` always carries an
+    empty terminal digest. A paused run is never relabelled completed.
+    """
+    if completed_ticks is None and status == "completed":
+        completed_ticks = running.ticks
     return running.model_copy(
         update={
             "status": status,
@@ -262,7 +304,11 @@ def finalize_manifest(
             "rng_draws_count": rng_draws_count,
             "rng_draws_by_module": dict(rng_draws_by_module),
             "stochastic_modules_active": list(stochastic_modules_active),
-            "deterministic_replay_digest": deterministic_replay_digest,
+            "deterministic_replay_digest": (
+                deterministic_replay_digest if status != "failed" else ""
+            ),
+            "completed_ticks": completed_ticks if completed_ticks is not None else 0,
+            "last_completed_quarter": last_completed_quarter,
         }
     )
 

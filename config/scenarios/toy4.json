@@ -1,0 +1,63 @@
+{
+  "schema_version": "1",
+  "scenario_id": "toy4",
+  "kind": "toy4",
+  "start": "1957Q1",
+  "ticks": 116,
+  "households": 1600,
+  "enterprises": 40,
+  "region_ids": [
+    "budapest",
+    "pest",
+    "borsod_abauj_zemplen",
+    "heves",
+    "nograd",
+    "fejer",
+    "komarom",
+    "veszprem",
+    "gyor_sopron",
+    "vas",
+    "zala",
+    "baranya",
+    "somogy",
+    "tolna",
+    "hajdu_bihar",
+    "szabolcs_szatmar",
+    "szolnok",
+    "bacs_kiskun",
+    "bekes",
+    "csongrad"
+  ],
+  "commodities": ["energy", "capital_goods", "food", "consumer_goods"],
+  "seed": 1729,
+  "stochastic": true,
+  "output_policy": "ensemble_compact",
+  "forcing_ids": ["p01_toy4_import_supply", "p01_toy4_export_orders"],
+  "initial_ids": [],
+  "parameter_ids": [],
+  "toy4_parameters": {
+    "equivalent_households": 1600.0,
+    "prices": [1.0, 4.0, 2.0, 3.0],
+    "desired_per_person": [0.4, 0.0, 2.0, 1.0],
+    "income_per_person": 6.0,
+    "sector_capacity_totals": [2500.0, 600.0, 3500.0, 2300.0],
+    "target_utilization": 0.9,
+    "input_coefficients": [
+      [0.05, 0.02, 0.0, 0.0],
+      [0.4, 0.05, 0.0, 0.0],
+      [0.2, 0.04, 0.0, 0.0],
+      [0.35, 0.08, 0.1, 0.0]
+    ],
+    "retail_release_fraction": [0.2, 0.0, 1.0, 1.0],
+    "regional_access_multiplier": [
+      0.5, 1.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+      1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+    ]
+  },
+  "toy4_initial": {
+    "wholesale_inventory": [2000.0, 700.0, 0.0, 0.0],
+    "retail_inventory_totals": [300.0, 0.0, 1000.0, 800.0],
+    "input_stock_target_quarters": 1.0,
+    "household_cash": 0.0
+  }
+}

@@ -97,21 +97,19 @@ def write_summary(summary: dict[str, Any], directory: Path) -> Path:
 
 def write_duckdb(
     directory: Path,
-    aggregates: pl.DataFrame,
-    events: pl.DataFrame,
+    tables: dict[str, pl.DataFrame],
     micro_parquets: dict[str, Path] | None = None,
 ) -> Path:
-    """Materialize aggregates/events; full-policy micro becomes parquet views."""
+    """Materialize named tables; full-policy micro becomes parquet views."""
     path = directory / "trajectory.duckdb"
     connection = duckdb.connect(str(path))
     try:
         connection.execute("SET threads TO 1")
-        connection.register("aggregates_arrow", aggregates.to_arrow())
-        connection.execute("CREATE TABLE aggregates AS SELECT * FROM aggregates_arrow")
-        connection.unregister("aggregates_arrow")
-        connection.register("events_arrow", events.to_arrow())
-        connection.execute("CREATE TABLE events AS SELECT * FROM events_arrow")
-        connection.unregister("events_arrow")
+        for name, frame in tables.items():
+            registered = f"{name}_arrow"
+            connection.register(registered, frame.to_arrow())
+            connection.execute(f"CREATE TABLE {name} AS SELECT * FROM {registered}")
+            connection.unregister(registered)
         for view_name, parquet_path in (micro_parquets or {}).items():
             connection.execute(
                 f"CREATE VIEW {view_name} AS SELECT * FROM read_parquet('{parquet_path}')"

@@ -119,3 +119,17 @@ variables:
     original_frequency: "static"
     aggregation: null
     notes: "Soft budget constraint strength latent parameter: literature prior + calibration + sensitivity + uncertainty required; never observed evidence (BASELINE §22.5)."
+  - variable_id: "toy4_import_supply"
+    semantic_kind: "external"
+    allowed_roles: ["exogenous_forcing"]
+    unit: "toy4_commodity_unit"
+    original_frequency: "quarterly"
+    aggregation: "sum"
+    notes: "Deterministic Toy-4 import supply per commodity; synthetic engineering fixture, not a historical trade series. toy4_commodity_unit: one independent unit per commodity; never sum across commodities."
+  - variable_id: "toy4_export_orders"
+    semantic_kind: "external"
+    allowed_roles: ["exogenous_forcing"]
+    unit: "toy4_commodity_unit"
+    original_frequency: "quarterly"
+    aggregation: "sum"
+    notes: "Deterministic Toy-4 export orders per commodity; synthetic engineering fixture, not a historical trade series. toy4_commodity_unit: one independent unit per commodity; never sum across commodities."

@@ -380,3 +380,23 @@ sources:
       notes: "Real rule/price anchor sources not obtained. Fabricating a CSV or claiming observed status is forbidden."
     coverage_notes: "No coverage: reconstruction inputs unresolved."
     notes: "Registered as requirement + uncertainty only; no reconstruction function implemented in P00."
+  - source_id: p01_toy4_fixture
+    institution: "HSM Lab local fixture"
+    dataset: "P01 Toy-4 deterministic forcing fixtures"
+    locator: "fixture:p01-toy4"
+    expected_format: ["PARQUET"]
+    expected_roles: ["exogenous_forcing"]
+    retrieval_method: "local deterministic generation inside this repository"
+    access_status: "public_metadata"
+    audit_status: "metadata_checked"
+    rights:
+      license_status: "verified"
+      license_name: "Locally generated synthetic fixture (no third-party rights)"
+      terms_locator: "fixture:p01-toy4"
+      evidence_quote: "generated locally by this repository; contains no third-party data"
+      checked_at: "2026-10-07T00:00:00Z"
+      download_allowed: true
+      redistribution_allowed: true
+      notes: "synthetic fixture rights block; no external dataset involved"
+    coverage_notes: "116 quarters x 4 commodities national grid; deterministic engineering values."
+    notes: "Synthetic forcing for the Toy-4 slice; registering it does not make real historical sources ready."
