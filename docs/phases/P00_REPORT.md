@@ -273,3 +273,30 @@ therefore remain numerically inadmissible until someone declares the rule.
 Re-verification: `pytest -q` → **132 passed** (+3: undeclared-rule refusal for each
 of sum/mean/end_of_period); `ruff`/strict `mypy` pass; CLI smoke digest unchanged
 (`1fda99b1a923320d…`, 42,000 draws).
+
+## 14. Final gate — independent review verdict
+
+Five independent review rounds (fresh frozen-env audits, executed counterexamples,
+full gates each round):
+
+| Round | Verdict | Defects | Fixed in |
+|---|---|---|---|
+| 1 | PATCH | P1–P7 (6 major, 1 minor) | ae680cf |
+| 2 | PATCH | R1–R5 (4 major, 1 minor); P1/P2/P4/P6/P7 verified | 6dcb58d |
+| 3 | PATCH | N1–N4 (3 major, 1 minor); R1–R5 verified | 3e171a0 |
+| 4 | PATCH | D1 (1 major); N1/N2/N4 verified | bdb4720 |
+| 5 | **PASS** | none; P1–P7, R1–R5, N1–N4, D1 all independently verified | — |
+
+Round-5 evidence highlights (reviewer-executed): `uv sync --frozen --no-cache` into a
+fresh environment (95 packages, CPython 3.12.14 arm64); pytest **132 passed**; ruff
+and strict mypy clean; baseline byte-hash `1f5b23…61b6f` unchanged from the original
+commit; doctor with the real offline SocioVerse store smoke passed with API keys
+stripped; D1 challenged with three undeclared-rule counterexamples plus six
+positive/mismatch controls — all behaved correctly; fresh smoke/scaling benchmarks
+reproduced (max peak RSS 224,395,264 B ≈ 0.209 GiB; 10k→20k ratios 1.697/1.759,
+no needs_profile; 11/12 scaling cases honestly flagged measurement_too_short);
+original and fresh manifests/benchmark artifacts independently verified.
+
+Scope of this verdict: the P00 engineering foundation only. Historical simulation,
+calibration, material balance, data acquisition and F2 performance remain
+unimplemented and unclaimed.
