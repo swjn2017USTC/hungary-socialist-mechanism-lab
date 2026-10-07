@@ -183,3 +183,40 @@ rights).
 - `outputs/` (proof runs, benchmark trees, audit reports) is local and
   gitignored; only the two compact benchmark JSONs under `benchmarks/` are
   tracked.
+
+---
+
+## 10. Revision 1 — independent-review patches (P1–P7)
+
+Round-1 independent review verdict: **PATCH** (6 major, 1 minor). All defects
+were repaired; the verification battery was then re-run in full.
+
+| Repair | Change |
+|---|---|
+| P1 wrong-loader admission | Every public loader now enforces its concrete artifact type before admission, hashing or parsing (`_require_role`); `load_targets` keeps requiring an explicit `TargetUse`. |
+| P2 payload/metadata binding | Numeric payloads must fall inside the declared target/forcing windows and match declared initial anchor dates; reserved-window rows are refused by payload year even under lying metadata; unit and original frequency must be *known* and agree between table, provenance and variable; `goods` is banned in data tables and an optional explicit commodity vocabulary (`DataRegistry.load(allowed_commodities=…)`) is enforced when declared. |
+| P3 lineage | Admission requires a real `raw_sha256`; non-synthetic provenance must match the source's institution/dataset/locator and rights fields; `anchor_ids` join `derived_from` in cycle detection; reconstruction anchors must be grade A/B initial-state artifacts (acyclic + every grade B requires anchors ⇒ grounding in grade A); grade-S assumptions cannot anchor anything. |
+| P4 prior declarations | `validate_parameter` compares literature_refs, prior_description, bounds.lower/upper, uncertainty_notes and status fields between the prior file and the registry declaration; any disagreement is refused. |
+| P5 failed-run honesty | Failed manifests record the RNG draws actually taken at the point of failure (and the modules that took them); the replay digest stays absent rather than invented. |
+| P6 SocioVerse round trip | Parquet↔DuckDB equality is content-level (all fields, JSON parsed semantically) and disagreement raises instead of flagging; the doctor gate therefore fails on corruption. |
+| P7 dead weight | Removed `EVENT_COLUMNS`, `MICRO_COLUMNS`, `_AGGREGATE_SCHEMA`, `check_core_window`, `import_socioverse`, `SMOKE_TICKS` and the vacuous import-guard test. |
+
+Re-verification after patches (this machine, frozen env):
+
+- `uv run pytest -q` → **103 passed** (89 → 103: +15 adversarial tests covering
+  wrong-loader calls with a read spy, hidden reserved rows, unit/vocabulary
+  violations, missing raw digests, attribution drift, self/acyclic anchor
+  rules, grade-A date binding, prior-file field drift, failure-time draw
+  accounting, and Parquet content corruption);
+- `uv run ruff check .` → pass; `uv run mypy src/hsm_lab` → strict pass (23 files);
+- `hsm run` smoke → completed, 42,000 draws, replay digest `1fda99b1a923320d…`
+  unchanged versus the original proof (workload untouched);
+- `hsm doctor --socioverse-smoke` → pass with content-level equality true;
+- `hsm data audit` → unchanged honest state (`registry_valid=true`,
+  `sources_ready=false`, artifacts 0).
+
+The reviewer's original counterexamples (validation TARGET through
+`load_forcing`/`load_initial`; 1986 row under 1970-declared metadata; missing
+raw digest with wrong attribution; self-anchored grade B; prior-file bounds
+[20,30] vs [0,1]; failed manifest reporting zero draws; corrupted
+metrics.parquet flagged as matching) all now fail closed.

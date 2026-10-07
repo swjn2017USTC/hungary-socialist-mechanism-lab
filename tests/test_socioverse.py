@@ -68,3 +68,22 @@ def test_socioverse_never_imports_into_runtime() -> None:
     )
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.strip() == "lazy-ok"
+
+
+def test_parquet_content_corruption_fails_the_smoke(tmp_path, monkeypatch) -> None:
+    """Same row count, different values: the round trip must fail (review P6)."""
+    import polars as pl
+
+    from hsm_lab.contract.schemas import ResearchGateError
+
+    real_read = pl.read_parquet
+
+    def corrupted(path, *args, **kwargs):  # noqa: ANN002, ANN003
+        frame = real_read(path, *args, **kwargs)
+        if str(path).endswith("metrics.parquet"):
+            frame = frame.with_columns(pl.lit(999).cast(pl.Float64).alias("probe_total"))
+        return frame
+
+    monkeypatch.setattr(pl, "read_parquet", corrupted)
+    with pytest.raises(ResearchGateError, match="metrics.parquet content disagrees"):
+        smoke_socioverse(tmp_path / "store")

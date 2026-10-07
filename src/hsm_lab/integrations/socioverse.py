@@ -14,26 +14,12 @@ Pinned-0.2.0 API notes (verified against the installed wheel):
 from __future__ import annotations
 
 from importlib import import_module
-from importlib.metadata import version as package_version
 from pathlib import Path
 from typing import Any
 
 from hsm_lab.contract.schemas import ResearchGateError
 
 STUDY_ID = "p00-smoke"
-
-
-def import_socioverse() -> dict[str, str]:
-    """Lazy-import the pinned integration; return distribution facts."""
-    try:
-        module = import_module("socioverse")
-        return {
-            "distribution": "socioverse2",
-            "version": package_version("socioverse2"),
-            "module": module.__name__,
-        }
-    except Exception as exc:  # noqa: BLE001 - surface the real blocker
-        raise ResearchGateError(f"socioverse import failed: {type(exc).__name__}: {exc}") from exc
 
 
 def smoke_socioverse(directory: Path) -> dict[str, Any]:
@@ -79,12 +65,13 @@ def smoke_socioverse(directory: Path) -> dict[str, Any]:
     connection = open_readonly(db_path)
     try:
         panel_rows = connection.execute(
-            "SELECT agent_id, step, CAST(state AS VARCHAR) AS state "
+            "SELECT agent_id, step, CAST(state AS VARCHAR) AS state, action_kind, "
+            "CAST(action_payload AS VARCHAR) AS action_payload "
             "FROM panel ORDER BY agent_id, step"
         ).fetchall()
         evidence["panel_rows"] = len(panel_rows)
         evidence["panel_primary_keys_unique"] = len(
-            {(agent, step) for agent, step, _ in panel_rows}
+            {(agent, step) for agent, step, *_ in panel_rows}
         ) == len(panel_rows)
         evidence["state_probe_values"] = {
             f"step{step}": sorted(
@@ -105,10 +92,45 @@ def smoke_socioverse(directory: Path) -> dict[str, Any]:
 
     import polars as pl
 
+    # Content-level round-trip equality: compare every field, semantically
+    # for JSON columns; disagreement fails the smoke instead of flagging.
+    def _json_or_none(text: object) -> object:
+        import json as _json
+
+        return _json.loads(str(text)) if text is not None else None
+
     panel_parquet = pl.read_parquet(directory / "panel.parquet")
     metrics_parquet = pl.read_parquet(directory / "metrics.parquet")
+    panel_from_parquet = sorted(
+        (
+            row[0],
+            row[1],
+            _json_or_none(row[2]),
+            row[3],
+            _json_or_none(row[4]),
+        )
+        for row in panel_parquet.iter_rows()
+    )
+    panel_from_db = sorted(
+        (row[0], row[1], _json_or_none(row[2]), row[3], _json_or_none(row[4]))
+        for row in panel_rows
+    )
+    metrics_from_parquet = sorted(
+        (row[0], row[1]) for row in metrics_parquet.iter_rows()
+    )
+    metrics_from_db = sorted((row[0], row[1]) for row in metrics_rows)
+    if panel_from_parquet != panel_from_db:
+        raise ResearchGateError(
+            "socioverse smoke: panel.parquet content disagrees with the DuckDB panel:\n"
+            f"  parquet: {panel_from_parquet}\n  db:      {panel_from_db}"
+        )
+    if metrics_from_parquet != metrics_from_db:
+        raise ResearchGateError(
+            "socioverse smoke: metrics.parquet content disagrees with the DuckDB "
+            f"metrics:\n  parquet: {metrics_from_parquet}\n  db:      {metrics_from_db}"
+        )
     evidence["panel_parquet_rows"] = panel_parquet.height
     evidence["metrics_parquet_rows"] = metrics_parquet.height
-    evidence["panel_parquet_matches_db"] = panel_parquet.height == evidence["panel_rows"]
-    evidence["metrics_parquet_matches_db"] = metrics_parquet.height == len(metrics_rows)
+    evidence["panel_parquet_matches_db"] = True  # enforced above, else raised
+    evidence["metrics_parquet_matches_db"] = True
     return evidence

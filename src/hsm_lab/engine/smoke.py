@@ -371,13 +371,19 @@ def run_smoke(
                     writer.close()
                 except Exception:  # noqa: BLE001  # pragma: no cover - best effort
                     pass
+        # Report the RNG state actually reached before the failure - never a
+        # fabricated zero - and leave the replay digest absent rather than
+        # inventing a completed result.
+        draws_by_module = rng.draws_by_module() if rng is not None else {}
         failed = finalize_manifest(
             running,
             status="failed",
             output_hashes={},
-            rng_draws_count=0,
-            rng_draws_by_module={},
-            stochastic_modules_active=[],
+            rng_draws_count=sum(draws_by_module.values()),
+            rng_draws_by_module=draws_by_module,
+            stochastic_modules_active=[
+                module for module, count in draws_by_module.items() if count > 0
+            ],
             deterministic_replay_digest="",
             failure_message=f"{type(exc).__name__}: {exc}",
         )

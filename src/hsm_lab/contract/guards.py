@@ -16,7 +16,6 @@ from pydantic import ValidationError
 
 from hsm_lab.contract.schemas import (
     ConfigError,
-    Quarter,
     ResearchContract,
     ResearchGateError,
     ScenarioSpec,
@@ -95,14 +94,3 @@ def verify_baseline(path: Path, contract: ResearchContract) -> str:
         )
     return digest
 
-
-def check_core_window(start: Quarter, ticks: int, contract: ResearchContract) -> Quarter:
-    """Return the end quarter after asserting the whole window is inside core."""
-    if ticks < 1:
-        raise ConfigError(f"ticks must be >= 1, got {ticks}")
-    end = start.advance(ticks - 1)
-    if not contract.in_core(start) or not contract.in_core(end):
-        raise ResearchGateError(
-            f"window {start}..{end} outside core {contract.core_start}..{contract.core_end}"
-        )
-    return end

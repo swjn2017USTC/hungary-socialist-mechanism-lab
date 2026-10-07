@@ -73,7 +73,7 @@ def _initial_artifact(tmp_path, *, grade, evidence, observation_at, anchor_ids=(
         "source_id": "src_fixture",
         "role": "initial_state",
         "grade": grade,
-        "initial_at": "1957Q1",
+        "initial_at": "1957-01-01",
         "observation_at": observation_at,
         "anchor_ids": list(anchor_ids),
     }
@@ -301,3 +301,112 @@ def test_unknown_rights_cannot_grant_downloads() -> None:
             "redistribution_allowed": True,
             "notes": "missing evidence",
         })
+
+
+# ----------------------------------------------------------------------
+# Review round 1: anchor lineage and payload/declaration agreement.
+# ----------------------------------------------------------------------
+def test_self_anchor_rejected(tmp_path) -> None:
+    artifact = _initial_artifact(
+        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        anchor_ids=["initial_B_reconstructed"],
+    )
+    with pytest.raises(ConfigError, match="cycle"):
+        make_registry(
+            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[artifact]
+        )
+
+
+def test_anchor_cycle_rejected(tmp_path) -> None:
+    first = _initial_artifact(
+        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        anchor_ids=["initial_B_reconstructed__2"],
+    )
+    first["artifact_id"] = "initial_B_reconstructed__1"
+    first["path"] = "fixtures/initial_B_reconstructed__1.parquet"
+    second = _initial_artifact(
+        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        anchor_ids=["initial_B_reconstructed__1"],
+    )
+    second["artifact_id"] = "initial_B_reconstructed__2"
+    second["path"] = "fixtures/initial_B_reconstructed__2.parquet"
+    with pytest.raises(ConfigError, match="cycle"):
+        make_registry(
+            tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+            artifacts=[first, second],
+        )
+
+
+def test_structural_assumption_anchor_rejected(tmp_path) -> None:
+    assumption = _initial_artifact(
+        tmp_path, grade="S", evidence="structural_assumption", observation_at="1957-01-01"
+    )
+    assumption["artifact_id"] = "assumption_anchor"
+    assumption["path"] = "fixtures/assumption_anchor.parquet"
+    bridged = _initial_artifact(
+        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        anchor_ids=["assumption_anchor"],
+    )
+    with pytest.raises(ConfigError, match="grade A or B"):
+        make_registry(
+            tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+            artifacts=[assumption, bridged],
+        )
+
+
+def test_grade_a_payload_must_sit_at_observation_date(tmp_path) -> None:
+    """File at 1960-01-01 declared as a 1957 observed state is refused."""
+    from hsm_lab.contract.schemas import ResearchGateError
+
+    lying = _anchor_artifact(tmp_path)
+    lying["initial_at"] = "1957-01-01"
+    lying["observation_at"] = "1957-01-01"
+    registry = make_registry(
+        tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[lying]
+    )
+    with pytest.raises(ResearchGateError, match="does not match the declared observation_at"):
+        registry.load_initial(registry.artifacts["census_1960"])
+
+
+def test_prior_file_field_disagreements_rejected(tmp_path) -> None:
+    from hsm_lab.contract.schemas import ResearchGateError
+
+    base = _parameter_artifact(tmp_path, evidence="literature_proxy")
+    registry = make_registry(
+        tmp_path, sources=[source_spec()], variables=PARAM_VARIABLE, artifacts=[base]
+    )
+    assert registry.validate_parameter(registry.artifacts["param_sbc"])[
+        "calibration_status"
+    ] == "not_calibrated"
+
+    payload = json.loads((tmp_path / "fixtures" / "prior.json").read_text(encoding="utf-8"))
+    payload["bounds"] = {"lower": 20.0, "upper": 30.0}
+    (tmp_path / "fixtures" / "prior.json").write_text(
+        json.dumps(payload), encoding="utf-8"
+    )
+    digest = sha256_file(tmp_path / "fixtures" / "prior.json")
+    drifted = {**base}
+    drifted["provenance"] = {
+        **base["provenance"], "artifact_sha256": digest, "raw_sha256": digest
+    }
+    registry2 = make_registry(
+        tmp_path, sources=[source_spec()], variables=PARAM_VARIABLE, artifacts=[drifted]
+    )
+    with pytest.raises(ResearchGateError, match="bounds.lower"):
+        registry2.validate_parameter(registry2.artifacts["param_sbc"])
+
+    payload["bounds"] = {"lower": 0.0, "upper": 1.0}
+    payload["literature_refs"] = ["Not Actually Cited (1999)"]
+    (tmp_path / "fixtures" / "prior.json").write_text(
+        json.dumps(payload), encoding="utf-8"
+    )
+    digest3 = sha256_file(tmp_path / "fixtures" / "prior.json")
+    drifted3 = {
+        **base,
+        "provenance": {**base["provenance"], "artifact_sha256": digest3, "raw_sha256": digest3},
+    }
+    registry3 = make_registry(
+        tmp_path, sources=[source_spec()], variables=PARAM_VARIABLE, artifacts=[drifted3]
+    )
+    with pytest.raises(ResearchGateError, match="literature_refs"):
+        registry3.validate_parameter(registry3.artifacts["param_sbc"])

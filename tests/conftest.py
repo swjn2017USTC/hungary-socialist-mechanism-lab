@@ -151,6 +151,7 @@ def make_registry(
     sources: list[dict],
     variables: list[dict],
     artifacts: list[dict],
+    allowed_commodities: list[str] | None = None,
 ) -> Any:
     """Materialize a complete fixture registry under ``root`` and load it."""
     (root / "config").mkdir(parents=True, exist_ok=True)
@@ -174,7 +175,11 @@ def make_registry(
     )
     from hsm_lab.data.registry import DataRegistry
 
-    return DataRegistry.load(root, extra_roots=(root / "fixtures",))
+    return DataRegistry.load(
+        root,
+        extra_roots=(root / "fixtures",),
+        allowed_commodities=allowed_commodities,
+    )
 
 
 def write_long_parquet(path: Path, rows: list[dict[str, Any]]) -> str:

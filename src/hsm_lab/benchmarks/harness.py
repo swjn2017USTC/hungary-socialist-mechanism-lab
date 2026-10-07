@@ -38,7 +38,6 @@ SCALING_CASES: tuple[tuple[int, int], ...] = (
     (30000, 300),
     (50000, 500),
 )
-SMOKE_TICKS = (10,)
 SCALING_TICKS = (10, 116)
 
 _BENCHMARK_NOTES = (

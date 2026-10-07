@@ -29,31 +29,6 @@ AGGREGATE_COLUMNS = [
     "probe_sum",
     "probe_mean",
 ]
-EVENT_COLUMNS = ["tick", "quarter", "event"]
-MICRO_COLUMNS = [
-    "tick",
-    "quarter",
-    "actor_id",
-    "region_id",
-    "commodity_id",
-    "weight",
-    "probe_value",
-]
-
-_AGGREGATE_SCHEMA = pa.schema(
-    [
-        ("tick", pa.int64()),
-        ("quarter", pa.string()),
-        ("actor_kind", pa.string()),
-        ("region_id", pa.string()),
-        ("commodity_id", pa.string()),
-        ("count", pa.int64()),
-        ("weight_sum", pa.float64()),
-        ("probe_sum", pa.float64()),
-        ("probe_mean", pa.float64()),
-    ]
-)
-
 _MICRO_SCHEMA = pa.schema(
     [
         ("tick", pa.int64()),

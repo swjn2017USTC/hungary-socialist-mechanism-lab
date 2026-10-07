@@ -11,6 +11,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from hsm_lab.contract.guards import load_research_contract, sha256_file
 from hsm_lab.contract.schemas import (
+    FORBIDDEN_COMMODITY_IDS,
     ConfigError,
     EvidenceStatus,
     Frequency,
@@ -18,7 +19,7 @@ from hsm_lab.contract.schemas import (
     ResearchGateError,
     TargetUse,
 )
-from hsm_lab.data.frequency import validate_period
+from hsm_lab.data.frequency import period_sort_key, validate_period
 from hsm_lab.data.schemas import (
     RECONSTRUCTED_ONLY_VARIABLES,
     ROLE_FOR_SEMANTIC_KIND,
@@ -78,20 +79,55 @@ def _index_by_id(items: Sequence[Any], id_attr: str, manifest: str) -> dict[str,
 
 
 def _assert_no_cycles(artifacts: dict[str, ArtifactSpec]) -> None:
+    """Acyclic lineage over derived_from AND reconstruction anchors."""
+
     def visit(node: str, stack: list[str]) -> None:
         if node in stack:
             cycle = stack[stack.index(node) :] + [node]
-            raise ConfigError(f"derived_from cycle in artifact registry: {' -> '.join(cycle)}")
-        deps = artifacts[node].provenance.derived_from
+            raise ConfigError(
+                f"lineage cycle in artifact registry (derived_from/anchors): "
+                f"{' -> '.join(cycle)}"
+            )
+        artifact = artifacts[node]
+        deps = list(artifact.provenance.derived_from)
+        if isinstance(artifact, InitialArtifact):
+            deps = deps + list(artifact.anchor_ids)
         for dep in deps:
             if dep not in artifacts:
                 raise ConfigError(
-                    f"artifact {node}: derived_from references unknown artifact {dep!r}"
+                    f"artifact {node}: lineage references unknown artifact {dep!r}"
                 )
             visit(dep, stack + [node])
 
     for artifact_id in artifacts:
         visit(artifact_id, [])
+
+
+def _assert_anchor_evidence(artifacts: dict[str, ArtifactSpec]) -> None:
+    """Reconstruction anchors must themselves be historical evidence.
+
+    A grade-B reconstruction may only anchor on grade-A observations or other
+    grade-B reconstructions; because grade B requires at least one anchor and
+    the lineage graph is acyclic, every chain grounds in grade A. Structural
+    assumptions (S) are not evidence and cannot serve as anchors.
+    """
+    for artifact in artifacts.values():
+        if not isinstance(artifact, InitialArtifact):
+            continue
+        for anchor_id in artifact.anchor_ids:
+            if anchor_id not in artifacts:
+                raise ConfigError(
+                    f"artifact {artifact.artifact_id} references unknown anchor "
+                    f"{anchor_id!r}"
+                )
+            anchor = artifacts[anchor_id]
+            if not isinstance(anchor, InitialArtifact) or anchor.grade not in ("A", "B"):
+                raise ConfigError(
+                    f"artifact {artifact.artifact_id}: anchor {anchor_id} must be an "
+                    f"initial-state artifact of grade A or B (got "
+                    f"{type(anchor).__name__}"
+                    f"{getattr(anchor, 'grade', '')})"
+                )
 
 
 class DataRegistry:
@@ -105,6 +141,7 @@ class DataRegistry:
         variables: dict[str, VariableSpec],
         artifacts: dict[str, ArtifactSpec],
         extra_roots: tuple[Path, ...] = (),
+        allowed_commodities: frozenset[str] | None = None,
     ) -> None:
         self.root = root
         self.contract = contract
@@ -112,9 +149,19 @@ class DataRegistry:
         self.variables = variables
         self.artifacts = artifacts
         self.extra_roots = extra_roots
+        # Optional explicit commodity vocabulary for numeric admission; None
+        # means no ontology has been declared yet (only the forbidden ids
+        # apply). Never inferred, never a historical ontology simulator.
+        self.allowed_commodities = allowed_commodities
 
     @classmethod
-    def load(cls, root: Path, *, extra_roots: Sequence[Path] = ()) -> DataRegistry:
+    def load(
+        cls,
+        root: Path,
+        *,
+        extra_roots: Sequence[Path] = (),
+        allowed_commodities: Sequence[str] | None = None,
+    ) -> DataRegistry:
         contract = load_research_contract(root)
         manifests = root / "data" / "manifests"
         try:
@@ -136,6 +183,7 @@ class DataRegistry:
         variables = _index_by_id(variables_list, "variable_id", "variables.yml")
         artifacts = _index_by_id(artifacts_list, "artifact_id", "artifacts.yml")
         _assert_no_cycles(artifacts)
+        _assert_anchor_evidence(artifacts)
         for artifact in artifacts.values():
             if artifact.source_id not in sources:
                 raise ConfigError(
@@ -147,14 +195,12 @@ class DataRegistry:
                     f"artifact {artifact.artifact_id} references unknown variable "
                     f"{artifact.variable_id!r}"
                 )
-            if isinstance(artifact, InitialArtifact):
-                for anchor in artifact.anchor_ids:
-                    if anchor not in artifacts:
-                        raise ConfigError(
-                            f"artifact {artifact.artifact_id} references unknown anchor "
-                            f"{anchor!r}"
-                        )
-        return cls(root, contract, sources, variables, artifacts, tuple(extra_roots))
+        vocabulary = (
+            frozenset(allowed_commodities) if allowed_commodities is not None else None
+        )
+        return cls(
+            root, contract, sources, variables, artifacts, tuple(extra_roots), vocabulary
+        )
 
     def resolve_path(self, rel: str) -> Path:
         """Resolve a repo-relative artifact path inside declared roots only."""
@@ -200,10 +246,34 @@ class DataRegistry:
                 f"{artifact.role.value} (input != target != parameter)"
             )
         prov = artifact.provenance
-        if prov.rights.license_status != source.rights.license_status:
+        # Provenance must still point at the source it claims: attribution
+        # drift means the file's origin story no longer matches the registry.
+        if prov.evidence_status is not EvidenceStatus.SYNTHETIC_FIXTURE:
+            for field, declared, actual in (
+                ("source_institution", source.institution, prov.source_institution),
+                ("dataset", source.dataset, prov.dataset),
+                ("locator", source.locator, prov.locator),
+            ):
+                if actual != declared:
+                    raise ResearchGateError(
+                        f"artifact {aid}: provenance {field} {actual!r} does not match "
+                        f"source {source.source_id} ({declared!r})"
+                    )
+        rights_pairs: tuple[tuple[str, object, object], ...] = (
+            ("license_status", source.rights.license_status, prov.rights.license_status),
+            ("license_name", source.rights.license_name, prov.rights.license_name),
+            ("terms_locator", source.rights.terms_locator, prov.rights.terms_locator),
+        )
+        for rights_field, rights_declared, rights_actual in rights_pairs:
+            if rights_actual != rights_declared:
+                raise ResearchGateError(
+                    f"artifact {aid}: provenance rights.{rights_field} "
+                    f"{rights_actual!r} does not match source rights ({rights_declared!r})"
+                )
+        if prov.raw_sha256 is None:
             raise ResearchGateError(
-                f"artifact {aid}: provenance rights drift versus source rights "
-                f"({prov.rights.license_status} != {source.rights.license_status})"
+                f"artifact {aid}: admission requires a real raw digest; candidates "
+                "without an obtained raw file are never numerically admitted"
             )
         if prov.evidence_status is EvidenceStatus.SYNTHETIC_FIXTURE:
             if not prov.locator.startswith("fixture:"):
@@ -338,9 +408,30 @@ class DataRegistry:
         bad_commodities = [
             commodity
             for commodity in frame["commodity_id"].drop_nulls().unique().to_list()
-            if not commodity
+            if commodity in FORBIDDEN_COMMODITY_IDS
         ]
         if bad_commodities:
+            raise ResearchGateError(
+                f"artifact {artifact.artifact_id}: forbidden aggregated commodity id(s) "
+                f"{sorted(bad_commodities)} - the single-'goods' shortcut is banned"
+            )
+        if self.allowed_commodities is not None:
+            outside = [
+                commodity
+                for commodity in frame["commodity_id"].drop_nulls().unique().to_list()
+                if commodity not in self.allowed_commodities
+            ]
+            if outside:
+                raise ResearchGateError(
+                    f"artifact {artifact.artifact_id}: commodity id(s) {sorted(outside)} "
+                    "outside the declared commodity vocabulary"
+                )
+        empty_commodities = [
+            commodity
+            for commodity in frame["commodity_id"].drop_nulls().unique().to_list()
+            if not commodity
+        ]
+        if empty_commodities:
             raise ResearchGateError(
                 f"artifact {artifact.artifact_id}: empty commodity ids are not allowed"
             )
@@ -369,21 +460,132 @@ class DataRegistry:
                 f"(variable_id, period, region_id, commodity_id): "
                 f"{duplicated.head(3).to_dicts()}"
             )
+        self._check_payload_metadata(artifact, expected_frequency, units[0], frame)
         return frame
 
+    def _check_payload_metadata(
+        self,
+        artifact: ArtifactSpec,
+        expected_frequency: Frequency,
+        table_unit: str,
+        frame: pl.DataFrame,
+    ) -> None:
+        """Bind the numeric payload to the declared unit, dates and periods.
+
+        Metadata lies are not trusted: actual file periods must fall inside the
+        declared windows (targets/forcing) or equal the declared anchor dates
+        (initial state), and reserved-window target rows are refused even when
+        the metadata claims core-only coverage.
+        """
+        aid = artifact.artifact_id
+        variable = self.variables[artifact.variable_id]
+        if variable.unit is None:
+            raise ResearchGateError(
+                f"artifact {aid}: variable {variable.variable_id} has no declared unit; "
+                "unknown-unit variables are never numerically admitted"
+            )
+        if variable.original_frequency is None:
+            raise ResearchGateError(
+                f"artifact {aid}: variable {variable.variable_id} has no declared "
+                "original_frequency; unknown-frequency variables are never numerically "
+                "admitted"
+            )
+        if artifact.provenance.original_frequency is not variable.original_frequency:
+            raise ResearchGateError(
+                f"artifact {aid}: provenance original_frequency "
+                f"{artifact.provenance.original_frequency.value} disagrees with the "
+                f"variable declaration {variable.original_frequency.value}"
+            )
+        if table_unit != variable.unit:
+            raise ResearchGateError(
+                f"artifact {aid}: table unit {table_unit!r} does not match the declared "
+                f"variable unit {variable.unit!r}"
+            )
+        periods = frame["period"].to_list()
+        reserved_years = range(
+            self.contract.reserved_start.year, self.contract.reserved_end.year + 1
+        )
+        if isinstance(artifact, TargetArtifact):
+            declared = artifact.observed_period
+            if declared.frequency is not expected_frequency:
+                raise ResearchGateError(
+                    f"artifact {aid}: observed_period frequency "
+                    f"{declared.frequency.value} disagrees with the file's "
+                    f"{expected_frequency.value} periods"
+                )
+            start_key = period_sort_key(declared.start, declared.frequency)
+            end_key = period_sort_key(declared.end, declared.frequency)
+            for period in periods:
+                key = period_sort_key(period, expected_frequency)
+                if key < start_key or key > end_key:
+                    raise ResearchGateError(
+                        f"artifact {aid}: payload period {period} lies outside the "
+                        f"declared observed_period {declared.start}..{declared.end}"
+                    )
+                if int(period[:4]) in reserved_years:
+                    raise ResearchGateError(
+                        f"artifact {aid}: payload period {period} enters the reserved "
+                        f"window {self.contract.reserved_start}.."
+                        f"{self.contract.reserved_end}; hold-out rows are refused "
+                        "regardless of declared metadata"
+                    )
+        elif isinstance(artifact, ForcingArtifact):
+            declared = artifact.period
+            if declared.frequency is not expected_frequency:
+                raise ResearchGateError(
+                    f"artifact {aid}: declared period frequency "
+                    f"{declared.frequency.value} disagrees with the file's "
+                    f"{expected_frequency.value} periods"
+                )
+            start_key = period_sort_key(declared.start, declared.frequency)
+            end_key = period_sort_key(declared.end, declared.frequency)
+            for period in periods:
+                key = period_sort_key(period, expected_frequency)
+                if key < start_key or key > end_key:
+                    raise ResearchGateError(
+                        f"artifact {aid}: payload period {period} lies outside the "
+                        f"declared coverage {declared.start}..{declared.end}"
+                    )
+        elif isinstance(artifact, InitialArtifact):
+            # Grade A payloads sit at the real observation date; reconstructed
+            # or assumed payloads sit at the initial date they claim.
+            grade_a = artifact.grade.value == "A"
+            declared_date = artifact.observation_at if grade_a else artifact.initial_at
+            for period in periods:
+                if period != declared_date:
+                    raise ResearchGateError(
+                        f"artifact {aid}: payload period {period} does not match the "
+                        f"declared "
+                        f"{'observation_at' if grade_a else 'initial_at'} "
+                        f"{declared_date!r}; a later observation can never be renamed "
+                        "into an earlier state"
+                    )
+
+    def _require_role(self, artifact: ArtifactSpec, expected: type, loader: str) -> None:
+        """The loader decides the role, not the caller's casting habits."""
+        if not isinstance(artifact, expected):
+            raise ResearchGateError(
+                f"{loader} requires an artifact of type {expected.__name__}; got "
+                f"{type(artifact).__name__} for artifact {artifact.artifact_id} "
+                f"(role {artifact.role.value})"
+            )
+
     def load_forcing(self, artifact: ForcingArtifact) -> pl.DataFrame:
+        self._require_role(artifact, ForcingArtifact, "load_forcing")
         path = self.admit_artifact(artifact, numeric=True)
         return self._read_long_table(
             artifact, path, self._expected_table_frequency(artifact.provenance)
         )
 
     def load_initial(self, artifact: InitialArtifact) -> pl.DataFrame:
+        self._require_role(artifact, InitialArtifact, "load_initial")
         path = self.admit_artifact(artifact, numeric=True)
         return self._read_long_table(
             artifact, path, self._expected_table_frequency(artifact.provenance)
         )
 
     def load_targets(self, artifact: TargetArtifact, purpose: TargetUse) -> pl.DataFrame:
+        self._require_role(artifact, TargetArtifact, "load_targets")
         path = self.admit_artifact(artifact, numeric=True, purpose=purpose)
         return self._read_long_table(
             artifact, path, artifact.provenance.original_frequency
@@ -391,6 +593,7 @@ class DataRegistry:
 
     def validate_parameter(self, artifact: ParameterArtifact) -> dict[str, object]:
         """Validate an auditable prior declaration; never a calibrated value."""
+        self._require_role(artifact, ParameterArtifact, "validate_parameter")
         path = self.admit_artifact(artifact, numeric=False)
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -412,13 +615,23 @@ class DataRegistry:
             raise ResearchGateError(
                 f"artifact {artifact.artifact_id}: prior file variable_id mismatch"
             )
-        if prior.calibration_status != artifact.calibration_status or (
-            prior.sensitivity_status != artifact.sensitivity_status
+        # The prior file and the registry declaration duplicate the same
+        # research claim; they must agree on every field, and neither may
+        # silently override the other.
+        for field, declared, actual in (
+            ("literature_refs", sorted(artifact.literature_refs), sorted(prior.literature_refs)),
+            ("prior_description", artifact.prior_description, prior.prior_description),
+            ("bounds.lower", artifact.bounds.lower, prior.bounds.lower),
+            ("bounds.upper", artifact.bounds.upper, prior.bounds.upper),
+            ("uncertainty_notes", artifact.uncertainty_notes, prior.uncertainty_notes),
+            ("calibration_status", artifact.calibration_status, prior.calibration_status),
+            ("sensitivity_status", artifact.sensitivity_status, prior.sensitivity_status),
         ):
-            raise ResearchGateError(
-                f"artifact {artifact.artifact_id}: prior file status fields disagree with "
-                "the registry declaration"
-            )
+            if actual != declared:
+                raise ResearchGateError(
+                    f"artifact {artifact.artifact_id}: prior file {field} {actual!r} "
+                    f"disagrees with the registry declaration {declared!r}"
+                )
         return dict(payload)
 
 

@@ -305,3 +305,184 @@ def test_scenario_loader_rejects_unknown_scenario(repo_root) -> None:
         load_scenario(repo_root, "historical")
     with pytest.raises(ConfigError, match="unsupported scenario"):
         load_scenario(repo_root, "counterfactual_1973")
+
+
+# ----------------------------------------------------------------------
+# Review round 1 (P1/P2/P3): wrong-loader, payload binding and lineage gates.
+# ----------------------------------------------------------------------
+def test_target_rejected_by_every_wrong_loader_before_any_read(
+    tmp_path, monkeypatch
+) -> None:
+    """A TargetArtifact must be refused by forcing/initial/parameter loaders
+    before any numeric table is read (the read itself is spied to fail)."""
+    import hsm_lab.data.registry as registry_module
+
+    def no_read(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise AssertionError("numeric table read attempted for a wrong-role artifact")
+
+    monkeypatch.setattr(registry_module.pl, "read_parquet", no_read)
+    artifact = _target_artifact(
+        tmp_path, use="validation", periods=["1970", "1971"], values=[1.0, 2.0]
+    )
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=GDP_VARIABLES, artifacts=[artifact]
+    )
+    target = registry.artifacts["art_target_validation"]
+    with pytest.raises(
+        ResearchGateError, match="load_forcing requires an artifact of type ForcingArtifact"
+    ):
+        registry.load_forcing(target)  # type: ignore[arg-type]
+    with pytest.raises(
+        ResearchGateError, match="load_initial requires an artifact of type InitialArtifact"
+    ):
+        registry.load_initial(target)  # type: ignore[arg-type]
+    with pytest.raises(
+        ResearchGateError, match="validate_parameter requires an artifact of type ParameterArtifact"
+    ):
+        registry.validate_parameter(target)  # type: ignore[arg-type]
+    # the legitimate loader still works for the declared purpose - restore reads first
+    monkeypatch.undo()
+    assert registry.load_targets(target, TargetUse.VALIDATION).height == 2
+
+
+def test_forcing_rejected_by_target_loader(tmp_path) -> None:
+    artifact = _good_forcing_fixture(tmp_path)
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=FORCING_VARIABLES, artifacts=[artifact]
+    )
+    forcing = registry.artifacts["art_forcing"]
+    with pytest.raises(
+        ResearchGateError, match="load_targets requires an artifact of type TargetArtifact"
+    ):
+        registry.load_targets(forcing, TargetUse.CALIBRATION)  # type: ignore[arg-type]
+
+
+def test_reserved_payload_rows_rejected_even_under_core_metadata(tmp_path) -> None:
+    """A 1986 row hidden behind a core-declared observed_period is refused."""
+    artifact = _target_artifact(
+        tmp_path, use="calibration", periods=["1970", "1986"], values=[1.0, 88.0]
+    )
+    # metadata claims 1970..1970 while the file secretly carries 1986
+    artifact["observed_period"] = {"start": "1970", "end": "1970", "frequency": "annual"}
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=GDP_VARIABLES, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="outside the declared observed_period"):
+        registry.load_targets(
+            registry.artifacts["art_target_calibration"], TargetUse.CALIBRATION
+        )
+    artifact2 = _target_artifact(
+        tmp_path, use="calibration", periods=["1986"], values=[88.0]
+    )
+    artifact2["observed_period"] = {"start": "1986", "end": "1986", "frequency": "annual"}
+    registry2 = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=GDP_VARIABLES, artifacts=[artifact2]
+    )
+    with pytest.raises(ResearchGateError, match="reserved window"):
+        registry2.load_targets(
+            registry2.artifacts["art_target_calibration"], TargetUse.CALIBRATION
+        )
+
+
+def test_unit_mismatch_rejected(tmp_path) -> None:
+    rows = [
+        {
+            "variable_id": "world_oil_price",
+            "period": period,
+            "region_id": None,
+            "commodity_id": None,
+            "value": value,
+            "unit": "wrong-unit",
+        }
+        for period, value in [("1970-01", 1.0), ("1970-02", 2.0), ("1970-03", 3.0)]
+    ]
+    path = tmp_path / "fixtures" / "forcing_unit.parquet"
+    digest = write_long_parquet(path, rows)
+    artifact = _good_forcing_fixture(tmp_path)
+    artifact["path"] = "fixtures/forcing_unit.parquet"
+    artifact["provenance"]["artifact_sha256"] = digest
+    artifact["provenance"]["raw_sha256"] = digest
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=FORCING_VARIABLES, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="does not match the declared variable unit"):
+        registry.load_forcing(registry.artifacts["art_forcing"])
+
+
+def test_unknown_variable_unit_blocks_numeric_admission(tmp_path) -> None:
+    artifact = _good_forcing_fixture(tmp_path)
+    variables = [
+        variable_spec("world_oil_price", "external", "exogenous_forcing",
+                      unit=None, original_frequency="monthly")
+    ]
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=variables, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="no declared unit"):
+        registry.load_forcing(registry.artifacts["art_forcing"])
+
+
+def test_forbidden_goods_commodity_rejected_and_allowlist_enforced(tmp_path) -> None:
+    rows = [
+        {
+            "variable_id": "world_oil_price",
+            "period": period,
+            "region_id": None,
+            "commodity_id": "goods",
+            "value": value,
+            "unit": "fixture-unit",
+        }
+        for period, value in [("1970-01", 1.0), ("1970-02", 2.0), ("1970-03", 3.0)]
+    ]
+    path = tmp_path / "fixtures" / "forcing_goods.parquet"
+    digest = write_long_parquet(path, rows)
+    artifact = _good_forcing_fixture(tmp_path)
+    artifact["path"] = "fixtures/forcing_goods.parquet"
+    artifact["provenance"]["artifact_sha256"] = digest
+    artifact["provenance"]["raw_sha256"] = digest
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=FORCING_VARIABLES, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="single-'goods' shortcut is banned"):
+        registry.load_forcing(registry.artifacts["art_forcing"])
+    # declared vocabulary: a benign but unlisted id is refused too
+    rows[0]["commodity_id"] = rows[1]["commodity_id"] = rows[2]["commodity_id"] = "energy"
+    digest2 = write_long_parquet(path, rows)
+    artifact["provenance"]["artifact_sha256"] = digest2
+    artifact["provenance"]["raw_sha256"] = digest2
+    registry2 = make_registry(
+        tmp_path,
+        sources=GDP_SOURCE,
+        variables=FORCING_VARIABLES,
+        artifacts=[artifact],
+        allowed_commodities=["food", "capital_goods"],
+    )
+    with pytest.raises(ResearchGateError, match="outside the declared commodity vocabulary"):
+        registry2.load_forcing(registry2.artifacts["art_forcing"])
+
+
+def test_missing_raw_digest_rejected(tmp_path) -> None:
+    artifact = _good_forcing_fixture(tmp_path)
+    artifact["provenance"]["raw_sha256"] = None
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=FORCING_VARIABLES, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="raw digest"):
+        registry.load_forcing(registry.artifacts["art_forcing"])
+
+
+def test_source_attribution_drift_rejected(tmp_path) -> None:
+    artifact = _good_forcing_fixture(tmp_path)
+    artifact["provenance"]["source_institution"] = "Wrong Institute"
+    registry = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=FORCING_VARIABLES, artifacts=[artifact]
+    )
+    with pytest.raises(ResearchGateError, match="source_institution"):
+        registry.load_forcing(registry.artifacts["art_forcing"])
+    artifact2 = _good_forcing_fixture(tmp_path)
+    artifact2["provenance"]["locator"] = "https://wrong.example/source"
+    registry2 = make_registry(
+        tmp_path, sources=GDP_SOURCE, variables=FORCING_VARIABLES, artifacts=[artifact2]
+    )
+    with pytest.raises(ResearchGateError, match="locator"):
+        registry2.load_forcing(registry2.artifacts["art_forcing"])

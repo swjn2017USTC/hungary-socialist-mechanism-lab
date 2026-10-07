@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from pathlib import Path
 
 import duckdb
@@ -244,5 +243,34 @@ def test_numpy_digest_stability(contract, registry, tmp_path) -> None:
     assert other != first
 
 
-def test_unused_json_import_guard() -> None:  # keeps ruff honest about imports
-    assert json.dumps({"ok": True}) == '{"ok": true}'
+
+def test_io_failure_manifest_records_real_draws(contract, registry, tmp_path, monkeypatch) -> None:
+    """A late failure must not fabricate zero RNG usage (review P5)."""
+    import hsm_lab.engine.smoke as smoke_module
+    from hsm_lab.engine import rng as rng_module
+
+    actual = {"draws": 0}
+    original_uniform = rng_module.RngRegistry.uniform
+
+    def counting(self, module, size):  # noqa: ANN001, ANN202
+        draws = original_uniform(self, module, size)
+        actual["draws"] += draws.size
+        return draws
+
+    def boom(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise OSError("disk exploded during duckdb write")
+
+    monkeypatch.setattr(rng_module.RngRegistry, "uniform", counting)
+    monkeypatch.setattr(smoke_module, "write_duckdb", boom)
+    with pytest.raises(OSError, match="disk exploded"):
+        run_smoke(smoke_spec(contract), tmp_path / "late-fail", contract, registry)
+    payload = load_json(tmp_path / "late-fail" / "manifest.json")
+    assert payload["status"] == "failed"
+    assert actual["draws"] == 42_000
+    assert payload["rng_draws_count"] == 42_000, "failed manifest must report real draws"
+    assert set(payload["stochastic_modules_active"]) == {
+        "smoke.households",
+        "smoke.enterprises",
+    }
+    assert payload["rng_draws_by_module"]["smoke.households"] == 40_000
+    assert payload["deterministic_replay_digest"] == ""
