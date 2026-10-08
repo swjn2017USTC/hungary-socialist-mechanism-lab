@@ -233,12 +233,59 @@ initial transient can land in it.
 
 Resolving this requires a *mechanism* decision that the approved P02 plan does
 not authorise (it pins the net-order rule, the nearest-two sourcing rule and the
-transport-service requirement). Candidate directions, none implemented here:
-order up to a coverage target rather than net of stock; reserve logistics
-capacity for the transport sector's own inputs, or exempt them from the route
-service requirement; or add a national pooling fallback when a demand's declared
-sources are empty. Choosing one changes pinned behaviour and the pinned tests and
-should be taken as an explicit phase decision.
+transport-service requirement).
+
+### Order-up-to-cover experiment (run, measured, rejected)
+
+The pinned `hoarding_quarters` parameter already implements order-up-to-cover
+(`gross = max(desired × (1 + hoarding) − opening_input, 0)`), so the candidate
+remedy was measured by switching that existing toggle on rather than by changing
+code. It softens the transient but does **not** remove the absorbing state, and
+it was therefore not committed:
+
+| configuration (1,000 households / 100 organizations, 116 ticks) | mean activity | zero ticks |
+|---|---|---|
+| baseline (`hoarding_quarters = 0`) | 3,665 | 110 |
+| cover 0.5 quarter | 4,457 | 107 |
+| cover 1 quarter | 4,759 | 107 |
+| cover 2 quarters | 5,039 | 108 |
+| raw-materials capacity 34,000, no cover | 3,779 | 111 |
+| cover 1 quarter + raw-materials capacity 34,000 | 5,333 | 109 |
+| transport self-haul, no cover | 3,924 | 110 |
+| transport self-haul + cover 1 / 2 quarters | 4,768 / 5,041 | 107 / 108 |
+
+Per-tick tracing (temporary instrumentation, reverted) shows three compounding
+constraints rather than one, and cover only moves which of them binds:
+
+1. *Delivery collapse, baseline.* Intermediate-input orders
+   `131,742 → allocated 82,845 → delivered 9,324` at tick 1: 63% is allocated
+   but only 11% of the allocation is delivered, because transport output is
+   `63,000, 0, 30,371, 0, 0` for ticks 0…4 and cross-region routes carry ~89% of
+   the intermediate edges. Allocation itself is fine in this configuration.
+2. *Allocation collapse, cover on.* With a cover the orders run closer to
+   target (`181,032` at tick 1) and now the sellers ration instead:
+   `ordered 181,032 → allocated 74,269` (41%), and the binding input becomes a
+   *regional* raw-materials shortage (`raw_materials@region-19` ratio 0.587,
+   then `food@region-11` 0.084, then `raw_materials@region-0/1` at 0), with
+   42 → 221 of 354 input rows below ratio 1. Regional sourcing is limited to the
+   nearest two domestic producers, so raising the national raw-materials
+   capacity total does not help a region whose two declared sources are empty.
+3. *Transport decay.* The transport sector consumes only its *opening* input
+   stock (the pinned transport-first exception), so its buffer must be built one
+   quarter ahead; under any of these configurations its realized activity decays
+   `63,000 → 52,524 → 43,887 → 12,775 → 0` because its own energy/capital-goods
+   replenishment is itself rationed (and, in the baseline, gated by the transport
+   service it provides).
+
+A fix therefore needs a *re-balancing package* over fixture topology and
+capacity — enough raw-material producers (or a source fallback) so that every
+region can actually reach a universal input, a capacity total consistent with
+the declared target vector (aggregate raw-materials supply/use is 0.797 at
+target), a buffer policy that covers the transport sector's one-quarter pipeline,
+and a decision on whether the transport sector's own inputs are self-hauled.
+None of that is implemented or committed; the shipped default remains the
+baseline above, and the engine, invariants, determinism, checkpointing and
+benchmark gates are unaffected.
 
 ## Deviations and boundaries
 
