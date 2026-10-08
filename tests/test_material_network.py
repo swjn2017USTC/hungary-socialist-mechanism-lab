@@ -17,6 +17,10 @@ import pytest
 from pydantic import ValidationError
 
 from hsm_lab.contract.base import ConfigError
+from hsm_lab.contract.households import (
+    HouseholdParameters,
+    compile_household_catalog,
+)
 from hsm_lab.contract.material import (
     ORGANIZATION_TYPE_ORDER,
     CellOwnerKind,
@@ -34,6 +38,7 @@ from tests.test_material import (
     Fixture,
     bank,
     default_params,
+    household_params,
     hub,
     idle_source_tech,
     producer,
@@ -43,13 +48,15 @@ from tests.test_material import (
 )
 
 
+def _household_params_for_test() -> HouseholdParameters:
+    return household_params([0.0] * 8)
+
+
 def test_ksh_outcome_cannot_be_bound_as_material_forcing() -> None:
     """Outcome/target variables remain outside the runtime forcing contract."""
     root = Path(__file__).resolve().parents[1]
     payload = json.loads(
-        (root / "config" / "scenarios" / "intermediate8_external.json").read_text(
-            encoding="utf-8"
-        )
+        (root / "config" / "scenarios" / "intermediate8_external.json").read_text(encoding="utf-8")
     )
     payload["forcing_bindings"][0]["variable_id"] = "gdp"
     with pytest.raises(ValidationError, match="forcing binding variable"):
@@ -109,12 +116,8 @@ def test_default_graph_edge_order_is_canonical() -> None:
     )
     assert np.array_equal(key, np.arange(len(key)))
     # edge commodity/stage mirror the source cell (transfers never convert)
-    assert np.array_equal(
-        network.edge_commodity, network.cell_commodity[network.edge_source_cell]
-    )
-    assert np.array_equal(
-        network.edge_stage, network.cell_stage[network.edge_source_cell]
-    )
+    assert np.array_equal(network.edge_commodity, network.cell_commodity[network.edge_source_cell])
+    assert np.array_equal(network.edge_stage, network.cell_stage[network.edge_source_cell])
 
 
 def test_every_served_supplier_has_at_least_one_buyer() -> None:
@@ -144,9 +147,7 @@ def test_every_served_supplier_has_at_least_one_buyer() -> None:
 def test_same_region_edges_are_free() -> None:
     network = _default_network().network
     source_region = network.cell_region[network.edge_source_cell]
-    dest_region = network.cell_region[
-        np.maximum(network.edge_destination_cell, 0)
-    ]
+    dest_region = network.cell_region[np.maximum(network.edge_destination_cell, 0)]
     local = (network.edge_destination_cell >= 0) & (source_region == dest_region)
     assert np.all(network.edge_transport_per_unit[local] == 0.0)
     assert np.all(network.edge_transport_org[local] == -1)
@@ -161,7 +162,14 @@ def test_network_compile_is_deterministic_and_order_independent() -> None:
     routes = [
         route(1, "output", "food", "ready", 4, "retail", "food", "ready", RoutePurpose.RETAIL),
         route(
-            2, "output", "energy", "standard", 3, "wholesale", "energy", "standard",
+            2,
+            "output",
+            "energy",
+            "standard",
+            3,
+            "wholesale",
+            "energy",
+            "standard",
             RoutePurpose.PROCUREMENT,
         ),
     ]
@@ -260,8 +268,7 @@ def test_banks_hold_no_material_cells() -> None:
     bank_ids = {
         int(state.organization_id[row])
         for row in range(len(state.organization_id))
-        if int(state.organization_type[row])
-        == ORGANIZATION_TYPE_ORDER.index(OrganizationType.BANK)
+        if int(state.organization_type[row]) == ORGANIZATION_TYPE_ORDER.index(OrganizationType.BANK)
     }
     org_cells = network.cell_owner_kind == 0
     assert bank_ids
@@ -282,7 +289,14 @@ def test_retail_only_stocks_ready_food() -> None:
 
 def test_retail_route_must_match_purpose() -> None:
     bad = route(
-        1, "output", "food", "ready", 3, "retail", "food", "ready",
+        1,
+        "output",
+        "food",
+        "ready",
+        3,
+        "retail",
+        "food",
+        "ready",
         RoutePurpose.INTERMEDIATE,
     )
     with pytest.raises(ConfigError):
@@ -298,7 +312,14 @@ def test_route_weights_must_sum_to_one() -> None:
     routes = [
         route(1, "output", "food", "ready", 3, "retail", "food", "ready", RoutePurpose.RETAIL, 0.6),
         route(
-            2, "wholesale", "food", "ready", 3, "retail", "food", "ready",
+            2,
+            "wholesale",
+            "food",
+            "ready",
+            3,
+            "retail",
+            "food",
+            "ready",
             RoutePurpose.RETAIL,
             0.3,
         ),
@@ -315,17 +336,38 @@ def test_route_weights_must_sum_to_one() -> None:
 def test_at_most_two_suppliers_per_demand_cell() -> None:
     routes = [
         route(
-            1, "output", "food", "ready", 3, "retail", "food", "ready",
+            1,
+            "output",
+            "food",
+            "ready",
+            3,
+            "retail",
+            "food",
+            "ready",
             RoutePurpose.RETAIL,
             0.34,
         ),
         route(
-            2, "wholesale", "food", "ready", 3, "retail", "food", "ready",
+            2,
+            "wholesale",
+            "food",
+            "ready",
+            3,
+            "retail",
+            "food",
+            "ready",
             RoutePurpose.RETAIL,
             0.33,
         ),
         route(
-            4, "wholesale", "food", "ready", 3, "retail", "food", "ready",
+            4,
+            "wholesale",
+            "food",
+            "ready",
+            3,
+            "retail",
+            "food",
+            "ready",
             RoutePurpose.RETAIL,
             0.33,
         ),
@@ -422,11 +464,7 @@ def test_a_ninth_commandity_is_a_registry_plus_data_change(monkeypatch) -> None:
         TechnologySpec(
             technology_id="fertilizer_blending",
             inputs=[InputCoefficient(commodity_id="energy", coefficient=0.1)],
-            outputs=[
-                OutputCoefficient(
-                    commodity_id=new_id, stage="standard", coefficient=1.0
-                )
-            ],
+            outputs=[OutputCoefficient(commodity_id=new_id, stage="standard", coefficient=1.0)],
         ),
     ]
     orgs = [
@@ -463,6 +501,20 @@ def test_a_ninth_commandity_is_a_registry_plus_data_change(monkeypatch) -> None:
             weight=np.ones(1, dtype=np.float64),
             size=np.ones(1, dtype=np.float64),
             plot_participating=np.zeros(1, dtype=bool),
+            urban=np.zeros(1, dtype=bool),
+            occupation=np.zeros(1, dtype=np.int8),
+            sector=np.zeros(1, dtype=np.int16),
+            education=np.zeros(1, dtype=np.int8),
+            children=np.zeros(1, dtype=np.int16),
+            adults=np.ones(1, dtype=np.int16),
+            elderly=np.zeros(1, dtype=np.int16),
+            working_adults=np.ones(1, dtype=np.float64),
+            pay_weight=np.ones(1, dtype=np.float64),
+            second_participating=np.zeros(1, dtype=bool),
+            western_exposure=np.zeros(1, dtype=np.float64),
+            informal_access=np.zeros(1, dtype=np.float64),
+            tenure=np.zeros(1, dtype=np.int8),
+            durable_owned=np.zeros((1, 4), dtype=np.float64),
         ),
         organizations=tuple(orgs),
         technologies=tuple(technologies),
@@ -472,6 +524,10 @@ def test_a_ninth_commandity_is_a_registry_plus_data_change(monkeypatch) -> None:
         region_equivalent_persons=np.ones(1, dtype=np.float64),
         parameters=params,
         initial_recipe=MaterialInitialRecipe(),
+        household_parameters=_household_params_for_test(),
+        household_catalog=compile_household_catalog(
+            _household_params_for_test(), params, tuple(axis)
+        ),
     )
     network = compile_material_network(
         initial,

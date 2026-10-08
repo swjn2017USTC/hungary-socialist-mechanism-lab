@@ -169,7 +169,7 @@ class RunManifest(StrictModel):
     schema_version: Literal["1"] = "1"
     run_id: str
     run_kind: Literal[
-        "synthetic_engine_smoke", "toy4_f0_simulation", "intermediate8_material_simulation"
+        "synthetic_engine_smoke", "toy4_f0_simulation", "intermediate8_household_simulation"
     ] = "synthetic_engine_smoke"
     political_mode: None = None
     status: Literal["running", "completed", "paused", "failed"]
@@ -230,7 +230,7 @@ def manifest_preamble(
     root: Path,
     baseline_hash: str,
     run_kind: Literal[
-        "synthetic_engine_smoke", "toy4_f0_simulation", "intermediate8_material_simulation"
+        "synthetic_engine_smoke", "toy4_f0_simulation", "intermediate8_household_simulation"
     ] = "synthetic_engine_smoke",
     parameter_vector: dict[str, float] | None = None,
     input_artifact_hashes: dict[str, str] | None = None,
@@ -313,5 +313,3 @@ def finalize_manifest(
             "last_completed_quarter": last_completed_quarter,
         }
     )
-
-

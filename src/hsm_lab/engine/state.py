@@ -19,6 +19,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from hsm_lab.contract.households import (
+    DURABLE_IDS,
+    ENTITLEMENT_IDS,
+    HOUSEHOLD_GOOD_IDS,
+    SUBSTITUTION_IDS,
+)
 from hsm_lab.contract.material import (
     ORGANIZATION_TYPE_ORDER,
     CellOwnerKind,
@@ -32,7 +38,7 @@ from hsm_lab.contract.schemas import ResearchGateError, ScenarioSpec
 if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
     from hsm_lab.engine.network import MaterialNetwork
 
-MATERIAL_STATE_VERSION = "material-state-v1"
+MATERIAL_STATE_VERSION = "material-state-v2"
 
 POOL_CODES: dict[str, int] = {
     "input": 0,
@@ -43,6 +49,13 @@ POOL_CODES: dict[str, int] = {
     "import_pool": 5,
 }
 
+#: Fixed household subsystem axis sizes (P03).  Every multi-axis state/flow
+#: array below carries one of these as its trailing dimension.
+N_H = len(HOUSEHOLD_GOOD_IDS)  # 11 consumption sub-channels
+N_D = len(DURABLE_IDS)  # 4 durable types
+N_E = len(ENTITLEMENT_IDS)  # 7 entitlement components
+N_Q = len(SUBSTITUTION_IDS)  # 5 forced-substitution pairs
+
 
 def owner_kind_code(kind: CellOwnerKind) -> int:
     return {
@@ -50,6 +63,7 @@ def owner_kind_code(kind: CellOwnerKind) -> int:
         CellOwnerKind.PLOT: 1,
         CellOwnerKind.PROJECT: 2,
         CellOwnerKind.TREASURY_IMPORT: 3,
+        CellOwnerKind.SECOND_ECONOMY: 4,
     }[kind]
 
 
@@ -101,9 +115,50 @@ class MaterialState:
     household_cash: np.ndarray  # float64 (N,)
     household_deferred_receipt: np.ndarray  # float64 (N,)
     household_wage_claim: np.ndarray  # float64 (N,) unpaid wage claims
+    # --- household static attributes (N,) --------------------------------
+    household_urban: np.ndarray  # bool (N,)
+    household_occupation: np.ndarray  # int8 (N,) occupation ordinal
+    household_sector: np.ndarray  # int16 (N,) sector ordinal
+    household_education: np.ndarray  # int8 (N,) education ordinal
+    household_children: np.ndarray  # int16 (N,)
+    household_adults: np.ndarray  # int16 (N,)
+    household_elderly: np.ndarray  # int16 (N,)
+    household_working_adults: np.ndarray  # float64 (N,)
+    household_pay_weight: np.ndarray  # float64 (N,)
+    household_plot_participating: np.ndarray  # bool (N,)
+    household_second_participating: np.ndarray  # bool (N,)
+    household_western_exposure: np.ndarray  # float64 (N,)
+    # --- household dynamic state (N,) ------------------------------------
+    household_tenure: np.ndarray  # int8 (N,) tenure ordinal
+    household_informal_access: np.ndarray  # float64 (N,)
+    household_dwelling_access: np.ndarray  # float64 (N,)
+    household_housing_wait: np.ndarray  # int32 (N,)
+    household_last_income: np.ndarray  # float64 (N,)
+    household_reference_income: np.ndarray  # float64 (N,)
+    household_last_price_index: np.ndarray  # float64 (N,)
+    household_reserved_plot_hours: np.ndarray  # float64 (N,)
+    household_reserved_second_hours: np.ndarray  # float64 (N,)
+    household_formal_effort: np.ndarray  # float64 (N,)
+    household_material_satisfaction: np.ndarray  # float64 (N,)
+    household_political_compliance: np.ndarray  # float64 (N,)
+    household_grievance: np.ndarray  # float64 (N,)
+    # --- household multi-axis dynamic state (N, axis) --------------------
+    household_durable_owned: np.ndarray  # float64 (N, D)
+    household_durable_age: np.ndarray  # float64 (N, D)
+    household_durable_backlog: np.ndarray  # float64 (N, D)
+    household_durable_wait: np.ndarray  # int32 (N, D)
+    household_durable_repair_credit: np.ndarray  # float64 (N, D)
+    household_consumption_reference: np.ndarray  # float64 (N, H)
+    household_last_consumption: np.ndarray  # float64 (N, H)
+    household_last_availability_unmet: np.ndarray  # float64 (N, H)
+    household_entitlement: np.ndarray  # float64 (N, E)
+    household_expectation: np.ndarray  # float64 (N, E)
+    household_improvement_streak: np.ndarray  # int32 (N, E)
     # --- regional household-channel stocks (R,) -------------------------
-    dwelling_stock: np.ndarray  # float64 (R,)
-    durable_stock: np.ndarray  # float64 (R,)
+    dwelling_stock: np.ndarray  # float64 (R,) physical dwelling stock
+    housing_vacant: np.ndarray  # float64 (R,) unoccupied dwelling stock
+    # --- second-economy aggregate pool (R, G) ---------------------------
+    second_output_stock: np.ndarray  # float64 (R, G) produced output inventory
     # --- organizations (O,) ---------------------------------------------
     organization_id: np.ndarray  # int64 (O,)
     organization_type: np.ndarray  # int8 (O,) OrganizationType ordinal
@@ -112,7 +167,9 @@ class MaterialState:
     organization_activity: np.ndarray  # int32 (O,) P-axis index or -1
     organization_bank: np.ndarray  # int32 (O,) dense bank index or -1
     organization_capacity: np.ndarray  # float64 (O,)
-    organization_labor_available: np.ndarray  # float64 (O,)
+    organization_labor_available: np.ndarray  # float64 (O,) nominal labor
+    organization_labor_endowment: np.ndarray  # float64 (O,) static nominal base
+    organization_effort_factor: np.ndarray  # float64 (O,) [floor, 1] effort
     organization_labor_per_activity: np.ndarray  # float64 (O,) 0 if none
     organization_cash: np.ndarray  # float64 (O,)
     organization_wage_arrears: np.ndarray  # float64 (O,)
@@ -161,7 +218,13 @@ class MaterialStockSnapshot:
     household_cash: np.ndarray  # float64 (N,)
     organization_cash: np.ndarray  # float64 (O,)
     dwelling_stock: np.ndarray  # float64 (R,)
-    durable_stock: np.ndarray  # float64 (R,)
+    housing_vacant: np.ndarray  # float64 (R,)
+    household_durable_owned: np.ndarray  # float64 (N, D)
+    household_dwelling_access: np.ndarray  # float64 (N,)
+    household_informal_access: np.ndarray  # float64 (N,)
+    household_entitlement: np.ndarray  # float64 (N, E)
+    household_expectation: np.ndarray  # float64 (N, E)
+    second_output_stock: np.ndarray  # float64 (R, G)
     bank_reserves: np.ndarray  # float64 (B,)
     bank_loan_asset: np.ndarray  # float64 (B,)
     bank_deposit_liability: np.ndarray  # float64 (B,)
@@ -255,6 +318,40 @@ class MaterialTickFlows:
     household_voluntary_saving: np.ndarray  # float64 (N,)
     household_cash_open: np.ndarray  # float64 (N,)
     household_cash_close: np.ndarray  # float64 (N,)
+    # --- household consumption sub-channels (N, H) --------------------------
+    household_desired_h: np.ndarray  # float64 (N, H)
+    household_affordable_h: np.ndarray  # float64 (N, H)
+    household_realized_h: np.ndarray  # float64 (N, H)
+    household_budget_unmet_h: np.ndarray  # float64 (N, H)
+    household_availability_unmet_h: np.ndarray  # float64 (N, H)
+    household_formal_h: np.ndarray  # float64 (N, H)
+    household_plot_self_h: np.ndarray  # float64 (N, H)
+    household_plot_market_h: np.ndarray  # float64 (N, H)
+    household_second_h: np.ndarray  # float64 (N, H)
+    household_goal_credit_h: np.ndarray  # float64 (N, H)
+    # --- household substitution / time / money (N, ·) -----------------------
+    household_substitution: np.ndarray  # float64 (N, Q)
+    household_queue_hours: np.ndarray  # float64 (N,)
+    household_search_hours: np.ndarray  # float64 (N,)
+    household_plot_hours: np.ndarray  # float64 (N,)
+    household_second_hours: np.ndarray  # float64 (N,)
+    household_leisure_hours: np.ndarray  # float64 (N,)
+    household_planned_spending: np.ndarray  # float64 (N,)
+    household_savings_draw: np.ndarray  # float64 (N,)
+    household_second_input_funding: np.ndarray  # float64 (N,)
+    household_second_income_direct: np.ndarray  # float64 (N,)
+    household_substitution_loss: np.ndarray  # float64 (N,)
+    household_postponement_cost: np.ndarray  # float64 (N,)
+    household_welfare_net: np.ndarray  # float64 (N,)
+    # --- durable / housing flows (N, ·) -------------------------------------
+    durable_acquired: np.ndarray  # float64 (N, D)
+    durable_retired: np.ndarray  # float64 (N, D)
+    durable_repaired: np.ndarray  # float64 (N, D)
+    housing_allocated: np.ndarray  # float64 (N,)
+    private_completed: np.ndarray  # float64 (N,)
+    household_overcrowding: np.ndarray  # float64 (N,)
+    entitlement_gap: np.ndarray  # float64 (N, E)
+    second_input_used: np.ndarray  # float64 (S,) second-economy input cell draw
     # --- regional retail (R, G) ----------------------------------------------
     retail_available: np.ndarray  # float64 (R, G)
     retail_sales: np.ndarray  # float64 (R, G)
@@ -322,6 +419,10 @@ def initial_conditions_scenario_guard(spec: ScenarioSpec) -> None:
 
 __all__ = [
     "MATERIAL_STATE_VERSION",
+    "N_D",
+    "N_E",
+    "N_H",
+    "N_Q",
     "MaterialForcing",
     "MaterialHistory",
     "MaterialPrices",
@@ -342,6 +443,7 @@ __all__ = [
 # P02 builders (ST additions): prices, initial state and opening snapshots.
 # Imports live here so the pinned declarations above stay byte-identical.
 
+
 def build_material_prices(parameters: MaterialParameters) -> MaterialPrices:
     """Compile the readonly admin price view (plan step 1 price vector)."""
     standard = np.array(parameters.prices, dtype=np.float64)
@@ -353,9 +455,7 @@ def _dense_bank_index(
 ) -> tuple[np.ndarray, dict[int, int]]:
     """Per-organization dense bank index (-1 for banks themselves)."""
     bank_ids = sorted(
-        spec.organization_id
-        for spec in organizations
-        if spec.type == OrganizationType.BANK
+        spec.organization_id for spec in organizations if spec.type == OrganizationType.BANK
     )
     if not bank_ids:
         raise ValueError("material scenario requires at least one bank organization")
@@ -372,9 +472,7 @@ def _dense_bank_index(
     return dense, position
 
 
-def _check_network_alignment(
-    initial: MaterialInitialConditions, network: MaterialNetwork
-) -> None:
+def _check_network_alignment(initial: MaterialInitialConditions, network: MaterialNetwork) -> None:
     """Fail closed when the compiled network disagrees with the initial draw."""
     cell_columns = (
         network.cell_owner_kind,
@@ -440,16 +538,13 @@ def initialize_material(
     for s in org_specs:
         if s.technology_id is not None and s.technology_id not in technology_index:
             raise ValueError(
-                f"organization {s.organization_id} declares unknown technology "
-                f"{s.technology_id!r}"
+                f"organization {s.organization_id} declares unknown technology {s.technology_id!r}"
             )
     organization_id = np.array([s.organization_id for s in org_specs], dtype=np.int64)
     organization_type = np.array(
         [ORGANIZATION_TYPE_ORDER.index(s.type) for s in org_specs], dtype=np.int8
     )
-    organization_region = np.array(
-        [region_index[s.region_id] for s in org_specs], dtype=np.int32
-    )
+    organization_region = np.array([region_index[s.region_id] for s in org_specs], dtype=np.int32)
     organization_technology = np.array(
         [-1 if s.technology_id is None else technology_index[s.technology_id] for s in org_specs],
         dtype=np.int32,
@@ -542,9 +637,7 @@ def initialize_material(
     output_quarters = np.where(org_activity_mask, float(recipe.output_stock_quarters), 1.0)
     a_rows = np.repeat(np.arange(activity_count), np.diff(np.asarray(network.A.indptr)))
     a_amounts = np.asarray(network.A.data) * target[a_rows] * input_quarters[a_rows]
-    np.add.at(
-        stock_value, np.asarray(network.input_cell)[np.asarray(network.A.indices)], a_amounts
-    )
+    np.add.at(stock_value, np.asarray(network.input_cell)[np.asarray(network.A.indices)], a_amounts)
     b_rows = np.repeat(np.arange(activity_count), np.diff(np.asarray(network.B.indptr)))
     b_amounts = np.asarray(network.B.data) * target[b_rows] * output_quarters[b_rows]
     np.add.at(stock_value, np.asarray(network.B.indices), b_amounts)
@@ -557,23 +650,74 @@ def initialize_material(
         raise ValueError("initial material stock must be non-negative")
 
     # --- households / regional stocks --------------------------------------
-    household_cash = np.full(
-        household_count, float(recipe.household_cash), dtype=np.float64
-    )
+    household_cash = np.full(household_count, float(recipe.household_cash), dtype=np.float64)
     household_deferred_receipt = np.zeros(household_count, dtype=np.float64)
     household_wage_claim = np.zeros(household_count, dtype=np.float64)
-    region_persons = np.array(
-        initial.region_equivalent_persons, dtype=np.float64, copy=True
-    )
+    region_persons = np.array(initial.region_equivalent_persons, dtype=np.float64, copy=True)
     if region_persons.shape != (region_count,):
         raise ValueError("region_equivalent_persons must match the region axis")
     dwelling_stock = float(recipe.dwelling_per_person) * region_persons
-    durable_stock = np.zeros(region_count, dtype=np.float64)
+    # Per-household dwelling access ≈ min(1, stock / represented households).
+    household_total_region = np.bincount(
+        household_region, weights=household_weight, minlength=region_count
+    )
+    access_share = np.minimum(
+        1.0,
+        dwelling_stock / np.maximum(household_total_region, 1e-12),
+    )
+    household_dwelling_access = access_share[household_region]
+    housing_vacant = np.maximum(
+        dwelling_stock
+        - np.bincount(
+            household_region,
+            weights=household_weight * household_dwelling_access,
+            minlength=region_count,
+        ),
+        0.0,
+    )
+
+    household_parameters = initial.household_parameters
+    catalog = initial.household_catalog
+    if household_parameters is None or catalog is None:
+        raise ValueError("initial conditions must carry household parameters and catalog")
+
+    durable_owned = np.asarray(households.durable_owned, dtype=np.float64).copy()
+    household_tenure = np.asarray(households.tenure, dtype=np.int8).copy()
+    household_informal_access = np.asarray(households.informal_access, dtype=np.float64).copy()
+
+    # reference income = national nominal wage pool * pay share (must be > 0)
+    pay_weight = np.asarray(households.pay_weight, dtype=np.float64)
+    national_wage_pool = float(parameters.wage_rate) * float(organization_labor_available.sum())
+    pay_total = float((household_weight * pay_weight).sum())
+    if pay_total > 0.0:
+        pay_share = pay_weight / pay_total
+    else:
+        # No pay weight (tiny zero-labor fixtures): fall back to a flat
+        # represented-household split so the reference scale stays finite.
+        weight_total = float(household_weight.sum())
+        pay_share = np.where(weight_total > 0.0, household_weight / weight_total, 0.0)
+    reference_income = national_wage_pool * pay_share
+
+    initial_entitlement = np.asarray(
+        household_parameters.expectations.initial_entitlement, dtype=np.float64
+    )
+    household_entitlement = np.tile(initial_entitlement, (household_count, 1))
+    household_expectation = household_entitlement.copy()
+
+    equivalence = (
+        np.asarray(households.adults, dtype=np.float64)
+        + 0.7 * np.asarray(households.children, dtype=np.float64)
+        + 0.9 * np.asarray(households.elderly, dtype=np.float64)
+    )
+    base = np.asarray(household_parameters.demand.base_per_equivalent_person, dtype=np.float64)
+    consumption_reference = base[None, :] * equivalence[:, None]
+    last_price_index = np.ones(household_count, dtype=np.float64)
+    compliance = np.full(
+        household_count, household_parameters.welfare.compliance_baseline, dtype=np.float64
+    )
 
     # --- finance: deposits/equity/reserves, treasury and foreign accounts --
-    national_wage_bill = float(parameters.wage_rate) * float(
-        organization_labor_available.sum()
-    )
+    national_wage_bill = float(parameters.wage_rate) * float(organization_labor_available.sum())
     treasury_deposit = float(recipe.treasury_deposit_quarters) * national_wage_bill
     # M2-neutral distribution working capital: the Treasury's idle opening
     # deposit funds the wholesale/retail bridge (already included in the
@@ -621,8 +765,55 @@ def initialize_material(
         household_cash=household_cash,
         household_deferred_receipt=household_deferred_receipt,
         household_wage_claim=household_wage_claim,
+        household_urban=np.asarray(households.urban, dtype=bool).copy(),
+        household_occupation=np.asarray(households.occupation, dtype=np.int8).copy(),
+        household_sector=np.asarray(households.sector, dtype=np.int16).copy(),
+        household_education=np.asarray(households.education, dtype=np.int8).copy(),
+        household_children=np.asarray(households.children, dtype=np.int16).copy(),
+        household_adults=np.asarray(households.adults, dtype=np.int16).copy(),
+        household_elderly=np.asarray(households.elderly, dtype=np.int16).copy(),
+        household_working_adults=np.asarray(households.working_adults, dtype=np.float64).copy(),
+        household_pay_weight=pay_weight.copy(),
+        household_plot_participating=participating.copy(),
+        household_second_participating=np.asarray(
+            households.second_participating, dtype=bool
+        ).copy(),
+        household_western_exposure=np.asarray(households.western_exposure, dtype=np.float64).copy(),
+        household_tenure=household_tenure,
+        household_informal_access=household_informal_access,
+        household_dwelling_access=household_dwelling_access,
+        household_housing_wait=np.zeros(household_count, dtype=np.int32),
+        household_last_income=reference_income.copy(),
+        household_reference_income=reference_income.copy(),
+        household_last_price_index=last_price_index,
+        household_reserved_plot_hours=np.zeros(household_count, dtype=np.float64),
+        household_reserved_second_hours=np.zeros(household_count, dtype=np.float64),
+        household_formal_effort=np.ones(household_count, dtype=np.float64),
+        household_material_satisfaction=np.full(household_count, 0.5, dtype=np.float64),
+        household_political_compliance=compliance,
+        household_grievance=np.zeros(household_count, dtype=np.float64),
+        household_durable_owned=durable_owned,
+        household_durable_age=np.zeros((household_count, durable_owned.shape[1]), dtype=np.float64),
+        household_durable_backlog=np.zeros(
+            (household_count, durable_owned.shape[1]), dtype=np.float64
+        ),
+        household_durable_wait=np.zeros((household_count, durable_owned.shape[1]), dtype=np.int32),
+        household_durable_repair_credit=np.zeros(
+            (household_count, durable_owned.shape[1]), dtype=np.float64
+        ),
+        household_consumption_reference=consumption_reference,
+        household_last_consumption=consumption_reference.copy(),
+        household_last_availability_unmet=np.zeros(
+            (household_count, len(catalog.household_good_ids)), dtype=np.float64
+        ),
+        household_entitlement=household_entitlement,
+        household_expectation=household_expectation,
+        household_improvement_streak=np.zeros(
+            (household_count, household_entitlement.shape[1]), dtype=np.int32
+        ),
         dwelling_stock=dwelling_stock,
-        durable_stock=durable_stock,
+        housing_vacant=housing_vacant,
+        second_output_stock=np.zeros((region_count, len(commodity_ids)), dtype=np.float64),
         organization_id=organization_id,
         organization_type=organization_type,
         organization_region=organization_region,
@@ -631,6 +822,8 @@ def initialize_material(
         organization_bank=organization_bank,
         organization_capacity=organization_capacity,
         organization_labor_available=organization_labor_available,
+        organization_labor_endowment=organization_labor_available.copy(),
+        organization_effort_factor=np.ones(org_count, dtype=np.float64),
         organization_labor_per_activity=organization_labor_per_activity,
         organization_cash=organization_cash,
         organization_wage_arrears=np.zeros(org_count, dtype=np.float64),
@@ -665,7 +858,13 @@ def capture_material_stocks(state: MaterialState) -> MaterialStockSnapshot:
         household_cash=state.household_cash.copy(),
         organization_cash=state.organization_cash.copy(),
         dwelling_stock=state.dwelling_stock.copy(),
-        durable_stock=state.durable_stock.copy(),
+        housing_vacant=state.housing_vacant.copy(),
+        household_durable_owned=state.household_durable_owned.copy(),
+        household_dwelling_access=state.household_dwelling_access.copy(),
+        household_informal_access=state.household_informal_access.copy(),
+        household_entitlement=state.household_entitlement.copy(),
+        household_expectation=state.household_expectation.copy(),
+        second_output_stock=state.second_output_stock.copy(),
         bank_reserves=state.bank_reserves.copy(),
         bank_loan_asset=state.bank_loan_asset.copy(),
         bank_deposit_liability=state.bank_deposit_liability.copy(),

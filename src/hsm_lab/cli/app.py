@@ -119,9 +119,9 @@ def doctor(
         arm64 = sys.platform == "darwin" and machine == "arm64"
         record("arm64_macos", arm64, f"{sys.platform}/{machine}", warn_only=True)
         try:
-            memory_bytes = __import__("os").sysconf("SC_PAGE_SIZE") * __import__(
-                "os"
-            ).sysconf("SC_PHYS_PAGES")
+            memory_bytes = __import__("os").sysconf("SC_PAGE_SIZE") * __import__("os").sysconf(
+                "SC_PHYS_PAGES"
+            )
         except (OSError, ValueError, AttributeError):
             memory_bytes = None
         record(
@@ -325,7 +325,7 @@ def run(
         if scenario == "toy4":
             raise ConfigError(
                 "--scenario toy4 was removed with the P01 Toy-4 engine and its "
- "config; use --scenario intermediate8 (Intermediate-8 material economy)"
+                "config; use --scenario intermediate8 (Intermediate-8 material economy)"
             )
         root = _repo_root()
         contract = load_research_contract(root)
@@ -402,8 +402,7 @@ def run(
                 f"run {manifest.run_id} completed: {manifest.run_kind}",
                 f"output: {target_dir}",
                 f"digest: {manifest.deterministic_replay_digest}",
-                f"rng draws: {manifest.rng_draws_count} "
-                f"({manifest.rng_draws_by_module})",
+                f"rng draws: {manifest.rng_draws_count} ({manifest.rng_draws_by_module})",
             ]
         else:
             from hsm_lab.engine.material import run_material
@@ -436,8 +435,7 @@ def run(
                 "checkpoint_paths": [
                     str(target_dir / path.rsplit("/metadata.json", 1)[0])
                     for path in sorted(manifest.output_hashes)
-                    if path.startswith("checkpoints/")
-                    and path.endswith("/metadata.json")
+                    if path.startswith("checkpoints/") and path.endswith("/metadata.json")
                 ],
                 "rng_draws_count": manifest.rng_draws_count,
                 "rng_draws_by_module": manifest.rng_draws_by_module,
@@ -446,14 +444,12 @@ def run(
                 "research_warnings": manifest.research_warnings,
             }
             human = [
-                f"run {manifest.run_id} {'paused' if paused else 'completed'}: "
-                f"{manifest.run_kind}",
+                f"run {manifest.run_id} {'paused' if paused else 'completed'}: {manifest.run_kind}",
                 f"output: {target_dir}",
                 f"completed ticks: {manifest.completed_ticks}/{manifest.ticks} "
                 f"(last quarter {manifest.last_completed_quarter})",
                 f"digest: {manifest.deterministic_replay_digest}",
-                f"rng draws: {manifest.rng_draws_count} "
-                f"({manifest.rng_draws_by_module})",
+                f"rng draws: {manifest.rng_draws_count} ({manifest.rng_draws_by_module})",
             ]
         _emit(payload, json_mode, human)
 
@@ -490,9 +486,7 @@ def _prepare_material_run(
     overrides: dict[str, Any] = {}
     if households is not None:
         if not 1000 <= households <= 30000:
-            raise ConfigError(
-                f"--households must lie in [1000, 30000], got {households}"
-            )
+            raise ConfigError(f"--households must lie in [1000, 30000], got {households}")
         overrides["households"] = households
     if organizations is not None:
         profiles: dict[int, OrganizationProfile] = {
@@ -516,9 +510,7 @@ def _prepare_material_run(
             )
         overrides["organizations"] = organizations
         if recipe is not None:
-            overrides["organization_recipe"] = OrganizationRecipe(
-                profile=profile, overrides=[]
-            )
+            overrides["organization_recipe"] = OrganizationRecipe(profile=profile, overrides=[])
     if seed is not None:
         overrides["seed"] = seed
     if output_policy is not None:
@@ -526,8 +518,7 @@ def _prepare_material_run(
             overrides["output_policy"] = OutputPolicy(output_policy)
         except ValueError as exc:
             raise ConfigError(
-                f"unknown output policy {output_policy!r}: use research_full or "
-                "ensemble_compact"
+                f"unknown output policy {output_policy!r}: use research_full or ensemble_compact"
             ) from exc
     if overrides:
         return _revalidated_copy(spec, overrides)
@@ -607,9 +598,9 @@ def summary(
             payload = json.loads(summary_path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise ResearchGateError(f"unreadable run outputs under {run_dir}: {exc}") from exc
-        if manifest.run_kind != "intermediate8_material_simulation":
+        if manifest.run_kind != "intermediate8_household_simulation":
             raise ResearchGateError(
-                "summary only reads intermediate8_material_simulation runs, got "
+                "summary only reads intermediate8_household_simulation runs, got "
                 f"{manifest.run_kind!r}"
             )
         if manifest.status not in ("completed", "paused"):
@@ -626,9 +617,7 @@ def summary(
                 "summary digest disagrees with the manifest: refusing divergent records"
             )
         if payload.get("completed_ticks") != manifest.completed_ticks:
-            raise ResearchGateError(
-                "summary completed_ticks disagrees with the manifest boundary"
-            )
+            raise ResearchGateError("summary completed_ticks disagrees with the manifest boundary")
         import hashlib
 
         recorded = manifest.output_hashes.get("summary.json")
@@ -702,9 +691,7 @@ def data_ingest(
     offline: bool = typer.Option(
         False, "--offline", help="Use the hash-verified cache only; miss exits 1."
     ),
-    refresh: bool = typer.Option(
-        False, "--refresh", help="Download a new vintage even if cached."
-    ),
+    refresh: bool = typer.Option(False, "--refresh", help="Download a new vintage even if cached."),
     json_mode: bool = JsonOption,
 ) -> None:
     """Download, cache, parse and register one whitelisted data source."""
@@ -714,9 +701,7 @@ def data_ingest(
 
         if source not in INGEST_DEFAULT_WINDOWS:
             known = ", ".join(sorted(INGEST_DEFAULT_WINDOWS))
-            raise ConfigError(
-                f"unknown ingestion source {source!r}; allowlist: {known}"
-            )
+            raise ConfigError(f"unknown ingestion source {source!r}; allowlist: {known}")
         start, end = INGEST_DEFAULT_WINDOWS[source]
         root = _repo_root()
         report = ingest_source(
@@ -761,9 +746,7 @@ def data_build_material_forcing(
 
     def action() -> None:
         if profile not in ("synthetic", "external"):
-            raise ConfigError(
-                f"unknown profile {profile!r}: use synthetic or external"
-            )
+            raise ConfigError(f"unknown profile {profile!r}: use synthetic or external")
         root = _repo_root()
         if profile == "synthetic":
             from hsm_lab.data.material import (

@@ -29,9 +29,7 @@ from tests.test_material import (
 
 # Intermediate-8 minus capital_goods: a housing fixture declares construction
 # but has no capital-goods producer, so the capital axis is omitted.
-CONSTRUCTION_COMMODITIES = tuple(
-    c for c in P02_COMMODITY_IDS if c != "capital_goods"
-)
+CONSTRUCTION_COMMODITIES = tuple(c for c in P02_COMMODITY_IDS if c != "capital_goods")
 
 
 def test_default_parameters_disable_overorder_and_hoarding() -> None:
@@ -138,10 +136,10 @@ def test_housing_delivery_only_adds_dwelling() -> None:
     capacity_open = float(fixture.state.organization_capacity[2])
     flows = fixture.tick(1)[0]
 
-    # one unit of construction is bought by the Treasury for housing
+    # P03 housing request is the access gap: access 0.4 vs desired 1.0 = 0.6.
     housing_demand = int(np.flatnonzero(np.asarray(fixture.network.demand_purpose) == 2)[0])
-    assert flows.used[housing_demand] == pytest.approx(1.0)
-    assert float(fixture.state.dwelling_stock[0]) - dwelling_open == pytest.approx(1.0)
+    assert flows.used[housing_demand] == pytest.approx(0.6)
+    assert float(fixture.state.dwelling_stock[0]) - dwelling_open == pytest.approx(0.6)
     # housing is not physical capacity for the builder
     assert fixture.state.organization_capacity[2] == pytest.approx(capacity_open)
 
@@ -291,9 +289,9 @@ def test_credit_grant_debt_and_wage_counterpart() -> None:
     assert state.bank_reserves[0] == pytest.approx(24.0)
     assert state.bank_loan_asset[0] == pytest.approx(6.0)
     assert state.bank_equity[0] == pytest.approx(20.0)
-    assert (
-        state.bank_reserves[0] + state.bank_loan_asset[0]
-    ) == pytest.approx(state.bank_deposit_liability[0] + state.bank_equity[0])
+    assert (state.bank_reserves[0] + state.bank_loan_asset[0]) == pytest.approx(
+        state.bank_deposit_liability[0] + state.bank_equity[0]
+    )
     assert state.bank_reserves[0] + state.bank_loan_asset[0] == pytest.approx(30.0)
     # the grant neither forgives principal nor creates material stock
     assert state.stock_value.sum() == pytest.approx(0.0)

@@ -23,6 +23,15 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from hsm_lab.contract.households import (
+    DEFAULT_PARENT_COMMODITY_IDS,
+    HOUSEHOLD_GOOD_IDS,
+    DemandParameters,
+    HouseholdParameters,
+    HousingParameters,
+    compile_household_catalog,
+    default_household_recipe,
+)
 from hsm_lab.contract.material import (
     P02_COMMODITY_IDS,
     P02_COMMODITY_SPECS,
@@ -84,13 +93,9 @@ def tech(
     return TechnologySpec(
         technology_id=technology_id,
         inputs=[
-            InputCoefficient(commodity_id=c, stage="standard", coefficient=k)
-            for c, k in inputs
+            InputCoefficient(commodity_id=c, stage="standard", coefficient=k) for c, k in inputs
         ],
-        outputs=[
-            OutputCoefficient(commodity_id=c, stage=s, coefficient=k)
-            for c, s, k in outputs
-        ],
+        outputs=[OutputCoefficient(commodity_id=c, stage=s, coefficient=k) for c, s, k in outputs],
     )
 
 
@@ -183,13 +188,60 @@ def idle_source_tech(technology_id: str, commodity: str, stage: str = "standard"
     return tech(technology_id, inputs=(("durable_goods", 1.0),), outputs=((commodity, stage, 1.0),))
 
 
+# Test-only bridge: the pre-P03 fixtures declared a flat per-person basket and a
+# housing request rate on ``MaterialParameters``.  The P03 cutover moved both to
+# the household layer, so ``default_params`` records the legacy kwargs here and
+# ``Fixture`` folds them into a ``HouseholdParameters`` block.
+_PENDING_HOUSEHOLD: dict[str, HouseholdParameters] = {}
+
+
+def household_params(
+    desired_per_person: list[float] | None = None,
+    housing_request_per_person: float | None = None,
+) -> HouseholdParameters:
+    """Translate a legacy per-person basket into a household demand block."""
+    demand = [0.0] * len(HOUSEHOLD_GOOD_IDS)
+    if desired_per_person is not None:
+        for g, commodity_id in enumerate(P02_COMMODITY_IDS):
+            value = float(desired_per_person[g])
+            if value <= 0.0:
+                continue
+            for h, parent in enumerate(DEFAULT_PARENT_COMMODITY_IDS):
+                if parent == commodity_id:
+                    demand[h] = value
+                    break
+    from hsm_lab.contract.households import DurablesParameters
+
+    housing = HousingParameters(
+        housing_construction_cap_per_person=float(housing_request_per_person or 0.0),
+        private_construction_intention_per_quarter=0.0,
+    )
+    return HouseholdParameters(
+        demand=DemandParameters(
+            base_per_equivalent_person=demand,
+            minimum_per_equivalent_person=[0.0] * len(HOUSEHOLD_GOOD_IDS),
+        ),
+        durables=DurablesParameters(
+            aspiration_base=[0.0, 0.0, 0.0, 0.0],
+            aspiration_income_weight=0.0,
+            aspiration_peer_weight=0.0,
+            aspiration_expectation_weight=0.0,
+            new_intention_per_quarter=0.0,
+        ),
+        housing=housing,
+    )
+
+
 def default_params(**overrides) -> MaterialParameters:
     # Vectors are sized by the declared commodity axis, never by a literal 8.
     axis = len(P02_COMMODITY_IDS)
+    legacy_dpp = overrides.pop("desired_per_person", None)
+    legacy_housing = overrides.pop("housing_request_per_person", None)
+    _PENDING_HOUSEHOLD.clear()
+    _PENDING_HOUSEHOLD["household"] = household_params(legacy_dpp, legacy_housing)
     base: dict = {
         "prices": [1.0] * axis,
         "food_raw_price": 1.0,
-        "desired_per_person": [0.0] * axis,
         "utilization": 1.0,
         "service_split": [1.0, 0.0, 0.0],
         "overorder_strength": 0.0,
@@ -200,7 +252,6 @@ def default_params(**overrides) -> MaterialParameters:
         "hunger_shortage": 0.0,
         "transport_per_unit": 0.0,
         "farm_seasonal_factors": [1.0, 1.0, 1.0, 1.0],
-        "housing_request_per_person": 0.0,
         "trade": TradeParameters(
             cmea_desired_imports=[0.0] * axis,
             convertible_desired_imports=[0.0] * axis,
@@ -230,8 +281,16 @@ class Fixture:
         ticks: int = 3,
         routes: list[MaterialRouteSpec] | None = None,
         plot_participating: np.ndarray | None = None,
+        household_parameters: HouseholdParameters | None = None,
+        desired_per_person: list[float] | None = None,
+        housing_request_per_person: float | None = None,
     ) -> None:
         self.parameters = parameters if parameters is not None else default_params()
+        self.household_parameters = (
+            household_parameters
+            or _PENDING_HOUSEHOLD.get("household")
+            or household_params(desired_per_person, housing_request_per_person)
+        )
         self.commodities = tuple(commodities)
         self.region_ids = tuple(region_ids)
         self.routes = tuple(routes) if routes is not None else None
@@ -261,6 +320,20 @@ class Fixture:
                     if plot_participating is None
                     else np.asarray(plot_participating, dtype=bool)
                 ),
+                urban=np.zeros(weight.size, dtype=bool),
+                occupation=np.zeros(weight.size, dtype=np.int8),
+                sector=np.zeros(weight.size, dtype=np.int16),
+                education=np.zeros(weight.size, dtype=np.int8),
+                children=np.zeros(weight.size, dtype=np.int16),
+                adults=size.astype(np.int16),
+                elderly=np.zeros(weight.size, dtype=np.int16),
+                working_adults=size.copy(),
+                pay_weight=size.copy(),
+                second_participating=np.zeros(weight.size, dtype=bool),
+                western_exposure=np.zeros(weight.size, dtype=np.float64),
+                informal_access=np.zeros(weight.size, dtype=np.float64),
+                tenure=np.zeros(weight.size, dtype=np.int8),
+                durable_owned=np.zeros((weight.size, 4), dtype=np.float64),
             ),
             organizations=tuple(orgs),
             technologies=tuple(technologies),
@@ -270,6 +343,10 @@ class Fixture:
             region_equivalent_persons=region_persons,
             parameters=self.parameters,
             initial_recipe=self.recipe,
+            household_parameters=self.household_parameters,
+            household_catalog=compile_household_catalog(
+                self.household_parameters, self.parameters, tuple(self.commodities)
+            ),
         )
         self.network = compile_material_network(
             self.initial,
@@ -295,6 +372,8 @@ class Fixture:
             kind="material",
             material_parameters=self.parameters,
             material_initial=self.recipe,
+            household_parameters=self.household_parameters,
+            household_initial=default_household_recipe(list(self.region_ids)),
             organization_recipe=OrganizationRecipe(profile="p02_100"),
             technologies=list(technologies),
             routes=list(routes) if routes is not None else None,
@@ -397,9 +476,9 @@ def _energy_lag_fixture(*, capital_buffer: float = 0.0) -> Fixture:
     fixture.state.stock_value[:] = 0.0
     fixture.state.stock_value[fixture.cell("organization", 1, 0, "output", "energy")] = 3.0
     if capital_buffer:
-        fixture.state.stock_value[
-            fixture.cell("organization", 3, 0, "input", "raw_materials")
-        ] = capital_buffer
+        fixture.state.stock_value[fixture.cell("organization", 3, 0, "input", "raw_materials")] = (
+            capital_buffer
+        )
     return fixture
 
 
@@ -460,9 +539,9 @@ def _raw_bottleneck_fixture(*, energy_opening: float) -> Fixture:
         [bank(0), energy, raw, consumer], technologies, commodities=NO_CAPITAL_COMMODITIES
     )
     fixture.state.stock_value[:] = 0.0
-    fixture.state.stock_value[
-        fixture.cell("organization", 1, 0, "output", "energy")
-    ] = energy_opening
+    fixture.state.stock_value[fixture.cell("organization", 1, 0, "output", "energy")] = (
+        energy_opening
+    )
     fixture.state.stock_value[fixture.cell("organization", 2, 0, "output", "raw_materials")] = 2.0
     return fixture
 
@@ -563,9 +642,7 @@ def _food_chain_fixture(*, processor_capacity: float = 10.0) -> Fixture:
         ticks=3,
     )
     fixture.state.stock_value[:] = 0.0
-    fixture.state.stock_value[
-        fixture.cell("organization", 1, 0, "input", "food", "raw")
-    ] = 10.0
+    fixture.state.stock_value[fixture.cell("organization", 1, 0, "input", "food", "raw")] = 10.0
     return fixture
 
 
@@ -593,10 +670,11 @@ def test_food_processing_and_distribution_delay() -> None:
     assert flows[1].edge_delivered[to_shop] == pytest.approx(0.0)
     assert flows[1].household_realized[0, food_g] == pytest.approx(0.0)
 
-    # t2: retail finally receives it; households get 8 of their desired 10.
+    # t2: retail finally receives all 8; the declared basic_food quota is 0.75
+    # of the parent-equivalent pool, so the household gets 6 of its desired 10.
     assert flows[2].edge_delivered[to_shop] == pytest.approx(8.0)
-    assert flows[2].household_realized[0, food_g] == pytest.approx(8.0)
-    assert flows[2].household_availability_unmet[0, food_g] == pytest.approx(2.0)
+    assert flows[2].household_realized[0, food_g] == pytest.approx(6.0)
+    assert flows[2].household_availability_unmet[0, food_g] == pytest.approx(4.0)
 
 
 def test_zero_processing_capacity_blocks_ready_food() -> None:
@@ -652,9 +730,9 @@ def _transport_fixture(*, transport_opening: float) -> Fixture:
     fixture.state.stock_value[:] = 0.0
     fixture.state.stock_value[fixture.cell("organization", 1, 1, "output", "energy")] = 10.0
     if transport_opening:
-        fixture.state.stock_value[
-            fixture.cell("organization", 4, 0, "input", "durable_goods")
-        ] = transport_opening
+        fixture.state.stock_value[fixture.cell("organization", 4, 0, "input", "durable_goods")] = (
+            transport_opening
+        )
     return fixture
 
 
@@ -770,13 +848,15 @@ def test_household_retail_rationing_matches_availability() -> None:
     flows = fixture.tick(1)[0]
 
     assert flows.household_desired[0, food_g] == pytest.approx(10.0)
-    assert flows.household_realized[0, food_g] == pytest.approx(8.0)
-    assert flows.household_availability_unmet[0, food_g] == pytest.approx(2.0)
-    assert flows.retail_sales[0, food_g] == pytest.approx(8.0)
-    assert flows.retail_unmet[0, food_g] == pytest.approx(2.0)
+    # the declared basic_food quota is 0.75 of the parent-equivalent pool, so
+    # the household gets 6 of the 8 available and 4 units stay unmet.
+    assert flows.household_realized[0, food_g] == pytest.approx(6.0)
+    assert flows.household_availability_unmet[0, food_g] == pytest.approx(4.0)
+    assert flows.retail_sales[0, food_g] == pytest.approx(6.0)
+    assert flows.retail_unmet[0, food_g] == pytest.approx(4.0)
     assert fixture.state.stock_value[
         fixture.cell("organization", 1, 0, "retail", "food", "ready")
-    ] == pytest.approx(0.0)
+    ] == pytest.approx(2.0)
 
 
 # ---------------------------------------------------------------------------
@@ -964,9 +1044,7 @@ def _investment_priority_fixture(order: str) -> Fixture:
         ticks=3,
     )
     fixture.state.stock_value[:] = 0.0
-    fixture.state.stock_value[
-        fixture.cell("organization", 1, 0, "output", "capital_goods")
-    ] = 10.0
+    fixture.state.stock_value[fixture.cell("organization", 1, 0, "output", "capital_goods")] = 10.0
     fixture.state.organization_project_approved[2] = 40.0
     fixture.state.organization_construction_wip[2] = 10.0
     fixture.state.stock_value[fixture.cell("project", 2, 0, "wip", "construction")] = 10.0
@@ -995,9 +1073,11 @@ def test_investment_priority_squeezes_consumer_production() -> None:
     assert production.state.organization_project_approved[consumer_org] == pytest.approx(40.0)
     # the ten consumer goods reach households only through the two-quarter
     # producer -> wholesale -> retail chain
-    assert [
-        _weighted(production, flow.household_realized[:, consumer_g]) for flow in flows
-    ] == [pytest.approx(0.0), pytest.approx(0.0), pytest.approx(10.0)]
+    assert [_weighted(production, flow.household_realized[:, consumer_g]) for flow in flows] == [
+        pytest.approx(0.0),
+        pytest.approx(0.0),
+        pytest.approx(10.0),
+    ]
 
     investment = _investment_priority_fixture("investment_first")
     inv_activity = _org_activity(investment, consumer_org)
@@ -1125,9 +1205,7 @@ def _plot_ready_fixture(
         [bank(0), worker],
         [idle_source_tech("energy_generation", "energy")],
         commodities=NO_CAPITAL_COMMODITIES,
-        parameters=default_params(
-            desired_per_person=[0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        ),
+        parameters=default_params(desired_per_person=[0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         households=[
             (0, 1.0, 2.0),
             (0, 1.0, 0.0),
@@ -1225,9 +1303,7 @@ def _formal_farm_fixture() -> Fixture:
             ),
         ],
         commodities=NO_CAPITAL_COMMODITIES,
-        parameters=default_params(
-            desired_per_person=[0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        ),
+        parameters=default_params(desired_per_person=[0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         households=[(0, 1.0, 2.0), (0, 1.0, 1.0), (0, 1.0, 1.0), (0, 1.0, 1.0)],
         household_cash=1000.0,
     )
@@ -1247,9 +1323,9 @@ def test_plot_channels_are_off_without_participation_but_farm_stands() -> None:
     assert flows.household_plot_income_direct == pytest.approx(0.0)
     assert flows.household_realized[:, fixture.g("food")] == pytest.approx(0.0)
     assert fixture.state.stock_value[fixture.network.plot_ready_self_cell[0]] == pytest.approx(0.0)
-    assert fixture.state.stock_value[
-        fixture.network.plot_ready_market_cell[0]
-    ] == pytest.approx(0.0)
+    assert fixture.state.stock_value[fixture.network.plot_ready_market_cell[0]] == pytest.approx(
+        0.0
+    )
     # the formal farm still exists and produces raw food for the formal chain
     assert fixture.initial.organizations[2].type is OrganizationType.STATE_FARM
     assert flows.activity_realized[farm_activity] == pytest.approx(4.0)
@@ -1338,9 +1414,9 @@ def test_foreign_channels_rates_and_official_fx_are_separate() -> None:
     assert flows.usd_import_payment == pytest.approx(100.0)
     assert fixture.state.cmea_settlement_balance == pytest.approx(-100.0)
     assert fixture.state.usd_reserve == pytest.approx(0.0)
-    assert fixture.state.stock_value[
-        fixture.network.import_pool_cell[energy_g]
-    ] == pytest.approx(150.0)
+    assert fixture.state.stock_value[fixture.network.import_pool_cell[energy_g]] == pytest.approx(
+        150.0
+    )
 
     # The official FX quote is a diagnostic only: it never rescales quantities,
     # channel prices, payments or settlement balances.
@@ -1357,9 +1433,9 @@ def test_foreign_channels_rates_and_official_fx_are_separate() -> None:
         assert other_flows.cmea_import_payment == pytest.approx(100.0)
         assert other_flows.usd_import_payment == pytest.approx(100.0)
         assert other.state.cmea_settlement_balance == pytest.approx(-100.0)
-        assert other.state.stock_value[
-            other.network.import_pool_cell[energy_g]
-        ] == pytest.approx(150.0)
+        assert other.state.stock_value[other.network.import_pool_cell[energy_g]] == pytest.approx(
+            150.0
+        )
 
     # External interest is the global rate plus the Hungary spread: 4%/400 +
     # 2%/400 = .015 on 100, 8%/400 + .005 = .025.  The domestic quarterly rate
@@ -1459,12 +1535,17 @@ def test_services_expire_and_completed_stocks_do_not_become_food() -> None:
     housing_flows = housing.tick(1)[0]
     _assert_gate(housing, housing_opening, housing_flows)
     demand = _housing_demand(housing)
-    assert housing_flows.used[demand] == pytest.approx(2.0)
-    assert float(housing.state.dwelling_stock[0]) - dwelling_open == pytest.approx(2.0)
+    # P03 housing request is the household access gap, not a flat per-person
+    # rate: access 0.4 vs desired 1.0 over two represented persons = 1.2.
+    assert housing_flows.used[demand] == pytest.approx(1.2)
+    assert float(housing.state.dwelling_stock[0]) - dwelling_open == pytest.approx(1.2)
     assert housing.state.organization_capacity[2] == pytest.approx(builder_capacity)
     assert housing_flows.organization_investment_completed[2] == pytest.approx(0.0)
     assert housing_flows.household_realized[:, housing.g("food")] == pytest.approx(0.0)
-    assert housing.state.durable_stock[0] == pytest.approx(0.0)
+    housing_durable = float(
+        np.sum(housing.state.household_weight * housing.state.household_durable_owned.sum(axis=1))
+    )
+    assert housing_durable == pytest.approx(0.0)
 
     # durable purchases add regional durable stock (not another consumption
     # good and not housing).
@@ -1473,8 +1554,13 @@ def test_services_expire_and_completed_stocks_do_not_become_food() -> None:
     durable_opening = capture_material_stocks(durable.state)
     durable_flows = durable.tick(1)[0]
     _assert_gate(durable, durable_opening, durable_flows)
-    assert durable_flows.retail_sales[0, durable_g] == pytest.approx(3.0)
-    assert durable.state.durable_stock[0] == pytest.approx(3.0)
+    # the declared durable quota splits the pool 0.30/0.30/0.30/0.10 across
+    # refrigerator/washer/TV/car, so the refrigerator channel caps at 0.9.
+    assert durable_flows.retail_sales[0, durable_g] == pytest.approx(0.9)
+    durable_owned = float(
+        np.sum(durable.state.household_weight * durable.state.household_durable_owned[:, 0])
+    )
+    assert durable_owned == pytest.approx(0.9)
     assert durable.state.dwelling_stock[0] == pytest.approx(0.4 * 3.0)
     assert durable_flows.expired_services == pytest.approx(0.0)
 
@@ -1529,9 +1615,7 @@ def _durable_sales_fixture() -> Fixture:
         [bank(0), worker, shop],
         [idle_source_tech("energy_generation", "energy")],
         commodities=NO_CAPITAL_COMMODITIES,
-        parameters=default_params(
-            desired_per_person=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
-        ),
+        parameters=default_params(desired_per_person=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]),
         households=[(0, 1.0, 3.0)],
         household_cash=1000.0,
     )
@@ -1693,9 +1777,7 @@ def _blocked_input_fixture() -> Fixture:
 def test_mixed_energy_departments_exclude_reservations_and_imports() -> None:
     fixture = _mixed_energy_fixture()
     energy_g = fixture.g("energy")
-    intermediate = fixture.k_of(
-        fixture.cell("organization", 2, 0, "input", "energy")
-    )
+    intermediate = fixture.k_of(fixture.cell("organization", 2, 0, "input", "energy"))
     opening = capture_material_stocks(fixture.state)
     flows = fixture.tick(1)[0]
     _assert_gate(fixture, opening, flows)

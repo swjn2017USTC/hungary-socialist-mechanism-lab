@@ -39,15 +39,20 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.sparse import csr_matrix  # type: ignore[import-untyped]
+
+if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
+    from hsm_lab.contract.households import HouseholdCatalog, HouseholdParameters
 
 from hsm_lab.contract.base import ConfigError, ResearchGateError
 from hsm_lab.contract.material import (
     COMMODITY_INDEX,
     HUB_COMMODITY_STAGES,
     INVESTMENT_COMMODITY_IDS,
+    P02_COMMODITY_IDS,
     PRODUCTIVE_TYPES,
     PURPOSE_CODES,
     RETAIL_COMMODITY_STAGES,
@@ -119,6 +124,12 @@ class MaterialNetwork:
     schema_version: str
     region_ids: tuple[str, ...]
     commodity_ids: tuple[str, ...]
+    household_parameters: HouseholdParameters
+    household_catalog: HouseholdCatalog
+    second_input_commodities: tuple[int, ...]  # commodity axis indices used as inputs
+    second_output_commodities: tuple[int, ...]  # commodity axis indices produced
+    # per parent commodity: the region retail cell index for this commodity (-1 none)
+    retail_cell_by_commodity: np.ndarray  # int32 (R, G)
     # stock-cell catalog (S,) ordered by (owner_kind, owner_id, region, pool,
     # commodity index, stage)
     cell_owner_kind: np.ndarray  # int8 (S,)
@@ -265,6 +276,26 @@ class _Compiler:
             self.export_demand[1, g] = convertible_exports[axis]
         self.importable = self.import_cap > 0.0
         self.default_transport_per_unit = float(self.initial.parameters.transport_per_unit)
+
+        household_parameters = self.initial.household_parameters
+        if household_parameters is None or self.initial.household_catalog is None:
+            raise ConfigError(
+                "material initial conditions must carry household_parameters and "
+                "household_catalog for P03"
+            )
+        recipe = household_parameters.second_economy
+        second_inputs: list[int] = []
+        second_outputs: list[int] = []
+        for axis_index, commodity_id in enumerate(P02_COMMODITY_IDS):
+            net_index = self.commodity_index.get(commodity_id)
+            if net_index is None:
+                continue
+            if recipe.input_coefficients[axis_index] > 0.0:
+                second_inputs.append(net_index)
+            if recipe.output_coefficients[axis_index] > 0.0:
+                second_outputs.append(net_index)
+        self.second_input_commodities = tuple(sorted(second_inputs))
+        self.second_output_commodities = tuple(sorted(second_outputs))
 
     def _build_org_tables(self) -> None:
         organizations = tuple(
@@ -1161,17 +1192,13 @@ class _Compiler:
                 stage_code = STAGE_CODES[self._consumable_stage(hh_g)]
                 household_sources: list[int] = []
                 for hh_position in self.region_retail_positions[region][:2]:
-                    household_cell = self.retail_cells.get(
-                        (hh_position, region, hh_g, stage_code)
-                    )
+                    household_cell = self.retail_cells.get((hh_position, region, hh_g, stage_code))
                     if household_cell is not None:
                         household_sources.append(household_cell)
                 if household_sources:
                     share = 1.0 / len(household_sources)
                     for cell in household_sources:
-                        self._add_edge(
-                            cell, -1, demand, RoutePurpose.HOUSEHOLD, share, -1, region
-                        )
+                        self._add_edge(cell, -1, demand, RoutePurpose.HOUSEHOLD, share, -1, region)
 
     # ------------------------------------------------------------------
     # explicit route lists
@@ -1633,10 +1660,18 @@ class _Compiler:
             elif g == construction_g:
                 project_construction[row] = cell
 
+        household_parameters = self.initial.household_parameters
+        household_catalog = self.initial.household_catalog
+        assert household_parameters is not None and household_catalog is not None
         return MaterialNetwork(
             schema_version=MATERIAL_NETWORK_VERSION,
             region_ids=self.region_ids,
             commodity_ids=self.commodity_ids,
+            household_parameters=household_parameters,
+            household_catalog=household_catalog,
+            second_input_commodities=self.second_input_commodities,
+            second_output_commodities=self.second_output_commodities,
+            retail_cell_by_commodity=retail_cell,
             cell_owner_kind=self.cell_kind_np,
             cell_owner_id=self.cell_owner_np,
             cell_region=self.cell_region_np,

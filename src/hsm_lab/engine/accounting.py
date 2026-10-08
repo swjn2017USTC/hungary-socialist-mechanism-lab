@@ -140,6 +140,11 @@ _SIGNED_RESIDUAL_FIELDS = frozenset(
 )
 
 
+#: Signed P03 household flow diagnostics (welfare index and entitlement gap may
+#: be negative; they are state/utility magnitudes, not quantity ledgers).
+_SIGNED_FLOW_FIELDS = frozenset({"household_welfare_net", "entitlement_gap"})
+
+
 class AccountingError(ResearchGateError):
     """A stock-flow or cash invariant violation; the run must fail closed."""
 
@@ -188,8 +193,7 @@ def _compare_cells(
     rhs = np.ascontiguousarray(rhs, dtype=np.float64)
     if lhs.shape != rhs.shape:
         raise AccountingError(
-            f"accounting shape mismatch in {quarter} ledger={ledger}: "
-            f"{lhs.shape} vs {rhs.shape}"
+            f"accounting shape mismatch in {quarter} ledger={ledger}: {lhs.shape} vs {rhs.shape}"
         )
     if not (np.all(np.isfinite(lhs)) and np.all(np.isfinite(rhs))):
         index = int(np.argmax(~(np.isfinite(lhs) & np.isfinite(rhs)).reshape(-1)))
@@ -232,8 +236,7 @@ def _compare_at_most(
     rhs = np.ascontiguousarray(rhs, dtype=np.float64)
     if lhs.shape != rhs.shape:
         raise AccountingError(
-            f"accounting shape mismatch in {quarter} ledger={ledger}: "
-            f"{lhs.shape} vs {rhs.shape}"
+            f"accounting shape mismatch in {quarter} ledger={ledger}: {lhs.shape} vs {rhs.shape}"
         )
     if not (np.all(np.isfinite(lhs)) and np.all(np.isfinite(rhs))):
         index = int(np.argmax(~(np.isfinite(lhs) & np.isfinite(rhs)).reshape(-1)))
@@ -270,9 +273,7 @@ def _check_array(
 ) -> None:
     values = np.asarray(values, dtype=np.float64)
     if not np.all(np.isfinite(values)):
-        raise AccountingError(
-            f"non-finite value in {quarter} ledger={ledger} shape={values.shape}"
-        )
+        raise AccountingError(f"non-finite value in {quarter} ledger={ledger} shape={values.shape}")
     if non_negative and values.size and float(np.min(values)) < -ATOL:
         raise AccountingError(
             f"negative value {float(np.min(values))!r} in {quarter} "
@@ -382,9 +383,7 @@ def _reconstruct(
     R = int(state.dwelling_stock.shape[0])
 
     if prices is None:
-        prices = MaterialPrices(
-            standard=np.ones(G, dtype=np.float64), food_raw=1.0
-        )
+        prices = MaterialPrices(standard=np.ones(G, dtype=np.float64), food_raw=1.0)
 
     open_ = np.asarray(opening.stock_value, dtype=np.float64)
     close = np.asarray(state.stock_value, dtype=np.float64)
@@ -422,12 +421,8 @@ def _reconstruct(
         )
 
     internal = dst >= 0
-    edge_receipts = np.bincount(
-        dst[internal], weights=delivered_edges[internal], minlength=S
-    )
-    edge_out_internal = np.bincount(
-        src[internal], weights=delivered_edges[internal], minlength=S
-    )
+    edge_receipts = np.bincount(dst[internal], weights=delivered_edges[internal], minlength=S)
+    edge_out_internal = np.bincount(src[internal], weights=delivered_edges[internal], minlength=S)
     edge_out_all = np.bincount(src, weights=delivered_edges, minlength=S)
 
     def _boundary_out(code: int) -> np.ndarray:
@@ -531,8 +526,7 @@ def _reconstruct(
         )
         direct_value = np.bincount(
             region,
-            weights=weight
-            * np.asarray(flows.household_plot_income_direct, dtype=np.float64),
+            weights=weight * np.asarray(flows.household_plot_income_direct, dtype=np.float64),
             minlength=R,
         )
         plot_self = np.asarray(network.plot_ready_self_cell, dtype=np.int64)
@@ -542,18 +536,14 @@ def _reconstruct(
         if bool(np.any(self_ok)):
             household_channel[plot_self[self_ok]] += self_use_value[self_ok] / ready_price
         if bool(np.any(market_ok)):
-            household_channel[plot_market[market_ok]] += (
-                direct_value[market_ok] / ready_price
-            )
+            household_channel[plot_market[market_ok]] += direct_value[market_ok] / ready_price
     services_g = commodity_ids.index(_SERVICES_ID) if _SERVICES_ID in commodity_ids else -1
     cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
     cell_pool = np.asarray(network.cell_pool, dtype=np.int64)
     cell_kind = np.asarray(network.cell_owner_kind, dtype=np.int64)
     cell_region = np.asarray(network.cell_region, dtype=np.int64)
     cell_stage = np.asarray(network.cell_stage, dtype=np.int64)
-    services_cells = (
-        (cell_commodity == services_g) if services_g >= 0 else np.zeros(S, dtype=bool)
-    )
+    services_cells = (cell_commodity == services_g) if services_g >= 0 else np.zeros(S, dtype=bool)
     retail_org_cells = (cell_pool == _POOL_RETAIL) & (cell_kind == _KIND_ORG)
 
     inflow = open_ + production + imports_in + edge_receipts
@@ -565,6 +555,7 @@ def _reconstruct(
         + logistics_used
         + project_installed
         + household_channel
+        + np.asarray(flows.second_input_used, dtype=np.float64)
     )
     expected_close = inflow - outflow
 
@@ -583,9 +574,7 @@ def _reconstruct(
         retail = np.nonzero(retail_org_cells)[0]
         keys = ((cell_region * G + cell_commodity) * 3 + cell_stage)[retail]
         open_g = np.bincount(keys, weights=open_[retail], minlength=group_count)
-        receipts_g = np.bincount(
-            keys, weights=edge_receipts[retail], minlength=group_count
-        )
+        receipts_g = np.bincount(keys, weights=edge_receipts[retail], minlength=group_count)
         close_g = np.bincount(keys, weights=close[retail], minlength=group_count)
         sales_g = np.zeros(group_count, dtype=np.float64)
         retail_sales = np.asarray(flows.retail_sales, dtype=np.float64)
@@ -593,14 +582,16 @@ def _reconstruct(
         mapped = retail_cell_map >= 0
         if bool(np.any(mapped)):
             sales_keys = (
-                np.broadcast_to(np.arange(R, dtype=np.int64)[:, None], (R, G))[mapped]
-                * G
+                np.broadcast_to(np.arange(R, dtype=np.int64)[:, None], (R, G))[mapped] * G
                 + np.broadcast_to(np.arange(G, dtype=np.int64)[None, :], (R, G))[mapped]
             ) * 3 + cell_stage[retail_cell_map[mapped]]
-            sales_g = np.bincount(
-                sales_keys, weights=retail_sales[mapped], minlength=group_count
-            )
-        expected_g = open_g + receipts_g - sales_g
+            sales_g = np.bincount(sales_keys, weights=retail_sales[mapped], minlength=group_count)
+        second_used_g = np.bincount(
+            keys,
+            weights=np.asarray(flows.second_input_used, dtype=np.float64)[retail],
+            minlength=group_count,
+        )
+        expected_g = open_g + receipts_g - sales_g - second_used_g
         group_residual = expected_g[keys] - close_g[keys]
         stock_residual[retail] = group_residual
         stock_tolerance[retail] = np.asarray(
@@ -635,9 +626,7 @@ def _reconstruct(
             out=np.ones(available_by_region.shape, dtype=np.float64),
             where=available_by_region > 0.0,
         )
-        services_leftover[regional_services] *= remaining_fraction[
-            cell_region[regional_services]
-        ]
+        services_leftover[regional_services] *= remaining_fraction[cell_region[regional_services]]
 
     return _Continuity(
         production=production,
@@ -723,9 +712,7 @@ def finance_balance_residuals(
         weight = np.asarray(state.household_weight, dtype=np.float64)
         household_cash = np.asarray(state.household_cash, dtype=np.float64)
         household_bank = np.asarray(state.household_region, dtype=np.int64) % banks
-        sources += np.bincount(
-            household_bank, weights=weight * household_cash, minlength=banks
-        )
+        sources += np.bincount(household_bank, weights=weight * household_cash, minlength=banks)
         org_bank = np.asarray(state.organization_bank, dtype=np.int64)
         borrower = org_bank >= 0
         if bool(np.any(borrower)):
@@ -774,7 +761,7 @@ def _sweep_flows(flows: MaterialTickFlows, quarter: str) -> None:
             value,
             quarter=quarter,
             ledger=f"flows.{field_info.name}",
-            non_negative=field_info.name not in _SIGNED_RESIDUAL_FIELDS,
+            non_negative=field_info.name not in (_SIGNED_RESIDUAL_FIELDS | _SIGNED_FLOW_FIELDS),
         )
     for name in (
         "cmea_import_payment",
@@ -795,14 +782,10 @@ def _sweep_flows(flows: MaterialTickFlows, quarter: str) -> None:
     if flows.official_fx_translation is not None:
         value = float(flows.official_fx_translation)
         if not math.isfinite(value) or value < -ATOL:
-            raise AccountingError(
-                f"invalid flows.official_fx_translation={value!r} in {quarter}"
-            )
+            raise AccountingError(f"invalid flows.official_fx_translation={value!r} in {quarter}")
 
 
-def _sweep_arrays(
-    obj: MaterialState | MaterialStockSnapshot, quarter: str, prefix: str
-) -> None:
+def _sweep_arrays(obj: MaterialState | MaterialStockSnapshot, quarter: str, prefix: str) -> None:
     """State/snapshot arrays are finite; quantity arrays are non-negative.
 
     Axis-index fields carry ``-1`` sentinels by contract and stay signed.
@@ -967,7 +950,9 @@ def check_material_invariants(
         "household_deferred_receipt": (N,),
         "household_wage_claim": (N,),
         "dwelling_stock": (R,),
-        "durable_stock": (R,),
+        "housing_vacant": (R,),
+        "household_dwelling_access": (N,),
+        "second_output_stock": (R, G),
         "organization_cash": (ORG,),
         "organization_wage_arrears": (ORG,),
         "organization_interest_arrears": (ORG,),
@@ -1069,9 +1054,7 @@ def check_material_invariants(
     demand_labels = _purpose_labels(network)
     edge_labels = _edge_labels(network)
     org_labels = [f"org[{int(org_id)}]" for org_id in np.asarray(state.organization_id)]
-    household_labels = [
-        f"household[{int(h)}]" for h in np.asarray(state.household_id)
-    ]
+    household_labels = [f"household[{int(h)}]" for h in np.asarray(state.household_id)]
     region_labels = [f"region[{region_id}]" for region_id in network.region_ids]
     commodity_labels = list(network.commodity_ids)
     bank_labels = [f"bank[{index}]" for index in range(B)]
@@ -1251,8 +1234,7 @@ def check_material_invariants(
     material_at_most(
         "production_input_availability_ceiling",
         continuity.production_used,
-        np.asarray(opening.stock_value, dtype=np.float64)
-        + continuity.production_row_delivered,
+        np.asarray(opening.stock_value, dtype=np.float64) + continuity.production_row_delivered,
         labels=cell_labels,
     )
     material_at_most(
@@ -1289,9 +1271,9 @@ def check_material_invariants(
             float(parameters.farm_seasonal_factors[int(flows.tick) % 4]),
             1.0,
         )
-        labor_per_activity = np.asarray(
-            state.organization_labor_per_activity, dtype=np.float64
-        )[rows]
+        labor_per_activity = np.asarray(state.organization_labor_per_activity, dtype=np.float64)[
+            rows
+        ]
         _require(
             bool(np.all(labor_per_activity > 0.0)),
             quarter,
@@ -1338,8 +1320,7 @@ def check_material_invariants(
         if bool(np.any(org_sources)):
             np.add.at(
                 hh_by_region_commodity,
-                cell_region_arr[hh_src[org_sources]] * G
-                + cell_commodity_arr[hh_src[org_sources]],
+                cell_region_arr[hh_src[org_sources]] * G + cell_commodity_arr[hh_src[org_sources]],
                 hh_amounts[org_sources],
             )
         plot_sources = cell_kind_arr[hh_src] == _KIND_PLOT
@@ -1368,8 +1349,7 @@ def check_material_invariants(
         direct_quantity = (
             np.bincount(
                 household_region,
-                weights=weight
-                * np.asarray(flows.household_plot_income_direct, dtype=np.float64),
+                weights=weight * np.asarray(flows.household_plot_income_direct, dtype=np.float64),
                 minlength=R,
             )
             / ready_price
@@ -1377,8 +1357,7 @@ def check_material_invariants(
         self_quantity = (
             np.bincount(
                 household_region,
-                weights=weight
-                * np.asarray(flows.household_self_use, dtype=np.float64),
+                weights=weight * np.asarray(flows.household_self_use, dtype=np.float64),
                 minlength=R,
             )
             / ready_price
@@ -1386,8 +1365,7 @@ def check_material_invariants(
         direct_from_households = (
             np.bincount(
                 household_region,
-                weights=weight
-                * np.asarray(flows.household_realized, dtype=np.float64)[:, food_g],
+                weights=weight * np.asarray(flows.household_realized, dtype=np.float64)[:, food_g],
                 minlength=R,
             )
             - retail_sales[:, food_g]
@@ -1409,9 +1387,7 @@ def check_material_invariants(
         )
 
     # Household demand cells (region-major pinned D order) mirror retail sales.
-    household_goods = [
-        g for g in range(G) if commodity_ids[g] in _HOUSEHOLD_CHANNEL_IDS
-    ]
+    household_goods = [g for g in range(G) if commodity_ids[g] in _HOUSEHOLD_CHANNEL_IDS]
     demand_purpose = np.asarray(network.demand_purpose, dtype=np.int64)
     household_demand = np.nonzero(demand_purpose == _P_HOUSEHOLD)[0]
     _require(
@@ -1449,9 +1425,7 @@ def check_material_invariants(
         )
     present = np.zeros((R, G), dtype=bool)
     if bool(np.any(retail_presence)):
-        present[
-            cell_region_arr[retail_presence], cell_commodity_arr[retail_presence]
-        ] = True
+        present[cell_region_arr[retail_presence], cell_commodity_arr[retail_presence]] = True
     rows_rg, columns_rg = np.nonzero(present)
     if rows_rg.size:
         material(
@@ -1577,8 +1551,7 @@ def check_material_invariants(
     finance(
         "bank_equity_interest_accrual",
         np.asarray(state.bank_equity, dtype=np.float64),
-        bank_equity_open
-        + _bank_sum(np.asarray(flows.organization_interest_due, dtype=np.float64)),
+        bank_equity_open + _bank_sum(np.asarray(flows.organization_interest_due, dtype=np.float64)),
         labels=bank_labels,
     )
 
@@ -1676,9 +1649,7 @@ def check_material_invariants(
     delivered_capital_wip = np.zeros(ORG, dtype=np.float64)
     delivered_construction_wip = np.zeros(ORG, dtype=np.float64)
     if bool(np.any(wip_capital)):
-        delivered_capital_wip[wip_capital] = continuity.edge_receipts[
-            capital_cells[wip_capital]
-        ]
+        delivered_capital_wip[wip_capital] = continuity.edge_receipts[capital_cells[wip_capital]]
     if bool(np.any(wip_construction)):
         delivered_construction_wip[wip_construction] = continuity.edge_receipts[
             construction_wip_cells[wip_construction]
@@ -1724,8 +1695,10 @@ def check_material_invariants(
         np.asarray(flows.household_wage_income, dtype=np.float64)
         + np.asarray(flows.household_plot_income_formal, dtype=np.float64)
         + np.asarray(flows.household_plot_income_direct, dtype=np.float64)
+        + np.asarray(flows.household_second_income_direct, dtype=np.float64)
         + np.asarray(flows.household_late_wage, dtype=np.float64)
         - np.asarray(flows.household_plot_input_funding, dtype=np.float64)
+        - np.asarray(flows.household_second_input_funding, dtype=np.float64)
         - np.asarray(flows.household_spending, dtype=np.float64),
         labels=household_labels,
     )
@@ -1733,6 +1706,7 @@ def check_material_invariants(
         "household_deferred_receipt_close",
         np.asarray(state.household_deferred_receipt, dtype=np.float64),
         np.asarray(flows.household_plot_income_direct, dtype=np.float64)
+        + np.asarray(flows.household_second_income_direct, dtype=np.float64)
         + np.asarray(flows.household_late_wage, dtype=np.float64),
         labels=household_labels,
     )
@@ -1875,9 +1849,7 @@ def check_material_invariants(
         domestic = currency == DOMESTIC_CURRENCY
         to_households = (kind == "wage_payment") & domestic & np.isin(debit, household_cash_ids)
         wage_journal_total = np.asarray([float(np.sum(amount[to_households]))])
-        to_borrowers = (kind == "bailout_grant") & domestic & np.isin(
-            credit, organization_cash_ids
-        )
+        to_borrowers = (kind == "bailout_grant") & domestic & np.isin(credit, organization_cash_ids)
         bailout_journal_total = np.asarray([float(np.sum(amount[to_borrowers]))])
     finance(
         "journal_wage_payment_vs_households",
@@ -1905,11 +1877,18 @@ def check_material_invariants(
     )
 
     # --- 8. regional household-channel stocks ---------------------------------
-    dwelling_delta = (
-        np.asarray(state.dwelling_stock, dtype=np.float64)
-        - np.asarray(opening.dwelling_stock, dtype=np.float64)
+    dwelling_delta = np.asarray(state.dwelling_stock, dtype=np.float64) - np.asarray(
+        opening.dwelling_stock, dtype=np.float64
     )
-    housing_delivered = flows.delivered[housing_cells]
+    hh_region = np.asarray(state.household_region, dtype=np.int64)
+    hh_weight = np.asarray(state.household_weight, dtype=np.float64)
+    # P03: dwelling stock grows from formal housing delivery AND private
+    # second-economy construction installation; both are real completions.
+    housing_delivered = flows.delivered[housing_cells] + np.bincount(
+        hh_region,
+        weights=hh_weight * np.asarray(flows.private_completed, dtype=np.float64),
+        minlength=R,
+    )
     material_at_most(
         "dwelling_completion_le_housing_delivery",
         dwelling_delta,
@@ -1922,17 +1901,26 @@ def check_material_invariants(
         dwelling_delta,
         labels=region_labels,
     )
-    durable_g = (
-        commodity_ids.index(_DURABLE_ID) if _DURABLE_ID in commodity_ids else -1
+    # P03: durable ownership is a per-household stock; continuity holds against
+    # the household-level acquired/retired flows (never a regional stock).
+    durable_close = np.asarray(state.household_durable_owned, dtype=np.float64)
+    durable_open = np.asarray(opening.household_durable_owned, dtype=np.float64)
+    durable_delta = np.bincount(
+        hh_region, weights=hh_weight * (durable_close - durable_open).sum(axis=1), minlength=R
     )
-    durable_sales = (
-        retail_sales[:, durable_g] if durable_g >= 0 else np.zeros(R, dtype=np.float64)
+    durable_trans = np.bincount(
+        hh_region,
+        weights=hh_weight
+        * (
+            np.asarray(flows.durable_acquired, dtype=np.float64).sum(axis=1)
+            - np.asarray(flows.durable_retired, dtype=np.float64).sum(axis=1)
+        ),
+        minlength=R,
     )
     material(
         "durable_stock_continuity",
-        np.asarray(state.durable_stock, dtype=np.float64)
-        - np.asarray(opening.durable_stock, dtype=np.float64),
-        durable_sales,
+        durable_delta,
+        durable_trans,
         labels=region_labels,
     )
 
@@ -1941,9 +1929,7 @@ def check_material_invariants(
         np.isin(demand_purpose, [_P_PROCUREMENT, _P_RETAIL])
         & (demand_cells >= 0)
         & np.isin(
-            np.asarray(network.cell_pool, dtype=np.int64)[
-                np.clip(demand_cells, 0, S - 1)
-            ],
+            np.asarray(network.cell_pool, dtype=np.int64)[np.clip(demand_cells, 0, S - 1)],
             [_POOL_WHOLESALE, _POOL_RETAIL],
         )
     )[0]
@@ -2082,9 +2068,7 @@ def derive_departments(
 
     production = np.asarray(network.B.T @ np.asarray(flows.activity_realized)).ravel()
     production = production.astype(np.float64)
-    services_cells = (
-        (cell_commodity == services_g) if services_g >= 0 else np.zeros(S, dtype=bool)
-    )
+    services_cells = (cell_commodity == services_g) if services_g >= 0 else np.zeros(S, dtype=bool)
 
     # Logistics services are consumed out of transport output cells.
     logistics = np.zeros(S, dtype=np.float64)
@@ -2120,8 +2104,7 @@ def derive_departments(
         direct_quantity = (
             np.bincount(
                 region,
-                weights=weight
-                * np.asarray(flows.household_plot_income_direct, dtype=np.float64),
+                weights=weight * np.asarray(flows.household_plot_income_direct, dtype=np.float64),
                 minlength=R,
             )
             / ready_price
@@ -2142,9 +2125,7 @@ def derive_departments(
         + _out(purpose == _P_PRIVATE_PLOT)
     )
     ii_purpose_out = _out(purpose == _P_HOUSING) + _out(purpose == _P_RETAIL)
-    exports_purpose_out = _out(purpose == _P_EXPORT_CMEA) + _out(
-        purpose == _P_EXPORT_CONVERTIBLE
-    )
+    exports_purpose_out = _out(purpose == _P_EXPORT_CMEA) + _out(purpose == _P_EXPORT_CONVERTIBLE)
     services_productive_out = (
         logistics + _out(purpose == _P_INTERMEDIATE) + _out(purpose == _P_PRIVATE_PLOT)
     )
@@ -2168,7 +2149,7 @@ def derive_departments(
         + plot_channel
     )
     share = np.zeros(S, dtype=np.float64)
-    positive = total_out > 0.0
+    positive = total_out > 1e-300
     np.divide(1.0, total_out, out=share, where=positive)
     # A cell whose recorded outflow has decayed into subnormal dust would give
     # share = inf and poison the whole attribution; such output is nil.
@@ -2199,12 +2180,8 @@ def derive_departments(
     k_used[k_rows] = np.asarray(flows.used, dtype=np.float64)[production_rows]
     input_price = cell_price[input_cells]
     input_is_services = services_cells[input_cells]
-    intermediate_value = float(
-        np.sum(k_used[~input_is_services] * input_price[~input_is_services])
-    )
-    services_input_value = float(
-        np.sum(k_used[input_is_services] * input_price[input_is_services])
-    )
+    intermediate_value = float(np.sum(k_used[~input_is_services] * input_price[~input_is_services]))
+    services_input_value = float(np.sum(k_used[input_is_services] * input_price[input_is_services]))
     logistics_quantity = float(np.sum(np.asarray(flows.edge_service_used, dtype=np.float64)))
     services_price = float(prices.standard[services_g]) if services_g >= 0 else 0.0
     logistics_value = logistics_quantity * services_price
@@ -2234,27 +2211,19 @@ def derive_departments(
     ]
     realized = np.asarray(flows.household_realized, dtype=np.float64)
     weight = np.asarray(state.household_weight, dtype=np.float64)
-    household_quantities = (
-        weight @ realized if realized.size else np.zeros(G, dtype=np.float64)
-    )
+    household_quantities = weight @ realized if realized.size else np.zeros(G, dtype=np.float64)
     household_value = float(
-        sum(
-            float(household_quantities[g]) * float(prices.standard[g])
-            for g in household_goods
-        )
+        sum(float(household_quantities[g]) * float(prices.standard[g]) for g in household_goods)
     )
-    services_household_qty = (
-        float(household_quantities[services_g]) if services_g >= 0 else 0.0
-    )
+    services_household_qty = float(household_quantities[services_g]) if services_g >= 0 else 0.0
     services_household_value = services_household_qty * services_price
     housing_value = (
         float(housing_completed) * float(prices.standard[construction_g])
         if construction_g >= 0
         else 0.0
     )
-    exports_quantity = (
-        np.asarray(flows.cmea_exports, dtype=np.float64)
-        + np.asarray(flows.convertible_exports, dtype=np.float64)
+    exports_quantity = np.asarray(flows.cmea_exports, dtype=np.float64) + np.asarray(
+        flows.convertible_exports, dtype=np.float64
     )
     export_stage = np.asarray(
         [
@@ -2281,9 +2250,7 @@ def derive_departments(
         commodity_use[cid] = {
             "department_I": department_i,
             "department_II": department_ii,
-            "service_use_productive": (input_qty + logistics_quantity)
-            if is_services
-            else 0.0,
+            "service_use_productive": (input_qty + logistics_quantity) if is_services else 0.0,
             "service_use_household": services_household_qty if is_services else 0.0,
             "exports": float(exports_quantity[g]),
         }

@@ -36,6 +36,10 @@ from hsm_lab.contract.schemas import (
 from hsm_lab.engine.rng import RngRegistry
 from hsm_lab.engine.state import (
     MATERIAL_STATE_VERSION,
+    N_D,
+    N_E,
+    N_H,
+    N_Q,
     MaterialHistory,
     MaterialState,
 )
@@ -53,9 +57,9 @@ from hsm_lab.storage.material_output import (
     TABLES,
 )
 
-CHECKPOINT_VERSION = "material-checkpoint-v1"
-STATE_VERSION = MATERIAL_STATE_VERSION  # "material-state-v1"
-ENGINE_VERSION = "material-engine-v1"
+CHECKPOINT_VERSION = "material-checkpoint-v2"
+STATE_VERSION = MATERIAL_STATE_VERSION  # "material-state-v2"
+ENGINE_VERSION = "material-engine-v2"
 
 _TOY4_CHECKPOINT_VERSIONS = ("toy4-checkpoint-v1",)
 
@@ -74,8 +78,45 @@ _STATE_ARRAY_SPEC: tuple[tuple[str, np.dtype, str], ...] = (
     ("household_cash", np.dtype("<f8"), "N"),
     ("household_deferred_receipt", np.dtype("<f8"), "N"),
     ("household_wage_claim", np.dtype("<f8"), "N"),
+    ("household_urban", np.dtype("?"), "N"),
+    ("household_occupation", np.dtype("i1"), "N"),
+    ("household_sector", np.dtype("<i2"), "N"),
+    ("household_education", np.dtype("i1"), "N"),
+    ("household_children", np.dtype("<i2"), "N"),
+    ("household_adults", np.dtype("<i2"), "N"),
+    ("household_elderly", np.dtype("<i2"), "N"),
+    ("household_working_adults", np.dtype("<f8"), "N"),
+    ("household_pay_weight", np.dtype("<f8"), "N"),
+    ("household_plot_participating", np.dtype("?"), "N"),
+    ("household_second_participating", np.dtype("?"), "N"),
+    ("household_western_exposure", np.dtype("<f8"), "N"),
+    ("household_tenure", np.dtype("i1"), "N"),
+    ("household_informal_access", np.dtype("<f8"), "N"),
+    ("household_dwelling_access", np.dtype("<f8"), "N"),
+    ("household_housing_wait", np.dtype("<i4"), "N"),
+    ("household_last_income", np.dtype("<f8"), "N"),
+    ("household_reference_income", np.dtype("<f8"), "N"),
+    ("household_last_price_index", np.dtype("<f8"), "N"),
+    ("household_reserved_plot_hours", np.dtype("<f8"), "N"),
+    ("household_reserved_second_hours", np.dtype("<f8"), "N"),
+    ("household_formal_effort", np.dtype("<f8"), "N"),
+    ("household_material_satisfaction", np.dtype("<f8"), "N"),
+    ("household_political_compliance", np.dtype("<f8"), "N"),
+    ("household_grievance", np.dtype("<f8"), "N"),
+    ("household_durable_owned", np.dtype("<f8"), "N"),
+    ("household_durable_age", np.dtype("<f8"), "N"),
+    ("household_durable_backlog", np.dtype("<f8"), "N"),
+    ("household_durable_wait", np.dtype("<i4"), "N"),
+    ("household_durable_repair_credit", np.dtype("<f8"), "N"),
+    ("household_consumption_reference", np.dtype("<f8"), "N"),
+    ("household_last_consumption", np.dtype("<f8"), "N"),
+    ("household_last_availability_unmet", np.dtype("<f8"), "N"),
+    ("household_entitlement", np.dtype("<f8"), "N"),
+    ("household_expectation", np.dtype("<f8"), "N"),
+    ("household_improvement_streak", np.dtype("<i4"), "N"),
     ("dwelling_stock", np.dtype("<f8"), "R"),
-    ("durable_stock", np.dtype("<f8"), "R"),
+    ("housing_vacant", np.dtype("<f8"), "R"),
+    ("second_output_stock", np.dtype("<f8"), "R"),
     ("organization_id", np.dtype("<i8"), "O"),
     ("organization_type", np.dtype("i1"), "O"),
     ("organization_region", np.dtype("<i4"), "O"),
@@ -84,6 +125,8 @@ _STATE_ARRAY_SPEC: tuple[tuple[str, np.dtype, str], ...] = (
     ("organization_bank", np.dtype("<i4"), "O"),
     ("organization_capacity", np.dtype("<f8"), "O"),
     ("organization_labor_available", np.dtype("<f8"), "O"),
+    ("organization_labor_endowment", np.dtype("<f8"), "O"),
+    ("organization_effort_factor", np.dtype("<f8"), "O"),
     ("organization_labor_per_activity", np.dtype("<f8"), "O"),
     ("organization_cash", np.dtype("<f8"), "O"),
     ("organization_wage_arrears", np.dtype("<f8"), "O"),
@@ -105,6 +148,25 @@ _STATE_ARRAY_SPEC: tuple[tuple[str, np.dtype, str], ...] = (
     ("bank_interest_receivable", np.dtype("<f8"), "B"),
 )
 
+#: Fields whose trailing dimension is a fixed household axis (H/D/E/Q) or the
+#: commodity axis (G).  ``_TRAILING_SIZES`` fixes the household axes; the
+#: commodity axis is validated from the payload length when available.
+_STATE_TRAILING: dict[str, str] = {
+    "household_durable_owned": "D",
+    "household_durable_age": "D",
+    "household_durable_backlog": "D",
+    "household_durable_wait": "D",
+    "household_durable_repair_credit": "D",
+    "household_consumption_reference": "H",
+    "household_last_consumption": "H",
+    "household_last_availability_unmet": "H",
+    "household_entitlement": "E",
+    "household_expectation": "E",
+    "household_improvement_streak": "E",
+    "second_output_stock": "G",
+}
+_TRAILING_SIZES: dict[str, int] = {"D": N_D, "E": N_E, "H": N_H, "Q": N_Q}
+
 _STATE_SCALAR_SPEC: tuple[tuple[str, np.dtype], ...] = (
     ("treasury_deposit", np.dtype("<f8")),
     ("usd_reserve", np.dtype("<f8")),
@@ -122,8 +184,30 @@ _STATE_NON_NEGATIVE = (
     "household_cash",
     "household_deferred_receipt",
     "household_wage_claim",
+    "household_working_adults",
+    "household_children",
+    "household_adults",
+    "household_elderly",
+    "household_pay_weight",
+    "household_western_exposure",
+    "household_dwelling_access",
+    "household_housing_wait",
+    "household_last_income",
+    "household_reference_income",
+    "household_last_price_index",
+    "household_reserved_plot_hours",
+    "household_reserved_second_hours",
+    "household_formal_effort",
+    "household_durable_owned",
+    "household_durable_age",
+    "household_durable_backlog",
+    "household_durable_repair_credit",
+    "household_consumption_reference",
+    "household_last_consumption",
+    "household_last_availability_unmet",
     "dwelling_stock",
-    "durable_stock",
+    "housing_vacant",
+    "second_output_stock",
     "organization_capacity",
     "organization_labor_available",
     "organization_labor_per_activity",
@@ -149,6 +233,12 @@ _STATE_NON_NEGATIVE = (
 _STATE_UNIT_RANGE = (
     "organization_shortage_expectation",
     "organization_bailout_expectation",
+    "household_informal_access",
+    "household_material_satisfaction",
+    "household_political_compliance",
+    "household_grievance",
+    "household_entitlement",
+    "household_expectation",
 )
 
 _NETWORK_ARRAY_SPEC: tuple[tuple[str, np.dtype], ...] = (
@@ -187,6 +277,7 @@ _NETWORK_ARRAY_SPEC: tuple[tuple[str, np.dtype], ...] = (
     ("plot_ready_self_cell", np.dtype("<i4")),
     ("plot_ready_market_cell", np.dtype("<i4")),
     ("retail_cell", np.dtype("<i4")),
+    ("retail_cell_by_commodity", np.dtype("<i4")),
     ("import_pool_cell", np.dtype("<i4")),
     ("project_capital_cell", np.dtype("<i4")),
     ("project_construction_cell", np.dtype("<i4")),
@@ -272,9 +363,7 @@ def state_arrays(state: MaterialState) -> dict[str, np.ndarray]:
         for name, _dtype, _axis in _STATE_ARRAY_SPEC
     }
     walked = {
-        f.name
-        for f in dataclasses.fields(state)
-        if isinstance(getattr(state, f.name), np.ndarray)
+        f.name for f in dataclasses.fields(state) if isinstance(getattr(state, f.name), np.ndarray)
     }
     _spec_drift(walked, {name for name, _d, _a in _STATE_ARRAY_SPEC}, "state")
     return arrays
@@ -285,8 +374,7 @@ def network_arrays(network: Any) -> dict[str, np.ndarray]:
     import dataclasses
 
     arrays = {
-        name: np.ascontiguousarray(getattr(network, name))
-        for name, _dtype in _NETWORK_ARRAY_SPEC
+        name: np.ascontiguousarray(getattr(network, name)) for name, _dtype in _NETWORK_ARRAY_SPEC
     }
     walked = {
         f.name
@@ -326,6 +414,12 @@ def canonical_array_hash(entries: dict[str, np.ndarray]) -> str:
 
 
 def network_static_hash(network: Any) -> str:
+    """Static hash over the stored network payload (cell/activity/route axes).
+
+    The household catalog is a pure function of the scenario parameters and is
+    rebuilt from the spec on resume, so it is not duplicated into the checkpoint
+    payload; its own hash is carried in the run manifest instead.
+    """
     return canonical_array_hash(network_arrays(network))
 
 
@@ -389,9 +483,7 @@ def save_material_checkpoint(
             **metadata,
         }
         payload_hashes = {
-            entry.name: sha256_file(entry)
-            for entry in sorted(staging.iterdir())
-            if entry.is_file()
+            entry.name: sha256_file(entry) for entry in sorted(staging.iterdir()) if entry.is_file()
         }
         payload["payload_sha256"] = payload_hashes
         (staging / "metadata.json").write_text(
@@ -410,9 +502,9 @@ def _verify_payload_hashes(directory: Path, metadata: dict[str, Any]) -> None:
     declared = metadata.get("payload_sha256")
     if not isinstance(declared, dict):
         raise ResearchGateError("checkpoint metadata lacks payload_sha256 map")
-    actual_names = {
-        entry.name for entry in directory.iterdir() if entry.is_file()
-    } - {"metadata.json"}
+    actual_names = {entry.name for entry in directory.iterdir() if entry.is_file()} - {
+        "metadata.json"
+    }
     if set(declared) != actual_names:
         raise ResearchGateError(
             f"checkpoint payload file set mismatch: declared {sorted(declared)} "
@@ -430,9 +522,7 @@ def _load_metadata(directory: Path) -> dict[str, Any]:
     if not directory.is_dir():
         raise ResearchGateError(f"checkpoint directory not found: {directory}")
     try:
-        metadata = json.loads(
-            (directory / "metadata.json").read_text(encoding="utf-8")
-        )
+        metadata = json.loads((directory / "metadata.json").read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ResearchGateError(f"unreadable checkpoint metadata: {exc}") from exc
     if not isinstance(metadata, dict):
@@ -485,11 +575,23 @@ def _state_from_payload(
                 f"checkpoint state array {name} has dtype {raw.dtype}, "
                 f"expected exactly {target} (silent coercion is refused)"
             )
-        if raw.ndim != 1 or raw.shape[0] != axes[axis]:
-            raise ResearchGateError(
-                f"checkpoint state array {name} has shape {raw.shape}, "
-                f"expected ({axes[axis]},)"
-            )
+        trailing = _STATE_TRAILING.get(name)
+        if trailing is None:
+            if raw.ndim != 1 or raw.shape[0] != axes[axis]:
+                raise ResearchGateError(
+                    f"checkpoint state array {name} has shape {raw.shape}, expected ({axes[axis]},)"
+                )
+        else:
+            expected_trailing = _TRAILING_SIZES.get(trailing)
+            if (
+                raw.ndim != 2
+                or raw.shape[0] != axes[axis]
+                or (expected_trailing is not None and raw.shape[1] != expected_trailing)
+            ):
+                raise ResearchGateError(
+                    f"checkpoint state array {name} has shape {raw.shape}, "
+                    f"expected a 2-D ({axes[axis]}, {trailing}) array"
+                )
         arrays[name] = np.ascontiguousarray(raw)
     scalars: dict[str, float] = {}
     for name, dtype in _STATE_SCALAR_SPEC:
@@ -525,9 +627,7 @@ def _validate_state(
     if arrays["household_id"].shape[0] != households:
         raise ResearchGateError("checkpoint household axis disagrees with the scenario")
     if snapshot.organizations is not None and org_count != int(snapshot.organizations):
-        raise ResearchGateError(
-            "checkpoint organization axis disagrees with the scenario"
-        )
+        raise ResearchGateError("checkpoint organization axis disagrees with the scenario")
     if arrays["dwelling_stock"].shape[0] != regions:
         raise ResearchGateError("checkpoint region axis disagrees with the scenario")
     if len(set(state.household_id.tolist())) != households:
@@ -547,9 +647,7 @@ def _validate_state(
     for name in _STATE_UNIT_RANGE:
         values = arrays[name]
         if float(np.min(values)) < -ATOL or float(np.max(values)) > 1.0 + ATOL:
-            raise ResearchGateError(
-                f"checkpoint state field {name} lies outside [0, 1]"
-            )
+            raise ResearchGateError(f"checkpoint state field {name} lies outside [0, 1]")
     if state.treasury_deposit < -ATOL or state.usd_reserve < -ATOL:
         raise ResearchGateError("checkpoint treasury/usd accounts are negative")
     index_checks = (
@@ -565,12 +663,8 @@ def _validate_state(
         ("plot_activity", arrays["plot_activity"], activity_count),
     )
     for name, values, bound in index_checks:
-        if values.size and (
-            int(values.min()) < -1 or int(values.max()) >= max(bound, 1)
-        ):
-            raise ResearchGateError(
-                f"checkpoint index array {name} falls outside its axis"
-            )
+        if values.size and (int(values.min()) < -1 or int(values.max()) >= max(bound, 1)):
+            raise ResearchGateError(f"checkpoint index array {name} falls outside its axis")
 
 
 def _validate_history_frames(
@@ -622,15 +716,11 @@ def _validate_history_frames(
             if column in nullable:
                 continue
             if frame[column].null_count():
-                raise ResearchGateError(
-                    f"checkpoint history table {name}.{column} has null values"
-                )
+                raise ResearchGateError(f"checkpoint history table {name}.{column} has null values")
         if name == "stage_balances":
             national_ticks = frame.filter(pl.col("region_id").is_null())["tick"]
             if national_ticks.n_unique() != completed or national_ticks.len() != (
-                completed * sum(
-                    len(legal_stages(c)) for c in snapshot.commodities
-                )
+                completed * sum(len(legal_stages(c)) for c in snapshot.commodities)
             ):
                 raise ResearchGateError(
                     "checkpoint stage_balances must carry exactly one complete "
@@ -648,14 +738,11 @@ def _validate_history_frames(
                     f"checkpoint history table {name}.{column} has non-finite values"
                 )
         if frame.group_by(_HISTORY_KEYS[name]).len().filter(pl.col("len") > 1).height:
-            raise ResearchGateError(
-                f"checkpoint history table {name} contains duplicate keys"
-            )
+            raise ResearchGateError(f"checkpoint history table {name} contains duplicate keys")
         observed_ticks = sorted(frame["tick"].unique().to_list())
         if observed_ticks != list(range(completed)):
             raise ResearchGateError(
-                f"checkpoint history table {name} does not cover ticks "
-                f"0..{completed - 1} exactly"
+                f"checkpoint history table {name} does not cover ticks 0..{completed - 1} exactly"
             )
         if frame.height != expected_heights[name]:
             raise ResearchGateError(
@@ -724,17 +811,11 @@ def _validate_history_consistency(
         "max_finance_tolerance_ratio",
     ):
         series = diagnostics[column].drop_nulls()
-        if series.len() and (
-            bool((series < 0.0).any()) or bool((series > 1.0).any())
-        ):
-            raise ResearchGateError(
-                f"checkpoint diagnostics {column} lies outside [0, 1]"
-            )
+        if series.len() and (bool((series < 0.0).any()) or bool((series > 1.0).any())):
+            raise ResearchGateError(f"checkpoint diagnostics {column} lies outside [0, 1]")
 
     # adjacent-quarter continuity + per-row ledger identity on the full grid
-    stage = frames["stage_balances"].sort(
- ["region_id", "commodity_id", "stage", "tick"]
-    )
+    stage = frames["stage_balances"].sort(["region_id", "commodity_id", "stage", "tick"])
     previous_close: dict[tuple[str | None, str, str], float] = {}
     for row in stage.iter_rows(named=True):
         key = (row["region_id"], row["commodity_id"], row["stage"])
@@ -744,8 +825,7 @@ def _validate_history_consistency(
                 row["opening"], expected_open
             ):
                 raise ResearchGateError(
-                    f"checkpoint stage-balance continuity broken at tick "
-                    f"{row['tick']} for {key}"
+                    f"checkpoint stage-balance continuity broken at tick {row['tick']} for {key}"
                 )
         previous_close[key] = row["closing"]
         scale = max(
@@ -780,8 +860,7 @@ def _validate_history_consistency(
         actual = float(actual_by_commodity[index])
         if abs(stored - actual) > max(1e-6, tol(stored, actual)):
             raise ResearchGateError(
-                f"checkpoint boundary total stock disagrees with the state for "
-                f"{commodity}"
+                f"checkpoint boundary total stock disagrees with the state for {commodity}"
             )
 
     budgets = frames["household_budgets"].filter(pl.col("tick") == final_tick)
@@ -798,10 +877,8 @@ def _validate_history_consistency(
         state_cash = float(np.sum(weight[mask] * state.household_cash[mask]))
         if abs(float(budget_cash[region]) - state_cash) > 1e-6:
             raise ResearchGateError(
-                f"checkpoint boundary household cash disagrees with the state for "
-                f"{region}"
+                f"checkpoint boundary household cash disagrees with the state for {region}"
             )
-
 
     financial = frames["financial_accounts"].filter(pl.col("tick") == final_tick)
     boundary_scalars = (
@@ -830,21 +907,16 @@ def _validate_history_consistency(
     if not chain_row.height or chain_row["digest"][0] == "":
         raise ResearchGateError("checkpoint diagnostics lack the final digest")
 
-    diagnostic_by_tick = {
-        int(row["tick"]): row for row in diagnostics.iter_rows(named=True)
-    }
+    diagnostic_by_tick = {int(row["tick"]): row for row in diagnostics.iter_rows(named=True)}
     for row in frames["events"].iter_rows(named=True):
         if row["event_type"] != MATERIAL_TICK_EVENT:
             raise ResearchGateError(
-                f"checkpoint event type {row['event_type']!r} is not "
-                f"{MATERIAL_TICK_EVENT!r}"
+                f"checkpoint event type {row['event_type']!r} is not {MATERIAL_TICK_EVENT!r}"
             )
         try:
             details = json.loads(row["details_json"])
         except (TypeError, ValueError) as exc:
-            raise ResearchGateError(
-                f"checkpoint event details are not valid JSON: {exc}"
-            ) from exc
+            raise ResearchGateError(f"checkpoint event details are not valid JSON: {exc}") from exc
         if not isinstance(details, dict):
             raise ResearchGateError("checkpoint event details must be a JSON object")
         diagnostic = diagnostic_by_tick.get(int(row["tick"]))
@@ -854,8 +926,7 @@ def _validate_history_consistency(
             )
         if details.get("digest") != diagnostic["digest"]:
             raise ResearchGateError(
-                f"checkpoint event digest disagrees with diagnostics at tick "
-                f"{row['tick']}"
+                f"checkpoint event digest disagrees with diagnostics at tick {row['tick']}"
             )
         for field in (
             "max_material_abs_residual",
@@ -865,17 +936,17 @@ def _validate_history_consistency(
             "bottleneck_demand_count",
             "financial_blocked_total",
         ):
-            if field not in details or not isinstance(details[field], (int, float)) or (
-                isinstance(details[field], bool)
+            if (
+                field not in details
+                or not isinstance(details[field], (int, float))
+                or (isinstance(details[field], bool))
             ):
                 raise ResearchGateError(
-                    f"checkpoint event {field} is not a JSON number at tick "
-                    f"{row['tick']}"
+                    f"checkpoint event {field} is not a JSON number at tick {row['tick']}"
                 )
             if abs(float(details[field]) - float(diagnostic[field])) > 1e-9:
                 raise ResearchGateError(
-                    f"checkpoint event {field} disagrees with diagnostics at tick "
-                    f"{row['tick']}"
+                    f"checkpoint event {field} disagrees with diagnostics at tick {row['tick']}"
                 )
 
 
@@ -985,17 +1056,13 @@ def load_material_checkpoint(
     )
     from hsm_lab.provenance.manifest import compute_parameter_hash
 
-    if (
-        metadata.get("parameter_hash")
-        is not None
-        and metadata.get("parameter_hash")
-        != compute_parameter_hash(material_parameter_vector(snapshot))
-    ):
+    if metadata.get("parameter_hash") is not None and metadata.get(
+        "parameter_hash"
+    ) != compute_parameter_hash(material_parameter_vector(snapshot)):
         raise ResearchGateError("checkpoint parameter hash mismatch")
-    if (
-        metadata.get("initial_recipe_hash") is not None
-        and metadata.get("initial_recipe_hash") != material_recipe_hash(snapshot)
-    ):
+    if metadata.get("initial_recipe_hash") is not None and metadata.get(
+        "initial_recipe_hash"
+    ) != material_recipe_hash(snapshot):
         raise ResearchGateError("checkpoint initial recipe hash mismatch")
 
     # --- history payload
@@ -1034,7 +1101,9 @@ def load_material_checkpoint(
         raise ResearchGateError("checkpoint RNG seed disagrees with the snapshot scenario")
     expected_rng = RngRegistry(snapshot.seed)
     if snapshot.stochastic:
-        expected_rng.uniform("material.initial_households", snapshot.households)
+        from hsm_lab.engine.households import _ATTR_DRAWS, ATTRIBUTE_MODULE
+
+        expected_rng.uniform(ATTRIBUTE_MODULE, snapshot.households * _ATTR_DRAWS)
     if rng.snapshot() != expected_rng.snapshot():
         raise ResearchGateError(
             "checkpoint RNG snapshot does not match the material initialization "

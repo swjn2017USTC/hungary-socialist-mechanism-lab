@@ -19,6 +19,9 @@ from collections.abc import Sequence
 
 import numpy as np
 
+from hsm_lab.contract.households import (
+    compile_household_catalog,
+)
 from hsm_lab.contract.material import (
     COMMODITY_INDEX,
     CONSTRUCTION_CAPACITY_TOTAL,
@@ -36,7 +39,6 @@ from hsm_lab.contract.material import (
     TYPE_TECHNOLOGY_IDS,
     WHOLESALE_HANDLING_TOTAL,
     ExportRole,
-    HouseholdInitial,
     MaterialInitialConditions,
     MaterialParameters,
     OrganizationSpec,
@@ -45,61 +47,13 @@ from hsm_lab.contract.material import (
     TechnologySpec,
 )
 from hsm_lab.contract.schemas import ConfigError, ScenarioSpec
+from hsm_lab.engine.households import build_synthetic_households
 from hsm_lab.engine.rng import RngRegistry
-
-_HOUSEHOLD_MODULE = "material.initial_households"
 
 #: Fraction of represented persons assigned to physical activities.
 _PHYSICAL_LABOR_SHARE = 0.9
 #: Labor headroom over physical capacity each productive organization gets.
 _LABOR_CAPACITY_HEADROOM = 1.2
-
-
-def _plot_participation(region: np.ndarray, region_count: int, fraction: float) -> np.ndarray:
-    """Within-region canonical-id ordinal cohort (plan step 3).
-
-    Household ``h`` (0-based inside its region, canonical id order)
-    participates iff ``floor((h+1)*f) > floor(h*f)``.
-    """
-    count = region.shape[0]
-    order = np.argsort(region, kind="stable")  # ids are ascending input order
-    sorted_region = region[order]
-    starts = np.searchsorted(sorted_region, np.arange(region_count), side="left")
-    ordinal = np.empty(count, dtype=np.int64)
-    ordinal[order] = np.arange(count, dtype=np.int64) - starts[sorted_region]
-    return np.floor((ordinal + 1.0) * fraction) > np.floor(ordinal * fraction)
-
-
-def _households(
-    spec: ScenarioSpec,
-    equivalent_households: float,
-    plot_recipe: PrivatePlotRecipe,
-    rng: RngRegistry,
-) -> tuple[HouseholdInitial, float, np.ndarray]:
-    """The single household draw: ids, regions, weights, sizes, plot cohort."""
-    count = spec.households
-    region_count = len(spec.region_ids)
-    household_id = np.arange(count, dtype=np.int64)
-    if spec.stochastic:
-        draws = rng.uniform(_HOUSEHOLD_MODULE, count)
-        size = 2.0 + np.floor(3.0 * draws)
-    else:
-        size = np.full(count, 3.0, dtype=np.float64)
-    region = (household_id % region_count).astype(dtype=np.int32)
-    weight = np.full(count, equivalent_households / count, dtype=np.float64)
-    persons = weight * size
-    equivalent_persons = float(persons.sum())
-    region_persons = np.bincount(region, weights=persons, minlength=region_count)
-    households = HouseholdInitial(
-        household_id=household_id,
-        region=region,
-        weight=weight,
-        size=size,
-        plot_participating=_plot_participation(
-            region, region_count, plot_recipe.participation_fraction
-        ),
-    )
-    return households, equivalent_persons, np.asarray(region_persons, dtype=np.float64)
 
 
 def _organization_slots(
@@ -211,15 +165,17 @@ def _quarterly_flow_value(
             price = price_by_id.get(row.commodity_id)
             if price is None:
                 raise ConfigError(
-                    f"technology {technology_id} consumes undeclared commodity "
-                    f"{row.commodity_id!r}"
+                    f"technology {technology_id} consumes undeclared commodity {row.commodity_id!r}"
                 )
             input_value += row.coefficient * price * target
-    household_value = sum(
-        float(parameters.desired_per_person[index]) * float(parameters.prices[index])
-        for index, commodity_id in enumerate(P02_COMMODITY_IDS)
-        if commodity_id in price_by_id
-    ) * equivalent_persons
+    household_value = (
+        sum(
+            float(parameters.prices[COMMODITY_INDEX[commodity_id]])
+            for commodity_id in P02_COMMODITY_IDS
+            if commodity_id in price_by_id
+        )
+        * equivalent_persons
+    )
     return input_value + household_value
 
 
@@ -251,18 +207,28 @@ def build_material_initial_conditions(
     # ScenarioSpec carries no plot fields; the contract default recipe is the
     # declared synthetic plot channel (grade S structural assumption).
     plot_recipe = PrivatePlotRecipe()
-    households, equivalent_persons, region_persons = _households(
-        spec, parameters.equivalent_households, plot_recipe, rng
+    households = build_synthetic_households(spec, rng)
+    region_count = len(spec.region_ids)
+    region_persons = np.bincount(
+        np.asarray(households.region, dtype=np.int64),
+        weights=(households.weight * households.size).astype(np.float64),
+        minlength=region_count,
+    )
+    equivalent_persons = float(region_persons.sum())
+    household_parameters = spec.household_parameters
+    if household_parameters is None:
+        raise ConfigError("material scenario must declare household_parameters")
+    household_catalog = compile_household_catalog(
+        household_parameters, parameters, tuple(spec.commodities)
     )
 
     profile = ORGANIZATION_PROFILES[recipe.profile]
     slots = _organization_slots(profile)
     organization_count = len(slots)
-    region_count = len(spec.region_ids)
 
     physical_capacity_total = sum(
         capacity for org_type, _, capacity in slots if org_type in PRODUCTIVE_TYPES
-    )
+    )  # noqa: E501
     if physical_capacity_total <= 0.0:
         raise ConfigError("organization profile declares no productive capacity")
     physical_labor_per_activity = (_PHYSICAL_LABOR_SHARE * equivalent_persons) / (
@@ -413,6 +379,8 @@ def build_material_initial_conditions(
         region_equivalent_persons=region_persons,
         parameters=parameters,
         initial_recipe=initial_recipe,
+        household_parameters=household_parameters,
+        household_catalog=household_catalog,
         distribution_working_capital=distribution_working_capital,
     )
 

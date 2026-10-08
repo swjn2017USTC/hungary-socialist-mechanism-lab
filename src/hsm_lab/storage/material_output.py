@@ -297,9 +297,7 @@ def _cell_scatter(size: int, indices: np.ndarray, values: np.ndarray) -> np.ndar
     return out
 
 
-def _household_region_sums(
-    state: MaterialState, values: np.ndarray, regions: int
-) -> np.ndarray:
+def _household_region_sums(state: MaterialState, values: np.ndarray, regions: int) -> np.ndarray:
     """Weighted regional sums of an (N,) or (N, G) per-household array."""
     weight = state.household_weight
     if values.ndim == 1:
@@ -383,6 +381,8 @@ class _CellLedger:
             demand_cell[consuming],
             np.asarray(flows.used, dtype=np.float64)[consuming],
         )
+        # second-economy input draws also leave the formal stock cells
+        self.used = self.used + np.asarray(flows.second_input_used, dtype=np.float64)
 
         # realized imports land in the treasury import pool cells
         self.imports = np.zeros(cell_count, dtype=np.float64)
@@ -481,8 +481,7 @@ class _CellLedger:
         out = np.zeros((self.regions, self.commodities), dtype=np.float64)
         if selected.size:
             out += np.bincount(
-                self.cell_region[selected] * self.commodities
-                + self.cell_commodity[selected],
+                self.cell_region[selected] * self.commodities + self.cell_commodity[selected],
                 weights=values[selected],
                 minlength=self.regions * self.commodities,
             ).reshape(self.regions, self.commodities)
@@ -536,9 +535,7 @@ def append_material_rows(
     _append_stage_rows(history, ledger, tick, quarter, region_ids, commodity_ids)
     _append_national_rows(history, state, flows, ledger, tick, quarter, commodity_ids)
     _append_budget_rows(history, state, flows, tick, quarter, region_ids)
-    _append_organization_rows(
-        history, state, flows, network, ledger, tick, quarter, region_ids
-    )
+    _append_organization_rows(history, state, flows, network, ledger, tick, quarter, region_ids)
     _append_financial_rows(history, state, flows, tick, quarter, invariant_summary)
     _append_department_rows(
         history, state, flows, parameters, network, tick, quarter, invariant_summary
@@ -567,9 +564,7 @@ def _append_aggregate_rows(
     dest_region = ledger.cell_region[valid]
     dest_commodity = ledger.cell_commodity[valid]
     demand_keys = dest_region * commodities + dest_commodity
-    demand_values_index = np.nonzero(demand_cell >= 0)[0][
-        ledger.cell_region[landed] >= 0
-    ]
+    demand_values_index = np.nonzero(demand_cell >= 0)[0][ledger.cell_region[landed] >= 0]
 
     def demand_sums(values: np.ndarray) -> np.ndarray:
         out = np.zeros((regions, commodities), dtype=np.float64)
@@ -607,9 +602,7 @@ def _append_aggregate_rows(
         "wholesale_close": ledger.grid(ledger.mask_wholesale, ledger.closing_view),
         "retail_open": ledger.grid(ledger.mask_retail, ledger.opening),
         "retail_close": ledger.grid(ledger.mask_retail, ledger.closing_view),
-        "household_desired": _household_region_sums(
-            state, flows.household_desired, regions
-        ),
+        "household_desired": _household_region_sums(state, flows.household_desired, regions),
         "household_budget_unmet": _household_region_sums(
             state, flows.household_budget_unmet, regions
         ),
@@ -632,9 +625,7 @@ def _append_aggregate_rows(
                 float(ledger.plot_self_use[region]) if commodity == food_index else 0.0
             )
             row["plot_market_sales"] = (
-                float(ledger.plot_market_sales[region])
-                if commodity == food_index
-                else 0.0
+                float(ledger.plot_market_sales[region]) if commodity == food_index else 0.0
             )
             history.aggregate_rows.append(row)
 
@@ -658,9 +649,7 @@ def _append_stage_rows(
     )
     grid_size = (regions + 1) * commodities * 10
 
-    stockable_commodity = np.array(
-        [_STOCKABLE_BY_ID.get(c, True) for c in commodity_ids]
-    )
+    stockable_commodity = np.array([_STOCKABLE_BY_ID.get(c, True) for c in commodity_ids])
     is_services_cell = ~stockable_commodity[ledger.cell_commodity]
     expiry = np.where(
         is_services_cell,
@@ -718,10 +707,7 @@ def _append_stage_rows(
                     "region_id": region_label,
                     "commodity_id": commodity_ids[g],
                     "stage": _STAGE_NAME_OF[stage_code],
-                    **{
-                        name: float(table[index])
-                        for name, table in tables.items()
-                    },
+                    **{name: float(table[index]) for name, table in tables.items()},
                     "residual": float(residual_table[index]),
                 }
             )
@@ -740,9 +726,7 @@ def _append_national_rows(
     household_consumption = _household_region_sums(
         state, flows.household_realized, ledger.regions
     ).sum(axis=0)
-    stockable_commodity = np.array(
-        [_STOCKABLE_BY_ID.get(c, True) for c in commodity_ids]
-    )
+    stockable_commodity = np.array([_STOCKABLE_BY_ID.get(c, True) for c in commodity_ids])
     expiry = np.where(
         stockable_commodity,
         0.0,
@@ -781,22 +765,12 @@ def _append_national_rows(
         "used": ledger.national_grid(ledger.mask_all, ledger.used),
         "household_consumption": household_consumption,
         "expiry": expiry,
-        "organization_input_open": ledger.national_grid(
-            ledger.mask_input, ledger.opening
-        ),
-        "organization_input_close": ledger.national_grid(
-            ledger.mask_input, ledger.closing_view
-        ),
-        "organization_output_open": ledger.national_grid(
-            ledger.mask_output, ledger.opening
-        ),
-        "organization_output_close": ledger.national_grid(
-            ledger.mask_output, ledger.closing_view
-        ),
+        "organization_input_open": ledger.national_grid(ledger.mask_input, ledger.opening),
+        "organization_input_close": ledger.national_grid(ledger.mask_input, ledger.closing_view),
+        "organization_output_open": ledger.national_grid(ledger.mask_output, ledger.opening),
+        "organization_output_close": ledger.national_grid(ledger.mask_output, ledger.closing_view),
         "wholesale_open": ledger.national_grid(ledger.mask_wholesale, ledger.opening),
-        "wholesale_close": ledger.national_grid(
-            ledger.mask_wholesale, ledger.closing_view
-        ),
+        "wholesale_close": ledger.national_grid(ledger.mask_wholesale, ledger.closing_view),
         "retail_open": ledger.national_grid(ledger.mask_retail, ledger.opening),
         "retail_close": ledger.national_grid(ledger.mask_retail, ledger.closing_view),
         "plot_open": ledger.national_grid(ledger.mask_plot, ledger.opening),
@@ -804,9 +778,7 @@ def _append_national_rows(
         "project_wip_open": ledger.national_grid(ledger.mask_wip, ledger.opening),
         "project_wip_close": ledger.national_grid(ledger.mask_wip, ledger.closing_view),
         "import_pool_open": ledger.national_grid(ledger.mask_import, ledger.opening),
-        "import_pool_close": ledger.national_grid(
-            ledger.mask_import, ledger.closing_view
-        ),
+        "import_pool_close": ledger.national_grid(ledger.mask_import, ledger.closing_view),
         "total_stock_open": ledger.national_grid(ledger.mask_all, ledger.opening),
         "total_stock_close": ledger.national_grid(ledger.mask_all, ledger.closing_view),
     }
@@ -821,9 +793,7 @@ def _append_national_rows(
         value = float(residual[g])
         row["material_balance_residual"] = value
         allowed = float(tolerance[g])
-        row["material_balance_tolerance_ratio"] = (
-            abs(value) / allowed if allowed > 0 else 0.0
-        )
+        row["material_balance_tolerance_ratio"] = abs(value) / allowed if allowed > 0 else 0.0
         history.national_rows.append(row)
 
 
@@ -838,25 +808,17 @@ def _append_budget_rows(
     regions = len(region_ids)
     columns = {
         "cash_open": _household_region_sums(state, flows.household_cash_open, regions),
-        "cash_close": _household_region_sums(
-            state, flows.household_cash_close, regions
-        ),
-        "pre_purchase_wages": _household_region_sums(
-            state, flows.household_wage_income, regions
-        ),
+        "cash_close": _household_region_sums(state, flows.household_cash_close, regions),
+        "pre_purchase_wages": _household_region_sums(state, flows.household_wage_income, regions),
         "plot_income_formal": _household_region_sums(
             state, flows.household_plot_income_formal, regions
         ),
         "plot_income_direct": _household_region_sums(
             state, flows.household_plot_income_direct, regions
         ),
-        "late_wage_payment": _household_region_sums(
-            state, flows.household_late_wage, regions
-        ),
+        "late_wage_payment": _household_region_sums(state, flows.household_late_wage, regions),
         "spending": _household_region_sums(state, flows.household_spending, regions),
-        "self_use_imputed": _household_region_sums(
-            state, flows.household_self_use, regions
-        ),
+        "self_use_imputed": _household_region_sums(state, flows.household_self_use, regions),
         "plot_input_funding": _household_region_sums(
             state, flows.household_plot_input_funding, regions
         ),
@@ -866,9 +828,7 @@ def _append_budget_rows(
         "voluntary_saving": _household_region_sums(
             state, flows.household_voluntary_saving, regions
         ),
-        "forced_saving": _household_region_sums(
-            state, flows.household_forced_saving, regions
-        ),
+        "forced_saving": _household_region_sums(state, flows.household_forced_saving, regions),
         "deferred_close": _household_region_sums(
             state,
             np.asarray(flows.household_plot_income_direct, dtype=np.float64)
@@ -1059,9 +1019,7 @@ def _append_financial_rows(
     repaid = by_bank(flows.organization_principal_paid)
     accrued = by_bank(flows.organization_interest_due)
     interest_paid = by_bank(flows.organization_interest_paid)
-    loan_open = (
-        np.asarray(state.bank_loan_asset, dtype=np.float64) - drawn + repaid
-    )
+    loan_open = np.asarray(state.bank_loan_asset, dtype=np.float64) - drawn + repaid
     residual = (
         np.asarray(state.bank_loan_asset, dtype=np.float64)
         + np.asarray(state.bank_interest_receivable, dtype=np.float64)
@@ -1218,14 +1176,10 @@ def _append_department_rows(
                 "actual_use_value": float(use.get(department, 0.0)),
                 "attributed_output_value": float(attributed.get(department, 0.0)),
                 "service_use_productive": (
-                    float(summary.service_use_productive)
-                    if department == "services"
-                    else 0.0
+                    float(summary.service_use_productive) if department == "services" else 0.0
                 ),
                 "service_use_household": (
-                    float(summary.service_use_household)
-                    if department == "services"
-                    else 0.0
+                    float(summary.service_use_household) if department == "services" else 0.0
                 ),
             }
         )
@@ -1242,9 +1196,7 @@ def _append_diagnostic_rows(
     ordered = np.asarray(flows.ordered, dtype=np.float64)
     delivered = np.asarray(flows.delivered, dtype=np.float64)
     bottleneck = int(np.count_nonzero((ordered > 0.0) & (delivered <= 0.0)))
-    blocked_total = float(
-        np.sum(np.asarray(flows.financial_delivery_blocked, dtype=np.float64))
-    )
+    blocked_total = float(np.sum(np.asarray(flows.financial_delivery_blocked, dtype=np.float64)))
     missing = [
         name
         for name in (
@@ -1290,11 +1242,7 @@ def _append_diagnostic_rows(
             "financial_blocked_total": blocked_total,
             "forcing_segment": segment,
             "expired_services": float(flows.expired_services),
-            **{
-                name: value
-                for name, value in invariant_summary.items()
-                if name != "per_ledger"
-            },
+            **{name: value for name, value in invariant_summary.items() if name != "per_ledger"},
         }
     )
     history.event_rows.append(
@@ -1377,9 +1325,7 @@ def _cast_frame(rows: list[dict[str, object]], table: str) -> pl.DataFrame:
             casts[column] = pl.Float64
     schema = pl.Schema(casts)
     if not rows:
-        return pl.DataFrame(
-            {column: [] for column in columns}
-        ).cast(schema)
+        return pl.DataFrame({column: [] for column in columns}).cast(schema)
     frame = pl.DataFrame(rows)
     return frame.select(columns).cast(schema)
 
@@ -1401,9 +1347,7 @@ def history_frames(history: MaterialHistory) -> dict[str, pl.DataFrame]:
     }
 
 
-def write_material_tables(
-    output_dir: Path, frames: dict[str, pl.DataFrame]
-) -> dict[str, Path]:
+def write_material_tables(output_dir: Path, frames: dict[str, pl.DataFrame]) -> dict[str, Path]:
     """Write all compact Parquet files and the DuckDB trajectory file."""
     paths: dict[str, Path] = {}
     for name in TABLES:

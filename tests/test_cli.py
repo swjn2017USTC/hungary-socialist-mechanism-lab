@@ -38,8 +38,12 @@ def test_help_both_entrypoints() -> None:
     console_script = Path(sys.executable).with_name("hsm")
     if console_script.is_file():
         script = subprocess.run(
-            [str(console_script), "--help"], cwd=REPO_ROOT, env=_env(),
-            capture_output=True, text=True, timeout=60,
+            [str(console_script), "--help"],
+            cwd=REPO_ROOT,
+            env=_env(),
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
         assert script.returncode == 0
         assert "doctor" in script.stdout
@@ -82,16 +86,18 @@ def test_run_two_seeds_and_policies(tmp_path) -> None:
         "c": ["--seed", "1730"],
         "full": ["--seed", "1729", "--output-policy", "research_full"],
     }.items():
-        proc = hsm("run", "--scenario", "smoke", *args,
-                   "--output-dir", str(tmp_path / name), "--json")
+        proc = hsm(
+            "run", "--scenario", "smoke", *args, "--output-dir", str(tmp_path / name), "--json"
+        )
         assert proc.returncode == 0, proc.stderr
         results[name] = json.loads(proc.stdout)
-    assert results["a"]["deterministic_replay_digest"] == results["full"][
-        "deterministic_replay_digest"
-    ]
-    assert results["a"]["deterministic_replay_digest"] != results["c"][
-        "deterministic_replay_digest"
-    ]
+    assert (
+        results["a"]["deterministic_replay_digest"]
+        == results["full"]["deterministic_replay_digest"]
+    )
+    assert (
+        results["a"]["deterministic_replay_digest"] != results["c"]["deterministic_replay_digest"]
+    )
     assert results["a"]["rng_draws_count"] == 42_000
     for name in results:
         assert results[name]["run_kind"] == "synthetic_engine_smoke"
@@ -139,7 +145,11 @@ def test_cli_needs_no_api_keys(tmp_path) -> None:
     assert not any(key in env for key in STRIPPED_ENV_KEYS)
     proc = subprocess.run(
         [sys.executable, "-m", "hsm_lab", "doctor", "--json"],
-        cwd=REPO_ROOT, env=env, capture_output=True, text=True, timeout=120,
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
     )
     assert proc.returncode == 0
 
@@ -147,8 +157,12 @@ def test_cli_needs_no_api_keys(tmp_path) -> None:
 def test_toy4_scenario_refused(tmp_path) -> None:
     """The deleted Toy-4 scenario exits 2 with one JSON object, before any run."""
     proc = hsm(
-        "run", "--scenario", "toy4",
-        "--output-dir", str(tmp_path / "n"), "--json",
+        "run",
+        "--scenario",
+        "toy4",
+        "--output-dir",
+        str(tmp_path / "n"),
+        "--json",
     )
     assert proc.returncode == 2
     payload = json.loads(proc.stdout)
@@ -162,8 +176,14 @@ def test_material_json_error_surface_for_bad_option(tmp_path) -> None:
     """Invalid option ranges must still emit one JSON object on stdout (exit 2),
     never a bare human Typer error."""
     proc = hsm(
-        "run", "--scenario", "intermediate8", "--households", "999",
-        "--output-dir", str(tmp_path / "n"), "--json",
+        "run",
+        "--scenario",
+        "intermediate8",
+        "--households",
+        "999",
+        "--output-dir",
+        str(tmp_path / "n"),
+        "--json",
     )
     assert proc.returncode == 2
     payload = json.loads(proc.stdout)
@@ -175,8 +195,14 @@ def test_material_json_error_surface_for_bad_option(tmp_path) -> None:
 
 def test_material_organizations_only_defined_profiles(tmp_path) -> None:
     proc = hsm(
-        "run", "--scenario", "intermediate8", "--organizations", "300",
-        "--output-dir", str(tmp_path / "o"), "--json",
+        "run",
+        "--scenario",
+        "intermediate8",
+        "--organizations",
+        "300",
+        "--output-dir",
+        str(tmp_path / "o"),
+        "--json",
     )
     assert proc.returncode == 2
     payload = json.loads(proc.stdout)
@@ -196,10 +222,16 @@ def test_material_resume_with_override_refused(tmp_path, monkeypatch) -> None:
     conflict = runner.invoke(
         app,
         [
-            "run", "--scenario", "intermediate8",
-            "--resume", str(tmp_path / "missing-ckpt"),
-            "--seed", "9",
-            "--output-dir", str(tmp_path / "r"), "--json",
+            "run",
+            "--scenario",
+            "intermediate8",
+            "--resume",
+            str(tmp_path / "missing-ckpt"),
+            "--seed",
+            "9",
+            "--output-dir",
+            str(tmp_path / "r"),
+            "--json",
         ],
     )
     assert conflict.exit_code == 2
@@ -218,7 +250,7 @@ def _fake_material_run_dir(tmp_path: Path, *, tamper: bool = False) -> Path:
     summary = {
         "schema_version": "1",
         "run_id": "run0001",
-        "run_kind": "intermediate8_material_simulation",
+        "run_kind": "intermediate8_household_simulation",
         "scenario_id": "intermediate8",
         "planned_ticks": 2,
         "completed_ticks": 2,
@@ -233,7 +265,7 @@ def _fake_material_run_dir(tmp_path: Path, *, tamper: bool = False) -> Path:
     manifest = RunManifest.model_validate(
         {
             "run_id": "run0001",
-            "run_kind": "intermediate8_material_simulation",
+            "run_kind": "intermediate8_household_simulation",
             "status": "completed",
             "started_at": "2026-01-01T00:00:00Z",
             "finished_at": "2026-01-01T00:00:01Z",
@@ -257,7 +289,7 @@ def _fake_material_run_dir(tmp_path: Path, *, tamper: bool = False) -> Path:
             "rng_scheme_version": "pcg64-sha256-module-v1",
             "dependency_versions": {},
             "research_warnings": [],
-            "engine_version": "material-engine-v1",
+            "engine_version": "material-engine-v2",
             "completed_ticks": 2,
             "deterministic_replay_digest": "digest-abc",
             "output_hashes": {
@@ -283,7 +315,7 @@ def test_summary_refuses_toy4_run_kind(tmp_path) -> None:
     (run_dir / "manifest.json").write_text(json.dumps(manifest))
     proc = hsm("summary", "--run-dir", str(run_dir), "--json")
     assert proc.returncode == 1
-    assert "intermediate8_material_simulation" in json.loads(proc.stdout)["error"]
+    assert "intermediate8_household_simulation" in json.loads(proc.stdout)["error"]
 
 
 def test_summary_refuses_tampered_economic_field(tmp_path) -> None:
@@ -298,7 +330,7 @@ def test_summary_reads_authentic_material_run(tmp_path) -> None:
     proc = hsm("summary", "--run-dir", str(run_dir), "--json")
     assert proc.returncode == 0
     payload = json.loads(proc.stdout)
-    assert payload["run_kind"] == "intermediate8_material_simulation"
+    assert payload["run_kind"] == "intermediate8_household_simulation"
     assert payload["completed_ticks"] == 2
     human = hsm("summary", "--run-dir", str(run_dir))
     assert human.returncode == 0
@@ -318,9 +350,7 @@ def test_data_ingest_rejects_unknown_source_and_flag_conflict() -> None:
     unknown = hsm("data", "ingest", "--source", "not_a_source", "--json")
     assert unknown.returncode == 2
     assert "allowlist" in json.loads(unknown.stdout)["error"]
-    conflict = hsm(
-        "data", "ingest", "--source", "ksh_gdp", "--offline", "--refresh", "--json"
-    )
+    conflict = hsm("data", "ingest", "--source", "ksh_gdp", "--offline", "--refresh", "--json")
     assert conflict.returncode == 2
     assert "mutually exclusive" in json.loads(conflict.stdout)["error"]
 

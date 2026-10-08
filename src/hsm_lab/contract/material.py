@@ -14,14 +14,17 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Annotated, Literal, Self, cast
+from typing import TYPE_CHECKING, Annotated, Literal, Self, cast
 
 import numpy as np
 from pydantic import Field, model_validator
 
 from hsm_lab.contract.base import ConfigError, FiniteFloat, StrictModel
+
+if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
+    from hsm_lab.contract.households import HouseholdCatalog, HouseholdParameters
 
 Stage = Literal["standard", "raw", "ready"]
 STAGES: tuple[Stage, ...] = ("standard", "raw", "ready")
@@ -199,9 +202,7 @@ PRODUCTIVE_TYPES = frozenset(
         OrganizationType.TRANSPORT,
     }
 )
-TRADER_TYPES = frozenset(
-    {OrganizationType.WHOLESALE_PROCURMENT, OrganizationType.RETAIL}
-)
+TRADER_TYPES = frozenset({OrganizationType.WHOLESALE_PROCURMENT, OrganizationType.RETAIL})
 
 # Industrial technologies in canonical order; capacity totals below follow it.
 INDUSTRIAL_TECHNOLOGY_IDS: tuple[str, ...] = (
@@ -292,9 +293,7 @@ class OrganizationSpec(StrictModel):
                     f"bank organization {self.organization_id} has fixed handling_capacity 0"
                 )
             if self.labor_available != 0.0 or self.labor_per_activity is not None:
-                raise ConfigError(
-                    f"bank organization {self.organization_id} has no material labor"
-                )
+                raise ConfigError(f"bank organization {self.organization_id} has no material labor")
             if self.bank_id is not None:
                 raise ConfigError(
                     f"bank organization {self.organization_id} must not carry bank_id"
@@ -303,9 +302,7 @@ class OrganizationSpec(StrictModel):
                 raise ConfigError(f"bank organization {self.organization_id} cannot borrow")
         if kind in TRADER_TYPES:
             if self.technology_id is not None:
-                raise ConfigError(
-                    f"trader {self.organization_id} must not declare a technology"
-                )
+                raise ConfigError(f"trader {self.organization_id} must not declare a technology")
             if self.capacity != 0.0:
                 raise ConfigError(f"trader {self.organization_id} has fixed capacity 0")
             if self.handling_capacity <= 0.0:
@@ -332,8 +329,7 @@ class OrganizationSpec(StrictModel):
                 )
             if self.handling_capacity != 0.0:
                 raise ConfigError(
-                    f"productive organization {self.organization_id} has fixed "
-                    "handling_capacity 0"
+                    f"productive organization {self.organization_id} has fixed handling_capacity 0"
                 )
         return self
 
@@ -399,9 +395,7 @@ def _tech(
     return TechnologySpec(
         technology_id=technology_id,
         inputs=input_rows,
-        outputs=[
-            OutputCoefficient(commodity_id=c, stage=s, coefficient=v) for c, s, v in outputs
-        ],
+        outputs=[OutputCoefficient(commodity_id=c, stage=s, coefficient=v) for c, s, v in outputs],
     )
 
 
@@ -549,6 +543,7 @@ class CellOwnerKind(StrEnum):
     PLOT = "plot"
     PROJECT = "project"
     TREASURY_IMPORT = "treasury_import"
+    SECOND_ECONOMY = "second_economy"
 
 
 class StockCellRef(StrictModel):
@@ -568,15 +563,11 @@ class StockCellRef(StrictModel):
         if self.owner_kind in (CellOwnerKind.PLOT, CellOwnerKind.PROJECT) and (
             self.region_id is None
         ):
-            raise ConfigError(
-                f"{self.owner_kind.value} stock cell requires region_id"
-            )
+            raise ConfigError(f"{self.owner_kind.value} stock cell requires region_id")
         if self.owner_kind is CellOwnerKind.TREASURY_IMPORT and self.region_id is not None:
             raise ConfigError("national import pool cell must not carry a region")
         if self.stage not in legal_stages(self.commodity_id):
-            raise ConfigError(
-                f"commodity {self.commodity_id} cannot carry stage {self.stage!r}"
-            )
+            raise ConfigError(f"commodity {self.commodity_id} cannot carry stage {self.stage!r}")
         return self
 
 
@@ -592,6 +583,7 @@ class RoutePurpose(StrEnum):
     EXPORT_CMEA = "export_cmea"
     EXPORT_CONVERTIBLE = "export_convertible"
     HOUSEHOLD = "household"
+    SECOND_ECONOMY = "second_economy"
 
 
 PURPOSE_CODES: dict[RoutePurpose, int] = {
@@ -783,20 +775,14 @@ class MaterialParameters(StrictModel):
         "Synthetic Intermediate-8 engineering constants; not historical Hungarian "
         "magnitudes and not calibrated against any observed series."
     )
-    equivalent_households: PositiveFloat = 5000.0
     # Admin prices (standard food slot represents ready food).
     prices: list[FiniteFloat] = Field(
         default=[1.0, 4.0, 2.0, 3.0, 1.5, 5.0, 12.0, 1.0], min_length=1
     )
     food_raw_price: PositiveFloat = 0.8
-    desired_per_person: list[FiniteFloat] = Field(
-        default=[0.4, 0.0, 2.0, 1.0, 0.0, 0.0, 0.02, 0.2], min_length=1
-    )
     utilization: Annotated[FiniteFloat, Field(gt=0.0, le=1.0)] = 0.9
     # Same-tick service split: logistics / productive / household, sums to 1.
-    service_split: list[FiniteFloat] = Field(
-        default=[0.7, 0.2, 0.1], min_length=3, max_length=3
-    )
+    service_split: list[FiniteFloat] = Field(default=[0.7, 0.2, 0.1], min_length=3, max_length=3)
     # Shortage mechanism toggles (default OFF so the mechanism is opt-in).
     overorder_strength: NonNegativeFloat = 0.0
     hoarding_quarters: NonNegativeFloat = 0.0
@@ -812,13 +798,9 @@ class MaterialParameters(StrictModel):
     hunger_base: NonNegativeFloat = 0.02
     hunger_bailout: NonNegativeFloat = 0.05
     hunger_shortage: NonNegativeFloat = 0.05
-    # Housing (construction completed only ever adds dwelling stock/capacity).
-    housing_request_per_person: NonNegativeFloat = 0.002
     # Transport and handling.
     transport_per_unit: NonNegativeFloat = 0.05
-    handling_work_per_unit: list[FiniteFloat] = Field(
-        default=[1.0] * 8, min_length=1
-    )
+    handling_work_per_unit: list[FiniteFloat] = Field(default=[1.0] * 8, min_length=1)
     # External anchors.
     world_oil_reference: PositiveFloat = 1.63
     oil_warmup_price: PositiveFloat = 1.6
@@ -834,7 +816,7 @@ class MaterialParameters(StrictModel):
 
     @model_validator(mode="after")
     def _check_vectors(self) -> Self:
-        for name in ("prices", "desired_per_person", "handling_work_per_unit"):
+        for name in ("prices", "handling_work_per_unit"):
             vector = getattr(self, name)
             if any(not math.isfinite(v) or v < 0 for v in vector):
                 raise ConfigError(f"{name} must be finite and non-negative")
@@ -855,7 +837,6 @@ class MaterialParameters(StrictModel):
         size = len(commodity_ids)
         for name in (
             "prices",
-            "desired_per_person",
             "handling_work_per_unit",
         ):
             if len(getattr(self, name)) != size:
@@ -868,7 +849,6 @@ class MaterialParameters(StrictModel):
     def flatten(self) -> dict[str, float]:
         """Field/index-path flattening for the run's parameter hash."""
         vector: dict[str, float] = {
-            "equivalent_households": self.equivalent_households,
             "food_raw_price": self.food_raw_price,
             "utilization": self.utilization,
             "overorder_strength": self.overorder_strength,
@@ -884,7 +864,6 @@ class MaterialParameters(StrictModel):
             "hunger_base": self.hunger_base,
             "hunger_bailout": self.hunger_bailout,
             "hunger_shortage": self.hunger_shortage,
-            "housing_request_per_person": self.housing_request_per_person,
             "transport_per_unit": self.transport_per_unit,
             "world_oil_reference": self.world_oil_reference,
             "oil_warmup_price": self.oil_warmup_price,
@@ -898,7 +877,6 @@ class MaterialParameters(StrictModel):
         }
         for name in (
             "prices",
-            "desired_per_person",
             "service_split",
             "handling_work_per_unit",
             "farm_seasonal_factors",
@@ -943,9 +921,7 @@ class MaterialInitialRecipe(StrictModel):
             "bank_equity_quarters": self.bank_equity_quarters,
             "initial_bailout_prior": self.initial_bailout_prior,
             "bank_initial_bailout_prior": self.bank_initial_bailout_prior,
-            "distribution_working_capital_quarters": (
-                self.distribution_working_capital_quarters
-            ),
+            "distribution_working_capital_quarters": (self.distribution_working_capital_quarters),
         }
 
 
@@ -963,6 +939,25 @@ class HouseholdInitial:
     weight: np.ndarray  # float64 (N,)
     size: np.ndarray  # float64 (N,)
     plot_participating: np.ndarray  # bool (N,)
+    # --- P03 static attributes (all canonical id order) ------------------
+    urban: np.ndarray  # bool (N,)
+    occupation: np.ndarray  # int8 (N,) occupation ordinal
+    sector: np.ndarray  # int16 (N,) sector ordinal
+    education: np.ndarray  # int8 (N,) education ordinal
+    children: np.ndarray  # int16 (N,)
+    adults: np.ndarray  # int16 (N,)
+    elderly: np.ndarray  # int16 (N,)
+    working_adults: np.ndarray  # float64 (N,)
+    pay_weight: np.ndarray  # float64 (N,)
+    second_participating: np.ndarray  # bool (N,)
+    western_exposure: np.ndarray  # float64 (N,)
+    informal_access: np.ndarray  # float64 (N,)
+    tenure: np.ndarray  # int8 (N,) initial tenure ordinal
+    durable_owned: np.ndarray  # float64 (N, D) initial ownership rate
+    people_total: float = 0.0
+    household_total: float = 0.0
+    achieved_margins: dict[str, float] = field(default_factory=dict)
+    static_hash: str = ""
 
 
 @dataclass(frozen=True)
@@ -987,6 +982,8 @@ class MaterialInitialConditions:
     region_equivalent_persons: np.ndarray  # float64 (R,)
     parameters: MaterialParameters
     initial_recipe: MaterialInitialRecipe
+    household_parameters: HouseholdParameters | None = None
+    household_catalog: HouseholdCatalog | None = None
     distribution_working_capital: float = 0.0
 
     @property

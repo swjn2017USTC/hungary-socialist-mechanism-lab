@@ -31,6 +31,10 @@ from hsm_lab.contract.base import (
     StrictInt,
     StrictModel,
 )
+from hsm_lab.contract.households import (
+    HouseholdInitialRecipe,
+    HouseholdParameters,
+)
 from hsm_lab.contract.material import (
     MATERIAL_FORCING_VARIABLE_IDS,
     ORGANIZATION_PROFILES,
@@ -251,7 +255,6 @@ class ResearchContract(StrictModel):
         )
 
 
-
 FORBIDDEN_COMMODITY_IDS = {"goods"}
 
 
@@ -276,6 +279,8 @@ class ScenarioSpec(StrictModel):
     parameter_ids: list[str]
     material_parameters: MaterialParameters | None = None
     material_initial: MaterialInitialRecipe | None = None
+    household_parameters: HouseholdParameters | None = None
+    household_initial: HouseholdInitialRecipe | None = None
     organization_recipe: OrganizationRecipe | None = None
     technologies: list[TechnologySpec] | None = None
     routes: list[MaterialRouteSpec] | None = None
@@ -297,6 +302,8 @@ class ScenarioSpec(StrictModel):
             material_fields = (
                 "material_parameters",
                 "material_initial",
+                "household_parameters",
+                "household_initial",
                 "organization_recipe",
                 "technologies",
                 "routes",
@@ -320,6 +327,10 @@ class ScenarioSpec(StrictModel):
         if self.material_parameters is None or self.material_initial is None:
             raise ConfigError(
                 "material scenarios must declare material_parameters and material_initial"
+            )
+        if self.household_parameters is None or self.household_initial is None:
+            raise ConfigError(
+                "material scenarios must declare household_parameters and household_initial"
             )
         if self.organization_recipe is None or self.technologies is None:
             raise ConfigError(
@@ -396,16 +407,13 @@ class ScenarioSpec(StrictModel):
         declared = P02_COMMODITY_IDS
         unknown = [cid for cid in self.commodities if cid not in declared]
         if unknown:
-            raise ConfigError(
-                f"commodity ids are not declared in the registry: {unknown}"
-            )
+            raise ConfigError(f"commodity ids are not declared in the registry: {unknown}")
         if len(set(self.commodities)) != len(self.commodities):
             raise ConfigError("commodity ids must be unique")
         missing = [cid for cid in declared if cid not in self.commodities]
         if missing:
             raise ConfigError(
-                f"material scenarios must declare every registry commodity; "
-                f"missing {missing}"
+                f"material scenarios must declare every registry commodity; missing {missing}"
             )
         # Commodity-indexed parameter vectors must match the declared axis length.
         if self.material_parameters is None:
@@ -432,4 +440,3 @@ class ScenarioSpec(StrictModel):
                 "material runs support ensemble_compact only in P02; research_full is "
                 "not silently downgraded (full micro household panel is P03 scope)"
             )
-
