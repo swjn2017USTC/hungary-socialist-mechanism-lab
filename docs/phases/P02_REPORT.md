@@ -354,9 +354,24 @@ these three levers alone: the carrier-level fuel/pool balance and the per-pool
 buffers have to be solved *jointly* with the monetary bridge, which is the
 steady-state step below.
 
+A bounded search over the *joint* space was then run to test whether any point in
+it is viable: carrier rule {nearest, round-robin} × `input_stock_quarters` {1, 2} ×
+`output_stock_quarters` {1, 2} × cover {1, 2} × `TRANSPORT_CAPACITY_TOTAL`
+{28,000, 36,000, 44,000} × `prices[7]` {1.5, 2.0, 2.5}, 141 completed
+evaluations of the full 116-tick default run, one process per point, scored by
+(dead ticks, floor). **No point is viable**: the best result in the billing-on
+space is 58 dead ticks with a floor of 0 (mean activity 14,653, at
+`input/output_stock_quarters` 2, cover 2, transport 28,000, price 2.5), versus
+0 dead ticks and a ~200 floor for the committed no-billing baseline. Billing as
+implemented converts the transport sector into a hard per-carrier bottleneck
+(some carriers serve volume-heavy regions with no fuel in the opening quarter, so
+every edge they carry gets a zero factor), and no combination of the other levers
+recovers it.
+
 Uncalibrated, the billing change on its own makes the shipped default worse
-(dead ticks return, transport wage arrears reach ~1.9M over the horizon), so it
-is not committed on its own; it belongs in the same change as the joint solve.
+(dead ticks return, transport wage arrears reach ~1.9M over the horizon), and the
+joint search above shows no viable point in that space either, so it is not
+committed; it belongs in the same change as the joint solve.
 
 ### Next step (approved, not yet implemented)
 
