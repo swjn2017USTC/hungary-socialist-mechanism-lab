@@ -489,6 +489,64 @@ cross-region distribution. The transport-side fix is real and measurable, but it
 exposes rather than closes the distribution-side shortage, so the phase gate is
 still not met.
 
+### Numerical steady-state solve (run, measured, falsified)
+
+The approved numerical approach was run as a coordinate descent over seven
+**declared fixture parameters only** — no rule or mechanism change:
+
+`hoarding_quarters` (order cover), `input_stock_quarters`,
+`output_stock_quarters`, `TRANSPORT_CAPACITY_TOTAL`, `prices[7]` (transport
+tariff), `organization_deposit_quarters`, `treasury_deposit_quarters`.
+
+Objective: zero ticks below half the reference scale, then maximise the late
+floor. Screening at 64 ticks, ~110 evaluations, one process per point.
+
+**A point passes the 116-tick gate.** `h=8, IQ=32, OQ=1, TRANSPORT=28,000,
+price=1.0, deposit=80 quarters, treasury=10`: zero sub-half ticks over 64,
+mean `1.385 ×` reference, floor `1.503 ×` reference. The decisive lever was the
+money side: `organization_deposit_quarters` 8 → 20 moved the mean from `0.561`
+to `0.946` and the floor from `0.001` to `0.355` on its own.
+
+**It is a buffered transient, not a steady state.** The same parameters run for
+232 ticks (forcing padded with the final quarter — a diagnostic-only device, the
+CLI/loader still gates the horizon at 116) collapse exactly like the baseline,
+just later:
+
+| 29-tick block | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|---|
+| mean activity (`dep=80`) | 239,475 | 276,675 | 239,457 | 162,364 | 74,743 | 12,721 | 200 | 200 |
+| mean activity (`dep=20`) | 238,837 | 161,337 | 9,189 | 200 | 200 | 200 | 200 | 200 |
+
+Last-24 median `200` = `0.001 ×` reference in both cases. The economy even runs
+*above* its initial scale in block 1 by drawing down the oversized buffers, then
+falls to the same dead floor: the floor is an **attractor**, and buffers only
+delay it. Passing the 116-tick gate on these values would therefore be a hollow
+pass and was not committed.
+
+**Two structural hypotheses were tested and falsified:**
+
+- *The distribution layer starts empty, so it cannot bootstrap.* True as a
+  census — at tick 0 input cells hold `97,755` and producer output cells
+  `188,200`, while **wholesale cells hold `0` and retail `100.2`** — but
+  injecting declared distribution inventory (1, 2 and 3 quarters of each cell's
+  throughput) makes the run *worse*, not better: mean `5,216 → 3,147 / 2,964 /
+  2,637` at `h=0` and `10,551 → 7,177 / 5,384 / 4,898` at `h=1`. The extra stock
+  suppresses the replenishment order through `max(need − opening, 0)`, so demand
+  falls upstream and the money chain stops instead.
+- *A deep enough buffer prevents the trough.* Falsified by the 232-tick run
+  above.
+
+**Conclusion.** Within the pinned rule set the model has no viable steady state
+in the declared parameter space: goods pile up upstream (producer output stock
+past `500,000`, wholesale `~47,000`) while retail stays pinned at `~25`, all
+retail shortfalls are on edges that *have* a carrier, and no fixture lever
+removes the dead-floor attractor. Closing this needs a **rule-level** change —
+the candidate already identified is giving the distribution layer (procurement /
+retail) a tier between intermediate production inputs and the residual, or a
+national source fallback when a demand's declared nearest-two sources are empty.
+Both are mechanism amendments that touch pinned behaviour and its tests, and
+neither is implemented or committed.
+
 ### Next step (approved, not yet implemented)
 
 A self-consistent steady state: solve the model's own fixed point jointly over
