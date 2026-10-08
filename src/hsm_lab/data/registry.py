@@ -29,6 +29,7 @@ from hsm_lab.data.schemas import (
     ParameterArtifact,
     ParameterPriorFile,
     Provenance,
+    SemanticKind,
     SourceSpec,
     TargetArtifact,
     VariableSpec,
@@ -92,8 +93,7 @@ def _assert_no_cycles(artifacts: dict[str, ArtifactSpec]) -> None:
         if node in stack:
             cycle = stack[stack.index(node) :] + [node]
             raise ConfigError(
-                f"lineage cycle in artifact registry (derived_from/anchors): "
-                f"{' -> '.join(cycle)}"
+                f"lineage cycle in artifact registry (derived_from/anchors): {' -> '.join(cycle)}"
             )
         artifact = artifacts[node]
         deps = list(artifact.provenance.derived_from)
@@ -101,9 +101,7 @@ def _assert_no_cycles(artifacts: dict[str, ArtifactSpec]) -> None:
             deps = deps + list(artifact.anchor_ids)
         for dep in deps:
             if dep not in artifacts:
-                raise ConfigError(
-                    f"artifact {node}: lineage references unknown artifact {dep!r}"
-                )
+                raise ConfigError(f"artifact {node}: lineage references unknown artifact {dep!r}")
             visit(dep, stack + [node])
 
     for artifact_id in artifacts:
@@ -124,8 +122,7 @@ def _assert_anchor_evidence(artifacts: dict[str, ArtifactSpec]) -> None:
         for anchor_id in artifact.anchor_ids:
             if anchor_id not in artifacts:
                 raise ConfigError(
-                    f"artifact {artifact.artifact_id} references unknown anchor "
-                    f"{anchor_id!r}"
+                    f"artifact {artifact.artifact_id} references unknown anchor {anchor_id!r}"
                 )
             anchor = artifacts[anchor_id]
             if not isinstance(anchor, InitialArtifact) or anchor.grade not in ("A", "B"):
@@ -202,12 +199,8 @@ class DataRegistry:
                     f"artifact {artifact.artifact_id} references unknown variable "
                     f"{artifact.variable_id!r}"
                 )
-        vocabulary = (
-            frozenset(allowed_commodities) if allowed_commodities is not None else None
-        )
-        return cls(
-            root, contract, sources, variables, artifacts, tuple(extra_roots), vocabulary
-        )
+        vocabulary = frozenset(allowed_commodities) if allowed_commodities is not None else None
+        return cls(root, contract, sources, variables, artifacts, tuple(extra_roots), vocabulary)
 
     def resolve_path(self, rel: str) -> Path:
         """Resolve a repo-relative artifact path inside declared roots only."""
@@ -217,9 +210,7 @@ class DataRegistry:
             base_resolved = base.resolve()
             if resolved == base_resolved or base_resolved in resolved.parents:
                 return resolved
-        raise ResearchGateError(
-            f"artifact path {rel!r} escapes the declared data/fixture roots"
-        )
+        raise ResearchGateError(f"artifact path {rel!r} escapes the declared data/fixture roots")
 
     # ------------------------------------------------------------------
     # Admission: role/semantic -> rights -> window -> digest, then read.
@@ -242,9 +233,7 @@ class DataRegistry:
             )
         variable = self.variables.get(artifact.variable_id)
         if variable is None:
-            raise ResearchGateError(
-                f"artifact {aid}: unknown variable {artifact.variable_id!r}"
-            )
+            raise ResearchGateError(f"artifact {aid}: unknown variable {artifact.variable_id!r}")
         expected_role = ROLE_FOR_SEMANTIC_KIND[variable.semantic_kind]
         if artifact.role is not expected_role:
             raise ResearchGateError(
@@ -272,9 +261,7 @@ class DataRegistry:
         source_rights = source.rights.model_dump(exclude={"notes"})
         if prov_rights != source_rights:
             differing = sorted(
-                key
-                for key in prov_rights
-                if prov_rights[key] != source_rights.get(key)
+                key for key in prov_rights if prov_rights[key] != source_rights.get(key)
             )
             raise ResearchGateError(
                 f"artifact {aid}: provenance rights disagree with source rights on "
@@ -403,9 +390,7 @@ class DataRegistry:
             )
         units = frame["unit"].unique().to_list()
         if len(units) != 1:
-            raise ResearchGateError(
-                f"artifact {artifact.artifact_id}: inconsistent units {units}"
-            )
+            raise ResearchGateError(f"artifact {artifact.artifact_id}: inconsistent units {units}")
         bad_regions = [
             region
             for region in frame["region_id"].drop_nulls().unique().to_list()
@@ -627,6 +612,33 @@ class DataRegistry:
 
     def load_forcing(self, artifact: ForcingArtifact) -> pl.DataFrame:
         self._require_role(artifact, ForcingArtifact, "load_forcing")
+        variable = self.variables.get(artifact.variable_id)
+        if variable is None or variable.semantic_kind is not SemanticKind.EXTERNAL:
+            raise ResearchGateError(
+                f"load_forcing requires an EXTERNAL variable; {artifact.variable_id!r} has "
+                f"semantic_kind {getattr(variable, 'semantic_kind', None)} "
+                "(domestic policy replay is a separate input channel)"
+            )
+        path = self.admit_artifact(artifact, numeric=True)
+        return self._read_long_table(
+            artifact, path, self._expected_table_frequency(artifact.provenance)
+        )
+
+    def load_policy_input(self, artifact: ForcingArtifact) -> pl.DataFrame:
+        """Load a Mode A domestic-policy replay table (semantic_kind policy_input).
+
+        This is a distinct input channel from external forcing: policy replay
+        artifacts never enter ``load_forcing`` and never enter the external
+        world pack.
+        """
+        self._require_role(artifact, ForcingArtifact, "load_policy_input")
+        variable = self.variables.get(artifact.variable_id)
+        if variable is None or variable.semantic_kind is not SemanticKind.POLICY_INPUT:
+            raise ResearchGateError(
+                f"load_policy_input requires a policy_input variable; "
+                f"{artifact.variable_id!r} has semantic_kind "
+                f"{getattr(variable, 'semantic_kind', None)}"
+            )
         path = self.admit_artifact(artifact, numeric=True)
         return self._read_long_table(
             artifact, path, self._expected_table_frequency(artifact.provenance)
@@ -658,9 +670,7 @@ class DataRegistry:
                 "Numeric target access without a declared purpose is refused."
             )
         path = self.admit_artifact(artifact, numeric=True, purpose=purpose)
-        return self._read_long_table(
-            artifact, path, artifact.provenance.original_frequency
-        )
+        return self._read_long_table(artifact, path, artifact.provenance.original_frequency)
 
     def validate_parameter(self, artifact: ParameterArtifact) -> dict[str, object]:
         """Validate an auditable prior declaration; never a calibrated value."""
@@ -704,5 +714,3 @@ class DataRegistry:
                     f"disagrees with the registry declaration {declared!r}"
                 )
         return dict(payload)
-
-

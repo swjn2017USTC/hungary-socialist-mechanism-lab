@@ -536,3 +536,30 @@ sources:
     priors; locally generated, no historical observations.
   notes: Local synthetic/prior/grade-S recipe source mirroring the P01 fixture rights mode; real sources
     never inherit these rights.
+- source_id: p04_fixture
+  institution: HSM Lab local fixture
+  dataset: P04 political/external/information structural fixtures
+  locator: fixture:p04-politics
+  expected_format:
+  - JSON
+  - PARQUET
+  expected_roles:
+  - exogenous_forcing
+  - latent_parameter
+  - initial_state
+  retrieval_method: local deterministic generation inside this repository
+  access_status: public_metadata
+  audit_status: metadata_checked
+  rights:
+    license_status: verified
+    license_name: Locally generated synthetic fixture (no third-party rights)
+    terms_locator: fixture:p02-material
+    evidence_quote: generated locally by this repository; contains no third-party data
+    checked_at: '2026-10-07T00:00:00Z'
+    download_allowed: true
+    redistribution_allowed: true
+    notes: synthetic fixture rights block; no external dataset involved
+  coverage_notes: 'Deterministic synthetic/structural P04 inputs 1957Q1..1985Q4: external recipe, 16-event
+    chronology, policy replay schedule and broadcast program.'
+  notes: Local structural fixture source; real historical anchors, if any, must be registered through
+    their own audited source, never here.

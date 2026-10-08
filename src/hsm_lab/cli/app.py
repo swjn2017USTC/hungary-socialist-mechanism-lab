@@ -409,15 +409,28 @@ def run(
 
             registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
             target_dir = _fresh_output_dir(output_dir, "run")
-            manifest = run_material(
-                spec,
-                target_dir,
-                contract,
-                registry,
-                until=until,
-                checkpoint_every=checkpoint_every,
-                resume_from=resume,
-            )
+            if spec.politics is not None:
+                from hsm_lab.engine.political_run import run_political
+
+                manifest = run_political(
+                    spec,
+                    target_dir,
+                    contract,
+                    registry,
+                    until=until,
+                    checkpoint_every=checkpoint_every,
+                    resume_from=resume,
+                )
+            else:
+                manifest = run_material(
+                    spec,
+                    target_dir,
+                    contract,
+                    registry,
+                    until=until,
+                    checkpoint_every=checkpoint_every,
+                    resume_from=resume,
+                )
             paused = manifest.status == "paused"
             payload = {
                 "status": "paused" if paused else "ok",
@@ -481,6 +494,24 @@ def _prepare_material_run(
             raise ConfigError(
                 f"option(s) {conflicts} are refused together with --resume: "
                 "seed/households/organizations/policy come from the checkpoint scenario"
+            )
+        return spec
+    if spec.politics is not None:
+        conflicts = [
+            flag
+            for flag, value in (
+                ("--seed", seed),
+                ("--households", households),
+                ("--organizations", organizations),
+                ("--output-policy", output_policy),
+            )
+            if value is not None
+        ]
+        if conflicts:
+            raise ConfigError(
+                f"option(s) {conflicts} are refused for a P04 politics scenario: the "
+                "recipe is pinned by the scenario config (fork a checkpoint to change "
+                "policy/coalition/technology instead)"
             )
         return spec
     overrides: dict[str, Any] = {}
@@ -788,6 +819,118 @@ def data_build_material_forcing(
                 f"pack: {root / MATERIAL_EXTERNAL_PACK_PATH}",
             ]
         _emit(payload, json_mode, human)
+
+    _guard(action, json_mode)
+
+
+@data_app.command("build-p04-inputs")
+def data_build_p04_inputs(
+    profile: str = typer.Option(
+        ..., "--profile", help="synthetic (local fixture) | external (admitted data)."
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Build the P04 external pack / event registry / policy replay / broadcasts."""
+
+    def action() -> None:
+        from hsm_lab.data.external import build_p04_inputs
+
+        if profile not in ("synthetic", "external"):
+            raise ConfigError(f"unknown profile {profile!r}: use synthetic or external")
+        report = build_p04_inputs(_repo_root(), profile)
+        _emit(
+            {"status": "ok", "command": "data build-p04-inputs", **report},
+            json_mode,
+            [
+                f"P04 {profile} inputs built: {len(report['files'])} files",
+                f"pack: {report['pack_path']}",
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
+@app.command()
+def fork(
+    checkpoint: Path = typer.Option(
+        ..., "--checkpoint", help="Parent P04 checkpoint directory to fork from."
+    ),
+    intervention: Path = typer.Option(
+        ..., "--intervention", help="Intervention JSON list (may be an empty list)."
+    ),
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    until: str | None = typer.Option(None, "--until", help="Inclusive stop quarter YYYYQn."),
+    checkpoint_every: int = typer.Option(
+        0, "--checkpoint-every", min=0, help="Save a checkpoint every k completed ticks."
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Fork a P04 checkpoint into a Mode C counterfactual branch."""
+
+    def action() -> None:
+        from hsm_lab.contract.guards import load_research_contract
+        from hsm_lab.contract.politics import InterventionSpec, PoliticalMode
+        from hsm_lab.contract.schemas import ScenarioSpec
+        from hsm_lab.data.registry import DataRegistry
+        from hsm_lab.engine.political_run import run_political
+        from hsm_lab.storage.fork import load_counterfactual_origin
+
+        root = _repo_root()
+        contract = load_research_contract(root)
+        metadata_path = checkpoint / "metadata.json"
+        if not metadata_path.is_file():
+            raise ResearchGateError(f"fork source is not a checkpoint directory: {checkpoint}")
+        parent = ScenarioSpec.model_validate(
+            json.loads(metadata_path.read_text(encoding="utf-8"))["scenario"]
+        )
+        if parent.politics is None:
+            raise ConfigError("fork requires a politics-enabled checkpoint")
+        if not intervention.is_file():
+            raise ConfigError(f"intervention file not found: {intervention}")
+        raw = json.loads(intervention.read_text(encoding="utf-8"))
+        if not isinstance(raw, list):
+            raise ConfigError("intervention file must contain a JSON list of intervention specs")
+        specs = [InterventionSpec.model_validate(entry) for entry in raw]
+        child = parent.model_copy(
+            update={
+                "politics": parent.politics.model_copy(
+                    update={"mode": PoliticalMode.COUNTERFACTUAL}
+                ),
+            }
+        )
+        registry = DataRegistry.load(root, allowed_commodities=child.commodities)
+        origin = load_counterfactual_origin(checkpoint, child, contract, interventions=specs)
+        target_dir = _fresh_output_dir(output_dir, "fork")
+        manifest = run_political(
+            child,
+            target_dir,
+            contract,
+            registry,
+            until=until,
+            checkpoint_every=checkpoint_every,
+            fork_from=origin,
+        )
+        _emit(
+            {
+                "status": "ok" if manifest.status != "paused" else "paused",
+                "command": "fork",
+                "run_id": manifest.run_id,
+                "run_kind": manifest.run_kind,
+                "political_mode": str(manifest.political_mode),
+                "source_checkpoint": str(checkpoint),
+                "output_dir": str(target_dir),
+                "completed_ticks": manifest.completed_ticks,
+                "last_completed_quarter": manifest.last_completed_quarter,
+                "deterministic_replay_digest": manifest.deterministic_replay_digest,
+                "intervention_count": len(specs),
+            },
+            json_mode,
+            [
+                f"fork {manifest.run_id}: {manifest.completed_ticks} ticks "
+                f"(last {manifest.last_completed_quarter})",
+                f"output: {target_dir}",
+            ],
+        )
 
     _guard(action, json_mode)
 

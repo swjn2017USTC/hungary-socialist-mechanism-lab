@@ -30,6 +30,13 @@ from hsm_lab.storage.material_output import (
     history_frames,
     write_material_tables,
 )
+from hsm_lab.storage.political_output import (
+    INFORMATION_COLUMNS,
+    OPPOSITION_COLUMNS,
+    POLICY_DECISION_COLUMNS,
+    POLITICAL_EVENT_COLUMNS,
+    POLITICAL_QUARTER_COLUMNS,
+)
 from tests.conftest import REPO_ROOT, load_json, smoke_spec
 
 
@@ -51,9 +58,7 @@ def test_aggregate_shape_and_group_invariants(contract, registry, tmp_path) -> N
     household_rows = frame.filter(pl.col("actor_kind") == "households")
     assert set(household_rows["count"].to_list()) == {50}
     assert set(household_rows["weight_sum"].to_list()) == {50.0}
-    enterprise_counts = set(
-        frame.filter(pl.col("actor_kind") == "enterprises")["count"].to_list()
-    )
+    enterprise_counts = set(frame.filter(pl.col("actor_kind") == "enterprises")["count"].to_list())
     assert enterprise_counts == {2, 3}  # ids 0..49 -> regions via id % 20
     assert frame["probe_sum"].is_finite().all()
     assert (frame["probe_sum"] >= 0).all()
@@ -75,9 +80,7 @@ def test_empty_region_mean_is_null_not_nan(contract, registry, tmp_path) -> None
 
 
 def test_deterministic_mode_values_and_zero_draws(contract, registry, tmp_path) -> None:
-    manifest, run_dir = _run(
-        tmp_path, "det", contract, registry, stochastic=False, seed=0
-    )
+    manifest, run_dir = _run(tmp_path, "det", contract, registry, stochastic=False, seed=0)
     assert manifest.rng_draws_count == 0
     assert manifest.stochastic_modules_active == []
     frame = pl.read_parquet(run_dir / "aggregates.parquet")
@@ -112,9 +115,7 @@ def test_same_seed_compact_full_agree(contract, registry, tmp_path) -> None:
         "trajectory.duckdb",
     ]
     compact_db = duckdb.connect(str(compact_dir / "trajectory.duckdb"), read_only=True)
-    tables = compact_db.execute(
-        "SELECT table_name FROM information_schema.tables"
-    ).fetchall()
+    tables = compact_db.execute("SELECT table_name FROM information_schema.tables").fetchall()
     compact_db.close()
     assert {name for (name,) in tables} == {"aggregates", "events"}
 
@@ -145,7 +146,13 @@ def test_full_micro_matches_aggregates(contract, registry, tmp_path) -> None:
     household_micro = pl.read_parquet(full_dir / "households.parquet")
     assert household_micro.height == 40_000
     assert set(household_micro.columns) == {
-        "tick", "quarter", "actor_id", "region_id", "commodity_id", "weight", "probe_value"
+        "tick",
+        "quarter",
+        "actor_id",
+        "region_id",
+        "commodity_id",
+        "weight",
+        "probe_value",
     }
 
 
@@ -175,9 +182,7 @@ def test_manifest_hashes_recompute(contract, registry, tmp_path) -> None:
     assert payload["finished_at"] >= payload["started_at"]
 
 
-def test_preexisting_output_dir_rejected_and_untouched(
-    contract, registry, tmp_path
-) -> None:
+def test_preexisting_output_dir_rejected_and_untouched(contract, registry, tmp_path) -> None:
     existing = tmp_path / "existing"
     existing.mkdir()
     (existing / "previous.txt").write_text("keep me", encoding="utf-8")
@@ -212,9 +217,16 @@ def test_events_table_counts_ticks(contract, registry, tmp_path) -> None:
     connection.close()
     assert events == [(tick, "synthetic_tick_completed") for tick in range(10)]
     assert [q for (q,) in quarters] == [
-        "1957Q1", "1957Q2", "1957Q3", "1957Q4",
-        "1958Q1", "1958Q2", "1958Q3", "1958Q4",
-        "1959Q1", "1959Q2",
+        "1957Q1",
+        "1957Q2",
+        "1957Q3",
+        "1957Q4",
+        "1958Q1",
+        "1958Q2",
+        "1958Q3",
+        "1958Q4",
+        "1959Q1",
+        "1959Q2",
     ]
 
 
@@ -252,13 +264,10 @@ def test_numpy_digest_stability(contract, registry, tmp_path) -> None:
     a = np.arange(8, dtype=np.float64).reshape(4, 2) / 7.0
     b = np.ones((2, 2), dtype=np.float64)
     first = replay_digest(spec, a, b, ["1957Q1", "1957Q2"], "pcg64-sha256-module-v1")
-    second = replay_digest(spec, a.copy(), b.copy(), ["1957Q1", "1957Q2"],
-                           "pcg64-sha256-module-v1")
+    second = replay_digest(spec, a.copy(), b.copy(), ["1957Q1", "1957Q2"], "pcg64-sha256-module-v1")
     assert first == second
-    other = replay_digest(spec, a + 1e-9, b, ["1957Q1", "1957Q2"],
-                          "pcg64-sha256-module-v1")
+    other = replay_digest(spec, a + 1e-9, b, ["1957Q1", "1957Q2"], "pcg64-sha256-module-v1")
     assert other != first
-
 
 
 def test_io_failure_manifest_records_real_draws(contract, registry, tmp_path, monkeypatch) -> None:
@@ -361,6 +370,7 @@ def test_rng_constructor_failure_writes_failed_manifest(
     assert payload["rng_draws_count"] == 0
     assert payload["deterministic_replay_digest"] == ""
 
+
 # ---------------------------------------------------------------------------
 # P02: material compact tables (synthetic MaterialHistory; no engine import).
 # ---------------------------------------------------------------------------
@@ -403,8 +413,7 @@ def _synthetic_material_history(ticks: int = 2) -> MaterialHistory:
                         **{
                             name: float(tick + 1)
                             for name in AGGREGATE_COLUMNS
-                            if name
-                            not in ("tick", "quarter", "region_id", "commodity_id")
+                            if name not in ("tick", "quarter", "region_id", "commodity_id")
                         },
                     }
                 )
@@ -535,9 +544,7 @@ def _synthetic_material_history(ticks: int = 2) -> MaterialHistory:
                     "account_id": account_id,
                     "currency": currency,
                     "account_label": label,
-                    "opening": None
-                    if (label == "treasury_cash" and tick == 0)
-                    else 7.0,
+                    "opening": None if (label == "treasury_cash" and tick == 0) else 7.0,
                     "closing": 8.0,
                     **{
                         name: 0.25
@@ -614,6 +621,12 @@ def test_material_history_frames_shapes_and_columns() -> None:
         "departments": ticks * 5,
         "tick_diagnostics": ticks,
         "events": ticks,
+        # P04 tables are typed empty for a material-only history
+        "political_quarters": 0,
+        "opposition_regions": 0,
+        "information_quarters": 0,
+        "policy_decisions": 0,
+        "political_events": 0,
     }
     for name, frame in frames.items():
         assert frame.height == expected_heights[name], name
@@ -627,6 +640,11 @@ def test_material_history_frames_shapes_and_columns() -> None:
     assert frames["departments"].columns == DEPARTMENT_COLUMNS
     assert frames["tick_diagnostics"].columns == DIAGNOSTIC_COLUMNS
     assert frames["events"].columns == EVENT_COLUMNS
+    assert frames["political_quarters"].columns == POLITICAL_QUARTER_COLUMNS
+    assert frames["opposition_regions"].columns == OPPOSITION_COLUMNS
+    assert frames["information_quarters"].columns == INFORMATION_COLUMNS
+    assert frames["policy_decisions"].columns == POLICY_DECISION_COLUMNS
+    assert frames["political_events"].columns == POLITICAL_EVENT_COLUMNS
 
 
 def test_material_stage_grid_contains_national_owner_row() -> None:
@@ -656,10 +674,7 @@ def test_material_financial_null_opening_round_trips() -> None:
     treasury = financial.filter(pl.col("account_label") == "treasury_cash")
     assert treasury.height == 1
     assert treasury["opening"][0] is None
-    assert (
-        financial.filter(pl.col("account_label") == "foreign_usd_reserve")["opening"][0]
-        == 7.0
-    )
+    assert financial.filter(pl.col("account_label") == "foreign_usd_reserve")["opening"][0] == 7.0
 
 
 def test_material_tables_parquet_duckdb_parity(tmp_path) -> None:

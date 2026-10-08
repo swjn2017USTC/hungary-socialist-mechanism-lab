@@ -51,6 +51,9 @@ class SemanticKind(StrEnum):
     INITIAL_ANCHOR = "initial_anchor"
     OUTCOME = "outcome"
     LATENT = "latent"
+    #: Declared domestic policy tools (Mode A replay): an explicit forcing
+    #: channel that is never an observed outcome and never an external variable.
+    POLICY_INPUT = "policy_input"
 
 
 ROLE_FOR_SEMANTIC_KIND: dict[SemanticKind, DataRole] = {
@@ -58,6 +61,7 @@ ROLE_FOR_SEMANTIC_KIND: dict[SemanticKind, DataRole] = {
     SemanticKind.INITIAL_ANCHOR: DataRole.INITIAL_STATE,
     SemanticKind.OUTCOME: DataRole.TARGET,
     SemanticKind.LATENT: DataRole.LATENT_PARAMETER,
+    SemanticKind.POLICY_INPUT: DataRole.EXOGENOUS_FORCING,
 }
 
 # Variables that may never enter the runtime as observed data.

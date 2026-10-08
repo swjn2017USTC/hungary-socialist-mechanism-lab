@@ -43,7 +43,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from dataclasses import fields as dataclass_fields
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -876,6 +876,8 @@ def check_material_invariants(
     flows: MaterialTickFlows,
     parameters: MaterialParameters,
     network: MaterialNetwork,
+    *,
+    controls: Any = None,
 ) -> InvariantSummary:
     """Verify every material/financial ledger of one completed tick.
 
@@ -1279,13 +1281,34 @@ def check_material_invariants(
             quarter,
             "productive organization lacks a positive labor_per_activity",
         )
-        expected_target = np.minimum(
+        expected_local = np.minimum(
             float(parameters.utilization)
             * np.asarray(opening.organization_capacity, dtype=np.float64)[rows]
             * season,
             np.asarray(state.organization_labor_available, dtype=np.float64)[rows]
             / labor_per_activity,
         )
+        if controls is not None and getattr(controls, "central_target", None) is not None:
+            autonomy = float(np.clip(controls.autonomy, 0.0, 1.0))
+            central = np.asarray(controls.central_target, dtype=np.float64)[activities]
+            mixed = np.maximum((1.0 - autonomy) * central + autonomy * expected_local, 0.0)
+            ceiling = np.maximum(
+                np.minimum(
+                    np.asarray(opening.organization_capacity, dtype=np.float64)[rows] * season,
+                    np.asarray(state.organization_labor_available, dtype=np.float64)[rows]
+                    / labor_per_activity,
+                ),
+                0.0,
+            )
+            expected_target = np.minimum(mixed, ceiling)
+            material_at_most(
+                "organization_target_capacity",
+                expected_target,
+                ceiling,
+                labels=[f"activity[{int(a)}]" for a in activities],
+            )
+        else:
+            expected_target = expected_local
         material(
             "organization_target_rule",
             flows.activity_target[activities],
@@ -1972,13 +1995,11 @@ def check_material_invariants(
         durable_backlog = np.asarray(state.household_durable_backlog, dtype=np.float64)
         durable_wait = np.asarray(state.household_durable_wait, dtype=np.float64)
         housing_wait = np.asarray(state.household_housing_wait, dtype=np.float64)
-        expected_postponement = (
-            welfare_p.durable_postponement_cost
-            * (durable_backlog.sum(axis=1) * (1.0 + durable_wait.mean(axis=1)))
-            + welfare_p.housing_postponement_cost
-            * np.asarray(flows.household_overcrowding, dtype=np.float64)
-            * (1.0 + housing_wait)
-        )
+        expected_postponement = welfare_p.durable_postponement_cost * (
+            durable_backlog.sum(axis=1) * (1.0 + durable_wait.mean(axis=1))
+        ) + welfare_p.housing_postponement_cost * np.asarray(
+            flows.household_overcrowding, dtype=np.float64
+        ) * (1.0 + housing_wait)
         material(
             "household_postponement_cost",
             np.asarray(flows.household_postponement_cost, dtype=np.float64),
@@ -1993,10 +2014,7 @@ def check_material_invariants(
         )
         _require(
             bool(
-                np.all(
-                    sources
-                    <= np.asarray(flows.household_realized_h, dtype=np.float64) + 1e-6
-                )
+                np.all(sources <= np.asarray(flows.household_realized_h, dtype=np.float64) + 1e-6)
             ),
             quarter,
             "household source channels exceed the realised H-level basket",

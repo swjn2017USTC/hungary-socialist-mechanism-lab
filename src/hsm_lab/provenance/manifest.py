@@ -21,6 +21,7 @@ from typing import Any, Literal
 from hsm_lab.contract.guards import sha256_file
 from hsm_lab.contract.schemas import (
     OutputPolicy,
+    PoliticalMode,
     ResearchContract,
     ScenarioSpec,
     StrictModel,
@@ -169,9 +170,18 @@ class RunManifest(StrictModel):
     schema_version: Literal["1"] = "1"
     run_id: str
     run_kind: Literal[
-        "synthetic_engine_smoke", "toy4_f0_simulation", "intermediate8_household_simulation"
+        "synthetic_engine_smoke",
+        "toy4_f0_simulation",
+        "intermediate8_household_simulation",
+        "p04_political_simulation",
     ] = "synthetic_engine_smoke"
-    political_mode: None = None
+    political_mode: PoliticalMode | None = None
+    parent_version_id: str | None = None
+    version_id: str | None = None
+    study_id: str | None = None
+    counterfactual_base: str | None = None
+    step_offset: int = 0
+    socioverse_version: str | None = None
     status: Literal["running", "completed", "paused", "failed"]
     failure_message: str | None = None
     started_at: datetime
@@ -230,7 +240,10 @@ def manifest_preamble(
     root: Path,
     baseline_hash: str,
     run_kind: Literal[
-        "synthetic_engine_smoke", "toy4_f0_simulation", "intermediate8_household_simulation"
+        "synthetic_engine_smoke",
+        "toy4_f0_simulation",
+        "intermediate8_household_simulation",
+        "p04_political_simulation",
     ] = "synthetic_engine_smoke",
     parameter_vector: dict[str, float] | None = None,
     input_artifact_hashes: dict[str, str] | None = None,

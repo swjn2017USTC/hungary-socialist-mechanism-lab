@@ -1,0 +1,11 @@
+[
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "no-reform",
+    "operation": "set",
+    "provenance": "institutional experiment: cancel the 1968Q1 NEM autonomy step (not a historical claim)",
+    "target": "policy.enterprise_autonomy",
+    "until_quarter": null,
+    "value": 0.1
+  }
+]

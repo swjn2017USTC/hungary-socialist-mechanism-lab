@@ -58,6 +58,20 @@ from hsm_lab.engine.state import (
 )
 from hsm_lab.provenance.manifest import canonical_json
 from hsm_lab.storage.output import write_duckdb
+from hsm_lab.storage.political_output import (
+    INFORMATION_COLUMNS,
+    INFORMATION_QUARTERS,
+    OPPOSITION_COLUMNS,
+    OPPOSITION_REGIONS,
+    POLICY_DECISION_COLUMNS,
+    POLICY_DECISIONS,
+    POLITICAL_EVENT_COLUMNS,
+    POLITICAL_EVENTS,
+    POLITICAL_QUARTER_COLUMNS,
+    POLITICAL_QUARTERS,
+    POLITICAL_STRING_COLUMNS,
+    POLITICAL_TABLES,
+)
 
 TABLES = (
     "aggregates",
@@ -69,6 +83,7 @@ TABLES = (
     "departments",
     "tick_diagnostics",
     "events",
+    *POLITICAL_TABLES,
 )
 
 MATERIAL_TICK_EVENT = material_tick_event()
@@ -1269,6 +1284,11 @@ _COLUMN_DTYPES: dict[str, dict[str, type[pl.DataType]]] = {
         "bottleneck_demand_count": pl.Int64,
     },
     "events": {"tick": pl.Int64},
+    POLITICAL_QUARTERS: {"tick": pl.Int64},
+    OPPOSITION_REGIONS: {"tick": pl.Int64},
+    INFORMATION_QUARTERS: {"tick": pl.Int64, "total_lag": pl.Int64, "source_quarter": pl.Int64},
+    POLICY_DECISIONS: {"tick": pl.Int64},
+    POLITICAL_EVENTS: {"tick": pl.Int64},
 }
 
 _STRING_COLUMNS: dict[str, set[str]] = {
@@ -1281,6 +1301,7 @@ _STRING_COLUMNS: dict[str, set[str]] = {
     "departments": {"quarter", "department"},
     "tick_diagnostics": {"quarter", "digest", "forcing_segment"},
     "events": {"quarter", "event_type", "details_json"},
+    **POLITICAL_STRING_COLUMNS,
 }
 
 _COLUMNS_OF = {
@@ -1293,6 +1314,11 @@ _COLUMNS_OF = {
     "departments": DEPARTMENT_COLUMNS,
     "tick_diagnostics": DIAGNOSTIC_COLUMNS,
     "events": EVENT_COLUMNS,
+    POLITICAL_QUARTERS: POLITICAL_QUARTER_COLUMNS,
+    OPPOSITION_REGIONS: OPPOSITION_COLUMNS,
+    INFORMATION_QUARTERS: INFORMATION_COLUMNS,
+    POLICY_DECISIONS: POLICY_DECISION_COLUMNS,
+    POLITICAL_EVENTS: POLITICAL_EVENT_COLUMNS,
 }
 
 
@@ -1344,6 +1370,11 @@ def history_frames(history: MaterialHistory) -> dict[str, pl.DataFrame]:
         "departments": _cast_frame(history.department_rows, "departments"),
         "tick_diagnostics": _cast_frame(history.diagnostic_rows, "tick_diagnostics"),
         "events": _cast_frame(history.event_rows, "events"),
+        POLITICAL_QUARTERS: _cast_frame(history.political_quarter_rows, POLITICAL_QUARTERS),
+        OPPOSITION_REGIONS: _cast_frame(history.opposition_rows, OPPOSITION_REGIONS),
+        INFORMATION_QUARTERS: _cast_frame(history.information_rows, INFORMATION_QUARTERS),
+        POLICY_DECISIONS: _cast_frame(history.policy_decision_rows, POLICY_DECISIONS),
+        POLITICAL_EVENTS: _cast_frame(history.political_event_rows, POLITICAL_EVENTS),
     }
 
 

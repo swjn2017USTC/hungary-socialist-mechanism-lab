@@ -263,3 +263,237 @@ variables:
   aggregation: null
   notes: Multiplier scaling the five-year-rule CMEA contract price reconstruction; selected value 1.0
     with engineering bounds [0.5, 1.5]; not calibrated.
+- variable_id: p04_coalition_parameters
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: dimensionless
+  original_frequency: static
+  aggregation: null
+  notes: P04 coalition latent parameter block; selected values and per-scalar engineering bounds recorded
+    in the prior file. Structural assumption, not calibrated, not assessed.
+- variable_id: p04_broker_parameters
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: dimensionless
+  original_frequency: static
+  aggregation: null
+  notes: P04 broker latent parameter block; selected values and per-scalar engineering bounds recorded
+    in the prior file. Structural assumption, not calibrated, not assessed.
+- variable_id: p04_information_parameters
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: dimensionless
+  original_frequency: static
+  aggregation: null
+  notes: P04 information latent parameter block; selected values and per-scalar engineering bounds recorded
+    in the prior file. Structural assumption, not calibrated, not assessed.
+- variable_id: p04_observation_parameters
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: dimensionless
+  original_frequency: static
+  aggregation: null
+  notes: P04 observation latent parameter block; selected values and per-scalar engineering bounds recorded
+    in the prior file. Structural assumption, not calibrated, not assessed.
+- variable_id: p04_culture_parameters
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: dimensionless
+  original_frequency: static
+  aggregation: null
+  notes: P04 culture latent parameter block; selected values and per-scalar engineering bounds recorded
+    in the prior file. Structural assumption, not calibrated, not assessed.
+- variable_id: p04_opposition_parameters
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: dimensionless
+  original_frequency: static
+  aggregation: null
+  notes: P04 opposition latent parameter block; selected values and per-scalar engineering bounds recorded
+    in the prior file. Structural assumption, not calibrated, not assessed.
+- variable_id: p04_external_recipe_parameters
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: dimensionless
+  original_frequency: static
+  aggregation: null
+  notes: P04 external_recipe latent parameter block; selected values and per-scalar engineering bounds
+    recorded in the prior file. Structural assumption, not calibrated, not assessed.
+- variable_id: policy_plan_utilization
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool plan_utilization (Mode A replay input); a declared policy instrument, never
+    a realized outcome and never observed.
+- variable_id: policy_enterprise_autonomy
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool enterprise_autonomy (Mode A replay input); a declared policy instrument,
+    never a realized outcome and never observed.
+- variable_id: policy_investment_intensity
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool investment_intensity (Mode A replay input); a declared policy instrument,
+    never a realized outcome and never observed.
+- variable_id: policy_industrial_priority
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool industrial_priority (Mode A replay input); a declared policy instrument,
+    never a realized outcome and never observed.
+- variable_id: policy_admin_price_factor
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool admin_price_factor (Mode A replay input); a declared policy instrument,
+    never a realized outcome and never observed.
+- variable_id: policy_wage_factor
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool wage_factor (Mode A replay input); a declared policy instrument, never a
+    realized outcome and never observed.
+- variable_id: policy_credit_fraction
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool credit_fraction (Mode A replay input); a declared policy instrument, never
+    a realized outcome and never observed.
+- variable_id: policy_budget_hardness
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool budget_hardness (Mode A replay input); a declared policy instrument, never
+    a realized outcome and never observed.
+- variable_id: policy_housing_factor
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool housing_factor (Mode A replay input); a declared policy instrument, never
+    a realized outcome and never observed.
+- variable_id: policy_borrowing_factor
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool borrowing_factor (Mode A replay input); a declared policy instrument, never
+    a realized outcome and never observed.
+- variable_id: policy_consumer_import_factor
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool consumer_import_factor (Mode A replay input); a declared policy instrument,
+    never a realized outcome and never observed.
+- variable_id: policy_second_economy_tolerance
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool second_economy_tolerance (Mode A replay input); a declared policy instrument,
+    never a realized outcome and never observed.
+- variable_id: policy_welfare_provision
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool welfare_provision (Mode A replay input); a declared policy instrument, never
+    a realized outcome and never observed.
+- variable_id: policy_private_autonomy
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool private_autonomy (Mode A replay input); a declared policy instrument, never
+    a realized outcome and never observed.
+- variable_id: policy_cultural_openness
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool cultural_openness (Mode A replay input); a declared policy instrument, never
+    a realized outcome and never observed.
+- variable_id: policy_supported_boundary
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool supported_boundary (Mode A replay input); a declared policy instrument,
+    never a realized outcome and never observed.
+- variable_id: policy_tolerance_boundary
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool tolerance_boundary (Mode A replay input); a declared policy instrument,
+    never a realized outcome and never observed.
+- variable_id: policy_repression
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool repression (Mode A replay input); a declared policy instrument, never a
+    realized outcome and never observed.
+- variable_id: policy_information_investment
+  semantic_kind: policy_input
+  allowed_roles:
+  - exogenous_forcing
+  unit: dimensionless
+  original_frequency: quarterly
+  aggregation: null
+  notes: Domestic policy tool information_investment (Mode A replay input); a declared policy instrument,
+    never a realized outcome and never observed.

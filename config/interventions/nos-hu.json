@@ -1,0 +1,29 @@
+[
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "nos-autonomy",
+    "operation": "set",
+    "provenance": "N\u00d6S-HU institutional experiment (not a Hungarian historical plan): restrict autonomy and raise information effort",
+    "target": "policy.enterprise_autonomy",
+    "until_quarter": null,
+    "value": 0.1
+  },
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "nos-info",
+    "operation": "set",
+    "provenance": "N\u00d6S-HU: information-governance effort index",
+    "target": "policy.information_investment",
+    "until_quarter": null,
+    "value": 0.8
+  },
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "nos-capability",
+    "operation": "set",
+    "provenance": "N\u00d6S-HU: one-shot information-capability set (never a productivity bonus)",
+    "target": "technology.capability",
+    "until_quarter": null,
+    "value": 0.8
+  }
+]

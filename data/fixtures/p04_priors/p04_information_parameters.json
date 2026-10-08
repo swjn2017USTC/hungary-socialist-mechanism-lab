@@ -1,0 +1,15 @@
+{
+  "bounds": {
+    "lower": 0.0,
+    "upper": 8.0
+  },
+  "calibration_status": "not_calibrated",
+  "literature_refs": [
+    "structural engineering fixture: P04 information parameters"
+  ],
+  "prior_description": "Selected engineering values and per-scalar bounds for the P04 information parameter block; every value is a declared structural assumption with no calibration against observed Hungarian series.",
+  "schema_version": "1",
+  "sensitivity_status": "not_assessed",
+  "uncertainty_notes": "not_calibrated / not_assessed. Declared envelope [0.0, 8.0]; selected_value_flat={\"p04.information.computational_cost_scale\": 1.0, \"p04.information.depreciation\": 0.0, \"p04.information.information_investment_weight\": 1.0, \"p04.information.lag_cap\": 8.0, \"p04.information.latency_scale\": 4.0, \"p04.information.learning\": 0.1, \"p04.information.measurement_sigma\": 0.1, \"p04.information.reporting_scale\": 4.0}; scalar_bounds={\"p04.information.computational_cost_scale\": [0.0, 2.0], \"p04.information.depreciation\": [0.0, 2.0], \"p04.information.information_investment_weight\": [0.0, 2.0], \"p04.information.lag_cap\": [0.0, 8.0], \"p04.information.latency_scale\": [0.0, 2.0], \"p04.information.learning\": [0.0, 2.0], \"p04.information.measurement_sigma\": [0.0, 2.0], \"p04.information.reporting_scale\": [0.0, 2.0]}",
+  "variable_id": "p04_information_parameters"
+}

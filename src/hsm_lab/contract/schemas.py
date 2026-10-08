@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Annotated, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import (
     AfterValidator,
@@ -286,9 +286,21 @@ class ScenarioSpec(StrictModel):
     routes: list[MaterialRouteSpec] | None = None
     forcing_pack: str | None = None
     forcing_bindings: list[ForcingBinding] = []
+    #: P04 political/external layer.  ``None`` explicitly means the material-only
+    #: P02/P03 scenario with no political engine (never a silent fallback).
+    #: Typed as ``Any`` and coerced to ``PoliticalRunSpec`` in ``_check_lists`` so
+    #: this module never imports ``contract.politics`` at module scope (the two
+    #: modules would otherwise form an import cycle).
+    politics: Any = None
 
     @model_validator(mode="after")
     def _check_lists(self) -> Self:
+        if self.politics is not None:
+            from hsm_lab.contract.politics import PoliticalRunSpec
+
+            if not isinstance(self.politics, PoliticalRunSpec):
+                coerced = PoliticalRunSpec.model_validate(self.politics)
+                object.__setattr__(self, "politics", coerced)
         if len(set(self.commodities)) != len(self.commodities):
             raise ConfigError("commodity ids must be unique")
         bad = sorted(set(self.commodities) & FORBIDDEN_COMMODITY_IDS)
@@ -315,6 +327,8 @@ class ScenarioSpec(StrictModel):
                 raise ConfigError(
                     "smoke scenarios must not carry material bindings or organizations"
                 )
+            if self.politics is not None:
+                raise ConfigError("smoke scenarios must not carry a political run specification")
             if self.enterprises is None:
                 raise ConfigError("smoke scenarios must declare enterprises")
         else:

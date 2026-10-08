@@ -28,3 +28,10 @@ data/private/
 !data/fixtures/p02_material_cmea_contract_prior.json
 !data/fixtures/p02_material_cmea_uncertainty_prior.json
 !data/fixtures/p02_material_synthetic_pack.json
+# P04 synthetic political/external fixtures (locally generated, no third-party rights)
+!data/fixtures/p04_external_synthetic_pack.json
+!data/fixtures/p04_information_program.json
+!data/fixtures/p04_priors/
+!data/fixtures/p04_priors/*.json
+!data/fixtures/p04_policy/
+!data/fixtures/p04_policy/*.parquet

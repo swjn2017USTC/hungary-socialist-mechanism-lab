@@ -1,0 +1,20 @@
+[
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "digital-info",
+    "operation": "set",
+    "provenance": "DIGITAL-NEM: raise information effort while keeping the replayed NEM autonomy and reporting bias",
+    "target": "policy.information_investment",
+    "until_quarter": null,
+    "value": 0.8
+  },
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "digital-capability",
+    "operation": "set",
+    "provenance": "DIGITAL-NEM: one-shot information-capability set",
+    "target": "technology.capability",
+    "until_quarter": null,
+    "value": 0.8
+  }
+]

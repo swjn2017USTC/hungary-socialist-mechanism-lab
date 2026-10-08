@@ -1,0 +1,23 @@
+[
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "pest-western",
+    "operation": "broadcast",
+    "provenance": "domestic information treatment: one county only, no policy change, no external-history change",
+    "target": "information.broadcast",
+    "until_quarter": null,
+    "value": {
+      "audience": {
+        "all": null,
+        "region_id_in": [
+          "pest"
+        ]
+      },
+      "channel": "western_comparison",
+      "content": "Western comparison fixture",
+      "content_sensitivity": 0.5,
+      "intensity": 0.2,
+      "ttl": 2
+    }
+  }
+]

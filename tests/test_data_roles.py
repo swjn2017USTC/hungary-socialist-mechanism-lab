@@ -6,6 +6,7 @@ import pytest
 
 from hsm_lab.contract.schemas import ConfigError, ResearchGateError
 from tests.conftest import (
+    REPO_ROOT,
     VERIFIED_RIGHTS,
     base_rows,
     make_registry,
@@ -17,8 +18,9 @@ from tests.conftest import (
 )
 
 POP_VARIABLE = [
-    variable_spec("population_anchor", "initial_anchor", "initial_state",
-                  original_frequency="dated")
+    variable_spec(
+        "population_anchor", "initial_anchor", "initial_state", original_frequency="dated"
+    )
 ]
 PARAM_VARIABLE = [
     variable_spec("sbc_strength", "latent", "latent_parameter", original_frequency="static")
@@ -80,12 +82,11 @@ def _initial_artifact(tmp_path, *, grade, evidence, observation_at, anchor_ids=(
 
 
 def test_1960_observation_renamed_1957_grade_A_rejected(tmp_path) -> None:
-    artifact = _initial_artifact(
-        tmp_path, grade="A", evidence="observed", observation_at="1960"
-    )
+    artifact = _initial_artifact(tmp_path, grade="A", evidence="observed", observation_at="1960")
     with pytest.raises(Exception, match="grade B|reconstructed|bridging"):
-        make_registry(tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
-                      artifacts=[artifact])
+        make_registry(
+            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[artifact]
+        )
 
 
 def test_grade_B_reconstruction_with_anchor_allowed(tmp_path) -> None:
@@ -98,12 +99,15 @@ def test_grade_B_reconstruction_with_anchor_allowed(tmp_path) -> None:
         anchor_ids=["census_1960"],
     )
     registry = make_registry(
-        tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+        tmp_path,
+        sources=[source_spec()],
+        variables=POP_VARIABLE,
         artifacts=[anchor, bridged],
     )
     frame = registry.load_initial(registry.artifacts["initial_B_reconstructed"])
     assert frame.height == 1
     assert registry.artifacts["census_1960"].grade == "A"
+
 
 def test_annual_target_claiming_quarterly_observed_rejected(tmp_path) -> None:
     path = tmp_path / "fixtures" / "gdp.parquet"
@@ -135,6 +139,8 @@ def test_annual_target_claiming_quarterly_observed_rejected(tmp_path) -> None:
             variables=[variable_spec("gdp", "outcome", "target", aggregation="sum")],
             artifacts=[artifact],
         )
+
+
 def _parameter_artifact(tmp_path, *, evidence: str, literature=None, bounds=None) -> dict:
     path = tmp_path / "fixtures" / "prior.json"
     payload = {
@@ -189,8 +195,7 @@ def test_latent_parameter_requires_literature(tmp_path) -> None:
             tmp_path,
             sources=[source_spec()],
             variables=PARAM_VARIABLE,
-            artifacts=[_parameter_artifact(tmp_path, evidence="literature_proxy",
-                                            literature=[])],
+            artifacts=[_parameter_artifact(tmp_path, evidence="literature_proxy", literature=[])],
         )
 
 
@@ -219,25 +224,32 @@ def test_latent_parameter_prior_file_validates(tmp_path) -> None:
     assert payload["calibration_status"] == "not_calibrated"
 
 
-
 def test_derived_from_cycle_rejected(tmp_path) -> None:
     first = _anchor_artifact(tmp_path)
     second = _initial_artifact(
-        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        tmp_path,
+        grade="B",
+        evidence="reconstructed",
+        observation_at="1960",
         anchor_ids=["census_1960"],
     )
     first["provenance"]["derived_from"] = ["initial_B_reconstructed"]
     second["provenance"]["derived_from"] = ["census_1960"]
     with pytest.raises(ConfigError, match="cycle"):
         make_registry(
-            tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+            tmp_path,
+            sources=[source_spec()],
+            variables=POP_VARIABLE,
             artifacts=[first, second],
         )
 
 
 def test_derived_from_unknown_id_rejected(tmp_path) -> None:
     artifact = _initial_artifact(
-        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        tmp_path,
+        grade="B",
+        evidence="reconstructed",
+        observation_at="1960",
         anchor_ids=["ghost_anchor"],
     )
     with pytest.raises(ConfigError, match="unknown artifact"):
@@ -255,8 +267,11 @@ def test_same_source_different_roles_allowed(tmp_path) -> None:
         "variable_id": "gdp",
         "path": "fixtures/gdp2.parquet",
         "provenance": provenance(
-            variable="gdp", role="target", evidence_status="observed",
-            artifact_sha256=digest, raw_sha256=digest,
+            variable="gdp",
+            role="target",
+            evidence_status="observed",
+            artifact_sha256=digest,
+            raw_sha256=digest,
         ),
         "source_id": "src_fixture",
         "role": "target",
@@ -291,16 +306,18 @@ def test_unknown_rights_cannot_grant_downloads() -> None:
     with pytest.raises(ValueError, match="unknown rights cannot grant"):
         RightsSpec.model_validate({**VERIFIED_RIGHTS, "license_status": "unknown"})
     with pytest.raises(ValueError, match="verified rights require"):
-        RightsSpec.model_validate({
-            "license_status": "verified",
-            "license_name": None,
-            "terms_locator": None,
-            "evidence_quote": None,
-            "checked_at": None,
-            "download_allowed": True,
-            "redistribution_allowed": True,
-            "notes": "missing evidence",
-        })
+        RightsSpec.model_validate(
+            {
+                "license_status": "verified",
+                "license_name": None,
+                "terms_locator": None,
+                "evidence_quote": None,
+                "checked_at": None,
+                "download_allowed": True,
+                "redistribution_allowed": True,
+                "notes": "missing evidence",
+            }
+        )
 
 
 # ----------------------------------------------------------------------
@@ -308,7 +325,10 @@ def test_unknown_rights_cannot_grant_downloads() -> None:
 # ----------------------------------------------------------------------
 def test_self_anchor_rejected(tmp_path) -> None:
     artifact = _initial_artifact(
-        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        tmp_path,
+        grade="B",
+        evidence="reconstructed",
+        observation_at="1960",
         anchor_ids=["initial_B_reconstructed"],
     )
     with pytest.raises(ConfigError, match="cycle"):
@@ -319,20 +339,28 @@ def test_self_anchor_rejected(tmp_path) -> None:
 
 def test_anchor_cycle_rejected(tmp_path) -> None:
     first = _initial_artifact(
-        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        tmp_path,
+        grade="B",
+        evidence="reconstructed",
+        observation_at="1960",
         anchor_ids=["initial_B_reconstructed__2"],
     )
     first["artifact_id"] = "initial_B_reconstructed__1"
     first["path"] = "fixtures/initial_B_reconstructed__1.parquet"
     second = _initial_artifact(
-        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        tmp_path,
+        grade="B",
+        evidence="reconstructed",
+        observation_at="1960",
         anchor_ids=["initial_B_reconstructed__1"],
     )
     second["artifact_id"] = "initial_B_reconstructed__2"
     second["path"] = "fixtures/initial_B_reconstructed__2.parquet"
     with pytest.raises(ConfigError, match="cycle"):
         make_registry(
-            tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+            tmp_path,
+            sources=[source_spec()],
+            variables=POP_VARIABLE,
             artifacts=[first, second],
         )
 
@@ -344,12 +372,17 @@ def test_structural_assumption_anchor_rejected(tmp_path) -> None:
     assumption["artifact_id"] = "assumption_anchor"
     assumption["path"] = "fixtures/assumption_anchor.parquet"
     bridged = _initial_artifact(
-        tmp_path, grade="B", evidence="reconstructed", observation_at="1960",
+        tmp_path,
+        grade="B",
+        evidence="reconstructed",
+        observation_at="1960",
         anchor_ids=["assumption_anchor"],
     )
     with pytest.raises(ConfigError, match="grade A or B"):
         make_registry(
-            tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+            tmp_path,
+            sources=[source_spec()],
+            variables=POP_VARIABLE,
             artifacts=[assumption, bridged],
         )
 
@@ -375,20 +408,17 @@ def test_prior_file_field_disagreements_rejected(tmp_path) -> None:
     registry = make_registry(
         tmp_path, sources=[source_spec()], variables=PARAM_VARIABLE, artifacts=[base]
     )
-    assert registry.validate_parameter(registry.artifacts["param_sbc"])[
-        "calibration_status"
-    ] == "not_calibrated"
+    assert (
+        registry.validate_parameter(registry.artifacts["param_sbc"])["calibration_status"]
+        == "not_calibrated"
+    )
 
     payload = json.loads((tmp_path / "fixtures" / "prior.json").read_text(encoding="utf-8"))
     payload["bounds"] = {"lower": 20.0, "upper": 30.0}
-    (tmp_path / "fixtures" / "prior.json").write_text(
-        json.dumps(payload), encoding="utf-8"
-    )
+    (tmp_path / "fixtures" / "prior.json").write_text(json.dumps(payload), encoding="utf-8")
     digest = sha256_file(tmp_path / "fixtures" / "prior.json")
     drifted = {**base}
-    drifted["provenance"] = {
-        **base["provenance"], "artifact_sha256": digest, "raw_sha256": digest
-    }
+    drifted["provenance"] = {**base["provenance"], "artifact_sha256": digest, "raw_sha256": digest}
     registry2 = make_registry(
         tmp_path, sources=[source_spec()], variables=PARAM_VARIABLE, artifacts=[drifted]
     )
@@ -397,9 +427,7 @@ def test_prior_file_field_disagreements_rejected(tmp_path) -> None:
 
     payload["bounds"] = {"lower": 0.0, "upper": 1.0}
     payload["literature_refs"] = ["Not Actually Cited (1999)"]
-    (tmp_path / "fixtures" / "prior.json").write_text(
-        json.dumps(payload), encoding="utf-8"
-    )
+    (tmp_path / "fixtures" / "prior.json").write_text(json.dumps(payload), encoding="utf-8")
     digest3 = sha256_file(tmp_path / "fixtures" / "prior.json")
     drifted3 = {
         **base,
@@ -420,9 +448,7 @@ def test_within_month_later_observation_requires_grade_B(tmp_path) -> None:
     near["initial_at"] = "1960-01-01"
     near["observation_at"] = "1960-01-31"
     with pytest.raises(ContractConfigError, match="grade B"):
-        make_registry(
-            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[near]
-        )
+        make_registry(tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[near])
 
 
 # ----------------------------------------------------------------------
@@ -432,7 +458,10 @@ def _chain_fixture(tmp_path):
     """grade-A census 1960 <- grade-B 1958 bridge <- grade-B 1957 reconstruction."""
     anchor = _anchor_artifact(tmp_path)
     bridge = _initial_artifact(
-        tmp_path, grade="B", evidence="reconstructed", observation_at="1960-01-01",
+        tmp_path,
+        grade="B",
+        evidence="reconstructed",
+        observation_at="1960-01-01",
         anchor_ids=["census_1960"],
     )
     bridge["artifact_id"] = "bridge_1958"
@@ -445,7 +474,10 @@ def _chain_fixture(tmp_path):
     bridge["provenance"]["artifact_sha256"] = digest
     bridge["provenance"]["raw_sha256"] = digest
     top = _initial_artifact(
-        tmp_path, grade="B", evidence="reconstructed", observation_at="1958-01-01",
+        tmp_path,
+        grade="B",
+        evidence="reconstructed",
+        observation_at="1958-01-01",
         anchor_ids=["bridge_1958"],
     )
     top["artifact_id"] = "top_1957"
@@ -462,7 +494,9 @@ def _chain_fixture(tmp_path):
 def test_valid_multilevel_reconstruction_chain_loads(tmp_path) -> None:
     anchor, bridge, top = _chain_fixture(tmp_path)
     registry = make_registry(
-        tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+        tmp_path,
+        sources=[source_spec()],
+        variables=POP_VARIABLE,
         artifacts=[anchor, bridge, top],
     )
     frame = registry.load_initial(registry.artifacts["top_1957"])
@@ -473,7 +507,9 @@ def test_descendant_refused_when_anchor_file_missing(tmp_path) -> None:
     anchor, bridge, top = _chain_fixture(tmp_path)
     (tmp_path / "fixtures" / "census_1960.parquet").unlink()
     registry = make_registry(
-        tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+        tmp_path,
+        sources=[source_spec()],
+        variables=POP_VARIABLE,
         artifacts=[anchor, bridge, top],
     )
     with pytest.raises(ResearchGateError, match="file not found"):
@@ -502,7 +538,9 @@ def test_descendant_refused_when_anchor_payload_corrupted(tmp_path) -> None:
     anchor, bridge, top = _chain_fixture(tmp_path)
     (tmp_path / "fixtures" / "bridge_1958.parquet").write_bytes(b"tampered")
     registry = make_registry(
-        tmp_path, sources=[source_spec()], variables=POP_VARIABLE,
+        tmp_path,
+        sources=[source_spec()],
+        variables=POP_VARIABLE,
         artifacts=[anchor, bridge, top],
     )
     with pytest.raises(ResearchGateError, match="digest mismatch"):
@@ -520,9 +558,7 @@ def test_ancient_observation_cannot_be_grade_a(tmp_path) -> None:
     stale["provenance"]["artifact_sha256"] = digest
     stale["provenance"]["raw_sha256"] = digest
     with pytest.raises(Exception, match="coincide exactly with initial_at"):
-        make_registry(
-            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[stale]
-        )
+        make_registry(tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[stale])
 
 
 def test_mixed_precision_grade_a_rejected(tmp_path) -> None:
@@ -530,9 +566,7 @@ def test_mixed_precision_grade_a_rejected(tmp_path) -> None:
     mixed["initial_at"] = "1960-03-01"
     mixed["observation_at"] = "1960Q1"  # quarter end = 1960-03-31, not equal
     with pytest.raises(Exception, match="coincide exactly"):
-        make_registry(
-            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[mixed]
-        )
+        make_registry(tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[mixed])
 
 
 def test_impossible_calendar_date_rejected(tmp_path) -> None:
@@ -540,7 +574,22 @@ def test_impossible_calendar_date_rejected(tmp_path) -> None:
     bad["initial_at"] = "1960-02-31"
     bad["observation_at"] = "1960-02-31"
     with pytest.raises(Exception, match="invalid anchor date"):
-        make_registry(
-            tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[bad]
-        )
+        make_registry(tmp_path, sources=[source_spec()], variables=POP_VARIABLE, artifacts=[bad])
 
+
+def test_policy_input_channel_is_separate_from_external_forcing() -> None:
+    """Mode A policy replay is its own input channel, never external forcing."""
+    import pytest
+
+    from hsm_lab.data.registry import DataRegistry
+
+    registry = DataRegistry.load(REPO_ROOT)
+    policy_artifact = registry.artifacts["p04_policy_enterprise_autonomy"]
+    frame = registry.load_policy_input(policy_artifact)
+    assert frame.height == 116
+    with pytest.raises(Exception, match="policy_input"):
+        registry.load_forcing(policy_artifact)
+
+    external_artifact = registry.artifacts["p02_material_world_oil_quarterly"]
+    with pytest.raises(Exception, match="external"):
+        registry.load_policy_input(external_artifact)

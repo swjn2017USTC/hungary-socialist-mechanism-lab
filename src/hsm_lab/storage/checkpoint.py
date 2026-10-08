@@ -1,6 +1,6 @@
 """Material end-of-quarter checkpoints: atomic publish, strict resume gates.
 
-Format ``material-checkpoint-v1``. A checkpoint is only ever written after a
+Format ``material-checkpoint-v3``. A checkpoint is only ever written after a
 tick has fully passed its accounting invariants (``completed_ticks``
 boundary) and is published atomically via a ``.tmp-<uuid>`` staging
 directory + ``os.replace``. Resume verifies payload digests, versions,
@@ -56,10 +56,20 @@ from hsm_lab.storage.material_output import (
     STAGE_COLUMNS,
     TABLES,
 )
+from hsm_lab.storage.political_output import (
+    INFORMATION_QUARTERS,
+    OPPOSITION_REGIONS,
+    POLITICAL_COLUMNS,
+    POLITICAL_INT_COLUMNS,
+    POLITICAL_KEYS,
+    POLITICAL_QUARTERS,
+    POLITICAL_STRING_COLUMNS,
+    POLITICAL_TABLES,
+)
 
-CHECKPOINT_VERSION = "material-checkpoint-v2"
-STATE_VERSION = MATERIAL_STATE_VERSION  # "material-state-v2"
-ENGINE_VERSION = "material-engine-v2"
+CHECKPOINT_VERSION = "material-checkpoint-v3"
+STATE_VERSION = MATERIAL_STATE_VERSION  # "material-state-v3"
+ENGINE_VERSION = "material-engine-v3"
 
 _TOY4_CHECKPOINT_VERSIONS = ("toy4-checkpoint-v1",)
 
@@ -296,6 +306,7 @@ _HISTORY_COLUMNS = {
     "departments": DEPARTMENT_COLUMNS,
     "tick_diagnostics": DIAGNOSTIC_COLUMNS,
     "events": EVENT_COLUMNS,
+    **POLITICAL_COLUMNS,
 }
 
 _HISTORY_KEYS = {
@@ -308,6 +319,7 @@ _HISTORY_KEYS = {
     "departments": ["tick", "department"],
     "tick_diagnostics": ["tick"],
     "events": ["tick"],
+    **POLITICAL_KEYS,
 }
 
 _HISTORY_INT_COLUMNS = {
@@ -320,6 +332,7 @@ _HISTORY_INT_COLUMNS = {
     "departments": {"tick"},
     "tick_diagnostics": {"tick", "checked_cells", "bottleneck_demand_count"},
     "events": {"tick"},
+    **POLITICAL_INT_COLUMNS,
 }
 
 _HISTORY_STRING_COLUMNS = {
@@ -332,6 +345,7 @@ _HISTORY_STRING_COLUMNS = {
     "departments": {"quarter", "department"},
     "tick_diagnostics": {"quarter", "digest", "forcing_segment"},
     "events": {"quarter", "event_type", "details_json"},
+    **POLITICAL_STRING_COLUMNS,
 }
 
 # Nullable-by-design columns (unavailable boundary values; never 0-faked).
@@ -436,8 +450,16 @@ def save_material_checkpoint(
     history: MaterialHistory,
     rng: RngRegistry,
     metadata: dict[str, object],
+    *,
+    political_arrays: dict[str, np.ndarray] | None = None,
 ) -> Path:
-    """Atomically publish one end-of-quarter checkpoint; refuse overwrite."""
+    """Atomically publish one end-of-quarter checkpoint; refuse overwrite.
+
+    ``political_arrays`` (when the P04 layer is enabled) are written into the
+    same checkpoint directory as ``political.npz`` and are covered by the same
+    payload digest map, so a P04 boundary is one immutable, self-describing
+    artifact - not a sidecar.
+    """
     if directory.exists() or directory.is_symlink():
         raise ResearchGateError(
             f"checkpoint directory {directory} already exists; refusing to overwrite"
@@ -484,6 +506,12 @@ def save_material_checkpoint(
             "network_static_hash": network_static_hash(network),
             **metadata,
         }
+        if political_arrays:
+            np.savez(
+                staging / "political.npz",
+                **{name: np.ascontiguousarray(array) for name, array in political_arrays.items()},
+            )
+            payload["political_arrays"] = sorted(political_arrays)
         payload_hashes = {
             entry.name: sha256_file(entry) for entry in sorted(staging.iterdir()) if entry.is_file()
         }
@@ -669,6 +697,103 @@ def _validate_state(
             raise ResearchGateError(f"checkpoint index array {name} falls outside its axis")
 
 
+def _validate_political_history_table(
+    name: str,
+    frame: Any,
+    snapshot: ScenarioSpec,
+    completed: int,
+) -> None:
+    """Validate one P04 table (typed empty when politics is disabled)."""
+    import polars as pl
+
+    from hsm_lab.contract.politics import POLITICAL_FEATURE_IDS
+
+    columns = _HISTORY_COLUMNS[name]
+    if frame.columns != columns:
+        raise ResearchGateError(
+            f"checkpoint political table {name} schema differs from the writer's"
+        )
+    for column in columns:
+        if column in _HISTORY_INT_COLUMNS[name]:
+            expected: Any = pl.Int64
+        elif column in _HISTORY_STRING_COLUMNS[name]:
+            expected = pl.String
+        else:
+            expected = pl.Float64
+        if frame.schema[column] != expected:
+            raise ResearchGateError(
+                f"checkpoint political table {name}.{column} has dtype "
+                f"{frame.schema[column]}, expected exactly {expected}"
+            )
+    numeric = [column for column in columns if column not in _HISTORY_STRING_COLUMNS[name]]
+    for column in numeric:
+        series = frame[column].drop_nulls()
+        if series.len() and not series.is_finite().all():
+            raise ResearchGateError(
+                f"checkpoint political table {name}.{column} has non-finite values"
+            )
+    if frame.height and frame.group_by(_HISTORY_KEYS[name]).len().filter(pl.col("len") > 1).height:
+        raise ResearchGateError(f"checkpoint political table {name} contains duplicate keys")
+    if frame.height:
+        bad_quarter = frame.filter(
+            pl.col("quarter")
+            != pl.col("tick").map_elements(
+                lambda tick: str(snapshot.start.advance(int(tick))),
+                return_dtype=pl.String,
+            )
+        )
+        if bad_quarter.height:
+            raise ResearchGateError(
+                f"checkpoint political table {name} has rows whose quarter disagrees "
+                "with the scenario calendar"
+            )
+    enabled = snapshot.politics is not None
+    if not enabled:
+        if frame.height:
+            raise ResearchGateError(
+                f"checkpoint political table {name} must be empty when politics is None"
+            )
+        return
+    observed_ticks = sorted(frame["tick"].unique().to_list()) if frame.height else []
+    if set(observed_ticks) - set(range(completed)):
+        raise ResearchGateError(
+            f"checkpoint political table {name} references ticks beyond the boundary"
+        )
+    regions = list(snapshot.region_ids)
+    if name == POLITICAL_QUARTERS:
+        if observed_ticks != list(range(completed)) or frame.height != completed:
+            raise ResearchGateError(
+                f"checkpoint political_quarters must cover ticks 0..{completed - 1} exactly"
+            )
+    elif name == OPPOSITION_REGIONS:
+        if observed_ticks != list(range(completed)) or frame.height != completed * len(regions):
+            raise ResearchGateError(
+                "checkpoint opposition_regions must cover every region on every tick"
+            )
+        unknown = set(frame["region_id"].unique().to_list()) - set(regions)
+        if unknown:
+            raise ResearchGateError(
+                f"checkpoint opposition_regions references unknown regions {sorted(unknown)}"
+            )
+    elif name == INFORMATION_QUARTERS:
+        if observed_ticks != list(range(completed)) or frame.height != completed * len(
+            POLITICAL_FEATURE_IDS
+        ):
+            raise ResearchGateError(
+                "checkpoint information_quarters must cover every feature on every tick"
+            )
+        unknown = set(frame["feature_id"].unique().to_list()) - set(POLITICAL_FEATURE_IDS)
+        if unknown:
+            raise ResearchGateError(
+                f"checkpoint information_quarters references unknown features {sorted(unknown)}"
+            )
+    # policy_decisions / political_events may be empty (Mode A / no events) and
+    # carry no fixed per-tick height.
+
+
+_POLITICAL_TABLE_SET = frozenset(POLITICAL_TABLES)
+
+
 def _validate_history_frames(
     frames: dict[str, Any],
     state: MaterialState,
@@ -694,6 +819,9 @@ def _validate_history_frames(
     }
     for name in TABLES:
         frame = frames[name]
+        if name in _POLITICAL_TABLE_SET:
+            _validate_political_history_table(name, frame, snapshot, completed)
+            continue
         if frame.columns != _HISTORY_COLUMNS[name]:
             raise ResearchGateError(
                 f"checkpoint history table {name} schema differs from the writer's"
@@ -957,8 +1085,15 @@ def load_material_checkpoint(
     spec: ScenarioSpec,
     contract: ResearchContract,
     network: Any,
+    *,
+    extra_rng_modules: dict[str, int] | None = None,
 ) -> tuple[MaterialState, MaterialHistory, RngRegistry, dict[str, object]]:
-    """Strictly verify and restore a checkpoint; no output side effects."""
+    """Strictly verify and restore a checkpoint; no output side effects.
+
+    ``extra_rng_modules`` declares the additional deterministic draw counts a
+    P04-enabled run consumes (e.g. ``{"p04_observation.measurement": L*F}``), so
+    the restored PCG64 state is checked against the full profile.
+    """
     metadata = _load_metadata(directory)
     _gate_versions(metadata)
     _verify_payload_hashes(directory, metadata)
@@ -1053,14 +1188,13 @@ def load_material_checkpoint(
 
     # --- parameter/initial-recipe identity (kernel module owns the vectors)
     from hsm_lab.engine.material import (
-        material_parameter_vector,
         material_recipe_hash,
     )
     from hsm_lab.provenance.manifest import compute_parameter_hash
 
     if metadata.get("parameter_hash") is not None and metadata.get(
         "parameter_hash"
-    ) != compute_parameter_hash(material_parameter_vector(snapshot)):
+    ) != compute_parameter_hash(_parameter_vector_with_politics(snapshot)):
         raise ResearchGateError("checkpoint parameter hash mismatch")
     if metadata.get("initial_recipe_hash") is not None and metadata.get(
         "initial_recipe_hash"
@@ -1106,12 +1240,49 @@ def load_material_checkpoint(
         from hsm_lab.engine.households import _ATTR_DRAWS, ATTRIBUTE_MODULE
 
         expected_rng.uniform(ATTRIBUTE_MODULE, snapshot.households * _ATTR_DRAWS)
+        for module, count in (extra_rng_modules or {}).items():
+            if count:
+                expected_rng.uniform(module, int(count))
     if rng.snapshot() != expected_rng.snapshot():
         raise ResearchGateError(
             "checkpoint RNG snapshot does not match the material initialization "
             "profile (module set, draw counts or PCG64 position)"
         )
+    declared_political = metadata.get("political_arrays")
+    if declared_political:
+        try:
+            payload_political = np.load(directory / "political.npz", allow_pickle=False)
+        except Exception as exc:  # noqa: BLE001 - any load failure is a gate failure
+            raise ResearchGateError(f"unreadable checkpoint political payload: {exc}") from exc
+        if sorted(payload_political.files) != sorted(declared_political):
+            raise ResearchGateError(
+                "checkpoint political payload field set disagrees with its declaration"
+            )
+        metadata["political"] = {
+            name: np.asarray(payload_political[name]) for name in declared_political
+        }
     return state, history, rng, metadata
+
+
+def _parameter_vector_with_politics(snapshot: ScenarioSpec) -> dict[str, float]:
+    """Material parameter vector merged with the resolved P04 political parameters."""
+    from hsm_lab.engine.material import material_parameter_vector
+
+    vector = material_parameter_vector(snapshot)
+    if snapshot.politics is not None:
+        from hsm_lab.contract.politics import PoliticalRunSpec, resolve_political_parameters
+        from hsm_lab.engine.policy import default_initial_policy
+
+        politics = (
+            snapshot.politics
+            if isinstance(snapshot.politics, PoliticalRunSpec)
+            else PoliticalRunSpec.model_validate(snapshot.politics)
+        )
+        resolved = resolve_political_parameters(
+            politics.parameters, default_initial_policy(snapshot)
+        )
+        vector = {**vector, **resolved.flatten()}
+    return vector
 
 
 def next_quarter_of(spec: ScenarioSpec, completed_ticks: int) -> str:

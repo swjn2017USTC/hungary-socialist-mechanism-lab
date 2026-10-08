@@ -1,0 +1,200 @@
+schema_version: '1'
+# P04 discrete external history (BASELINE §14.2).  Every event acts ONLY through
+# explicit signal channels; there is no "event -> support +20" patch.  Quarter
+# boundaries are locally reconstructed chronology unless a source fixes them;
+# economic channels reference the continuous external series and never add a
+# second shock on top of the series themselves.
+events:
+  - event_id: post1956_stabilization
+    start: 1957Q1
+    end: 1960Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 1 (1957-60 regime re-stabilisation)"
+    economic_series_refs: []
+    signal_channels: [regime_threat, public_action_risk]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Regime consolidation signal; no direct quantity patch."
+
+  - event_id: soviet_energy_network
+    start: 1960Q1
+    end: 1964Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 2 (Soviet hydrocarbon / CMEA energy network expansion)"
+    economic_series_refs: [soviet_energy_availability]
+    signal_channels: [official_policy]
+    mapping_parameter_paths:
+      - p04.external_recipe.base_energy_quota
+    notes: "Annotates the structural Soviet energy quota recipe; no second quantity shock."
+
+  - event_id: prague_spring
+    start: 1968Q1
+    end: 1968Q2
+    date_precision: exact_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 3 (1968Q1 Prague Spring)"
+    economic_series_refs: []
+    signal_channels: [opposition_success]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Reform possibility / neighbourhood efficacy signal only."
+
+  - event_id: warsaw_pact_invasion
+    start: 1968Q3
+    end: 1968Q3
+    pulse: true
+    date_precision: exact_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 4 (1968Q3 Warsaw Pact invasion of Czechoslovakia)"
+    economic_series_refs: []
+    signal_channels: [regime_threat, public_action_risk]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Raises perceived action risk and regime threat; deletes no grievance."
+
+  - event_id: detente_ostpolitik
+    start: 1969Q1
+    end: 1972Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 5 (1969-72 detente / Ostpolitik)"
+    economic_series_refs: [technology_access, international_credit_availability]
+    signal_channels: [western_comparison, foreign_linkage, official_policy]
+    mapping_parameter_paths:
+      - p04.external_recipe.base_technology_access
+    notes: "External contact/exposure signal; technology access is a channel index."
+
+  - event_id: cmea_programme
+    start: 1971Q1
+    end: 1971Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 6 (1971 CMEA Comprehensive Programme)"
+    economic_series_refs: [cmea_demand]
+    signal_channels: [official_policy]
+    mapping_parameter_paths:
+      - p04.external_recipe.base_cmea_demand
+    notes: "CMEA integration constraint signal."
+
+  - event_id: oil_shock_1
+    start: 1973Q4
+    end: 1974Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 7 (1973-74 first oil shock)"
+    economic_series_refs: [world_oil_price]
+    signal_channels: [official_policy]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "External pressure is computed from the actual world_oil_price series change; the event only annotates."
+
+  - event_id: western_stagflation
+    start: 1974Q1
+    end: 1975Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 8 (1974-75 Western recession and stagflation)"
+    economic_series_refs: [western_demand, western_inflation]
+    signal_channels: [western_comparison]
+    mapping_parameter_paths:
+      - p04.external_recipe.base_western_demand
+    notes: "Western recession signal."
+
+  - event_id: helsinki
+    start: 1975Q1
+    end: 1975Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 9 (1975 Helsinki Final Act)"
+    economic_series_refs: []
+    signal_channels: [foreign_linkage, intellectual_linkage, repression_cost]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Foreign linkage, rights information and repression-cost signal."
+
+  - event_id: cmea_price_rule_change
+    start: 1975Q1
+    end: 1976Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 10 (1975-76 CMEA price-rule change)"
+    economic_series_refs: [cmea_energy_price]
+    signal_channels: [official_policy]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Annotates the reconstructed CMEA contract price; no extra subsidy term."
+
+  - event_id: charter77
+    start: 1977Q1
+    end: 1977Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 11 (1977 Charter 77 and regional dissent networks)"
+    economic_series_refs: []
+    signal_channels: [intellectual_linkage, opposition_success]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Samizdat / intellectual linkage signal."
+
+  - event_id: oil_shock_2
+    start: 1979Q1
+    end: 1979Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 12 (1979 second oil shock)"
+    economic_series_refs: [world_oil_price]
+    signal_channels: [official_policy]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Series annotation only."
+
+  - event_id: volcker_credit_squeeze
+    start: 1979Q1
+    end: 1982Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 13 (1979-82 Volcker shock, global recession, debt environment)"
+    economic_series_refs: [global_usd_rate, western_demand, international_credit_availability]
+    signal_channels: [official_policy]
+    mapping_parameter_paths:
+      - p04.external_recipe.base_credit_availability
+    notes: "External credit availability and rate channel; no debt-stock write."
+
+  - event_id: solidarity
+    start: 1980Q1
+    end: 1981Q3
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 14 (1980-81 Solidarnosc rise)"
+    economic_series_refs: []
+    signal_channels: [opposition_success, worker_linkage, regime_threat, repression_cost]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Dual channel: raises opposition efficacy / worker linkage AND leader threat / repression cost."
+
+  - event_id: polish_martial_law
+    start: 1981Q4
+    end: 1981Q4
+    pulse: true
+    date_precision: exact_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 15 (1981Q4 martial law in Poland)"
+    economic_series_refs: []
+    signal_channels: [public_action_risk, regime_threat, repression_cost]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Raises perceived action risk; grievance is not deleted."
+
+  - event_id: gorbachev_signal
+    start: 1985Q1
+    end: 1985Q4
+    date_precision: reconstructed_quarter
+    date_evidence:
+      - "BASELINE §14.2 item 16 (1985 Gorbachev accession)"
+    economic_series_refs: []
+    signal_channels: [official_policy, opposition_success]
+    mapping_parameter_paths:
+      - p04.external_recipe.default_loading
+    notes: "Soviet reform-tolerance / restriction signal."

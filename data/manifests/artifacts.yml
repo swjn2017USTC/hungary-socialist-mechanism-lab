@@ -2590,3 +2590,1580 @@ artifacts:
     start: 1975Q1
     end: 1985Q4
     frequency: quarterly
+- artifact_id: p04_coalition_prior
+  variable_id: p04_coalition_parameters
+  path: data/fixtures/p04_priors/p04_coalition_parameters.json
+  provenance:
+    variable: p04_coalition_parameters
+    role: latent_parameter
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: da4b8e802b6edd1cfcf4fdd75637195ff79f4985de1c0bb221ac55f5c196755d
+    original_frequency: static
+    model_frequency: static
+    transformation:
+      method: literature_prior
+      source_frequency: static
+      result_frequency: static
+      aggregation: null
+      description: Structural political parameter prior declared locally
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: P04 latent political parameter prior; not calibrated.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: da4b8e802b6edd1cfcf4fdd75637195ff79f4985de1c0bb221ac55f5c196755d
+  source_id: p04_fixture
+  allow_missing: false
+  role: latent_parameter
+  literature_refs:
+  - 'structural engineering fixture: P04 coalition parameters'
+  prior_description: Selected engineering values and per-scalar bounds for the P04 coalition parameter
+    block; every value is a declared structural assumption with no calibration against observed Hungarian
+    series.
+  bounds:
+    lower: 0.0
+    upper: 2.0
+  calibration_status: not_calibrated
+  sensitivity_status: not_assessed
+  uncertainty_notes: 'not_calibrated / not_assessed. Declared envelope [0.0, 2.0]; selected_value_flat={"p04.coalition.beta.administrative_conservative.contract_gap":
+    0.0, "p04.coalition.beta.administrative_conservative.debt_pressure": 0.0, "p04.coalition.beta.administrative_conservative.elite_cohesion":
+    0.0, "p04.coalition.beta.administrative_conservative.external_pressure": 0.0, "p04.coalition.beta.administrative_conservative.growth":
+    0.0, "p04.coalition.beta.administrative_conservative.previous_policy_error": 0.0, "p04.coalition.beta.administrative_conservative.shortage":
+    0.0, "p04.coalition.beta.administrative_conservative.soviet_constraint": 0.0, "p04.coalition.beta.administrative_conservative.technology_capacity":
+    0.0, "p04.coalition.beta.administrative_conservative.worker_unrest": 0.0, "p04.coalition.beta.reform_technocratic.contract_gap":
+    0.0, "p04.coalition.beta.reform_technocratic.debt_pressure": 0.0, "p04.coalition.beta.reform_technocratic.elite_cohesion":
+    0.0, "p04.coalition.beta.reform_technocratic.external_pressure": 0.0, "p04.coalition.beta.reform_technocratic.growth":
+    0.0, "p04.coalition.beta.reform_technocratic.previous_policy_error": 0.0, "p04.coalition.beta.reform_technocratic.shortage":
+    0.0, "p04.coalition.beta.reform_technocratic.soviet_constraint": 0.0, "p04.coalition.beta.reform_technocratic.technology_capacity":
+    0.0, "p04.coalition.beta.reform_technocratic.worker_unrest": 0.0, "p04.coalition.beta.sectoral_industrial.contract_gap":
+    0.0, "p04.coalition.beta.sectoral_industrial.debt_pressure": 0.0, "p04.coalition.beta.sectoral_industrial.elite_cohesion":
+    0.0, "p04.coalition.beta.sectoral_industrial.external_pressure": 0.0, "p04.coalition.beta.sectoral_industrial.growth":
+    0.0, "p04.coalition.beta.sectoral_industrial.previous_policy_error": 0.0, "p04.coalition.beta.sectoral_industrial.shortage":
+    0.0, "p04.coalition.beta.sectoral_industrial.soviet_constraint": 0.0, "p04.coalition.beta.sectoral_industrial.technology_capacity":
+    0.0, "p04.coalition.beta.sectoral_industrial.worker_unrest": 0.0, "p04.coalition.beta.social_contract_pragmatist.contract_gap":
+    0.0, "p04.coalition.beta.social_contract_pragmatist.debt_pressure": 0.0, "p04.coalition.beta.social_contract_pragmatist.elite_cohesion":
+    0.0, "p04.coalition.beta.social_contract_pragmatist.external_pressure": 0.0, "p04.coalition.beta.social_contract_pragmatist.growth":
+    0.0, "p04.coalition.beta.social_contract_pragmatist.previous_policy_error": 0.0, "p04.coalition.beta.social_contract_pragmatist.shortage":
+    0.0, "p04.coalition.beta.social_contract_pragmatist.soviet_constraint": 0.0, "p04.coalition.beta.social_contract_pragmatist.technology_capacity":
+    0.0, "p04.coalition.beta.social_contract_pragmatist.worker_unrest": 0.0, "p04.coalition.interaction.administrative_conservative.growth_bad_information":
+    0.0, "p04.coalition.interaction.administrative_conservative.growth_bad_soviet": 0.0, "p04.coalition.interaction.reform_technocratic.growth_bad_information":
+    0.0, "p04.coalition.interaction.reform_technocratic.growth_bad_soviet": 0.0, "p04.coalition.interaction.sectoral_industrial.growth_bad_information":
+    0.0, "p04.coalition.interaction.sectoral_industrial.growth_bad_soviet": 0.0, "p04.coalition.interaction.social_contract_pragmatist.growth_bad_information":
+    0.0, "p04.coalition.interaction.social_contract_pragmatist.growth_bad_soviet": 0.0, "p04.coalition.intercept.administrative_conservative":
+    0.0, "p04.coalition.intercept.reform_technocratic": 0.0, "p04.coalition.intercept.sectoral_industrial":
+    0.0, "p04.coalition.intercept.social_contract_pragmatist": 0.0, "p04.coalition.learning_rate": 0.1};
+    scalar_bounds={"p04.coalition.beta.administrative_conservative.contract_gap": [0.0, 2.0], "p04.coalition.beta.administrative_conservative.debt_pressure":
+    [0.0, 2.0], "p04.coalition.beta.administrative_conservative.elite_cohesion": [0.0, 2.0], "p04.coalition.beta.administrative_conservative.external_pressure":
+    [0.0, 2.0], "p04.coalition.beta.administrative_conservative.growth": [0.0, 2.0], "p04.coalition.beta.administrative_conservative.previous_policy_error":
+    [0.0, 2.0], "p04.coalition.beta.administrative_conservative.shortage": [0.0, 2.0], "p04.coalition.beta.administrative_conservative.soviet_constraint":
+    [0.0, 2.0], "p04.coalition.beta.administrative_conservative.technology_capacity": [0.0, 2.0], "p04.coalition.beta.administrative_conservative.worker_unrest":
+    [0.0, 2.0], "p04.coalition.beta.reform_technocratic.contract_gap": [0.0, 2.0], "p04.coalition.beta.reform_technocratic.debt_pressure":
+    [0.0, 2.0], "p04.coalition.beta.reform_technocratic.elite_cohesion": [0.0, 2.0], "p04.coalition.beta.reform_technocratic.external_pressure":
+    [0.0, 2.0], "p04.coalition.beta.reform_technocratic.growth": [0.0, 2.0], "p04.coalition.beta.reform_technocratic.previous_policy_error":
+    [0.0, 2.0], "p04.coalition.beta.reform_technocratic.shortage": [0.0, 2.0], "p04.coalition.beta.reform_technocratic.soviet_constraint":
+    [0.0, 2.0], "p04.coalition.beta.reform_technocratic.technology_capacity": [0.0, 2.0], "p04.coalition.beta.reform_technocratic.worker_unrest":
+    [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.contract_gap": [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.debt_pressure":
+    [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.elite_cohesion": [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.external_pressure":
+    [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.growth": [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.previous_policy_error":
+    [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.shortage": [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.soviet_constraint":
+    [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.technology_capacity": [0.0, 2.0], "p04.coalition.beta.sectoral_industrial.worker_unrest":
+    [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.contract_gap": [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.debt_pressure":
+    [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.elite_cohesion": [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.external_pressure":
+    [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.growth": [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.previous_policy_error":
+    [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.shortage": [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.soviet_constraint":
+    [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.technology_capacity": [0.0, 2.0], "p04.coalition.beta.social_contract_pragmatist.worker_unrest":
+    [0.0, 2.0], "p04.coalition.interaction.administrative_conservative.growth_bad_information": [0.0,
+    2.0], "p04.coalition.interaction.administrative_conservative.growth_bad_soviet": [0.0, 2.0], "p04.coalition.interaction.reform_technocratic.growth_bad_information":
+    [0.0, 2.0], "p04.coalition.interaction.reform_technocratic.growth_bad_soviet": [0.0, 2.0], "p04.coalition.interaction.sectoral_industrial.growth_bad_information":
+    [0.0, 2.0], "p04.coalition.interaction.sectoral_industrial.growth_bad_soviet": [0.0, 2.0], "p04.coalition.interaction.social_contract_pragmatist.growth_bad_information":
+    [0.0, 2.0], "p04.coalition.interaction.social_contract_pragmatist.growth_bad_soviet": [0.0, 2.0],
+    "p04.coalition.intercept.administrative_conservative": [0.0, 2.0], "p04.coalition.intercept.reform_technocratic":
+    [0.0, 2.0], "p04.coalition.intercept.sectoral_industrial": [0.0, 2.0], "p04.coalition.intercept.social_contract_pragmatist":
+    [0.0, 2.0], "p04.coalition.learning_rate": [0.0, 2.0]}'
+- artifact_id: p04_broker_prior
+  variable_id: p04_broker_parameters
+  path: data/fixtures/p04_priors/p04_broker_parameters.json
+  provenance:
+    variable: p04_broker_parameters
+    role: latent_parameter
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 2e0baccd38a7cb88a430febf0f120c52d9b5d06c5c971a87d41132c456e40fd2
+    original_frequency: static
+    model_frequency: static
+    transformation:
+      method: literature_prior
+      source_frequency: static
+      result_frequency: static
+      aggregation: null
+      description: Structural political parameter prior declared locally
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: P04 latent political parameter prior; not calibrated.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 2e0baccd38a7cb88a430febf0f120c52d9b5d06c5c971a87d41132c456e40fd2
+  source_id: p04_fixture
+  allow_missing: false
+  role: latent_parameter
+  literature_refs:
+  - 'structural engineering fixture: P04 broker parameters'
+  prior_description: Selected engineering values and per-scalar bounds for the P04 broker parameter block;
+    every value is a declared structural assumption with no calibration against observed Hungarian series.
+  bounds:
+    lower: 0.0
+    upper: 2.0
+  calibration_status: not_calibrated
+  sensitivity_status: not_assessed
+  uncertainty_notes: 'not_calibrated / not_assessed. Declared envelope [0.0, 2.0]; selected_value_flat={"p04.broker.A.economic_viability.admin_price_factor":
+    0.0, "p04.broker.A.economic_viability.borrowing_factor": 0.0, "p04.broker.A.economic_viability.budget_hardness":
+    0.0, "p04.broker.A.economic_viability.consumer_import_factor": 0.0, "p04.broker.A.economic_viability.credit_fraction":
+    0.0, "p04.broker.A.economic_viability.cultural_openness": 0.0, "p04.broker.A.economic_viability.enterprise_autonomy":
+    0.0, "p04.broker.A.economic_viability.housing_factor": 0.0, "p04.broker.A.economic_viability.industrial_priority":
+    0.0, "p04.broker.A.economic_viability.information_investment": 0.0, "p04.broker.A.economic_viability.investment_intensity":
+    0.0, "p04.broker.A.economic_viability.plan_utilization": 0.0, "p04.broker.A.economic_viability.private_autonomy":
+    0.0, "p04.broker.A.economic_viability.repression": 0.0, "p04.broker.A.economic_viability.second_economy_tolerance":
+    0.0, "p04.broker.A.economic_viability.supported_boundary": 0.0, "p04.broker.A.economic_viability.tolerance_boundary":
+    0.0, "p04.broker.A.economic_viability.wage_factor": 0.0, "p04.broker.A.economic_viability.welfare_provision":
+    0.0, "p04.broker.A.elite_cohesion.admin_price_factor": 0.0, "p04.broker.A.elite_cohesion.borrowing_factor":
+    0.0, "p04.broker.A.elite_cohesion.budget_hardness": 0.0, "p04.broker.A.elite_cohesion.consumer_import_factor":
+    0.0, "p04.broker.A.elite_cohesion.credit_fraction": 0.0, "p04.broker.A.elite_cohesion.cultural_openness":
+    0.0, "p04.broker.A.elite_cohesion.enterprise_autonomy": 0.0, "p04.broker.A.elite_cohesion.housing_factor":
+    0.0, "p04.broker.A.elite_cohesion.industrial_priority": 0.0, "p04.broker.A.elite_cohesion.information_investment":
+    0.0, "p04.broker.A.elite_cohesion.investment_intensity": 0.0, "p04.broker.A.elite_cohesion.plan_utilization":
+    0.0, "p04.broker.A.elite_cohesion.private_autonomy": 0.0, "p04.broker.A.elite_cohesion.repression":
+    0.0, "p04.broker.A.elite_cohesion.second_economy_tolerance": 0.0, "p04.broker.A.elite_cohesion.supported_boundary":
+    0.0, "p04.broker.A.elite_cohesion.tolerance_boundary": 0.0, "p04.broker.A.elite_cohesion.wage_factor":
+    0.0, "p04.broker.A.elite_cohesion.welfare_provision": 0.0, "p04.broker.A.living_standards.admin_price_factor":
+    0.0, "p04.broker.A.living_standards.borrowing_factor": 0.0, "p04.broker.A.living_standards.budget_hardness":
+    0.0, "p04.broker.A.living_standards.consumer_import_factor": 0.0, "p04.broker.A.living_standards.credit_fraction":
+    0.0, "p04.broker.A.living_standards.cultural_openness": 0.0, "p04.broker.A.living_standards.enterprise_autonomy":
+    0.0, "p04.broker.A.living_standards.housing_factor": 0.0, "p04.broker.A.living_standards.industrial_priority":
+    0.0, "p04.broker.A.living_standards.information_investment": 0.0, "p04.broker.A.living_standards.investment_intensity":
+    0.0, "p04.broker.A.living_standards.plan_utilization": 0.0, "p04.broker.A.living_standards.private_autonomy":
+    0.0, "p04.broker.A.living_standards.repression": 0.0, "p04.broker.A.living_standards.second_economy_tolerance":
+    0.0, "p04.broker.A.living_standards.supported_boundary": 0.0, "p04.broker.A.living_standards.tolerance_boundary":
+    0.0, "p04.broker.A.living_standards.wage_factor": 0.0, "p04.broker.A.living_standards.welfare_provision":
+    0.0, "p04.broker.A.regime_stability.admin_price_factor": 0.0, "p04.broker.A.regime_stability.borrowing_factor":
+    0.0, "p04.broker.A.regime_stability.budget_hardness": 0.0, "p04.broker.A.regime_stability.consumer_import_factor":
+    0.0, "p04.broker.A.regime_stability.credit_fraction": 0.0, "p04.broker.A.regime_stability.cultural_openness":
+    0.0, "p04.broker.A.regime_stability.enterprise_autonomy": 0.0, "p04.broker.A.regime_stability.housing_factor":
+    0.0, "p04.broker.A.regime_stability.industrial_priority": 0.0, "p04.broker.A.regime_stability.information_investment":
+    0.0, "p04.broker.A.regime_stability.investment_intensity": 0.0, "p04.broker.A.regime_stability.plan_utilization":
+    0.0, "p04.broker.A.regime_stability.private_autonomy": 0.0, "p04.broker.A.regime_stability.repression":
+    0.0, "p04.broker.A.regime_stability.second_economy_tolerance": 0.0, "p04.broker.A.regime_stability.supported_boundary":
+    0.0, "p04.broker.A.regime_stability.tolerance_boundary": 0.0, "p04.broker.A.regime_stability.wage_factor":
+    0.0, "p04.broker.A.regime_stability.welfare_provision": 0.0, "p04.broker.A.soviet_acceptability.admin_price_factor":
+    0.0, "p04.broker.A.soviet_acceptability.borrowing_factor": 0.0, "p04.broker.A.soviet_acceptability.budget_hardness":
+    0.0, "p04.broker.A.soviet_acceptability.consumer_import_factor": 0.0, "p04.broker.A.soviet_acceptability.credit_fraction":
+    0.0, "p04.broker.A.soviet_acceptability.cultural_openness": 0.0, "p04.broker.A.soviet_acceptability.enterprise_autonomy":
+    0.0, "p04.broker.A.soviet_acceptability.housing_factor": 0.0, "p04.broker.A.soviet_acceptability.industrial_priority":
+    0.0, "p04.broker.A.soviet_acceptability.information_investment": 0.0, "p04.broker.A.soviet_acceptability.investment_intensity":
+    0.0, "p04.broker.A.soviet_acceptability.plan_utilization": 0.0, "p04.broker.A.soviet_acceptability.private_autonomy":
+    0.0, "p04.broker.A.soviet_acceptability.repression": 0.0, "p04.broker.A.soviet_acceptability.second_economy_tolerance":
+    0.0, "p04.broker.A.soviet_acceptability.supported_boundary": 0.0, "p04.broker.A.soviet_acceptability.tolerance_boundary":
+    0.0, "p04.broker.A.soviet_acceptability.wage_factor": 0.0, "p04.broker.A.soviet_acceptability.welfare_provision":
+    0.0, "p04.broker.cohesion_alpha": 0.1, "p04.broker.cohesion_penalty": 0.1, "p04.broker.ideal.administrative_conservative.admin_price_factor":
+    0.0, "p04.broker.ideal.administrative_conservative.borrowing_factor": 0.0, "p04.broker.ideal.administrative_conservative.budget_hardness":
+    0.0, "p04.broker.ideal.administrative_conservative.consumer_import_factor": 0.0, "p04.broker.ideal.administrative_conservative.credit_fraction":
+    0.0, "p04.broker.ideal.administrative_conservative.cultural_openness": 0.0, "p04.broker.ideal.administrative_conservative.enterprise_autonomy":
+    0.0, "p04.broker.ideal.administrative_conservative.housing_factor": 0.0, "p04.broker.ideal.administrative_conservative.industrial_priority":
+    0.0, "p04.broker.ideal.administrative_conservative.information_investment": 0.0, "p04.broker.ideal.administrative_conservative.investment_intensity":
+    0.0, "p04.broker.ideal.administrative_conservative.plan_utilization": 0.0, "p04.broker.ideal.administrative_conservative.private_autonomy":
+    0.0, "p04.broker.ideal.administrative_conservative.repression": 0.0, "p04.broker.ideal.administrative_conservative.second_economy_tolerance":
+    0.0, "p04.broker.ideal.administrative_conservative.supported_boundary": 0.0, "p04.broker.ideal.administrative_conservative.tolerance_boundary":
+    0.0, "p04.broker.ideal.administrative_conservative.wage_factor": 0.0, "p04.broker.ideal.administrative_conservative.welfare_provision":
+    0.0, "p04.broker.ideal.reform_technocratic.admin_price_factor": 0.0, "p04.broker.ideal.reform_technocratic.borrowing_factor":
+    0.0, "p04.broker.ideal.reform_technocratic.budget_hardness": 0.0, "p04.broker.ideal.reform_technocratic.consumer_import_factor":
+    0.0, "p04.broker.ideal.reform_technocratic.credit_fraction": 0.0, "p04.broker.ideal.reform_technocratic.cultural_openness":
+    0.0, "p04.broker.ideal.reform_technocratic.enterprise_autonomy": 0.0, "p04.broker.ideal.reform_technocratic.housing_factor":
+    0.0, "p04.broker.ideal.reform_technocratic.industrial_priority": 0.0, "p04.broker.ideal.reform_technocratic.information_investment":
+    0.0, "p04.broker.ideal.reform_technocratic.investment_intensity": 0.0, "p04.broker.ideal.reform_technocratic.plan_utilization":
+    0.0, "p04.broker.ideal.reform_technocratic.private_autonomy": 0.0, "p04.broker.ideal.reform_technocratic.repression":
+    0.0, "p04.broker.ideal.reform_technocratic.second_economy_tolerance": 0.0, "p04.broker.ideal.reform_technocratic.supported_boundary":
+    0.0, "p04.broker.ideal.reform_technocratic.tolerance_boundary": 0.0, "p04.broker.ideal.reform_technocratic.wage_factor":
+    0.0, "p04.broker.ideal.reform_technocratic.welfare_provision": 0.0, "p04.broker.ideal.sectoral_industrial.admin_price_factor":
+    0.0, "p04.broker.ideal.sectoral_industrial.borrowing_factor": 0.0, "p04.broker.ideal.sectoral_industrial.budget_hardness":
+    0.0, "p04.broker.ideal.sectoral_industrial.consumer_import_factor": 0.0, "p04.broker.ideal.sectoral_industrial.credit_fraction":
+    0.0, "p04.broker.ideal.sectoral_industrial.cultural_openness": 0.0, "p04.broker.ideal.sectoral_industrial.enterprise_autonomy":
+    0.0, "p04.broker.ideal.sectoral_industrial.housing_factor": 0.0, "p04.broker.ideal.sectoral_industrial.industrial_priority":
+    0.0, "p04.broker.ideal.sectoral_industrial.information_investment": 0.0, "p04.broker.ideal.sectoral_industrial.investment_intensity":
+    0.0, "p04.broker.ideal.sectoral_industrial.plan_utilization": 0.0, "p04.broker.ideal.sectoral_industrial.private_autonomy":
+    0.0, "p04.broker.ideal.sectoral_industrial.repression": 0.0, "p04.broker.ideal.sectoral_industrial.second_economy_tolerance":
+    0.0, "p04.broker.ideal.sectoral_industrial.supported_boundary": 0.0, "p04.broker.ideal.sectoral_industrial.tolerance_boundary":
+    0.0, "p04.broker.ideal.sectoral_industrial.wage_factor": 0.0, "p04.broker.ideal.sectoral_industrial.welfare_provision":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.admin_price_factor": 0.0, "p04.broker.ideal.social_contract_pragmatist.borrowing_factor":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.budget_hardness": 0.0, "p04.broker.ideal.social_contract_pragmatist.consumer_import_factor":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.credit_fraction": 0.0, "p04.broker.ideal.social_contract_pragmatist.cultural_openness":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.enterprise_autonomy": 0.0, "p04.broker.ideal.social_contract_pragmatist.housing_factor":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.industrial_priority": 0.0, "p04.broker.ideal.social_contract_pragmatist.information_investment":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.investment_intensity": 0.0, "p04.broker.ideal.social_contract_pragmatist.plan_utilization":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.private_autonomy": 0.0, "p04.broker.ideal.social_contract_pragmatist.repression":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.second_economy_tolerance": 0.0, "p04.broker.ideal.social_contract_pragmatist.supported_boundary":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.tolerance_boundary": 0.0, "p04.broker.ideal.social_contract_pragmatist.wage_factor":
+    0.0, "p04.broker.ideal.social_contract_pragmatist.welfare_provision": 0.0, "p04.broker.inertia_penalty":
+    0.1, "p04.broker.q.economic_viability": 1.0, "p04.broker.q.elite_cohesion": 1.0, "p04.broker.q.living_standards":
+    1.0, "p04.broker.q.regime_stability": 1.0, "p04.broker.q.soviet_acceptability": 1.0, "p04.broker.repression_cost_penalty":
+    0.1, "p04.broker.soviet_floor": 0.2, "p04.broker.target_base.economic_viability": 0.5, "p04.broker.target_base.elite_cohesion":
+    0.5, "p04.broker.target_base.living_standards": 1.0, "p04.broker.target_base.regime_stability": 1.0,
+    "p04.broker.target_base.soviet_acceptability": -1.0, "p04.broker.target_response.economic_viability.contract_gap":
+    0.0, "p04.broker.target_response.economic_viability.debt_pressure": 0.0, "p04.broker.target_response.economic_viability.elite_cohesion":
+    0.0, "p04.broker.target_response.economic_viability.external_pressure": 0.0, "p04.broker.target_response.economic_viability.growth":
+    0.0, "p04.broker.target_response.economic_viability.previous_policy_error": 0.0, "p04.broker.target_response.economic_viability.shortage":
+    0.0, "p04.broker.target_response.economic_viability.soviet_constraint": 0.0, "p04.broker.target_response.economic_viability.technology_capacity":
+    0.0, "p04.broker.target_response.economic_viability.worker_unrest": 0.0, "p04.broker.target_response.elite_cohesion.contract_gap":
+    0.0, "p04.broker.target_response.elite_cohesion.debt_pressure": 0.0, "p04.broker.target_response.elite_cohesion.elite_cohesion":
+    0.0, "p04.broker.target_response.elite_cohesion.external_pressure": 0.0, "p04.broker.target_response.elite_cohesion.growth":
+    0.0, "p04.broker.target_response.elite_cohesion.previous_policy_error": 0.0, "p04.broker.target_response.elite_cohesion.shortage":
+    0.0, "p04.broker.target_response.elite_cohesion.soviet_constraint": 0.0, "p04.broker.target_response.elite_cohesion.technology_capacity":
+    0.0, "p04.broker.target_response.elite_cohesion.worker_unrest": 0.0, "p04.broker.target_response.living_standards.contract_gap":
+    0.0, "p04.broker.target_response.living_standards.debt_pressure": 0.0, "p04.broker.target_response.living_standards.elite_cohesion":
+    0.0, "p04.broker.target_response.living_standards.external_pressure": 0.0, "p04.broker.target_response.living_standards.growth":
+    0.0, "p04.broker.target_response.living_standards.previous_policy_error": 0.0, "p04.broker.target_response.living_standards.shortage":
+    0.0, "p04.broker.target_response.living_standards.soviet_constraint": 0.0, "p04.broker.target_response.living_standards.technology_capacity":
+    0.0, "p04.broker.target_response.living_standards.worker_unrest": 0.0, "p04.broker.target_response.regime_stability.contract_gap":
+    0.0, "p04.broker.target_response.regime_stability.debt_pressure": 0.0, "p04.broker.target_response.regime_stability.elite_cohesion":
+    0.0, "p04.broker.target_response.regime_stability.external_pressure": 0.0, "p04.broker.target_response.regime_stability.growth":
+    0.0, "p04.broker.target_response.regime_stability.previous_policy_error": 0.0, "p04.broker.target_response.regime_stability.shortage":
+    0.0, "p04.broker.target_response.regime_stability.soviet_constraint": 0.0, "p04.broker.target_response.regime_stability.technology_capacity":
+    0.0, "p04.broker.target_response.regime_stability.worker_unrest": 0.0, "p04.broker.target_response.soviet_acceptability.contract_gap":
+    0.0, "p04.broker.target_response.soviet_acceptability.debt_pressure": 0.0, "p04.broker.target_response.soviet_acceptability.elite_cohesion":
+    0.0, "p04.broker.target_response.soviet_acceptability.external_pressure": 0.0, "p04.broker.target_response.soviet_acceptability.growth":
+    0.0, "p04.broker.target_response.soviet_acceptability.previous_policy_error": 0.0, "p04.broker.target_response.soviet_acceptability.shortage":
+    0.0, "p04.broker.target_response.soviet_acceptability.soviet_constraint": 0.0, "p04.broker.target_response.soviet_acceptability.technology_capacity":
+    0.0, "p04.broker.target_response.soviet_acceptability.worker_unrest": 0.0}; scalar_bounds={"p04.broker.A.economic_viability.admin_price_factor":
+    [0.0, 2.0], "p04.broker.A.economic_viability.borrowing_factor": [0.0, 2.0], "p04.broker.A.economic_viability.budget_hardness":
+    [0.0, 2.0], "p04.broker.A.economic_viability.consumer_import_factor": [0.0, 2.0], "p04.broker.A.economic_viability.credit_fraction":
+    [0.0, 2.0], "p04.broker.A.economic_viability.cultural_openness": [0.0, 2.0], "p04.broker.A.economic_viability.enterprise_autonomy":
+    [0.0, 2.0], "p04.broker.A.economic_viability.housing_factor": [0.0, 2.0], "p04.broker.A.economic_viability.industrial_priority":
+    [0.0, 2.0], "p04.broker.A.economic_viability.information_investment": [0.0, 2.0], "p04.broker.A.economic_viability.investment_intensity":
+    [0.0, 2.0], "p04.broker.A.economic_viability.plan_utilization": [0.0, 2.0], "p04.broker.A.economic_viability.private_autonomy":
+    [0.0, 2.0], "p04.broker.A.economic_viability.repression": [0.0, 2.0], "p04.broker.A.economic_viability.second_economy_tolerance":
+    [0.0, 2.0], "p04.broker.A.economic_viability.supported_boundary": [0.0, 2.0], "p04.broker.A.economic_viability.tolerance_boundary":
+    [0.0, 2.0], "p04.broker.A.economic_viability.wage_factor": [0.0, 2.0], "p04.broker.A.economic_viability.welfare_provision":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.admin_price_factor": [0.0, 2.0], "p04.broker.A.elite_cohesion.borrowing_factor":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.budget_hardness": [0.0, 2.0], "p04.broker.A.elite_cohesion.consumer_import_factor":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.credit_fraction": [0.0, 2.0], "p04.broker.A.elite_cohesion.cultural_openness":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.enterprise_autonomy": [0.0, 2.0], "p04.broker.A.elite_cohesion.housing_factor":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.industrial_priority": [0.0, 2.0], "p04.broker.A.elite_cohesion.information_investment":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.investment_intensity": [0.0, 2.0], "p04.broker.A.elite_cohesion.plan_utilization":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.private_autonomy": [0.0, 2.0], "p04.broker.A.elite_cohesion.repression":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.second_economy_tolerance": [0.0, 2.0], "p04.broker.A.elite_cohesion.supported_boundary":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.tolerance_boundary": [0.0, 2.0], "p04.broker.A.elite_cohesion.wage_factor":
+    [0.0, 2.0], "p04.broker.A.elite_cohesion.welfare_provision": [0.0, 2.0], "p04.broker.A.living_standards.admin_price_factor":
+    [0.0, 2.0], "p04.broker.A.living_standards.borrowing_factor": [0.0, 2.0], "p04.broker.A.living_standards.budget_hardness":
+    [0.0, 2.0], "p04.broker.A.living_standards.consumer_import_factor": [0.0, 2.0], "p04.broker.A.living_standards.credit_fraction":
+    [0.0, 2.0], "p04.broker.A.living_standards.cultural_openness": [0.0, 2.0], "p04.broker.A.living_standards.enterprise_autonomy":
+    [0.0, 2.0], "p04.broker.A.living_standards.housing_factor": [0.0, 2.0], "p04.broker.A.living_standards.industrial_priority":
+    [0.0, 2.0], "p04.broker.A.living_standards.information_investment": [0.0, 2.0], "p04.broker.A.living_standards.investment_intensity":
+    [0.0, 2.0], "p04.broker.A.living_standards.plan_utilization": [0.0, 2.0], "p04.broker.A.living_standards.private_autonomy":
+    [0.0, 2.0], "p04.broker.A.living_standards.repression": [0.0, 2.0], "p04.broker.A.living_standards.second_economy_tolerance":
+    [0.0, 2.0], "p04.broker.A.living_standards.supported_boundary": [0.0, 2.0], "p04.broker.A.living_standards.tolerance_boundary":
+    [0.0, 2.0], "p04.broker.A.living_standards.wage_factor": [0.0, 2.0], "p04.broker.A.living_standards.welfare_provision":
+    [0.0, 2.0], "p04.broker.A.regime_stability.admin_price_factor": [0.0, 2.0], "p04.broker.A.regime_stability.borrowing_factor":
+    [0.0, 2.0], "p04.broker.A.regime_stability.budget_hardness": [0.0, 2.0], "p04.broker.A.regime_stability.consumer_import_factor":
+    [0.0, 2.0], "p04.broker.A.regime_stability.credit_fraction": [0.0, 2.0], "p04.broker.A.regime_stability.cultural_openness":
+    [0.0, 2.0], "p04.broker.A.regime_stability.enterprise_autonomy": [0.0, 2.0], "p04.broker.A.regime_stability.housing_factor":
+    [0.0, 2.0], "p04.broker.A.regime_stability.industrial_priority": [0.0, 2.0], "p04.broker.A.regime_stability.information_investment":
+    [0.0, 2.0], "p04.broker.A.regime_stability.investment_intensity": [0.0, 2.0], "p04.broker.A.regime_stability.plan_utilization":
+    [0.0, 2.0], "p04.broker.A.regime_stability.private_autonomy": [0.0, 2.0], "p04.broker.A.regime_stability.repression":
+    [0.0, 2.0], "p04.broker.A.regime_stability.second_economy_tolerance": [0.0, 2.0], "p04.broker.A.regime_stability.supported_boundary":
+    [0.0, 2.0], "p04.broker.A.regime_stability.tolerance_boundary": [0.0, 2.0], "p04.broker.A.regime_stability.wage_factor":
+    [0.0, 2.0], "p04.broker.A.regime_stability.welfare_provision": [0.0, 2.0], "p04.broker.A.soviet_acceptability.admin_price_factor":
+    [0.0, 2.0], "p04.broker.A.soviet_acceptability.borrowing_factor": [0.0, 2.0], "p04.broker.A.soviet_acceptability.budget_hardness":
+    [0.0, 2.0], "p04.broker.A.soviet_acceptability.consumer_import_factor": [0.0, 2.0], "p04.broker.A.soviet_acceptability.credit_fraction":
+    [0.0, 2.0], "p04.broker.A.soviet_acceptability.cultural_openness": [0.0, 2.0], "p04.broker.A.soviet_acceptability.enterprise_autonomy":
+    [0.0, 2.0], "p04.broker.A.soviet_acceptability.housing_factor": [0.0, 2.0], "p04.broker.A.soviet_acceptability.industrial_priority":
+    [0.0, 2.0], "p04.broker.A.soviet_acceptability.information_investment": [0.0, 2.0], "p04.broker.A.soviet_acceptability.investment_intensity":
+    [0.0, 2.0], "p04.broker.A.soviet_acceptability.plan_utilization": [0.0, 2.0], "p04.broker.A.soviet_acceptability.private_autonomy":
+    [0.0, 2.0], "p04.broker.A.soviet_acceptability.repression": [0.0, 2.0], "p04.broker.A.soviet_acceptability.second_economy_tolerance":
+    [0.0, 2.0], "p04.broker.A.soviet_acceptability.supported_boundary": [0.0, 2.0], "p04.broker.A.soviet_acceptability.tolerance_boundary":
+    [0.0, 2.0], "p04.broker.A.soviet_acceptability.wage_factor": [0.0, 2.0], "p04.broker.A.soviet_acceptability.welfare_provision":
+    [0.0, 2.0], "p04.broker.cohesion_alpha": [0.0, 2.0], "p04.broker.cohesion_penalty": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.admin_price_factor":
+    [0.0, 2.0], "p04.broker.ideal.administrative_conservative.borrowing_factor": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.budget_hardness":
+    [0.0, 2.0], "p04.broker.ideal.administrative_conservative.consumer_import_factor": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.credit_fraction":
+    [0.0, 2.0], "p04.broker.ideal.administrative_conservative.cultural_openness": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.enterprise_autonomy":
+    [0.0, 2.0], "p04.broker.ideal.administrative_conservative.housing_factor": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.industrial_priority":
+    [0.0, 2.0], "p04.broker.ideal.administrative_conservative.information_investment": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.investment_intensity":
+    [0.0, 2.0], "p04.broker.ideal.administrative_conservative.plan_utilization": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.private_autonomy":
+    [0.0, 2.0], "p04.broker.ideal.administrative_conservative.repression": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.second_economy_tolerance":
+    [0.0, 2.0], "p04.broker.ideal.administrative_conservative.supported_boundary": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.tolerance_boundary":
+    [0.0, 2.0], "p04.broker.ideal.administrative_conservative.wage_factor": [0.0, 2.0], "p04.broker.ideal.administrative_conservative.welfare_provision":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.admin_price_factor": [0.0, 2.0], "p04.broker.ideal.reform_technocratic.borrowing_factor":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.budget_hardness": [0.0, 2.0], "p04.broker.ideal.reform_technocratic.consumer_import_factor":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.credit_fraction": [0.0, 2.0], "p04.broker.ideal.reform_technocratic.cultural_openness":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.enterprise_autonomy": [0.0, 2.0], "p04.broker.ideal.reform_technocratic.housing_factor":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.industrial_priority": [0.0, 2.0], "p04.broker.ideal.reform_technocratic.information_investment":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.investment_intensity": [0.0, 2.0], "p04.broker.ideal.reform_technocratic.plan_utilization":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.private_autonomy": [0.0, 2.0], "p04.broker.ideal.reform_technocratic.repression":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.second_economy_tolerance": [0.0, 2.0], "p04.broker.ideal.reform_technocratic.supported_boundary":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.tolerance_boundary": [0.0, 2.0], "p04.broker.ideal.reform_technocratic.wage_factor":
+    [0.0, 2.0], "p04.broker.ideal.reform_technocratic.welfare_provision": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.admin_price_factor":
+    [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.borrowing_factor": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.budget_hardness":
+    [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.consumer_import_factor": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.credit_fraction":
+    [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.cultural_openness": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.enterprise_autonomy":
+    [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.housing_factor": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.industrial_priority":
+    [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.information_investment": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.investment_intensity":
+    [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.plan_utilization": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.private_autonomy":
+    [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.repression": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.second_economy_tolerance":
+    [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.supported_boundary": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.tolerance_boundary":
+    [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.wage_factor": [0.0, 2.0], "p04.broker.ideal.sectoral_industrial.welfare_provision":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.admin_price_factor": [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.borrowing_factor":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.budget_hardness": [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.consumer_import_factor":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.credit_fraction": [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.cultural_openness":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.enterprise_autonomy": [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.housing_factor":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.industrial_priority": [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.information_investment":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.investment_intensity": [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.plan_utilization":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.private_autonomy": [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.repression":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.second_economy_tolerance": [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.supported_boundary":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.tolerance_boundary": [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.wage_factor":
+    [0.0, 2.0], "p04.broker.ideal.social_contract_pragmatist.welfare_provision": [0.0, 2.0], "p04.broker.inertia_penalty":
+    [0.0, 2.0], "p04.broker.q.economic_viability": [0.0, 2.0], "p04.broker.q.elite_cohesion": [0.0, 2.0],
+    "p04.broker.q.living_standards": [0.0, 2.0], "p04.broker.q.regime_stability": [0.0, 2.0], "p04.broker.q.soviet_acceptability":
+    [0.0, 2.0], "p04.broker.repression_cost_penalty": [0.0, 2.0], "p04.broker.soviet_floor": [0.0, 2.0],
+    "p04.broker.target_base.economic_viability": [0.0, 2.0], "p04.broker.target_base.elite_cohesion":
+    [0.0, 2.0], "p04.broker.target_base.living_standards": [0.0, 2.0], "p04.broker.target_base.regime_stability":
+    [0.0, 2.0], "p04.broker.target_base.soviet_acceptability": [0.0, 2.0], "p04.broker.target_response.economic_viability.contract_gap":
+    [0.0, 2.0], "p04.broker.target_response.economic_viability.debt_pressure": [0.0, 2.0], "p04.broker.target_response.economic_viability.elite_cohesion":
+    [0.0, 2.0], "p04.broker.target_response.economic_viability.external_pressure": [0.0, 2.0], "p04.broker.target_response.economic_viability.growth":
+    [0.0, 2.0], "p04.broker.target_response.economic_viability.previous_policy_error": [0.0, 2.0], "p04.broker.target_response.economic_viability.shortage":
+    [0.0, 2.0], "p04.broker.target_response.economic_viability.soviet_constraint": [0.0, 2.0], "p04.broker.target_response.economic_viability.technology_capacity":
+    [0.0, 2.0], "p04.broker.target_response.economic_viability.worker_unrest": [0.0, 2.0], "p04.broker.target_response.elite_cohesion.contract_gap":
+    [0.0, 2.0], "p04.broker.target_response.elite_cohesion.debt_pressure": [0.0, 2.0], "p04.broker.target_response.elite_cohesion.elite_cohesion":
+    [0.0, 2.0], "p04.broker.target_response.elite_cohesion.external_pressure": [0.0, 2.0], "p04.broker.target_response.elite_cohesion.growth":
+    [0.0, 2.0], "p04.broker.target_response.elite_cohesion.previous_policy_error": [0.0, 2.0], "p04.broker.target_response.elite_cohesion.shortage":
+    [0.0, 2.0], "p04.broker.target_response.elite_cohesion.soviet_constraint": [0.0, 2.0], "p04.broker.target_response.elite_cohesion.technology_capacity":
+    [0.0, 2.0], "p04.broker.target_response.elite_cohesion.worker_unrest": [0.0, 2.0], "p04.broker.target_response.living_standards.contract_gap":
+    [0.0, 2.0], "p04.broker.target_response.living_standards.debt_pressure": [0.0, 2.0], "p04.broker.target_response.living_standards.elite_cohesion":
+    [0.0, 2.0], "p04.broker.target_response.living_standards.external_pressure": [0.0, 2.0], "p04.broker.target_response.living_standards.growth":
+    [0.0, 2.0], "p04.broker.target_response.living_standards.previous_policy_error": [0.0, 2.0], "p04.broker.target_response.living_standards.shortage":
+    [0.0, 2.0], "p04.broker.target_response.living_standards.soviet_constraint": [0.0, 2.0], "p04.broker.target_response.living_standards.technology_capacity":
+    [0.0, 2.0], "p04.broker.target_response.living_standards.worker_unrest": [0.0, 2.0], "p04.broker.target_response.regime_stability.contract_gap":
+    [0.0, 2.0], "p04.broker.target_response.regime_stability.debt_pressure": [0.0, 2.0], "p04.broker.target_response.regime_stability.elite_cohesion":
+    [0.0, 2.0], "p04.broker.target_response.regime_stability.external_pressure": [0.0, 2.0], "p04.broker.target_response.regime_stability.growth":
+    [0.0, 2.0], "p04.broker.target_response.regime_stability.previous_policy_error": [0.0, 2.0], "p04.broker.target_response.regime_stability.shortage":
+    [0.0, 2.0], "p04.broker.target_response.regime_stability.soviet_constraint": [0.0, 2.0], "p04.broker.target_response.regime_stability.technology_capacity":
+    [0.0, 2.0], "p04.broker.target_response.regime_stability.worker_unrest": [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.contract_gap":
+    [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.debt_pressure": [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.elite_cohesion":
+    [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.external_pressure": [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.growth":
+    [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.previous_policy_error": [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.shortage":
+    [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.soviet_constraint": [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.technology_capacity":
+    [0.0, 2.0], "p04.broker.target_response.soviet_acceptability.worker_unrest": [0.0, 2.0]}'
+- artifact_id: p04_information_prior
+  variable_id: p04_information_parameters
+  path: data/fixtures/p04_priors/p04_information_parameters.json
+  provenance:
+    variable: p04_information_parameters
+    role: latent_parameter
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 6652cf7daab16bc74aabcfac61ef7471ff2c9d4fa30526e182800ab2bbf4780f
+    original_frequency: static
+    model_frequency: static
+    transformation:
+      method: literature_prior
+      source_frequency: static
+      result_frequency: static
+      aggregation: null
+      description: Structural political parameter prior declared locally
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: P04 latent political parameter prior; not calibrated.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 6652cf7daab16bc74aabcfac61ef7471ff2c9d4fa30526e182800ab2bbf4780f
+  source_id: p04_fixture
+  allow_missing: false
+  role: latent_parameter
+  literature_refs:
+  - 'structural engineering fixture: P04 information parameters'
+  prior_description: Selected engineering values and per-scalar bounds for the P04 information parameter
+    block; every value is a declared structural assumption with no calibration against observed Hungarian
+    series.
+  bounds:
+    lower: 0.0
+    upper: 8.0
+  calibration_status: not_calibrated
+  sensitivity_status: not_assessed
+  uncertainty_notes: 'not_calibrated / not_assessed. Declared envelope [0.0, 8.0]; selected_value_flat={"p04.information.computational_cost_scale":
+    1.0, "p04.information.depreciation": 0.0, "p04.information.information_investment_weight": 1.0, "p04.information.lag_cap":
+    8.0, "p04.information.latency_scale": 4.0, "p04.information.learning": 0.1, "p04.information.measurement_sigma":
+    0.1, "p04.information.reporting_scale": 4.0}; scalar_bounds={"p04.information.computational_cost_scale":
+    [0.0, 2.0], "p04.information.depreciation": [0.0, 2.0], "p04.information.information_investment_weight":
+    [0.0, 2.0], "p04.information.lag_cap": [0.0, 8.0], "p04.information.latency_scale": [0.0, 2.0], "p04.information.learning":
+    [0.0, 2.0], "p04.information.measurement_sigma": [0.0, 2.0], "p04.information.reporting_scale": [0.0,
+    2.0]}'
+- artifact_id: p04_observation_prior
+  variable_id: p04_observation_parameters
+  path: data/fixtures/p04_priors/p04_observation_parameters.json
+  provenance:
+    variable: p04_observation_parameters
+    role: latent_parameter
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 10821630f696e5440c65bd8f7aa337d58ba9217664a6ddaffa57f93267514ff0
+    original_frequency: static
+    model_frequency: static
+    transformation:
+      method: literature_prior
+      source_frequency: static
+      result_frequency: static
+      aggregation: null
+      description: Structural political parameter prior declared locally
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: P04 latent political parameter prior; not calibrated.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 10821630f696e5440c65bd8f7aa337d58ba9217664a6ddaffa57f93267514ff0
+  source_id: p04_fixture
+  allow_missing: false
+  role: latent_parameter
+  literature_refs:
+  - 'structural engineering fixture: P04 observation parameters'
+  prior_description: Selected engineering values and per-scalar bounds for the P04 observation parameter
+    block; every value is a declared structural assumption with no calibration against observed Hungarian
+    series.
+  bounds:
+    lower: 0.0
+    upper: 2.0
+  calibration_status: not_calibrated
+  sensitivity_status: not_assessed
+  uncertainty_notes: 'not_calibrated / not_assessed. Declared envelope [0.0, 2.0]; selected_value_flat={"p04.observation.bias_incentive_loading":
+    0.0, "p04.observation.capacity_reference": 1.0, "p04.observation.declared_scale.contract_gap": 1.0,
+    "p04.observation.declared_scale.debt_pressure": 1.0, "p04.observation.declared_scale.elite_cohesion":
+    1.0, "p04.observation.declared_scale.external_pressure": 1.0, "p04.observation.declared_scale.growth":
+    1.0, "p04.observation.declared_scale.previous_policy_error": 1.0, "p04.observation.declared_scale.shortage":
+    1.0, "p04.observation.declared_scale.soviet_constraint": 1.0, "p04.observation.declared_scale.technology_capacity":
+    1.0, "p04.observation.declared_scale.worker_unrest": 1.0, "p04.observation.feature_bias_loading.contract_gap.capacity":
+    0.0, "p04.observation.feature_bias_loading.contract_gap.inventory": 0.0, "p04.observation.feature_bias_loading.contract_gap.need":
+    0.0, "p04.observation.feature_bias_loading.debt_pressure.capacity": 0.0, "p04.observation.feature_bias_loading.debt_pressure.inventory":
+    0.0, "p04.observation.feature_bias_loading.debt_pressure.need": 0.0, "p04.observation.feature_bias_loading.elite_cohesion.capacity":
+    0.0, "p04.observation.feature_bias_loading.elite_cohesion.inventory": 0.0, "p04.observation.feature_bias_loading.elite_cohesion.need":
+    0.0, "p04.observation.feature_bias_loading.external_pressure.capacity": 0.0, "p04.observation.feature_bias_loading.external_pressure.inventory":
+    0.0, "p04.observation.feature_bias_loading.external_pressure.need": 0.0, "p04.observation.feature_bias_loading.growth.capacity":
+    0.0, "p04.observation.feature_bias_loading.growth.inventory": 0.0, "p04.observation.feature_bias_loading.growth.need":
+    0.0, "p04.observation.feature_bias_loading.previous_policy_error.capacity": 0.0, "p04.observation.feature_bias_loading.previous_policy_error.inventory":
+    0.0, "p04.observation.feature_bias_loading.previous_policy_error.need": 0.0, "p04.observation.feature_bias_loading.shortage.capacity":
+    0.0, "p04.observation.feature_bias_loading.shortage.inventory": 0.0, "p04.observation.feature_bias_loading.shortage.need":
+    0.0, "p04.observation.feature_bias_loading.soviet_constraint.capacity": 0.0, "p04.observation.feature_bias_loading.soviet_constraint.inventory":
+    0.0, "p04.observation.feature_bias_loading.soviet_constraint.need": 0.0, "p04.observation.feature_bias_loading.technology_capacity.capacity":
+    0.0, "p04.observation.feature_bias_loading.technology_capacity.inventory": 0.0, "p04.observation.feature_bias_loading.technology_capacity.need":
+    0.0, "p04.observation.feature_bias_loading.worker_unrest.capacity": 0.0, "p04.observation.feature_bias_loading.worker_unrest.inventory":
+    0.0, "p04.observation.feature_bias_loading.worker_unrest.need": 0.0, "p04.observation.initial_concealment":
+    0.2, "p04.observation.initial_misstatement": 0.0, "p04.observation.initial_overstatement": 0.2, "p04.observation.inventory_reference":
+    1.0, "p04.observation.need_reference": 1.0, "p04.observation.noise_scale.contract_gap": 1.0, "p04.observation.noise_scale.debt_pressure":
+    1.0, "p04.observation.noise_scale.elite_cohesion": 1.0, "p04.observation.noise_scale.external_pressure":
+    1.0, "p04.observation.noise_scale.growth": 1.0, "p04.observation.noise_scale.previous_policy_error":
+    1.0, "p04.observation.noise_scale.shortage": 1.0, "p04.observation.noise_scale.soviet_constraint":
+    1.0, "p04.observation.noise_scale.technology_capacity": 1.0, "p04.observation.noise_scale.worker_unrest":
+    1.0, "p04.observation.ring_length": 9.0}; scalar_bounds={"p04.observation.bias_incentive_loading":
+    [0.0, 2.0], "p04.observation.capacity_reference": [0.0, 2.0], "p04.observation.declared_scale.contract_gap":
+    [0.0, 2.0], "p04.observation.declared_scale.debt_pressure": [0.0, 2.0], "p04.observation.declared_scale.elite_cohesion":
+    [0.0, 2.0], "p04.observation.declared_scale.external_pressure": [0.0, 2.0], "p04.observation.declared_scale.growth":
+    [0.0, 2.0], "p04.observation.declared_scale.previous_policy_error": [0.0, 2.0], "p04.observation.declared_scale.shortage":
+    [0.0, 2.0], "p04.observation.declared_scale.soviet_constraint": [0.0, 2.0], "p04.observation.declared_scale.technology_capacity":
+    [0.0, 2.0], "p04.observation.declared_scale.worker_unrest": [0.0, 2.0], "p04.observation.feature_bias_loading.contract_gap.capacity":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.contract_gap.inventory": [0.0, 2.0], "p04.observation.feature_bias_loading.contract_gap.need":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.debt_pressure.capacity": [0.0, 2.0], "p04.observation.feature_bias_loading.debt_pressure.inventory":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.debt_pressure.need": [0.0, 2.0], "p04.observation.feature_bias_loading.elite_cohesion.capacity":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.elite_cohesion.inventory": [0.0, 2.0], "p04.observation.feature_bias_loading.elite_cohesion.need":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.external_pressure.capacity": [0.0, 2.0], "p04.observation.feature_bias_loading.external_pressure.inventory":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.external_pressure.need": [0.0, 2.0], "p04.observation.feature_bias_loading.growth.capacity":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.growth.inventory": [0.0, 2.0], "p04.observation.feature_bias_loading.growth.need":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.previous_policy_error.capacity": [0.0, 2.0], "p04.observation.feature_bias_loading.previous_policy_error.inventory":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.previous_policy_error.need": [0.0, 2.0], "p04.observation.feature_bias_loading.shortage.capacity":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.shortage.inventory": [0.0, 2.0], "p04.observation.feature_bias_loading.shortage.need":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.soviet_constraint.capacity": [0.0, 2.0], "p04.observation.feature_bias_loading.soviet_constraint.inventory":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.soviet_constraint.need": [0.0, 2.0], "p04.observation.feature_bias_loading.technology_capacity.capacity":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.technology_capacity.inventory": [0.0, 2.0], "p04.observation.feature_bias_loading.technology_capacity.need":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.worker_unrest.capacity": [0.0, 2.0], "p04.observation.feature_bias_loading.worker_unrest.inventory":
+    [0.0, 2.0], "p04.observation.feature_bias_loading.worker_unrest.need": [0.0, 2.0], "p04.observation.initial_concealment":
+    [0.0, 2.0], "p04.observation.initial_misstatement": [0.0, 2.0], "p04.observation.initial_overstatement":
+    [0.0, 2.0], "p04.observation.inventory_reference": [0.0, 2.0], "p04.observation.need_reference": [0.0,
+    2.0], "p04.observation.noise_scale.contract_gap": [0.0, 2.0], "p04.observation.noise_scale.debt_pressure":
+    [0.0, 2.0], "p04.observation.noise_scale.elite_cohesion": [0.0, 2.0], "p04.observation.noise_scale.external_pressure":
+    [0.0, 2.0], "p04.observation.noise_scale.growth": [0.0, 2.0], "p04.observation.noise_scale.previous_policy_error":
+    [0.0, 2.0], "p04.observation.noise_scale.shortage": [0.0, 2.0], "p04.observation.noise_scale.soviet_constraint":
+    [0.0, 2.0], "p04.observation.noise_scale.technology_capacity": [0.0, 2.0], "p04.observation.noise_scale.worker_unrest":
+    [0.0, 2.0], "p04.observation.ring_length": [0.0, 2.0]}'
+- artifact_id: p04_culture_prior
+  variable_id: p04_culture_parameters
+  path: data/fixtures/p04_priors/p04_culture_parameters.json
+  provenance:
+    variable: p04_culture_parameters
+    role: latent_parameter
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 99165d2ecfd06a04cbbec99c7f2ac7b3cd10f88584ad62898332c404161c88a3
+    original_frequency: static
+    model_frequency: static
+    transformation:
+      method: literature_prior
+      source_frequency: static
+      result_frequency: static
+      aggregation: null
+      description: Structural political parameter prior declared locally
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: P04 latent political parameter prior; not calibrated.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 99165d2ecfd06a04cbbec99c7f2ac7b3cd10f88584ad62898332c404161c88a3
+  source_id: p04_fixture
+  allow_missing: false
+  role: latent_parameter
+  literature_refs:
+  - 'structural engineering fixture: P04 culture parameters'
+  prior_description: Selected engineering values and per-scalar bounds for the P04 culture parameter block;
+    every value is a declared structural assumption with no calibration against observed Hungarian series.
+  bounds:
+    lower: -2.0
+    upper: 2.0
+  calibration_status: not_calibrated
+  sensitivity_status: not_assessed
+  uncertainty_notes: 'not_calibrated / not_assessed. Declared envelope [-2.0, 2.0]; selected_value_flat={"p04.culture.exposure_alpha":
+    0.1, "p04.culture.identification_alpha": 0.1, "p04.culture.initial_exposure": 0.05, "p04.culture.initial_ideology":
+    0.5, "p04.culture.official_loading": 0.1, "p04.culture.prohibited_multiplier": 0.0, "p04.culture.supported_multiplier":
+    1.0, "p04.culture.tolerated_multiplier": 0.5, "p04.culture.western_loading": 0.1}; scalar_bounds={"p04.culture.exposure_alpha":
+    [0.0, 2.0], "p04.culture.identification_alpha": [0.0, 2.0], "p04.culture.initial_exposure": [0.0,
+    2.0], "p04.culture.initial_ideology": [0.0, 2.0], "p04.culture.official_loading": [-2.0, 2.0], "p04.culture.prohibited_multiplier":
+    [0.0, 2.0], "p04.culture.supported_multiplier": [0.0, 2.0], "p04.culture.tolerated_multiplier": [0.0,
+    2.0], "p04.culture.western_loading": [-2.0, 2.0]}'
+- artifact_id: p04_opposition_prior
+  variable_id: p04_opposition_parameters
+  path: data/fixtures/p04_priors/p04_opposition_parameters.json
+  provenance:
+    variable: p04_opposition_parameters
+    role: latent_parameter
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 8e5a43595f06640d2f68b71048c1f91eada2fafa02a9be7e50355182fcc5066d
+    original_frequency: static
+    model_frequency: static
+    transformation:
+      method: literature_prior
+      source_frequency: static
+      result_frequency: static
+      aggregation: null
+      description: Structural political parameter prior declared locally
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: P04 latent political parameter prior; not calibrated.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 8e5a43595f06640d2f68b71048c1f91eada2fafa02a9be7e50355182fcc5066d
+  source_id: p04_fixture
+  allow_missing: false
+  role: latent_parameter
+  literature_refs:
+  - 'structural engineering fixture: P04 opposition parameters'
+  prior_description: Selected engineering values and per-scalar bounds for the P04 opposition parameter
+    block; every value is a declared structural assumption with no calibration against observed Hungarian
+    series.
+  bounds:
+    lower: 0.0
+    upper: 2.0
+  calibration_status: not_calibrated
+  sensitivity_status: not_assessed
+  uncertainty_notes: 'not_calibrated / not_assessed. Declared envelope [0.0, 2.0]; selected_value_flat={"p04.opposition.action_risk_weight":
+    1.0, "p04.opposition.alpha.foreign_linkage": 0.1, "p04.opposition.alpha.intellectual_density": 0.1,
+    "p04.opposition.alpha.network_size": 0.1, "p04.opposition.alpha.perceived_efficacy": 0.1, "p04.opposition.alpha.repression_exposure":
+    0.1, "p04.opposition.alpha.samizdat_capacity": 0.1, "p04.opposition.alpha.worker_linkage": 0.1, "p04.opposition.attrition_rate":
+    0.2, "p04.opposition.efficacy_risk_weight": 1.0, "p04.opposition.efficacy_success_weight": 1.0, "p04.opposition.exposure_decay":
+    0.1, "p04.opposition.exposure_repression_weight": 1.0, "p04.opposition.foreign_linkage_weight": 0.5,
+    "p04.opposition.foreign_western_weight": 1.0, "p04.opposition.formation_input_scale": 1.0, "p04.opposition.formation_rate":
+    0.2, "p04.opposition.household_efficacy_alpha": 0.1, "p04.opposition.household_exposure_alpha": 0.1,
+    "p04.opposition.initial_state.foreign_linkage": 0.1, "p04.opposition.initial_state.intellectual_density":
+    0.0, "p04.opposition.initial_state.network_size": 0.1, "p04.opposition.initial_state.perceived_efficacy":
+    0.1, "p04.opposition.initial_state.repression_exposure": 0.1, "p04.opposition.initial_state.samizdat_capacity":
+    0.1, "p04.opposition.initial_state.worker_linkage": 0.0, "p04.opposition.samizdat_charter_weight":
+    0.5, "p04.opposition.samizdat_tolerance_weight": 1.0}; scalar_bounds={"p04.opposition.action_risk_weight":
+    [0.0, 2.0], "p04.opposition.alpha.foreign_linkage": [0.0, 2.0], "p04.opposition.alpha.intellectual_density":
+    [0.0, 2.0], "p04.opposition.alpha.network_size": [0.0, 2.0], "p04.opposition.alpha.perceived_efficacy":
+    [0.0, 2.0], "p04.opposition.alpha.repression_exposure": [0.0, 2.0], "p04.opposition.alpha.samizdat_capacity":
+    [0.0, 2.0], "p04.opposition.alpha.worker_linkage": [0.0, 2.0], "p04.opposition.attrition_rate": [0.0,
+    2.0], "p04.opposition.efficacy_risk_weight": [0.0, 2.0], "p04.opposition.efficacy_success_weight":
+    [0.0, 2.0], "p04.opposition.exposure_decay": [0.0, 2.0], "p04.opposition.exposure_repression_weight":
+    [0.0, 2.0], "p04.opposition.foreign_linkage_weight": [0.0, 2.0], "p04.opposition.foreign_western_weight":
+    [0.0, 2.0], "p04.opposition.formation_input_scale": [0.0, 2.0], "p04.opposition.formation_rate": [0.0,
+    2.0], "p04.opposition.household_efficacy_alpha": [0.0, 2.0], "p04.opposition.household_exposure_alpha":
+    [0.0, 2.0], "p04.opposition.initial_state.foreign_linkage": [0.0, 2.0], "p04.opposition.initial_state.intellectual_density":
+    [0.0, 2.0], "p04.opposition.initial_state.network_size": [0.0, 2.0], "p04.opposition.initial_state.perceived_efficacy":
+    [0.0, 2.0], "p04.opposition.initial_state.repression_exposure": [0.0, 2.0], "p04.opposition.initial_state.samizdat_capacity":
+    [0.0, 2.0], "p04.opposition.initial_state.worker_linkage": [0.0, 2.0], "p04.opposition.samizdat_charter_weight":
+    [0.0, 2.0], "p04.opposition.samizdat_tolerance_weight": [0.0, 2.0]}'
+- artifact_id: p04_external_recipe_prior
+  variable_id: p04_external_recipe_parameters
+  path: data/fixtures/p04_priors/p04_external_recipe_parameters.json
+  provenance:
+    variable: p04_external_recipe_parameters
+    role: latent_parameter
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: e4e7e8c9b2ad638a679b2ed96cb6fc9b1141a8f4e833ad0c938f25b5f2237b00
+    original_frequency: static
+    model_frequency: static
+    transformation:
+      method: literature_prior
+      source_frequency: static
+      result_frequency: static
+      aggregation: null
+      description: Structural political parameter prior declared locally
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: P04 latent political parameter prior; not calibrated.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: e4e7e8c9b2ad638a679b2ed96cb6fc9b1141a8f4e833ad0c938f25b5f2237b00
+  source_id: p04_fixture
+  allow_missing: false
+  role: latent_parameter
+  literature_refs:
+  - 'structural engineering fixture: P04 external_recipe parameters'
+  prior_description: Selected engineering values and per-scalar bounds for the P04 external_recipe parameter
+    block; every value is a declared structural assumption with no calibration against observed Hungarian
+    series.
+  bounds:
+    lower: -100.0
+    upper: 2.0
+  calibration_status: not_calibrated
+  sensitivity_status: not_assessed
+  uncertainty_notes: 'not_calibrated / not_assessed. Declared envelope [-100.0, 2.0]; selected_value_flat={"p04.external_recipe.base_cmea_demand":
+    1.0, "p04.external_recipe.base_credit_availability": 1.0, "p04.external_recipe.base_energy_quota":
+    1.0, "p04.external_recipe.base_geopolitical_tension": 0.3, "p04.external_recipe.base_soviet_constraint":
+    0.5, "p04.external_recipe.base_technology_access": 0.5, "p04.external_recipe.base_western_demand":
+    1.0, "p04.external_recipe.base_western_inflation": 0.0, "p04.external_recipe.debt_reference": 10000.0,
+    "p04.external_recipe.default_loading": 0.2, "p04.external_recipe.signal_clip": 1.0, "p04.external_recipe.signal_lower":
+    -1.0, "p04.external_recipe.signal_persistence": 0.8, "p04.external_recipe.signal_upper": 1.0, "p04.external_recipe.soviet_constraint_multiplier":
+    1.0, "p04.external_recipe.tension_regime_weight": 0.5, "p04.external_recipe.western_price_index_initial":
+    1.0}; scalar_bounds={"p04.external_recipe.base_cmea_demand": [0.0, 2.0], "p04.external_recipe.base_credit_availability":
+    [0.0, 2.0], "p04.external_recipe.base_energy_quota": [0.0, 2.0], "p04.external_recipe.base_geopolitical_tension":
+    [0.0, 2.0], "p04.external_recipe.base_soviet_constraint": [0.0, 2.0], "p04.external_recipe.base_technology_access":
+    [0.0, 2.0], "p04.external_recipe.base_western_demand": [0.0, 2.0], "p04.external_recipe.base_western_inflation":
+    [-100.0, 2.0], "p04.external_recipe.debt_reference": [0.0, 2.0], "p04.external_recipe.default_loading":
+    [0.0, 2.0], "p04.external_recipe.signal_clip": [0.0, 2.0], "p04.external_recipe.signal_lower": [-2.0,
+    2.0], "p04.external_recipe.signal_persistence": [0.0, 2.0], "p04.external_recipe.signal_upper": [0.0,
+    2.0], "p04.external_recipe.soviet_constraint_multiplier": [0.0, 2.0], "p04.external_recipe.tension_regime_weight":
+    [0.0, 2.0], "p04.external_recipe.western_price_index_initial": [0.0, 2.0]}'
+- artifact_id: p04_policy_plan_utilization
+  variable_id: policy_plan_utilization
+  path: data/fixtures/p04_policy/policy_plan_utilization.parquet
+  provenance:
+    variable: policy_plan_utilization
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: b4b3457e837a697fdbab8c4e5bb8977986df0c05b530afcf27ef1d915b9e3fc9
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: b4b3457e837a697fdbab8c4e5bb8977986df0c05b530afcf27ef1d915b9e3fc9
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_enterprise_autonomy
+  variable_id: policy_enterprise_autonomy
+  path: data/fixtures/p04_policy/policy_enterprise_autonomy.parquet
+  provenance:
+    variable: policy_enterprise_autonomy
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: d51decc02618f5c075e5210dd3b18f2dba16c4c4147341039fec23722bc91598
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: d51decc02618f5c075e5210dd3b18f2dba16c4c4147341039fec23722bc91598
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_investment_intensity
+  variable_id: policy_investment_intensity
+  path: data/fixtures/p04_policy/policy_investment_intensity.parquet
+  provenance:
+    variable: policy_investment_intensity
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 6080bf183c34ef0515addf1240d4242efa3d77c9211ee1e166bc71f82c9042e1
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 6080bf183c34ef0515addf1240d4242efa3d77c9211ee1e166bc71f82c9042e1
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_industrial_priority
+  variable_id: policy_industrial_priority
+  path: data/fixtures/p04_policy/policy_industrial_priority.parquet
+  provenance:
+    variable: policy_industrial_priority
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 8dc01b08f26bd81ac39642770350d4d531792855789d0cad0a7a464c7069beb1
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 8dc01b08f26bd81ac39642770350d4d531792855789d0cad0a7a464c7069beb1
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_admin_price_factor
+  variable_id: policy_admin_price_factor
+  path: data/fixtures/p04_policy/policy_admin_price_factor.parquet
+  provenance:
+    variable: policy_admin_price_factor
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: ea16ff98a3646325fc7adbec44f9e7543225feee3c1f4a4e296f3f97120222b8
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: ea16ff98a3646325fc7adbec44f9e7543225feee3c1f4a4e296f3f97120222b8
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_wage_factor
+  variable_id: policy_wage_factor
+  path: data/fixtures/p04_policy/policy_wage_factor.parquet
+  provenance:
+    variable: policy_wage_factor
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: dd6e7a45ff888c5c6fcbcc9a270960bab17e0ce897c3b3366279d1dc222fa8c4
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: dd6e7a45ff888c5c6fcbcc9a270960bab17e0ce897c3b3366279d1dc222fa8c4
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_credit_fraction
+  variable_id: policy_credit_fraction
+  path: data/fixtures/p04_policy/policy_credit_fraction.parquet
+  provenance:
+    variable: policy_credit_fraction
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 06678a78aea6c65b67e45091eeb3eb33be14950238d762a07eb9b569300af7fa
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 06678a78aea6c65b67e45091eeb3eb33be14950238d762a07eb9b569300af7fa
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_budget_hardness
+  variable_id: policy_budget_hardness
+  path: data/fixtures/p04_policy/policy_budget_hardness.parquet
+  provenance:
+    variable: policy_budget_hardness
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: b67c961fd01cda876afd80ea656cc6c110aa423b81190beacf82a440c5456486
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: b67c961fd01cda876afd80ea656cc6c110aa423b81190beacf82a440c5456486
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_housing_factor
+  variable_id: policy_housing_factor
+  path: data/fixtures/p04_policy/policy_housing_factor.parquet
+  provenance:
+    variable: policy_housing_factor
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: f2d5c9e4bb7bcbad948f33ced0ca613c4213aad1daff3ec16ce5f7fc48d5d65b
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: f2d5c9e4bb7bcbad948f33ced0ca613c4213aad1daff3ec16ce5f7fc48d5d65b
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_borrowing_factor
+  variable_id: policy_borrowing_factor
+  path: data/fixtures/p04_policy/policy_borrowing_factor.parquet
+  provenance:
+    variable: policy_borrowing_factor
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: e0d2584e591b690ae9d25a8f9acc30f6ad4859378fbf8d25f58dc206334b51c4
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: e0d2584e591b690ae9d25a8f9acc30f6ad4859378fbf8d25f58dc206334b51c4
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_consumer_import_factor
+  variable_id: policy_consumer_import_factor
+  path: data/fixtures/p04_policy/policy_consumer_import_factor.parquet
+  provenance:
+    variable: policy_consumer_import_factor
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: ae063c817761a99f3ed0509306b184f2f6da3fc4d94749de0606ca1077471dd2
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: ae063c817761a99f3ed0509306b184f2f6da3fc4d94749de0606ca1077471dd2
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_second_economy_tolerance
+  variable_id: policy_second_economy_tolerance
+  path: data/fixtures/p04_policy/policy_second_economy_tolerance.parquet
+  provenance:
+    variable: policy_second_economy_tolerance
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 36994aad3f522b30d258e30e4950810dead7f35a98b2d51d0d576a62c6016cf3
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 36994aad3f522b30d258e30e4950810dead7f35a98b2d51d0d576a62c6016cf3
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_welfare_provision
+  variable_id: policy_welfare_provision
+  path: data/fixtures/p04_policy/policy_welfare_provision.parquet
+  provenance:
+    variable: policy_welfare_provision
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 60967095e7e50627fe6ae887708ab33adb827b8b8674e5c35665c2a3f4cc018a
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 60967095e7e50627fe6ae887708ab33adb827b8b8674e5c35665c2a3f4cc018a
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_private_autonomy
+  variable_id: policy_private_autonomy
+  path: data/fixtures/p04_policy/policy_private_autonomy.parquet
+  provenance:
+    variable: policy_private_autonomy
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 71b2a3736f3072f8ace5b65cc7181d7e654e104812728cf726481f062db9eac7
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 71b2a3736f3072f8ace5b65cc7181d7e654e104812728cf726481f062db9eac7
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_cultural_openness
+  variable_id: policy_cultural_openness
+  path: data/fixtures/p04_policy/policy_cultural_openness.parquet
+  provenance:
+    variable: policy_cultural_openness
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 8f8efb7f19480dd61493c9cc5cdc7ad0b562a6b13c8c358e0b92621339f20b24
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 8f8efb7f19480dd61493c9cc5cdc7ad0b562a6b13c8c358e0b92621339f20b24
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_supported_boundary
+  variable_id: policy_supported_boundary
+  path: data/fixtures/p04_policy/policy_supported_boundary.parquet
+  provenance:
+    variable: policy_supported_boundary
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 6d8386a23631894c24abe6a50b8f3a2064dae3e1f2e4c45d6fc68df9ee8803e7
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 6d8386a23631894c24abe6a50b8f3a2064dae3e1f2e4c45d6fc68df9ee8803e7
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_tolerance_boundary
+  variable_id: policy_tolerance_boundary
+  path: data/fixtures/p04_policy/policy_tolerance_boundary.parquet
+  provenance:
+    variable: policy_tolerance_boundary
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: e2e9c67c1020ad8ee5be33e0032a908d900fe010d8751fb9c529224f90e9b26c
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: e2e9c67c1020ad8ee5be33e0032a908d900fe010d8751fb9c529224f90e9b26c
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_repression
+  variable_id: policy_repression
+  path: data/fixtures/p04_policy/policy_repression.parquet
+  provenance:
+    variable: policy_repression
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 4a50844e473a0997c26851338dde5306487ede3ea57f1d6ba44eb218fe51f907
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 4a50844e473a0997c26851338dde5306487ede3ea57f1d6ba44eb218fe51f907
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly
+- artifact_id: p04_policy_information_investment
+  variable_id: policy_information_investment
+  path: data/fixtures/p04_policy/policy_information_investment.parquet
+  provenance:
+    variable: policy_information_investment
+    role: exogenous_forcing
+    source_institution: HSM Lab local fixture
+    dataset: P04 political/external/information structural fixtures
+    locator: fixture:p04-politics
+    retrieved_at: '2026-10-08T00:00:00Z'
+    raw_sha256: 1762ffc653e9548cf2e948802a7b9a205f22bfadd1ad5107f279d9cd7e27f905
+    original_frequency: quarterly
+    model_frequency: quarterly
+    transformation:
+      method: synthetic_generation
+      source_frequency: quarterly
+      result_frequency: quarterly
+      aggregation: null
+      description: Compiled Mode A domestic policy replay schedule; a declared instrument path, never
+        an observed outcome.
+    evidence_status: structural_assumption
+    rights:
+      license_status: verified
+      license_name: Locally generated synthetic fixture (no third-party rights)
+      terms_locator: fixture:p02-material
+      evidence_quote: generated locally by this repository; contains no third-party data
+      checked_at: '2026-10-07T00:00:00Z'
+      download_allowed: true
+      redistribution_allowed: true
+      notes: synthetic fixture rights block; no external dataset involved
+    notes: Domestic policy replay schedule (fixture). 1968Q1 enterprise_autonomy=0.7 is an engineering
+      structural assumption; only the 1968Q1 date is source-confirmed.
+    source_id: p04_fixture
+    source_period: null
+    raw_path: null
+    derived_from: []
+    artifact_sha256: 1762ffc653e9548cf2e948802a7b9a205f22bfadd1ad5107f279d9cd7e27f905
+  source_id: p04_fixture
+  allow_missing: false
+  role: exogenous_forcing
+  period:
+    start: 1957Q1
+    end: 1985Q4
+    frequency: quarterly

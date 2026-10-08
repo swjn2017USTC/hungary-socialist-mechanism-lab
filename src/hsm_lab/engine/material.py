@@ -151,7 +151,7 @@ from hsm_lab.storage.output import write_summary
 if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
     from hsm_lab.data.registry import DataRegistry
 
-MATERIAL_ENGINE_VERSION = "material-engine-v2"
+MATERIAL_ENGINE_VERSION = "material-engine-v3"
 MATERIAL_RUN_KIND: Literal["intermediate8_household_simulation"] = (
     "intermediate8_household_simulation"
 )
@@ -471,6 +471,7 @@ def tick_material(
     network: MaterialNetwork,
     *,
     phase_times: dict[str, float] | None = None,
+    controls: Any = None,
 ) -> MaterialTickFlows:
     """Advance the material economy by one admitted quarter (plan section 3).
 
@@ -478,6 +479,11 @@ def tick_material(
     gate; this function advances every mutable array to the closing boundary
     but deliberately leaves ``completed_ticks`` untouched so a rejected
     quarter never enters the admitted record.
+
+    ``controls`` (a :class:`~hsm_lab.engine.policy.TickControls`, optional)
+    carries the runtime household parameters/catalog and the central-vs-local
+    planning mix; ``None`` reproduces the P02/P03 behaviour exactly (the
+    runtime catalog/parameters then come from ``network``).
     """
     mark = time.perf_counter()
 
@@ -535,8 +541,10 @@ def tick_material(
         cell_count,
     )
 
-    household_parameters = network.household_parameters
-    catalog = network.household_catalog
+    household_parameters = (
+        controls.household_parameters if controls is not None else network.household_parameters
+    )
+    catalog = controls.household_catalog if controls is not None else network.household_catalog
 
     # ---------------- opening boundary (frozen) --------------------------
     stock_open = np.asarray(state.stock_value, dtype=np.float64).copy()
@@ -645,10 +653,20 @@ def tick_material(
         labor_cap[plot_rows] = np.asarray(state.plot_labor_budget, dtype=np.float64)[
             plot_regions
         ] / float(plot_recipe.plot_labor_per_activity)
-    target = np.maximum(
+    local_target = np.maximum(
         np.minimum(float(parameters.utilization) * capacity * season, labor_cap),
         0.0,
     )
+    if controls is not None and getattr(controls, "central_target", None) is not None:
+        autonomy = float(np.clip(controls.autonomy, 0.0, 1.0))
+        central = np.asarray(controls.central_target, dtype=np.float64)
+        if central.shape != local_target.shape:
+            raise ValueError("central planning target shape does not match the activity axis")
+        target = np.maximum((1.0 - autonomy) * central + autonomy * local_target, 0.0)
+        ceiling = np.maximum(np.minimum(capacity * season, labor_cap), 0.0)
+        target = np.minimum(target, ceiling)
+    else:
+        target = local_target
     flows.activity_target = target.copy()
     org_activity = np.asarray(state.organization_activity, dtype=np.int64)
     with_activity = org_activity >= 0

@@ -38,7 +38,7 @@ from hsm_lab.contract.schemas import ResearchGateError, ScenarioSpec
 if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
     from hsm_lab.engine.network import MaterialNetwork
 
-MATERIAL_STATE_VERSION = "material-state-v2"
+MATERIAL_STATE_VERSION = "material-state-v3"
 
 POOL_CODES: dict[str, int] = {
     "input": 0,
@@ -403,6 +403,12 @@ class MaterialHistory:
     department_rows: list[dict[str, object]] = field(default_factory=list)
     diagnostic_rows: list[dict[str, object]] = field(default_factory=list)
     event_rows: list[dict[str, object]] = field(default_factory=list)
+    # --- P04 political layer (typed empty when politics is disabled) -------
+    political_quarter_rows: list[dict[str, object]] = field(default_factory=list)
+    opposition_rows: list[dict[str, object]] = field(default_factory=list)
+    information_rows: list[dict[str, object]] = field(default_factory=list)
+    policy_decision_rows: list[dict[str, object]] = field(default_factory=list)
+    political_event_rows: list[dict[str, object]] = field(default_factory=list)
     digest_chain: str = ""
 
 
@@ -713,9 +719,7 @@ def initialize_material(
     base = np.asarray(household_parameters.demand.base_per_equivalent_person, dtype=np.float64)
     consumption_reference = base[None, :] * equivalence[:, None]
     last_price_index = np.ones(household_count, dtype=np.float64)
-    initial_service_value = consumption_reference @ np.asarray(
-        catalog.price_h, dtype=np.float64
-    )
+    initial_service_value = consumption_reference @ np.asarray(catalog.price_h, dtype=np.float64)
     compliance = np.full(
         household_count, household_parameters.welfare.compliance_baseline, dtype=np.float64
     )

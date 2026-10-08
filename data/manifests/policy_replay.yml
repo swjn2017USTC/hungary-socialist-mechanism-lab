@@ -1,0 +1,47 @@
+schema_version: '1'
+# Mode A domestic-policy replay registry.  This is a *declared policy
+# instrument path*, never an observed outcome and never external forcing.
+replay:
+  input_channel: domestic_policy_replay
+  initial_policy:
+    plan_utilization: 0.9
+    enterprise_autonomy: 0.1
+    investment_intensity: 1.0
+    industrial_priority: 0.0
+    admin_price_factor: 1.0
+    wage_factor: 1.0
+    credit_fraction: 0.5
+    budget_hardness: 0.0
+    housing_factor: 1.0
+    borrowing_factor: 1.0
+    consumer_import_factor: 1.0
+    second_economy_tolerance: 1.0
+    welfare_provision: 0.5
+    private_autonomy: 0.5
+    cultural_openness: 0.5
+    supported_boundary: 0.3
+    tolerance_boundary: 0.7
+    repression: 0.3
+    information_investment: 0.0
+  records:
+    - record_id: nem_1968q1
+      effective_quarter: 1968Q1
+      patch:
+        enterprise_autonomy: 0.7
+      date_precision: reconstructed_quarter
+      date_evidence:
+        - "World Bank NEM implementation date 1968-01-01 (Balassa, The Hungarian economic reform 1968-1981; read metadata only)"
+      magnitude_evidence_status: structural_assumption
+      notes: >-
+        The 1968Q1 NEM start date is source-confirmed; the magnitude
+        enterprise_autonomy=0.7 is a declared engineering structural
+        assumption, not an observed policy intensity.  Coverage is explicitly
+        partial: only one change-point is registered, so the remaining
+        coordinates simply carry the declared initial vector forward.  No
+        observed wage/debt/investment series is back-filled into policy.
+  coverage_note: >-
+    Partial domestic policy coverage: exactly one source-confirmed date
+    (1968Q1 enterprise autonomy), all other coordinates piecewise-constant
+    from the declared initial vector.  This registry does not claim to cover
+    the full domestic policy history of 1957-1985.
+  schedule_sha256: null

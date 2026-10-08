@@ -1,0 +1,15 @@
+{
+  "bounds": {
+    "lower": -2.0,
+    "upper": 2.0
+  },
+  "calibration_status": "not_calibrated",
+  "literature_refs": [
+    "structural engineering fixture: P04 culture parameters"
+  ],
+  "prior_description": "Selected engineering values and per-scalar bounds for the P04 culture parameter block; every value is a declared structural assumption with no calibration against observed Hungarian series.",
+  "schema_version": "1",
+  "sensitivity_status": "not_assessed",
+  "uncertainty_notes": "not_calibrated / not_assessed. Declared envelope [-2.0, 2.0]; selected_value_flat={\"p04.culture.exposure_alpha\": 0.1, \"p04.culture.identification_alpha\": 0.1, \"p04.culture.initial_exposure\": 0.05, \"p04.culture.initial_ideology\": 0.5, \"p04.culture.official_loading\": 0.1, \"p04.culture.prohibited_multiplier\": 0.0, \"p04.culture.supported_multiplier\": 1.0, \"p04.culture.tolerated_multiplier\": 0.5, \"p04.culture.western_loading\": 0.1}; scalar_bounds={\"p04.culture.exposure_alpha\": [0.0, 2.0], \"p04.culture.identification_alpha\": [0.0, 2.0], \"p04.culture.initial_exposure\": [0.0, 2.0], \"p04.culture.initial_ideology\": [0.0, 2.0], \"p04.culture.official_loading\": [-2.0, 2.0], \"p04.culture.prohibited_multiplier\": [0.0, 2.0], \"p04.culture.supported_multiplier\": [0.0, 2.0], \"p04.culture.tolerated_multiplier\": [0.0, 2.0], \"p04.culture.western_loading\": [-2.0, 2.0]}",
+  "variable_id": "p04_culture_parameters"
+}

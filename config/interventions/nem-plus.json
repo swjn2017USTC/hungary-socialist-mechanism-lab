@@ -1,0 +1,11 @@
+[
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "nem-plus",
+    "operation": "set",
+    "provenance": "institutional experiment: harden the budget on top of the replayed NEM autonomy",
+    "target": "policy.budget_hardness",
+    "until_quarter": null,
+    "value": 0.8
+  }
+]
