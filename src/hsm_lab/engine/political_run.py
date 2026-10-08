@@ -334,26 +334,894 @@ def _policy_error(
     return error, prediction
 
 
-def _update_policy_error(
+# ---------------------------------------------------------------------------
+# Session: stepwise admission (drivable by the native loop or SocioVerse2)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class DecisionOutcome:
+    """A computed-but-uncommitted quarter decision (no state was written)."""
+
+    policy: PolicyVector
+    transition: CoalitionTransition
+    decision: PolicyDecision
+    prediction: np.ndarray
+    objective: np.ndarray
+    policy_error: float
+    capability: float
+    information: InformationState
+    weights_before: np.ndarray
+    policy_source: str
+    soviet_bound: bool
+    soviet_violation: float
+    publication_source: int
+
+
+@dataclass(frozen=True)
+class QuarterPrep:
+    """The exogenous part of one quarter (external slice, events, broadcasts)."""
+
+    tick: int
+    quarter: Quarter
+    external: ExternalWorldSlice
+    delivery_rows: list[dict[str, Any]]
+    county_signals: np.ndarray
+    government: dict[str, float]
+    signals: np.ndarray
+    soviet_constraint: float
+    multiplier: float
+    ttl: np.ndarray
+    cf_government: float
+
+
+class PoliticalSession:
+    """One admitted quarter at a time; the single owner of P04 admission.
+
+    ``open()`` performs preflight, restore/fork and initialization exactly once;
+    ``admit_quarter()`` advances exactly one quarter (external slice → signals →
+    decision → material kernel → culture/opposition/observation → gates → tables
+    → checkpoint); ``finish()`` writes the tables, summary and manifest.  The
+    native runner and the SocioVerse2 orchestration both drive this object, so
+    there is exactly one admission path.
+    """
+
+    def __init__(
+        self,
+        runtime: PoliticalRuntime,
+        output_dir: Path,
+        registry: Any,
+        until: Quarter | str | None,
+        checkpoint_every: int,
+        resume_from: Path | None,
+        fork_from: ForkOrigin | None,
+    ) -> None:
+        self.runtime = runtime
+        self.output_dir = Path(output_dir)
+        self.registry = registry
+        self.until = until
+        self.checkpoint_every = int(checkpoint_every)
+        self.resume_from = resume_from
+        self.fork_from = fork_from
+
+        self.spec = runtime.spec
+        self.contract = runtime.contract
+        self.politics = runtime.politics
+        self.pack = runtime.pack
+        self.forcing = runtime.forcing
+        self.logical_mode: PoliticalMode = runtime.base_mode
+        self.opened = False
+        self.finished = False
+        if self.checkpoint_every < 0:
+            raise ConfigError("checkpoint_every must be non-negative")
+
+    # -- lifecycle ---------------------------------------------------------
+    def open(self) -> PoliticalSession:
+        from hsm_lab.contract.guards import BASELINE_FILENAME, verify_baseline
+        from hsm_lab.storage.checkpoint import load_material_checkpoint
+
+        spec = self.spec
+        registry = self.registry
+        root = registry.root
+        if self.output_dir.exists() or self.output_dir.is_symlink():
+            raise ResearchGateError(
+                f"output directory {self.output_dir} already exists; refusing to "
+                "overwrite any previous run"
+            )
+        self.baseline_hash = verify_baseline(root / BASELINE_FILENAME, self.contract)
+        self.lock_hash = compute_lock_hash(root)
+        self.parameter_vector = {
+            **material_parameter_vector(spec),
+            **self.politics.parameters.flatten(),
+        }
+        self.parameter_hash = compute_parameter_hash(self.parameter_vector)
+        self.initial_recipe_hash = material_recipe_hash(spec)
+
+        self.until_quarter = (
+            None
+            if self.until is None
+            else (Quarter.parse(self.until) if isinstance(self.until, str) else self.until)
+        )
+
+        # --- initial condition draw / restore -----------------------------
+        self.parent_run_id: str | None = None
+        self.restored_metadata: dict[str, Any] = {}
+        self.restore_source = (
+            self.resume_from
+            if self.resume_from is not None
+            else (None if self.fork_from is None else self.fork_from.checkpoint)
+        )
+        self.network = build_material_network(
+            spec, self.contract, build_material_initial_conditions(spec, RngRegistry(spec.seed))
+        )
+        self.axes = resolve_political_axes(
+            households=spec.households,
+            regions=len(spec.region_ids),
+            organizations=int(spec.organizations or 0),
+            commodities=len(spec.commodities),
+            interventions=len(self.runtime.interventions),
+        )
+        if self.restore_source is not None:
+            metadata_path = self.restore_source / "metadata.json"
+            if not metadata_path.is_file():
+                raise ResearchGateError(f"checkpoint metadata not found: {metadata_path}")
+            boundary_meta = json.loads(metadata_path.read_text(encoding="utf-8"))
+            boundary = int(boundary_meta["completed_ticks"])
+            state, history, rng, restored = load_material_checkpoint(
+                self.restore_source,
+                spec,
+                self.contract,
+                self.network,
+                extra_rng_modules=({MEASUREMENT_MODULE: boundary * F} if spec.stochastic else {}),
+            )
+            if "political" not in restored:
+                raise ResearchGateError(
+                    "checkpoint carries no political payload; it was not written by a P04 run"
+                )
+            political = state_from_political_arrays(
+                {name: np.asarray(value) for name, value in restored["political"].items()},
+                self.axes,
+            )
+            if political.intervention_ttl.shape[0] != len(self.runtime.interventions):
+                political.intervention_ttl = np.zeros(
+                    len(self.runtime.interventions), dtype=np.int64
+                )
+            self.rng, self.state, self.political, self.history = rng, state, political, history
+            self.restored_metadata = restored
+            self.resume_boundary = boundary
+            self.parent_run_id = str(restored.get("source_run_id") or "")
+        else:
+            self.rng = RngRegistry(spec.seed)
+            initial = build_material_initial_conditions(spec, self.rng)
+            self.network = build_material_network(spec, self.contract, initial)
+            self.state = initialize_material(spec, initial, self.network)
+            self.political = _initial_state(
+                spec,
+                self.politics,
+                self.state,
+                self.network,
+                self.axes,
+                len(self.runtime.interventions),
+            )
+            self.history = MaterialHistory()
+            self.history.digest_chain = _initial_chain(
+                spec=spec,
+                baseline_hash=self.baseline_hash,
+                lock_hash=self.lock_hash,
+                parameter_hash=self.parameter_hash,
+                initial_recipe_hash=self.initial_recipe_hash,
+                input_artifact_hashes=dict(self.forcing.input_artifact_hashes),
+                initial_state=self.state,
+                political=self.political,
+            )
+            self.resume_boundary = 0
+
+        # Observation references are the initial report normalization carried in
+        # the political state (checkpointed; never updated from future outcomes).
+        normalization = np.asarray(self.political.report_normalization, dtype=np.float64)
+        parameters = self.politics.parameters
+        parameters = parameters.model_copy(
+            update={
+                "observation": parameters.observation.model_copy(
+                    update={
+                        "need_reference": float(max(normalization[0], 1e-12)),
+                        "inventory_reference": float(max(normalization[1], 1e-12)),
+                        "capacity_reference": float(max(normalization[2], 1e-12)),
+                    }
+                )
+            }
+        )
+        self.politics = self.politics.model_copy(update={"parameters": parameters})
+        self.runtime.politics = self.politics
+
+        if self.until_quarter is not None:
+            end = spec.start.advance(spec.ticks - 1)
+            if not (
+                spec.start.advance(self.resume_boundary).to_ordinal()
+                <= self.until_quarter.to_ordinal()
+                <= end.to_ordinal()
+            ):
+                raise ConfigError(f"--until {self.until_quarter} lies outside the remaining window")
+            self.target_ticks = self.until_quarter.to_ordinal() - spec.start.to_ordinal() + 1
+        else:
+            self.target_ticks = spec.ticks
+
+        self.logical_mode = (
+            PoliticalMode.COUNTERFACTUAL
+            if (self.runtime.branch is not None or self.runtime.resuming_counterfactual)
+            else self.runtime.base_mode
+        )
+        self.runtime.logical_mode = self.logical_mode
+
+        self.run_id = uuid4().hex
+        running = manifest_preamble(
+            run_id=self.run_id,
+            spec=spec,
+            contract=self.contract,
+            root=root,
+            baseline_hash=self.baseline_hash,
+            run_kind=MATERIAL_RUN_KIND,
+            parameter_vector=self.parameter_vector,
+            input_artifact_hashes=dict(self.forcing.input_artifact_hashes)
+            | dict(pack_hashes(self.pack)),
+            initial_recipe_hash=self.initial_recipe_hash,
+            engine_version=POLITICAL_ENGINE_VERSION_FULL,
+            parent_run_id=self.parent_run_id or None,
+            resumed_from_checkpoint=str(self.restore_source) if self.restore_source else None,
+        )
+        self.manifest = running.model_copy(
+            update={"run_kind": POLITICAL_RUN_KIND, "political_mode": self.logical_mode}
+        )
+        self.output_dir.mkdir(parents=True)
+        write_manifest_atomic(self.output_dir, self.manifest)
+
+        self._derive_runtime_indices()
+        self.tallies: dict[str, Any] = {
+            "max_material_abs_residual": 0.0,
+            "max_material_tolerance_ratio": 0.0,
+            "max_finance_abs_residual": 0.0,
+            "max_finance_tolerance_ratio": 0.0,
+            "soviet_violations": 0,
+            "delivered_broadcasts": 0,
+        }
+        self.checkpoint_paths: list[str] = []
+        self.saved_boundaries: set[int] = set()
+        self.admitted_ticks = int(self.state.completed_ticks)
+        self.program_state = _ProgramState(self.runtime.program, self.resume_boundary)
+        self.cf_state = _InterventionState(self.runtime.interventions, self.spec.start.to_ordinal())
+        self.run_started = time.perf_counter()
+        self.last_outcome: DecisionOutcome | None = None
+        self.last_quarter: str | None = None
+        self.opened = True
+        return self
+
+    def _derive_runtime_indices(self) -> None:
+        spec = self.spec
+        state = self.state
+        network = self.network
+        self.runtime_network = dataclasses.replace(network)
+        self.index = _tick_index(network)
+        self.cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
+        self.hh_region = np.asarray(state.household_region, dtype=np.int64)
+        self.hh_weight = np.asarray(state.household_weight, dtype=np.float64)
+        self.region_count = len(spec.region_ids)
+        self.org_count = int(state.organization_id.shape[0])
+        self.g_count = len(network.commodity_ids)
+        education = np.asarray(state.household_education, dtype=np.int64)
+        sector = np.asarray(state.household_sector, dtype=np.int64)
+        intellectual_density = _county_mean(
+            (education == 2).astype(np.float64), self.hh_weight, self.hh_region, self.region_count
+        )
+        worker_density = _county_mean(
+            (sector == 0).astype(np.float64), self.hh_weight, self.hh_region, self.region_count
+        )
+        self.formation_inputs = np.stack([intellectual_density, worker_density], axis=1)
+        self.county_contact = np.asarray(state.household_western_exposure, dtype=np.float64).copy()
+
+    # -- read-only views ---------------------------------------------------
+    @property
+    def region_ids(self) -> list[str]:
+        return list(self.spec.region_ids)
+
+    @property
+    def completed_ticks(self) -> int:
+        return int(self.state.completed_ticks)
+
+    @property
+    def done(self) -> bool:
+        return self.completed_ticks >= self.target_ticks
+
+    @property
+    def remaining_ticks(self) -> int:
+        return max(0, self.target_ticks - self.completed_ticks)
+
+    @property
+    def start_tick(self) -> int:
+        return int(self.state.completed_ticks) if self.opened else 0
+
+    def quarter_of(self, tick: int) -> str:
+        return str(self.spec.start.advance(tick))
+
+    def published_view(self) -> dict[str, float]:
+        """Lagged published state the decision layer may legitimately see."""
+        lag = _total_lag(self.political, self.politics.parameters)
+        published, valid, source = select_published(self.political, self.completed_ticks, lag)
+        return {
+            "source_tick": float(source),
+            **{
+                feature: float(published[index]) if bool(valid[index]) else float("nan")
+                for index, feature in enumerate(POLITICAL_FEATURE_IDS)
+            },
+        }
+
+    def audit_state(self) -> dict[str, Any]:
+        """Real closing aggregates for panel/metrics only (never for decisions)."""
+        return {
+            "completed_ticks": self.completed_ticks,
+            "quarter": self.quarter_of(self.completed_ticks - 1) if self.completed_ticks else None,
+            "logical_mode": str(self.logical_mode),
+            "information_capability": float(self.political.information_capability[0]),
+            "elite_cohesion": float(self.political.elite_cohesion[0]),
+            "coalition_weights": [
+                float(value) for value in np.asarray(self.political.coalition_weights)
+            ],
+            "policy": {
+                name: float(value)
+                for name, value in zip(
+                    POLICY_COORDINATES, np.asarray(self.political.policy), strict=True
+                )
+            },
+            "opposition_capacity": [
+                float(value) for value in _region_capacity(np.asarray(self.political.opposition))
+            ],
+            "max_material_tolerance_ratio": float(self.tallies["max_material_tolerance_ratio"]),
+            "max_finance_tolerance_ratio": float(self.tallies["max_finance_tolerance_ratio"]),
+        }
+
+    def region_state(self, region_id: str) -> dict[str, Any]:
+        index = self.spec.region_ids.index(region_id)
+        opposition = np.asarray(self.political.opposition, dtype=np.float64)
+        return {
+            "region_id": region_id,
+            "capacity": float(_region_capacity(opposition)[index]),
+            "perceived_efficacy": float(
+                opposition[index, OPPOSITION_AXIS_IDS.index("perceived_efficacy")]
+            ),
+            "repression_exposure": float(
+                opposition[index, OPPOSITION_AXIS_IDS.index("repression_exposure")]
+            ),
+        }
+
+    # -- one quarter -------------------------------------------------------
+    def _prepare(self, tick: int) -> QuarterPrep:
+        quarter = Quarter.parse(self.quarter_of(tick))
+        external = self.pack.slice(tick)
+        deliver_rows, county_signals, cf_government = _deliver_broadcasts(
+            tick=tick,
+            quarter=quarter,
+            runtime=self.runtime,
+            political=self.political,
+            state=self.state,
+            network=self.network,
+            program_state=self.program_state,
+            cf_state=self.cf_state,
+            region_count=self.region_count,
+            hh_region=self.hh_region,
+        )
+        signals = _advance_signals(
+            np.asarray(self.political.signals, dtype=np.float64),
+            self.runtime,
+            tick,
+            county_signals,
+            self.region_count,
+        )
+        government = _government_signals(signals, external, cf_government)
+        multiplier = self.cf_state.soviet_multiplier(tick)
+        if multiplier is None:
+            multiplier = 1.0
+        soviet_constraint = float(
+            np.clip(external.get("soviet_constraint", 0.0) * float(multiplier), 0.0, 1.0)
+        )
+        return QuarterPrep(
+            tick=tick,
+            quarter=quarter,
+            external=external,
+            delivery_rows=deliver_rows,
+            county_signals=county_signals,
+            government=government,
+            signals=signals,
+            soviet_constraint=soviet_constraint,
+            multiplier=float(multiplier),
+            ttl=_remaining_ttl(self.cf_state, tick),
+            cf_government=float(cf_government),
+        )
+
+    def propose_decision(self) -> DecisionOutcome:
+        """Compute the next quarter's decision without committing anything."""
+        if not self.opened:
+            raise ConfigError("session is not open")
+        if self.done:
+            raise ConfigError("no remaining quarter to decide")
+        tick = self.completed_ticks
+        prep = self._prepare(tick)
+        return _decide(
+            runtime=self.runtime,
+            political=self.political,
+            signals=prep.signals,
+            external=prep.external,
+            tick=tick,
+            quarter=prep.quarter,
+            cf_state=self.cf_state,
+            government=prep.government,
+            county_signals=prep.county_signals,
+            soviet_constraint=prep.soviet_constraint,
+        )
+
+    def admit_quarter(self, decision: PolicyDecision | None = None) -> dict[str, Any]:
+        """Advance exactly one quarter; returns a compact audit record.
+
+        ``decision`` may be supplied by an external orchestration layer (the
+        SocioVerse2 decision model); otherwise the session computes it with the
+        project's own rule.  Either way this method is the only place that
+        commits P04/material state for the quarter.
+        """
+        if not self.opened:
+            raise ConfigError("session is not open")
+        if self.done:
+            raise ConfigError("scenario already reached its target boundary")
+        tick = self.completed_ticks
+        prep = self._prepare(tick)
+        outcome = _decide(
+            runtime=self.runtime,
+            political=self.political,
+            signals=prep.signals,
+            external=prep.external,
+            tick=tick,
+            quarter=prep.quarter,
+            cf_state=self.cf_state,
+            government=prep.government,
+            county_signals=prep.county_signals,
+            soviet_constraint=prep.soviet_constraint,
+        )
+        if decision is not None:
+            outcome = dataclasses.replace(
+                outcome,
+                decision=decision,
+                policy=PolicyVector.from_vector(np.asarray(decision.selected_policy)),
+            )
+        return self._commit(prep, outcome)
+
+    def _commit(self, prep: QuarterPrep, outcome: DecisionOutcome) -> dict[str, Any]:
+        spec = self.spec
+        state = self.state
+        political = self.political
+        parameters = self.politics.parameters
+        tick = prep.tick
+        quarter = prep.quarter
+        opening = capture_material_stocks(state)
+
+        # --- commit the quarter's political transition --------------------
+        political.signals = prep.signals
+        political.soviet_constraint_multiplier = np.array([prep.multiplier], dtype=np.float64)
+        if political.intervention_ttl.shape[0] == prep.ttl.shape[0]:
+            political.intervention_ttl = prep.ttl
+        political.publication_cursor = np.array(
+            [max(int(political.publication_cursor[0]), int(outcome.publication_source))],
+            dtype=np.int64,
+        )
+        political.coalition_weights = outcome.transition.new_weights
+        political.policy = outcome.policy.to_vector()
+        slot = tick % POLITICAL_RING_LENGTH
+        political.prediction_history[slot] = outcome.prediction
+        political.objective_history[slot] = outcome.objective
+        political.policy_error = np.array([outcome.policy_error], dtype=np.float64)
+        self.last_outcome = outcome
+        self.last_quarter = str(quarter)
+
+        info_state_before = InformationState(
+            capability=outcome.capability,
+            dimensions=np.asarray(political.information_dimensions, dtype=np.float64),
+            total_lag=_total_lag(political, parameters),
+        )
+        effective = compile_effective_policy(
+            spec.material_parameters,  # type: ignore[arg-type]
+            spec.household_parameters,  # type: ignore[arg-type]
+            outcome.policy,
+            prep.external,
+            tuple(self.network.commodity_ids),
+        )
+        object.__setattr__(
+            self.runtime_network, "household_parameters", effective.household_parameters
+        )
+        object.__setattr__(self.runtime_network, "household_catalog", effective.household_catalog)
+        central = _central_target(
+            political=political,
+            network=self.network,
+            plan_utilization=float(outcome.policy.plan_utilization),
+            tick=tick,
+        )
+        controls = TickControls(
+            material_parameters=effective.material_parameters,
+            household_parameters=effective.household_parameters,
+            household_catalog=effective.household_catalog,
+            autonomy=float(outcome.policy.enterprise_autonomy),
+            central_target=central,
+            policy=outcome.policy,
+        )
+
+        # --- material kernel (the only producer of realized quantities) ----
+        flows = tick_material(
+            state,
+            self.forcing,
+            effective.material_parameters,
+            self.runtime_network,
+            controls=controls,
+        )
+        if flows.tick != tick:
+            raise ResearchGateError("material tick does not describe the expected quarter")
+
+        # --- closing: culture, opposition, action --------------------------
+        household_signals = prep.county_signals[self.hh_region]
+        western_visible = household_signals[:, _SIGNAL["western_comparison"]]
+        identification, exposure, efficacy = update_household_culture(
+            np.asarray(political.household_identification, dtype=np.float64),
+            np.asarray(political.household_exposure, dtype=np.float64),
+            np.asarray(political.household_efficacy, dtype=np.float64),
+            official_signal_visible=float(
+                np.mean(prep.county_signals[:, _SIGNAL["official_policy"]])
+            ),
+            western_signal_visible=western_visible,
+            region_exposure_target=np.zeros(self.region_count, dtype=np.float64),
+            region_efficacy=np.asarray(
+                political.opposition[:, OPPOSITION_AXIS_IDS.index("perceived_efficacy")]
+            ),
+            household_region=self.hh_region,
+            exposure_contact=self.county_contact,
+            parameters=parameters.culture,
+            openness=float(outcome.policy.cultural_openness),
+        )
+        political.household_identification = identification
+        political.household_exposure = exposure
+        political.household_efficacy = efficacy
+
+        opposition = update_region_capacity(
+            np.asarray(political.opposition, dtype=np.float64),
+            self.formation_inputs,
+            outcome.policy,
+            prep.county_signals,
+            prep.external,
+            parameters.opposition,
+        )
+        political.opposition = opposition
+        risk_signal = np.clip(
+            np.asarray(prep.county_signals[:, _SIGNAL["public_action_risk"]], dtype=np.float64),
+            0.0,
+            1.0,
+        )
+        political.household_action = action_propensity(
+            np.asarray(state.household_grievance, dtype=np.float64),
+            self.hh_region,
+            np.asarray(political.household_exposure, dtype=np.float64),
+            np.asarray(political.household_efficacy, dtype=np.float64),
+            opposition,
+            outcome.policy,
+            risk_signal,
+            parameters.opposition,
+            self.region_count,
+        )
+
+        new_info = advance_information_capacity(
+            info_state_before, outcome.policy, prep.external, parameters.information
+        )
+        capability_override = self.cf_state.capability_override(tick)
+        if capability_override:
+            new_info = information_state(capability_override, parameters.information)
+        political.information_capability = np.array([new_info.capability], dtype=np.float64)
+        political.information_dimensions = np.asarray(new_info.dimensions, dtype=np.float64)
+
+        truth = _closing_truth(
+            state=state,
+            political=political,
+            flows=flows,
+            external=prep.external,
+            index=self.index,
+            cell_commodity=self.cell_commodity,
+            g_count=self.g_count,
+            debt_reference=parameters.external_recipe.debt_reference,
+            capability=new_info.capability,
+            tick=tick,
+            soviet_constraint=prep.soviet_constraint,
+        )
+        _commit_report_ring(
+            political=political,
+            runtime=self.runtime,
+            state=state,
+            network=self.network,
+            flows=flows,
+            truth=truth,
+            info_state=new_info,
+            tick=tick,
+            quarter=quarter,
+            rng=self.rng,
+            stochastic=spec.stochastic,
+            index=self.index,
+            cell_commodity=self.cell_commodity,
+            org_count=self.org_count,
+            g_count=self.g_count,
+        )
+        political.elite_cohesion = np.array(
+            [
+                _update_cohesion(
+                    political=political,
+                    parameters=parameters.broker,
+                    policy=outcome.policy,
+                )
+            ],
+            dtype=np.float64,
+        )
+
+        # --- gates ---------------------------------------------------------
+        invariant_summary = check_material_invariants(
+            opening,
+            state,
+            flows,
+            effective.material_parameters,
+            self.runtime_network,
+            controls=controls,
+        )
+        residual, tolerance = _material_residuals(opening, state, flows, self.runtime_network)
+        flows.material_balance_residual = residual
+        flows.material_balance_tolerance = tolerance
+        finance_residual, finance_tolerance = finance_balance_residuals(state, flows)
+        flows.finance_balance_residual = finance_residual
+        flows.finance_balance_tolerance = finance_tolerance
+        self.tallies["max_material_abs_residual"] = max(
+            self.tallies["max_material_abs_residual"],
+            float(invariant_summary.max_material_abs_residual),
+        )
+        self.tallies["max_material_tolerance_ratio"] = max(
+            self.tallies["max_material_tolerance_ratio"],
+            float(invariant_summary.max_material_tolerance_ratio),
+        )
+        self.tallies["max_finance_abs_residual"] = max(
+            self.tallies["max_finance_abs_residual"],
+            float(invariant_summary.max_finance_abs_residual),
+        )
+        self.tallies["max_finance_tolerance_ratio"] = max(
+            self.tallies["max_finance_tolerance_ratio"],
+            float(invariant_summary.max_finance_tolerance_ratio),
+        )
+        self.tallies["soviet_violations"] += int(outcome.soviet_violation > 0.0)
+        self.tallies["delivered_broadcasts"] += sum(
+            1 for row in prep.delivery_rows if row["delivery"] == "delivered"
+        )
+
+        # --- commit the boundary -------------------------------------------
+        state.completed_ticks += 1
+        self.history.digest_chain = _advance_chain(
+            previous=self.history.digest_chain,
+            state=state,
+            flows=flows,
+            political=political,
+            deliveries=prep.delivery_rows,
+        )
+        self.admitted_ticks = state.completed_ticks
+        invariant_dict: dict[str, Any] = {
+            "max_material_abs_residual": float(invariant_summary.max_material_abs_residual),
+            "max_material_tolerance_ratio": float(invariant_summary.max_material_tolerance_ratio),
+            "max_finance_abs_residual": float(invariant_summary.max_finance_abs_residual),
+            "max_finance_tolerance_ratio": float(invariant_summary.max_finance_tolerance_ratio),
+            "checked_cells": int(invariant_summary.checked_cells),
+            "per_ledger": dict(invariant_summary.per_ledger),
+            "forcing_segment": str(self.forcing.segment[tick]),
+            "treasury_deposit_open": float(opening.treasury_deposit),
+            "bank_reserves_open": [float(v) for v in opening.bank_reserves],
+            "housing_completed": float(
+                np.sum(np.asarray(state.dwelling_stock) - opening.dwelling_stock)
+            ),
+            "material_balance_residual": [float(v) for v in residual],
+            "material_balance_tolerance": [float(v) for v in tolerance],
+        }
+        append_material_rows(
+            self.history,
+            state,
+            flows,
+            effective.material_parameters,
+            self.runtime_network,
+            region_ids=list(spec.region_ids),
+            commodity_ids=list(spec.commodities),
+            digest=self.history.digest_chain,
+            invariant_summary=invariant_dict,
+            opening_stock=opening.stock_value,
+        )
+        _append_political_rows(
+            history=self.history,
+            runtime=self.runtime,
+            political=political,
+            state=state,
+            flows=flows,
+            decision=outcome.decision,
+            coalition_transition=outcome.transition,
+            county_signals=prep.county_signals,
+            external=prep.external,
+            tick=tick,
+            quarter=quarter,
+            deliverables=prep.delivery_rows,
+            region_ids=list(spec.region_ids),
+            governance=prep.government,
+            info_state=new_info,
+            soviet_constraint=prep.soviet_constraint,
+        )
+        self._maybe_checkpoint(state.completed_ticks)
+        return {
+            "tick": tick,
+            "quarter": str(quarter),
+            "policy_source": outcome.policy_source,
+            "coalition_weights": [float(v) for v in outcome.transition.new_weights],
+            "policy": [float(v) for v in outcome.policy.to_vector()],
+            "information_capability": float(new_info.capability),
+            "delivered_broadcasts": sum(
+                1 for row in prep.delivery_rows if row["delivery"] == "delivered"
+            ),
+        }
+
+    def _maybe_checkpoint(self, boundary: int) -> None:
+        from hsm_lab.storage.checkpoint import checkpoint_dir, save_material_checkpoint
+
+        paused_here = boundary == self.target_ticks and self.target_ticks < self.spec.ticks
+        due = (
+            (self.checkpoint_every > 0 and boundary % self.checkpoint_every == 0)
+            or paused_here
+            or (self.checkpoint_every > 0 and boundary == self.spec.ticks)
+        )
+        if not due or boundary in self.saved_boundaries:
+            return
+        path = save_material_checkpoint(
+            checkpoint_dir(self.output_dir, boundary),
+            self.state,
+            self.network,
+            self.history,
+            self.rng,
+            {
+                "scenario": self.spec.model_dump(mode="json"),
+                "scenario_hash": compute_scenario_hash(self.spec),
+                "baseline_hash": self.baseline_hash,
+                "lock_hash": self.lock_hash,
+                "parameter_hash": self.parameter_hash,
+                "initial_recipe_hash": self.initial_recipe_hash,
+                "engine_version": POLITICAL_ENGINE_VERSION_FULL,
+                "state_version": MATERIAL_STATE_VERSION,
+                "political_state_version": POLITICAL_STATE_VERSION,
+                "political_mode": str(self.logical_mode),
+                "input_artifact_hashes": dict(self.forcing.input_artifact_hashes),
+                "region_ids": list(self.spec.region_ids),
+                "commodity_ids": list(self.spec.commodities),
+                "last_completed_quarter": str(self.spec.start.advance(boundary - 1)),
+                "next_quarter": str(self.spec.start.advance(boundary)),
+                "source_run_id": self.run_id,
+                "branch": None
+                if self.runtime.branch is None
+                else self.runtime.branch.model_dump(mode="json"),
+            },
+            political_arrays=political_arrays(self.political, self.axes),
+        )
+        self.saved_boundaries.add(boundary)
+        self.checkpoint_paths.append(str(path.relative_to(self.output_dir)))
+
+    # -- finalization ------------------------------------------------------
+    def finish(self) -> RunManifest:
+        if self.finished:
+            raise ResearchGateError("session already finished")
+        spec = self.spec
+        frames = history_frames(self.history)
+        write_material_tables(self.output_dir, frames)
+        summary = _build_summary(
+            runtime=self.runtime,
+            run_id=self.run_id,
+            spec=spec,
+            state=self.state,
+            political=self.political,
+            history=self.history,
+            frames=frames,
+            rng=self.rng,
+            parameter_hash=self.parameter_hash,
+            initial_recipe_hash=self.initial_recipe_hash,
+            checkpoint_paths=self.checkpoint_paths,
+            tallies=self.tallies,
+            logical_mode=self.logical_mode,
+            performance={"total_wall_s": time.perf_counter() - self.run_started},
+        )
+        write_summary(summary, self.output_dir)
+        parameters_declaration = spec.material_parameters
+        assert parameters_declaration is not None
+        (self.output_dir / "parameters.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "1",
+                    "scenario_id": spec.scenario_id,
+                    "parameter_hash": self.parameter_hash,
+                    "declaration": parameters_declaration.model_dump(mode="json"),
+                    "political_parameters": self.politics.parameters.model_dump(mode="json"),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        hashes = hash_output_tree(self.output_dir)
+        boundary = self.state.completed_ticks
+        status: Literal["completed", "paused"] = "completed" if boundary == spec.ticks else "paused"
+        final = finalize_manifest(
+            self.manifest,
+            status=status,
+            output_hashes=hashes,
+            rng_draws_count=self.rng.draws_count(),
+            rng_draws_by_module=self.rng.draws_by_module(),
+            stochastic_modules_active=[
+                module for module, count in self.rng.draws_by_module().items() if count > 0
+            ],
+            deterministic_replay_digest=self.history.digest_chain,
+            completed_ticks=boundary,
+            last_completed_quarter=(str(spec.start.advance(boundary - 1)) if boundary else None),
+        )
+        write_manifest_atomic(self.output_dir, final)
+        self.finished = True
+        return final
+
+    def mark_failed(self, exc: BaseException) -> None:
+        """Record a failed run; never silently downgrade the evidence."""
+        if self.finished:
+            return
+        draws_by_module = self.rng.draws_by_module() if self.rng is not None else {}
+        boundary = self.admitted_ticks
+        failed = finalize_manifest(
+            self.manifest,
+            status="failed",
+            output_hashes={},
+            rng_draws_count=sum(draws_by_module.values()),
+            rng_draws_by_module=draws_by_module,
+            stochastic_modules_active=[
+                module for module, count in draws_by_module.items() if count > 0
+            ],
+            deterministic_replay_digest="",
+            failure_message=f"{type(exc).__name__}: {exc}",
+            completed_ticks=boundary,
+            last_completed_quarter=(
+                str(self.spec.start.advance(boundary - 1)) if boundary else None
+            ),
+        )
+        try:
+            write_manifest_atomic(self.output_dir, failed)
+        except OSError:  # pragma: no cover - evidence already lost
+            pass
+
+
+def open_political_session(
+    spec: ScenarioSpec,
+    output_dir: Path,
+    contract: ResearchContract,
+    registry: Any,
     *,
-    runtime: PoliticalRuntime,
-    political: PoliticalState,
-    previous_policy: PolicyVector,
-    objective: np.ndarray,
-    tick: int,
-) -> None:
-    """Write the prediction/objective rings and the current policy error."""
-    a_matrix = np.asarray(runtime.politics.parameters.broker.A, dtype=np.float64)
-    error, prediction = _policy_error(previous_policy, objective, a_matrix)
-    slot = int(tick) % POLITICAL_RING_LENGTH
-    political.prediction_history[slot] = prediction
-    political.objective_history[slot] = np.asarray(objective, dtype=np.float64)
-    political.policy_error = np.array([error], dtype=np.float64)
-
-
-# ---------------------------------------------------------------------------
-# Runner
-# ---------------------------------------------------------------------------
+    until: Quarter | str | None = None,
+    checkpoint_every: int = 0,
+    resume_from: Path | None = None,
+    fork_from: ForkOrigin | None = None,
+    interventions: list[InterventionSpec] | None = None,
+) -> PoliticalSession:
+    """Build the run context and open a session (preflight + restore/init)."""
+    runtime = _build_runtime(
+        spec,
+        contract,
+        registry,
+        until=until,
+        resume_from=resume_from,
+        fork_from=fork_from,
+        interventions=interventions,
+    )
+    return PoliticalSession(
+        runtime, output_dir, registry, until, checkpoint_every, resume_from, fork_from
+    ).open()
 
 
 def run_political(
@@ -369,39 +1237,56 @@ def run_political(
     interventions: list[InterventionSpec] | None = None,
 ) -> RunManifest:
     """Run (or resume/fork) a P04 politics-enabled scenario into a fresh dir."""
+    session = open_political_session(
+        spec,
+        output_dir,
+        contract,
+        registry,
+        until=until,
+        checkpoint_every=checkpoint_every,
+        resume_from=resume_from,
+        fork_from=fork_from,
+        interventions=interventions,
+    )
+    try:
+        while not session.done:
+            session.admit_quarter()
+        return session.finish()
+    except Exception as exc:  # noqa: BLE001 - record evidence, then re-raise
+        session.mark_failed(exc)
+        raise
 
+
+def _build_runtime(
+    spec: ScenarioSpec,
+    contract: ResearchContract,
+    registry: Any,
+    *,
+    until: Quarter | str | None,
+    resume_from: Path | None,
+    fork_from: ForkOrigin | None,
+    interventions: list[InterventionSpec] | None,
+) -> PoliticalRuntime:
+    """Assemble the immutable per-run context (external pack, events, schedule)."""
     if spec.kind != "material":
         raise ConfigError(f"run_political requires kind='material', got {spec.kind!r}")
     if spec.politics is None:
         raise ConfigError("run_political requires a politics block (use run_material otherwise)")
-    contract_check = contract
     root = registry.root
     from hsm_lab.contract.guards import BASELINE_FILENAME, verify_baseline
 
-    verify_baseline(root / BASELINE_FILENAME, contract_check)
-    spec.validate_for_run(contract_check)
-    if checkpoint_every < 0:
-        raise ConfigError("checkpoint_every must be non-negative")
-
-    if resume_from is not None:
-        # The boundary tick is read from the checkpoint metadata below.
-        pass
+    verify_baseline(root / BASELINE_FILENAME, contract)
+    spec.validate_for_run(contract)
 
     parent_scenario = spec if fork_from is None else fork_from.parent_scenario
-    effective_spec = spec
     politics = spec.politics
     assert isinstance(politics, PoliticalRunSpec)
 
-    # Resuming a counterfactual child must restore its branch context: the root
-    # base mode and every intervention already in force.  `run --resume` never
-    # appends interventions (a new divergence requires a new fork).
     resuming_counterfactual = False
     compiled_interventions: list[CompiledIntervention] = []
+    resume_base_mode: PoliticalMode | None = None
     if resume_from is not None:
-        from hsm_lab.storage.fork import (
-            inherited_interventions_of,
-            resolve_root_base_mode,
-        )
+        from hsm_lab.storage.fork import inherited_interventions_of, resolve_root_base_mode
 
         resume_metadata_path = Path(resume_from) / "metadata.json"
         if not resume_metadata_path.is_file():
@@ -413,17 +1298,13 @@ def run_political(
                 inherited_interventions_of(resume_metadata), spec.start.to_ordinal()
             )
             resuming_counterfactual = True
-            # The root base mode is authoritative over whatever the template
-            # scenario declares.
             resume_base_mode = resolve_root_base_mode(resume_metadata)
-        else:
-            resume_base_mode = None
-    else:
-        resume_base_mode = None
+
     from hsm_lab.engine.policy import default_initial_policy as _dip
 
-    resolved_parameters = resolve_political_parameters(politics.parameters, _dip(spec))
-    politics = politics.model_copy(update={"parameters": resolved_parameters})
+    politics = politics.model_copy(
+        update={"parameters": resolve_political_parameters(politics.parameters, _dip(spec))}
+    )
     if fork_from is not None:
         base_mode = fork_from.base_mode
         compiled_interventions = compile_interventions(
@@ -437,56 +1318,40 @@ def run_political(
         if interventions:
             compiled_interventions = compile_interventions(interventions, spec.start.to_ordinal())
 
-    forcing = load_material_forcing(effective_spec, registry)
-    parameter_vector = {
-        **material_parameter_vector(effective_spec),
-        **politics.parameters.flatten(),
-    }
+    forcing = load_material_forcing(spec, registry)
+    parameter_vector = {**material_parameter_vector(spec), **politics.parameters.flatten()}
     parameter_hash = compute_parameter_hash(parameter_vector)
-
     pack = load_external_pack(politics, registry)
     events = load_event_registry(root)
     program = load_information_program(root, pack.information_program_path or "")
+
     schedule: dict[str, list[float]] | None = None
-    if (
-        base_mode is PoliticalMode.HISTORICAL_REPLAY
-        and politics.mode is not PoliticalMode.COUNTERFACTUAL
-    ):
-        all_quarters = [str(spec.start.advance(k)) for k in range(spec.ticks)]
-        schedule = compile_policy_schedule(politics, registry, all_quarters)
-    if (
-        base_mode is PoliticalMode.HISTORICAL_REPLAY
-        and politics.mode is PoliticalMode.COUNTERFACTUAL
-        and politics.replay_registry
+    if base_mode is PoliticalMode.HISTORICAL_REPLAY and (
+        politics.mode is not PoliticalMode.COUNTERFACTUAL or politics.replay_registry
     ):
         all_quarters = [str(spec.start.advance(k)) for k in range(spec.ticks)]
         schedule = compile_policy_schedule(politics, registry, all_quarters)
 
     branch = None
     if fork_from is not None:
-        # Branch effective-parameter hash: the base parameter hash plus the
-        # declared intervention schedule.  It never masquerades as the base
-        # parameter_hash.
-        branch_parameter_hash = canonical_digest(
-            {
-                "base_parameter_hash": parameter_hash,
-                "interventions": [
-                    item.spec.model_dump(mode="json") for item in compiled_interventions
-                ],
-            }
-        )
         branch = build_branch_spec(
             origin=fork_from,
             child_spec=spec,
             root_parameter_hash=parameter_hash,
-            branch_parameter_hash=branch_parameter_hash,
+            branch_parameter_hash=canonical_digest(
+                {
+                    "base_parameter_hash": parameter_hash,
+                    "interventions": [
+                        item.spec.model_dump(mode="json") for item in compiled_interventions
+                    ],
+                }
+            ),
             external_history_hash=pack.pack_hash,
             root_scenario_hash=compute_scenario_hash(parent_scenario),
         )
-
-    runtime = PoliticalRuntime(
-        spec=effective_spec,
-        contract=contract_check,
+    return PoliticalRuntime(
+        spec=spec,
+        contract=contract,
         registry=registry,
         politics=politics,
         pack=pack,
@@ -502,7 +1367,6 @@ def run_political(
         branch_parameter_hash=parameter_hash,
         resuming_counterfactual=resuming_counterfactual,
     )
-    return _execute(runtime, output_dir, registry, until, checkpoint_every, resume_from, fork_from)
 
 
 def _objective_weights(spec: ScenarioSpec, politics: PoliticalRunSpec, registry: Any) -> np.ndarray:
@@ -516,618 +1380,6 @@ def _opposition_initial(
     return np.tile(
         np.asarray(parameters.initial_state, dtype=np.float64), (len(spec.region_ids), 1)
     )
-
-
-def _execute(
-    runtime: PoliticalRuntime,
-    output_dir: Path,
-    registry: Any,
-    until: Quarter | str | None,
-    checkpoint_every: int,
-    resume_from: Path | None,
-    fork_from: ForkOrigin | None,
-) -> RunManifest:
-    from hsm_lab.storage.checkpoint import (
-        checkpoint_dir,
-        load_material_checkpoint,
-        save_material_checkpoint,
-    )
-
-    spec = runtime.spec
-    contract = runtime.contract
-    root = registry.root
-    from hsm_lab.contract.guards import BASELINE_FILENAME, verify_baseline
-
-    baseline_hash = verify_baseline(root / BASELINE_FILENAME, contract)
-    forcing = runtime.forcing
-    politics = runtime.politics
-    parameters = politics.parameters
-    parameter_vector = {
-        **material_parameter_vector(spec),
-        **parameters.flatten(),
-    }
-    parameter_hash = compute_parameter_hash(parameter_vector)
-    lock_hash = compute_lock_hash(root)
-    initial_recipe_hash = material_recipe_hash(spec)
-
-    def _parse_until(value: Any) -> Quarter | None:
-        if value is None:
-            return None
-        return Quarter.parse(value) if isinstance(value, str) else value
-
-    until_quarter = _parse_until(until)
-
-    # --- initial condition draw / restore --------------------------------
-    rng: RngRegistry | None = None
-    state: MaterialState | None = None
-    political: PoliticalState | None = None
-    history: MaterialHistory | None = None
-    resume_boundary = 0
-    parent_run_id: str | None = None
-    restored_metadata: dict[str, Any] = {}
-    restore_source = (
-        resume_from
-        if resume_from is not None
-        else (None if fork_from is None else fork_from.checkpoint)
-    )
-    probe_rng = RngRegistry(spec.seed)
-    probe_initial = build_material_initial_conditions(spec, probe_rng)
-    network = build_material_network(spec, contract, probe_initial)
-    axes = resolve_political_axes(
-        households=spec.households,
-        regions=len(spec.region_ids),
-        organizations=int(spec.organizations or 0),
-        commodities=len(spec.commodities),
-        interventions=len(runtime.interventions),
-    )
-    if restore_source is not None:
-        # Read the boundary first so the expected RNG profile (measurement
-        # draws = boundary * F) can be checked in a single strict load.
-        metadata_path = restore_source / "metadata.json"
-        if not metadata_path.is_file():
-            raise ResearchGateError(f"checkpoint metadata not found: {metadata_path}")
-        boundary_meta = json.loads(metadata_path.read_text(encoding="utf-8"))
-        resume_boundary = int(boundary_meta["completed_ticks"])
-        state, history, rng, restored_metadata = load_material_checkpoint(
-            restore_source,
-            spec,
-            contract,
-            network,
-            extra_rng_modules=(
-                {MEASUREMENT_MODULE: resume_boundary * F} if spec.stochastic else {}
-            ),
-        )
-        if "political" not in restored_metadata:
-            raise ResearchGateError(
-                "checkpoint carries no political payload; it was not written by a P04 run"
-            )
-        political = state_from_political_arrays(
-            {name: np.asarray(value) for name, value in restored_metadata["political"].items()},
-            axes,
-        )
-        # The branch intervention ledger is branch-defined: a child fork has its
-        # own (inherited + declared) schedule, so rebuild the TTL axis to match.
-        if political.intervention_ttl.shape[0] != len(runtime.interventions):
-            political.intervention_ttl = np.zeros(len(runtime.interventions), dtype=np.int64)
-        parent_run_id = str(restored_metadata.get("source_run_id") or "")
-    else:
-        rng = RngRegistry(spec.seed)
-        initial = build_material_initial_conditions(spec, rng)
-        network = build_material_network(spec, contract, initial)
-        state = initialize_material(spec, initial, network)
-        political = _initial_state(spec, politics, state, network, axes, len(runtime.interventions))
-        history = MaterialHistory()
-        history.digest_chain = _initial_chain(
-            spec=spec,
-            baseline_hash=baseline_hash,
-            lock_hash=lock_hash,
-            parameter_hash=parameter_hash,
-            initial_recipe_hash=initial_recipe_hash,
-            input_artifact_hashes=dict(forcing.input_artifact_hashes),
-            initial_state=state,
-            political=political,
-        )
-    assert state is not None and political is not None and history is not None and rng is not None
-
-    # The observation references are the initial report normalization carried in
-    # the political state (checkpointed, never updated from future outcomes).
-    normalization = np.asarray(political.report_normalization, dtype=np.float64)
-    parameters = politics.parameters
-    observation_parameters = parameters.observation.model_copy(
-        update={
-            "need_reference": float(max(normalization[0], 1e-12)),
-            "inventory_reference": float(max(normalization[1], 1e-12)),
-            "capacity_reference": float(max(normalization[2], 1e-12)),
-        }
-    )
-    parameters = parameters.model_copy(update={"observation": observation_parameters})
-    politics = politics.model_copy(update={"parameters": parameters})
-    runtime.politics = politics
-
-    if until_quarter is not None:
-        end = spec.start.advance(spec.ticks - 1)
-        if (
-            not spec.start.advance(resume_boundary).to_ordinal()
-            <= until_quarter.to_ordinal()
-            <= end.to_ordinal()
-        ):
-            raise ConfigError(f"--until {until_quarter} lies outside the remaining window")
-        target_ticks = until_quarter.to_ordinal() - spec.start.to_ordinal() + 1
-    else:
-        target_ticks = spec.ticks
-
-    if output_dir.exists() or output_dir.is_symlink():
-        raise ResearchGateError(
-            f"output directory {output_dir} already exists; refusing to overwrite any previous run"
-        )
-
-    run_id = uuid4().hex
-    running = manifest_preamble(
-        run_id=run_id,
-        spec=spec,
-        contract=contract,
-        root=root,
-        baseline_hash=baseline_hash,
-        run_kind=MATERIAL_RUN_KIND,
-        parameter_vector=parameter_vector,
-        input_artifact_hashes=dict(forcing.input_artifact_hashes) | dict(pack_hashes(runtime.pack)),
-        initial_recipe_hash=initial_recipe_hash,
-        engine_version=POLITICAL_ENGINE_VERSION_FULL,
-        parent_run_id=parent_run_id or None,
-        resumed_from_checkpoint=str(restore_source) if restore_source is not None else None,
-    )
-    logical_mode = (
-        PoliticalMode.COUNTERFACTUAL
-        if (runtime.branch is not None or runtime.resuming_counterfactual)
-        else runtime.base_mode
-    )
-    runtime.logical_mode = logical_mode
-    running = running.model_copy(
-        update={
-            "run_kind": POLITICAL_RUN_KIND,
-            "political_mode": logical_mode,
-        }
-    )
-    output_dir.mkdir(parents=True)
-    write_manifest_atomic(output_dir, running)
-
-    runtime_network = dataclasses.replace(network)
-    index = _tick_index(network)
-    cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
-    hh_region = np.asarray(state.household_region, dtype=np.int64)
-    hh_weight = np.asarray(state.household_weight, dtype=np.float64)
-    region_count = len(spec.region_ids)
-    org_count = int(state.organization_id.shape[0])
-    g_count = len(network.commodity_ids)
-
-    # Formation inputs: static county education/sector margins via household weights.
-    education = np.asarray(state.household_education, dtype=np.int64)
-    sector = np.asarray(state.household_sector, dtype=np.int64)
-    tertiary = (education == 2).astype(np.float64)
-    industry = (sector == 0).astype(np.float64)
-    intellectual_density = _county_mean(tertiary, hh_weight, hh_region, region_count)
-    worker_density = _county_mean(industry, hh_weight, hh_region, region_count)
-    formation_inputs = np.stack([intellectual_density, worker_density], axis=1)
-
-    # County contact for the Western-exposure target (fixed initial margin).
-    initial_exposure = np.asarray(state.household_western_exposure, dtype=np.float64).copy()
-    county_contact = initial_exposure.copy()
-
-    tallies: dict[str, Any] = {
-        "max_material_abs_residual": 0.0,
-        "max_material_tolerance_ratio": 0.0,
-        "max_finance_abs_residual": 0.0,
-        "max_finance_tolerance_ratio": 0.0,
-        "soviet_violations": 0,
-        "delivered_broadcasts": 0,
-    }
-    checkpoint_paths: list[str] = []
-    saved_boundaries: set[int] = set()
-    admitted_ticks = int(state.completed_ticks)
-    # Rebuild the broadcast scheduler state for the restored boundary: all
-    # program messages whose [at_step, at_step+ttl) covers steps 1..boundary.
-    program_state = _ProgramState(runtime.program, resume_boundary)
-    cf_state = _InterventionState(runtime.interventions, spec.start.to_ordinal())
-
-    try:
-        run_started = time.perf_counter()
-        while state.completed_ticks < target_ticks:
-            tick = int(state.completed_ticks)
-            quarter = Quarter.parse(str(forcing.quarters[tick]))
-            opening = capture_material_stocks(state)
-            external = runtime.pack.slice(tick)
-
-            # --- 2. signals, interventions, coalition, policy ---------------
-            signals_prev = np.asarray(political.signals, dtype=np.float64)
-            deliver_rows, county_signals, cf_government = _deliver_broadcasts(
-                tick=tick,
-                quarter=quarter,
-                runtime=runtime,
-                political=political,
-                state=state,
-                network=network,
-                program_state=program_state,
-                cf_state=cf_state,
-                region_count=region_count,
-                hh_region=hh_region,
-            )
-            signals = _advance_signals(signals_prev, runtime, tick, county_signals, region_count)
-            government = _government_signals(signals, external, cf_government)
-            political.signals = signals
-
-            # Declared counterfactual controls resolved for this quarter: the
-            # Soviet-constraint multiplier and the branch broadcast TTL ledger.
-            multiplier = cf_state.soviet_multiplier(tick)
-            if multiplier is None:
-                multiplier = 1.0
-            political.soviet_constraint_multiplier = np.array([float(multiplier)], dtype=np.float64)
-            soviet_constraint = float(
-                np.clip(external.get("soviet_constraint", 0.0) * float(multiplier), 0.0, 1.0)
-            )
-            ttl = _remaining_ttl(cf_state, tick)
-            if political.intervention_ttl.shape[0] == ttl.shape[0]:
-                political.intervention_ttl = ttl
-
-            decision_policy, coalition_transition, decision = _decision_step(
-                runtime=runtime,
-                political=political,
-                signals=signals,
-                external=external,
-                tick=tick,
-                quarter=quarter,
-                cf_state=cf_state,
-                government=government,
-                county_signals=county_signals,
-                soviet_constraint=soviet_constraint,
-            )
-
-            # --- 3. commit transitions, compile effective policy ------------
-            if coalition_transition is not None:
-                political.coalition_weights = coalition_transition.new_weights
-            capability_before = float(political.information_capability[0])
-            info_state_before = InformationState(
-                capability=capability_before,
-                dimensions=np.asarray(political.information_dimensions, dtype=np.float64),
-                total_lag=_total_lag(political, parameters),
-            )
-            political.policy = decision_policy.to_vector()
-            effective = compile_effective_policy(
-                spec.material_parameters,  # type: ignore[arg-type]
-                spec.household_parameters,  # type: ignore[arg-type]
-                decision_policy,
-                external,
-                tuple(network.commodity_ids),
-            )
-            object.__setattr__(
-                runtime_network, "household_parameters", effective.household_parameters
-            )
-            object.__setattr__(runtime_network, "household_catalog", effective.household_catalog)
-            central = _central_target(
-                political=political,
-                network=network,
-                plan_utilization=float(decision_policy.plan_utilization),
-                tick=tick,
-            )
-            controls = TickControls(
-                material_parameters=effective.material_parameters,
-                household_parameters=effective.household_parameters,
-                household_catalog=effective.household_catalog,
-                autonomy=float(decision_policy.enterprise_autonomy),
-                central_target=central,
-                policy=decision_policy,
-            )
-
-            # --- 4. material tick ------------------------------------------
-            flows = tick_material(
-                state,
-                forcing,
-                effective.material_parameters,
-                runtime_network,
-                controls=controls,
-            )
-            if flows.tick != tick:
-                raise ResearchGateError("material tick does not describe the expected quarter")
-
-            # --- 5. closing: culture, opposition, action --------------------
-            household_signals = county_signals[hh_region]
-            openness = float(decision_policy.cultural_openness)
-            western_visible = household_signals[:, _SIGNAL["western_comparison"]]
-            identification, exposure, efficacy = update_household_culture(
-                np.asarray(political.household_identification, dtype=np.float64),
-                np.asarray(political.household_exposure, dtype=np.float64),
-                np.asarray(political.household_efficacy, dtype=np.float64),
-                official_signal_visible=float(
-                    np.mean(county_signals[:, _SIGNAL["official_policy"]])
-                ),
-                western_signal_visible=western_visible,
-                region_exposure_target=np.zeros(region_count, dtype=np.float64),
-                region_efficacy=np.asarray(
-                    political.opposition[:, OPPOSITION_AXIS_IDS.index("perceived_efficacy")]
-                ),
-                household_region=hh_region,
-                exposure_contact=county_contact,
-                parameters=parameters.culture,
-                openness=openness,
-            )
-            political.household_identification = identification
-            political.household_exposure = exposure
-            political.household_efficacy = efficacy
-
-            opposition = update_region_capacity(
-                np.asarray(political.opposition, dtype=np.float64),
-                formation_inputs,
-                decision_policy,
-                county_signals,
-                external,
-                parameters.opposition,
-            )
-            political.opposition = opposition
-            risk_signal = np.asarray(
-                county_signals[:, _SIGNAL["public_action_risk"]], dtype=np.float64
-            )
-            risk_signal = np.clip(risk_signal, 0.0, 1.0)
-            grievance = np.asarray(state.household_grievance, dtype=np.float64)
-            action = action_propensity(
-                grievance,
-                hh_region,
-                np.asarray(political.household_exposure, dtype=np.float64),
-                np.asarray(political.household_efficacy, dtype=np.float64),
-                opposition,
-                decision_policy,
-                risk_signal,
-                parameters.opposition,
-                region_count,
-            )
-            political.household_action = action
-
-            # capability accumulation (uses the chosen policy; next-quarter effect)
-            new_info = advance_information_capacity(
-                info_state_before, decision_policy, external, parameters.information
-            )
-            if cf_capability_override := cf_state.capability_override(tick):
-                new_info = information_state(cf_capability_override, parameters.information)
-            political.information_capability = np.array([new_info.capability], dtype=np.float64)
-            political.information_dimensions = np.asarray(new_info.dimensions, dtype=np.float64)
-
-            # --- closing truth features + observation ring ------------------
-            truth = _closing_truth(
-                state=state,
-                political=political,
-                flows=flows,
-                external=external,
-                index=index,
-                cell_commodity=cell_commodity,
-                g_count=g_count,
-                debt_reference=parameters.external_recipe.debt_reference,
-                capability=new_info.capability,
-                tick=tick,
-                soviet_constraint=soviet_constraint,
-            )
-            _commit_report_ring(
-                political=political,
-                runtime=runtime,
-                state=state,
-                network=network,
-                flows=flows,
-                truth=truth,
-                info_state=new_info,
-                tick=tick,
-                quarter=quarter,
-                rng=rng,
-                stochastic=spec.stochastic,
-                index=index,
-                cell_commodity=cell_commodity,
-                org_count=org_count,
-                g_count=g_count,
-            )
-            cohesion_next = _update_cohesion(
-                political=political,
-                parameters=parameters.broker,
-                policy=decision_policy,
-            )
-            political.elite_cohesion = np.array([cohesion_next], dtype=np.float64)
-
-            # --- 6. gates ---------------------------------------------------
-            invariant_summary = check_material_invariants(
-                opening,
-                state,
-                flows,
-                effective.material_parameters,
-                runtime_network,
-                controls=controls,
-            )
-            residual, tolerance = _material_residuals(opening, state, flows, runtime_network)
-            flows.material_balance_residual = residual
-            flows.material_balance_tolerance = tolerance
-            finance_residual, finance_tolerance = finance_balance_residuals(state, flows)
-            flows.finance_balance_residual = finance_residual
-            flows.finance_balance_tolerance = finance_tolerance
-            tallies["max_material_abs_residual"] = max(
-                tallies["max_material_abs_residual"],
-                float(invariant_summary.max_material_abs_residual),
-            )
-            tallies["max_material_tolerance_ratio"] = max(
-                tallies["max_material_tolerance_ratio"],
-                float(invariant_summary.max_material_tolerance_ratio),
-            )
-
-            # --- commit -----------------------------------------------------
-            state.completed_ticks += 1
-            history.digest_chain = _advance_chain(
-                previous=history.digest_chain,
-                state=state,
-                flows=flows,
-                political=political,
-                deliveries=deliver_rows,
-            )
-            admitted_ticks = state.completed_ticks
-            invariant_dict: dict[str, Any] = {
-                "max_material_abs_residual": float(invariant_summary.max_material_abs_residual),
-                "max_material_tolerance_ratio": float(
-                    invariant_summary.max_material_tolerance_ratio
-                ),
-                "max_finance_abs_residual": float(invariant_summary.max_finance_abs_residual),
-                "max_finance_tolerance_ratio": float(invariant_summary.max_finance_tolerance_ratio),
-                "checked_cells": int(invariant_summary.checked_cells),
-                "per_ledger": dict(invariant_summary.per_ledger),
-                "forcing_segment": str(forcing.segment[tick]),
-                "treasury_deposit_open": float(opening.treasury_deposit),
-                "bank_reserves_open": [float(v) for v in opening.bank_reserves],
-                "housing_completed": float(
-                    np.sum(np.asarray(state.dwelling_stock) - opening.dwelling_stock)
-                ),
-                "material_balance_residual": [float(v) for v in residual],
-                "material_balance_tolerance": [float(v) for v in tolerance],
-            }
-            append_material_rows(
-                history,
-                state,
-                flows,
-                effective.material_parameters,
-                runtime_network,
-                region_ids=list(spec.region_ids),
-                commodity_ids=list(spec.commodities),
-                digest=history.digest_chain,
-                invariant_summary=invariant_dict,
-                opening_stock=opening.stock_value,
-            )
-            _append_political_rows(
-                history=history,
-                runtime=runtime,
-                political=political,
-                state=state,
-                flows=flows,
-                decision=decision,
-                coalition_transition=coalition_transition,
-                county_signals=county_signals,
-                external=external,
-                tick=tick,
-                quarter=quarter,
-                deliverables=deliver_rows,
-                region_ids=list(spec.region_ids),
-                governance=government,
-                info_state=new_info,
-                soviet_constraint=soviet_constraint,
-            )
-
-            boundary = state.completed_ticks
-            paused_here = boundary == target_ticks and target_ticks < spec.ticks
-            due = (
-                (checkpoint_every > 0 and boundary % checkpoint_every == 0)
-                or paused_here
-                or (checkpoint_every > 0 and boundary == spec.ticks)
-            )
-            if due and boundary not in saved_boundaries:
-                path = save_material_checkpoint(
-                    checkpoint_dir(output_dir, boundary),
-                    state,
-                    network,
-                    history,
-                    rng,
-                    {
-                        "scenario": spec.model_dump(mode="json"),
-                        "scenario_hash": compute_scenario_hash(spec),
-                        "baseline_hash": baseline_hash,
-                        "lock_hash": lock_hash,
-                        "parameter_hash": parameter_hash,
-                        "initial_recipe_hash": initial_recipe_hash,
-                        "engine_version": POLITICAL_ENGINE_VERSION_FULL,
-                        "state_version": MATERIAL_STATE_VERSION,
-                        "political_state_version": POLITICAL_STATE_VERSION,
-                        "political_mode": str(logical_mode),
-                        "input_artifact_hashes": dict(forcing.input_artifact_hashes),
-                        "region_ids": list(spec.region_ids),
-                        "commodity_ids": list(spec.commodities),
-                        "last_completed_quarter": str(spec.start.advance(boundary - 1)),
-                        "next_quarter": str(spec.start.advance(boundary)),
-                        "source_run_id": run_id,
-                        "branch": None
-                        if runtime.branch is None
-                        else runtime.branch.model_dump(mode="json"),
-                    },
-                    political_arrays=political_arrays(political, axes),
-                )
-                saved_boundaries.add(boundary)
-                checkpoint_paths.append(str(path.relative_to(output_dir)))
-
-        # --- finalize -------------------------------------------------------
-        frames = history_frames(history)
-        write_material_tables(output_dir, frames)
-        summary = _build_summary(
-            runtime=runtime,
-            run_id=run_id,
-            spec=spec,
-            state=state,
-            political=political,
-            history=history,
-            frames=frames,
-            rng=rng,
-            parameter_hash=parameter_hash,
-            initial_recipe_hash=initial_recipe_hash,
-            checkpoint_paths=checkpoint_paths,
-            tallies=tallies,
-            logical_mode=logical_mode,
-            performance={"total_wall_s": time.perf_counter() - run_started},
-        )
-        write_summary(summary, output_dir)
-        parameters_declaration = spec.material_parameters
-        assert parameters_declaration is not None
-        (output_dir / "parameters.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": "1",
-                    "scenario_id": spec.scenario_id,
-                    "parameter_hash": parameter_hash,
-                    "declaration": parameters_declaration.model_dump(mode="json"),
-                    "political_parameters": parameters.model_dump(mode="json"),
-                },
-                indent=2,
-                sort_keys=True,
-            )
-            + "\n",
-            encoding="utf-8",
-        )
-        hashes = hash_output_tree(output_dir)
-        boundary = state.completed_ticks
-        status: Literal["completed", "paused"] = "completed" if boundary == spec.ticks else "paused"
-        final = finalize_manifest(
-            running,
-            status=status,
-            output_hashes=hashes,
-            rng_draws_count=rng.draws_count(),
-            rng_draws_by_module=rng.draws_by_module(),
-            stochastic_modules_active=[
-                module for module, count in rng.draws_by_module().items() if count > 0
-            ],
-            deterministic_replay_digest=history.digest_chain,
-            completed_ticks=boundary,
-            last_completed_quarter=(str(spec.start.advance(boundary - 1)) if boundary else None),
-        )
-        write_manifest_atomic(output_dir, final)
-        return final
-    except Exception as exc:  # noqa: BLE001 - record evidence, then re-raise
-        draws_by_module = rng.draws_by_module() if rng is not None else {}
-        failed = finalize_manifest(
-            running,
-            status="failed",
-            output_hashes={},
-            rng_draws_count=sum(draws_by_module.values()),
-            rng_draws_by_module=draws_by_module,
-            stochastic_modules_active=[
-                module for module, count in draws_by_module.items() if count > 0
-            ],
-            deterministic_replay_digest="",
-            failure_message=f"{type(exc).__name__}: {exc}",
-            completed_ticks=admitted_ticks,
-            last_completed_quarter=(
-                str(spec.start.advance(admitted_ticks - 1)) if admitted_ticks else None
-            ),
-        )
-        try:
-            write_manifest_atomic(output_dir, failed)
-        except OSError:  # pragma: no cover
-            pass
-        raise
 
 
 # ---------------------------------------------------------------------------
@@ -1514,7 +1766,7 @@ def _government_signals(
     return {"regime_threat": regime_threat, "repression_cost": repression_cost}
 
 
-def _decision_step(
+def _decide(
     *,
     runtime: PoliticalRuntime,
     political: PoliticalState,
@@ -1526,7 +1778,13 @@ def _decision_step(
     government: dict[str, float],
     county_signals: np.ndarray,
     soviet_constraint: float,
-) -> tuple[PolicyVector, CoalitionTransition | None, PolicyDecision | None]:
+) -> DecisionOutcome:
+    """Compute (without committing) the coalition transition and policy for one quarter.
+
+    This is the single decision rule shared by the native runner and the
+    SocioVerse2 `DecisionModel` adapter; it reads state and writes nothing, so it
+    can be proposed first and committed later.
+    """
     parameters = runtime.politics.parameters
     capability = float(political.information_capability[0])
     override = cf_state.capability_override(tick)
@@ -1534,7 +1792,7 @@ def _decision_step(
         capability = float(override)
     information = information_state(capability, parameters.information)
 
-    published, valid, source = _select_published(political, tick, information.total_lag)
+    published, valid, source = select_published(political, tick, information.total_lag)
     feedback = _feedback(
         runtime=runtime,
         political=political,
@@ -1564,7 +1822,7 @@ def _decision_step(
         broker_parameters = broker_parameters.model_copy(
             update={"q": [float(value) for value in objective_override]}
         )
-    decision: PolicyDecision | None = None
+    decision: PolicyDecision
     if runtime.base_mode is PoliticalMode.ENDOGENOUS_POLITICS:
         decision = choose_policy(
             transition.new_weights,
@@ -1578,34 +1836,60 @@ def _decision_step(
         policy = PolicyVector.from_vector(decision.selected_policy)
     else:
         policy = _replay_policy(runtime, tick, previous_policy)
+        decision = PolicyDecision(
+            candidate_ids=[],
+            candidate_utilities=np.zeros(0, dtype=np.float64),
+            candidate_policies=np.zeros((0, U), dtype=np.float64),
+            selected_index=-1,
+            selected_policy=policy.to_vector(),
+            binding_constraints=[],
+            source="replay",
+            elite_cohesion=float(political.elite_cohesion[0]),
+        )
 
     patches = cf_state.policy_patches(tick)
     if patches:
         policy = policy.patch(patches)
+        decision = dataclasses.replace(decision, selected_policy=policy.to_vector())
+
+    constraint = float(np.clip(soviet_constraint, 0.0, 1.0))
+    cap = 1.0 - constraint * (1.0 - float(broker_parameters.soviet_floor))
     if runtime.base_mode is PoliticalMode.HISTORICAL_REPLAY:
         # Mode A (and A-based branches) keep the declared replay policy; the
         # Soviet feasible set is diagnostic only (recorded as a violation).
-        if decision is None:
-            decision = PolicyDecision(
-                candidate_ids=[],
-                candidate_utilities=np.zeros(0, dtype=np.float64),
-                candidate_policies=np.zeros((0, U), dtype=np.float64),
-                selected_index=-1,
-                selected_policy=policy.to_vector(),
-                binding_constraints=[],
-                source="replay",
-                elite_cohesion=float(political.elite_cohesion[0]),
-            )
+        violation = max(
+            0.0,
+            float(policy.enterprise_autonomy) - cap,
+            float(policy.cultural_openness) - cap,
+        )
+        soviet_bound = False
     else:
-        policy = _project_soviet(policy, soviet_constraint, broker_parameters)
-    _update_policy_error(
-        runtime=runtime,
-        political=political,
-        previous_policy=previous_policy,
-        objective=feedback.objective_vector,
-        tick=tick,
+        policy = _project_soviet(policy, constraint, broker_parameters)
+        violation = 0.0
+        soviet_bound = bool(
+            float(policy.enterprise_autonomy) >= cap - 1e-12
+            or float(policy.cultural_openness) >= cap - 1e-12
+        )
+
+    a_matrix = np.asarray(broker_parameters.A, dtype=np.float64)
+    error, prediction = _policy_error(previous_policy, feedback.objective_vector, a_matrix)
+    return DecisionOutcome(
+        policy=policy,
+        transition=transition,
+        decision=decision,
+        prediction=prediction,
+        objective=np.asarray(feedback.objective_vector, dtype=np.float64),
+        policy_error=error,
+        capability=capability,
+        information=information,
+        weights_before=weights,
+        policy_source=(
+            "replay" if runtime.base_mode is PoliticalMode.HISTORICAL_REPLAY else "broker"
+        ),
+        soviet_bound=soviet_bound,
+        soviet_violation=violation,
+        publication_source=int(source),
     )
-    return policy, transition, decision
 
 
 def _replay_policy(runtime: PoliticalRuntime, tick: int, previous: PolicyVector) -> PolicyVector:
@@ -1628,24 +1912,20 @@ def _project_soviet(
     return PolicyVector.model_validate(updated)
 
 
-def _select_published(
+def select_published(
     political: PoliticalState, tick: int, total_lag: int
 ) -> tuple[np.ndarray, np.ndarray, int]:
+    """Pick the lagged published state view for a decision (read-only).
+
+    The publication cursor is *not* advanced here: it is committed by the
+    session when the quarter is admitted, so a decision proposal never mutates
+    causal state.
+    """
     cursor = int(political.publication_cursor[0])
     source = max(tick - 1 - int(total_lag), cursor)
     if source < 0:
         return _initial_published(), np.zeros(F, dtype=bool), -1
     slot = source % POLITICAL_RING_LENGTH
-    if int(political.state_report_quarters[slot]) == source and int(
-        political.state_report_valid[slot]
-    ):
-        political.publication_cursor = np.array([source], dtype=np.int64)
-        return (
-            np.asarray(political.state_published[slot], dtype=np.float64).copy(),
-            np.asarray(political.state_valid[slot], dtype=np.float64).astype(bool),
-            source,
-        )
-    # No new valid published source: keep the previous published view.
     return (
         np.asarray(political.state_published[slot], dtype=np.float64).copy(),
         np.asarray(political.state_valid[slot], dtype=np.float64).astype(bool),

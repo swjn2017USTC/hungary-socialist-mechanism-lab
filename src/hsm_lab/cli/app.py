@@ -315,6 +315,11 @@ def run(
         "--resume",
         help="Material checkpoint directory to resume from.",
     ),
+    socioverse: bool = typer.Option(
+        False,
+        "--socioverse",
+        help="Drive a P04 run through the real SocioVerse2 longitudinal simulator.",
+    ),
     json_mode: bool = JsonOption,
 ) -> None:
     """Run a scenario (smoke probe load or the Intermediate-8 material economy)."""
@@ -341,6 +346,7 @@ def run(
             "--until": until,
             "--checkpoint-every": checkpoint_every if checkpoint_every else None,
             "--resume": resume,
+            "--socioverse": socioverse if socioverse else None,
         }
         if spec.kind == "smoke":
             used = [flag for flag, value in material_only.items() if value is not None]
@@ -410,17 +416,30 @@ def run(
             registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
             target_dir = _fresh_output_dir(output_dir, "run")
             if spec.politics is not None:
-                from hsm_lab.engine.political_run import run_political
+                if socioverse:
+                    from hsm_lab.integrations.socioverse import run_political_socioverse
 
-                manifest = run_political(
-                    spec,
-                    target_dir,
-                    contract,
-                    registry,
-                    until=until,
-                    checkpoint_every=checkpoint_every,
-                    resume_from=resume,
-                )
+                    manifest = run_political_socioverse(
+                        spec,
+                        target_dir,
+                        contract,
+                        registry,
+                        until=until,
+                        checkpoint_every=checkpoint_every,
+                        resume_from=resume,
+                    )
+                else:
+                    from hsm_lab.engine.political_run import run_political
+
+                    manifest = run_political(
+                        spec,
+                        target_dir,
+                        contract,
+                        registry,
+                        until=until,
+                        checkpoint_every=checkpoint_every,
+                        resume_from=resume,
+                    )
             else:
                 manifest = run_material(
                     spec,

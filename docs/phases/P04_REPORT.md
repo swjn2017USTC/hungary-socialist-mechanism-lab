@@ -144,10 +144,10 @@ the efficacy channel move independently, and grievance is never deleted.
 
 ## 4. Verification evidence (exercised, not asserted)
 
-- `uv run pytest -q` → **295 passed** (17 new P04 tests across
+- `uv run pytest -q` → **301 passed** (23 new P04 tests across
   `test_politics.py`, `test_information.py`, `test_opposition.py`,
-  `test_external_history.py`, `test_political_run.py`, plus extensions to
-  `test_data_roles.py` and `test_output.py`).
+  `test_external_history.py`, `test_political_run.py`, `test_socioverse_p04.py`,
+  plus extensions to `test_data_roles.py` and `test_output.py`).
 - Full CLI smoke: `p04_replay` and `p04_endogenous` each completed
   **116 ticks → 1985Q4**; `p04_replay` 1968Q1 `enterprise_autonomy == 0.7` with
   `policy_source == replay`; `p04_endogenous` used `policy_source == broker`
@@ -165,19 +165,10 @@ the efficacy channel move independently, and grievance is never deleted.
 
 ## 5. Known gaps / honest limitations
 
-1. **SocioVerse2 longitudinal adapter layer is not implemented — the dependency
-   is installed, the wiring is not.** `socioverse2==0.2.0` is present in the
-   project `.venv` (`hsm doctor --socioverse-smoke` exercises its real
-   `DuckDbTrajectoryStore` and passes on every run), and its `LongitudinalSimulator`,
-   `EnvironmentProvider` / `PopulationProvider` / `DecisionModel` /
-   `MetricCollector` ABCs and `InformationEnvironment` were read from the
-   installed wheel. Nothing about the machine blocked this: the native runner
-   (`engine/political_run.py` + `storage/fork.py`) already provides the
-   checkpoint/replay branch mechanism the plan permits as the fallback, so the
-   adapter layer is a *scope trade-off*, not an environment failure. Concretely,
-   wiring it requires lifting the quarter body out of `_execute` into a stepwise
-   session that `Environment.apply` can drive, plus the 26-institution panel.
-   Until that lands, plan acceptance criterion 7 stays **partial**.
+1. **(RESOLVED — see §7) SocioVerse2 longitudinal orchestration.** The adapter
+   layer and a real `LongitudinalSimulator` loop over the 26 institutional IDs
+   are now implemented and tested; the dependency was never the blocker
+   (`socioverse2==0.2.0` is installed and its store smoke always passed).
 2. **P02 material-chain degeneration persists.** With the mandated
    `p02_100`/N=1000 recipe the synthetic economy collapses toward zero realized
    production over the horizon (this is the pre-existing P02/P03 degeneration;
@@ -260,3 +251,59 @@ Re-verified after the patches: `uv run pytest -q` → 295 passed; full CLI A/B r
 reach 1985Q4 (116 ticks, `replay` / `broker` sources, max material tolerance
 ratio ≤ 0.0073); a no-op fork is still bit-identical to a plain resume
 (`596a658e8e53195b…` both).
+
+---
+
+## 7. SocioVerse2 longitudinal orchestration (adapter layer)
+
+The quarter body was lifted out of the runner into a stepwise
+`PoliticalSession` (`engine/political_run.py`), which is now the single
+admission owner for both driving paths:
+
+- `open_political_session(...)` — preflight, restore/fork, initialization;
+- `propose_decision()` — the coalition + broker rule, **read-only** (the policy
+  error rings, publication cursor and signal state are no longer written by the
+  decision; `select_published` became a pure function);
+- `admit_quarter(decision=None)` — commit exactly one quarter (external slice →
+  signals → decision → material kernel → culture/opposition/observation →
+  invariants → tables → checkpoint);
+- `finish()` / `mark_failed(exc)`.
+
+`run_political(...)` is now `open → while not done: admit_quarter() → finish()`,
+so the native CLI path and the framework path share one code path.
+
+`integrations/socioverse.py` adds the real adapters over the pinned
+`socioverse2==0.2.0` and drives them with the framework's own simulator:
+
+| Adapter | Responsibility |
+|---|---|
+| `InstitutionalPopulation` | the 26 persistent institutional IDs (4 coalitions, broker, planner, 20 counties) — no household personas |
+| `PoliticalEnvironment` | `advance_to` routes broadcasts by **global** step; `observe_batch` assembles the four quadrants (macro physical = *lagged published* view, macro/local information = real `InformationEnvironment`); `apply` validates the single broker `policy_choice` and admits the quarter |
+| `PoliticalRuleDecision` | calls the project's rule and returns `Action(kind='policy_choice', source='rule', payload=<coalition/policy transition>)`; Mode A returns no action |
+| `PoliticalMetricCollector` | per-step metrics from the admitted boundary (audit aggregates only) |
+| `OffsetTrajectoryStore` | maps framework-local steps onto global steps (fork/resume offsets) |
+
+Division of labour is enforced, not just documented: SocioVerse2 owns the step
+loop, persistent IDs, environment projection, broadcast routing and the small
+panel/metrics store; the session owns the causal engine. No LLM or decision
+client exists; branch selection remains the project's checkpoint/replay.
+
+**Evidence (exercised).** `tests/test_socioverse_p04.py` (6 tests): 26 persistent
+IDs; a real ≥2-step loop with 26×(n+1) panel rows, broker-only `policy_choice`
+actions and DuckDB ⇄ Parquet agreement; Mode A produces **no** broker action;
+audience/TTL routing through the real `InformationEnvironment` (a `pest`-only
+broadcast appears in `region:pest`'s `local_information` and not in another
+county's); fork offsets map local steps 0..2 onto global steps 4..6.
+
+**The decisive check:** with the same scenario and horizon, the framework-driven
+run and the native runner produce the **identical** behaviour digest
+(`102532f1a47732e4981235ba…`) and byte-identical
+`political_quarters`/`opposition_regions`/`information_quarters` tables. The
+orchestration layer therefore changes no causal result. Full-horizon
+`hsm run --scenario p04_endogenous --socioverse` completes 116 quarters in ~6 s
+with the usual invariants and RNG accounting (`p04_observation.measurement`
+draws present).
+
+CLI: `hsm run --scenario <p04_*> --socioverse` selects this path; without the
+flag the native runner is used. Both are refused for smoke scenarios, and
+`--socioverse` is rejected together with the other material-only overrides.
