@@ -73,13 +73,13 @@ def test_scheme_version_exposed() -> None:
 def test_snapshot_restores_exact_continuation() -> None:
     """7 draws -> snapshot -> 5 more == restore -> 5 more; counts reach 12."""
     rng = RngRegistry(1729)
-    rng.uniform("toy4.initial_households", 7)
+    rng.uniform("material.initial_households", 7)
     snapshot = rng.snapshot()
-    live_tail = rng.uniform("toy4.initial_households", 5)
+    live_tail = rng.uniform("material.initial_households", 5)
     restored = RngRegistry.from_snapshot(snapshot)
-    restored_tail = restored.uniform("toy4.initial_households", 5)
+    restored_tail = restored.uniform("material.initial_households", 5)
     np.testing.assert_array_equal(live_tail, restored_tail)
-    assert restored.draws_by_module() == {"toy4.initial_households": 12}
+    assert restored.draws_by_module() == {"material.initial_households": 12}
     assert restored.draws_count() == rng.draws_count() == 12
     assert restored.seed == 1729
     assert restored.scheme_version == RNG_SCHEME_VERSION

@@ -1,8 +1,9 @@
 """Period parsing and frequency-boundary aggregations (BASELINE §24).
 
-Monthly->quarterly and quarterly->annual only. There is deliberately no
-annual->quarterly interpolation API: annual outcomes are compared after
-aggregating the quarterly simulation, never by faking quarterly observations.
+Monthly->quarterly, dated->quarterly (end-of-period quotes) and
+quarterly->annual only. There is deliberately no annual->quarterly
+interpolation API: annual outcomes are compared after aggregating the
+quarterly simulation, never by faking quarterly observations.
 """
 
 from __future__ import annotations
@@ -159,6 +160,32 @@ def monthly_to_quarterly(frame: pl.DataFrame, aggregation: Aggregation) -> pl.Da
 
     # Aggregate while the original monthly periods are still present so that
     # end_of_period sorts by true month order; then relabel to quarterly.
+    aggregated = enriched.group_by(keys + ["_year", "_quarter"]).agg(
+        _value_expr(aggregation)
+    )
+    _assert_finite_result(aggregated)
+    return aggregated.with_columns(
+        (pl.col("_year") + "Q" + pl.col("_quarter").cast(pl.Utf8)).alias(PERIOD_COLUMN)
+    ).drop("_year", "_quarter")
+
+def dated_to_quarterly(frame: pl.DataFrame, aggregation: Aggregation) -> pl.DataFrame:
+    """Collapse DATED quotes to quarterly by real-date groups.
+
+    Only ``end_of_period`` is declared: each quarter keeps the last actual
+    quote by true date. Quarters without any quote emit no row - calendar
+    days are never imputed and a missing date is never written as zero.
+    """
+    _validate_aggregation(aggregation)
+    if aggregation != "end_of_period":
+        raise ConfigError(
+            "dated_to_quarterly only supports 'end_of_period'; quotes are stock-like "
+            "observations, never summed or averaged across days"
+        )
+    keys = _validate_frame(frame, Frequency.DATED)
+    enriched = frame.with_columns(
+        pl.col(PERIOD_COLUMN).str.slice(0, 4).alias("_year"),
+        pl.col(PERIOD_COLUMN).str.slice(5, 2).cast(pl.Int32).alias("_month"),
+    ).with_columns(((pl.col("_month") - 1) // 3 + 1).alias("_quarter"))
     aggregated = enriched.group_by(keys + ["_year", "_quarter"]).agg(
         _value_expr(aggregation)
     )

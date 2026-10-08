@@ -1,26 +1,152 @@
-"""Toy-4 material-balance and cash accounting (P01 step C/G).
+"""Material-economy accounting: per-cell invariants and departments (P02).
 
-Every check is per-cell: a local ledger error cannot hide behind a national
-aggregate. Violations raise :class:`AccountingError` immediately with the
-quarter, ledger name, cell key, both sides, residual and tolerance - the
-caller then fails the run closed.
+Every check is per-cell over the canonical stock-cell catalog (organization
+retail pools are checked per ``(region, commodity, stage)`` group because
+regional sales are not decomposed per retail organization): a local ledger
+error cannot hide behind a national aggregate. Violations raise
+:class:`AccountingError` immediately with the quarter, ledger name, cell key,
+both sides, residual and tolerance — the caller then fails the run closed.
+
+Stock continuity is reconstructed from flows plus the network catalog so each
+physical movement is counted exactly once:
+
+* inflows — production ``B.T @ activity_realized``, realized imports into the
+  treasury import-pool cells, edge deliveries whose destination is a stock
+  cell;
+* outflows — internal edge deliveries by source cell, export- and
+  housing-purpose boundary edges by source cell, household acquisition
+  channels (regional ``retail_sales``, plot self-use from the imputed value
+  at the ready-food admin price, plot direct-market sales from late cash
+  receipts), production input use scattered through ``input_cell``,
+  logistics services consumed by delivered edges (attributed to the
+  transport organization's output cell) and project installation
+  (``organization_investment_completed`` x per-unit into the project WIP
+  cells);
+* services cells are non-stockable: they must close at zero and the sum of
+  their unexpired leftovers reconciles with ``flows.expired_services``.
+
+Boundary household edges mirror ``retail_sales``/the plot direct channel and
+export edges mirror the trade arrays; both equivalences are gated so the
+edge view and the channel view can never drift apart.
+
+Department attribution maps delivery purposes to departments exactly as
+declared in plan section 5 (a convention over the purpose vocabulary, never
+a permanent commodity label): intermediate, investment, procurement and
+private-plot deliveries attribute output to Department I; housing, retail
+and the plot household channels to Department II; export deliveries to the
+exports column; services output splits into productive/household service
+use; production without any same-tick outflow is unclassified.
 """
 
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass, field
+from dataclasses import fields as dataclass_fields
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from hsm_lab.contract.schemas import ResearchGateError, Toy4Parameters
-from hsm_lab.engine.state import TickFlows, Toy4State
+from hsm_lab.contract.base import ResearchGateError
+from hsm_lab.contract.material import (
+    ORGANIZATION_TYPE_ORDER,
+    PURPOSE_CODES,
+    STAGE_CODES,
+    MaterialParameters,
+    OrganizationType,
+    RoutePurpose,
+)
+from hsm_lab.engine.finance import (
+    DOMESTIC_CURRENCY,
+    AccountKind,
+    household_account_ids,
+    organization_account_ids,
+    quarter_domestic_credit_rate,
+)
+from hsm_lab.engine.state import (
+    POOL_CODES,
+    MaterialPrices,
+    MaterialState,
+    MaterialStockSnapshot,
+    MaterialTickFlows,
+    build_material_prices,
+)
+
+if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
+    from hsm_lab.engine.network import MaterialNetwork
 
 ATOL = 1e-9
 RTOL = 1e-10
 
+_PER_UNIT_DEFAULT = 0.25  # plan default when parameters are unavailable
+
+# Purpose codes used by the reconstruction.
+_P_INTERMEDIATE = PURPOSE_CODES[RoutePurpose.INTERMEDIATE]
+_P_INVESTMENT = PURPOSE_CODES[RoutePurpose.INVESTMENT]
+_P_HOUSING = PURPOSE_CODES[RoutePurpose.HOUSING]
+_P_PROCUREMENT = PURPOSE_CODES[RoutePurpose.PROCUREMENT]
+_P_RETAIL = PURPOSE_CODES[RoutePurpose.RETAIL]
+_P_PRIVATE_PLOT = PURPOSE_CODES[RoutePurpose.PRIVATE_PLOT]
+_P_EXPORT_CMEA = PURPOSE_CODES[RoutePurpose.EXPORT_CMEA]
+_P_EXPORT_CONVERTIBLE = PURPOSE_CODES[RoutePurpose.EXPORT_CONVERTIBLE]
+_P_HOUSEHOLD = PURPOSE_CODES[RoutePurpose.HOUSEHOLD]
+
+_POOL_WHOLESALE = POOL_CODES["wholesale"]
+_POOL_RETAIL = POOL_CODES["retail"]
+
+_KIND_ORG = 0
+_KIND_PLOT = 1
+_KIND_IMPORT = 3
+
+_KIND_NAMES = {0: "org", 1: "plot", 2: "project", 3: "treasury_import"}
+_POOL_NAMES = {code: name for name, code in POOL_CODES.items()}
+_STAGE_NAMES = {code: name for name, code in STAGE_CODES.items()}
+_PURPOSE_NAMES = {code: purpose.value for purpose, code in PURPOSE_CODES.items()}
+
+# Identity (never axis-position) based commodity semantics; declared
+# commodities outside the pinned eight default to non-household stockables.
+_HOUSEHOLD_CHANNEL_IDS = frozenset(
+    {"energy", "food", "consumer_goods", "durable_goods", "services_transport"}
+)
+_SERVICES_ID = "services_transport"
+_FOOD_ID = "food"
+_CONSTRUCTION_ID = "construction"
+_DURABLE_ID = "durable_goods"
+_CAPITAL_ID = "capital_goods"
+
+_FARM_TYPE_CODES = frozenset(
+    ORGANIZATION_TYPE_ORDER.index(t)
+    for t in (OrganizationType.AGRICULTURAL_COOPERATIVE, OrganizationType.STATE_FARM)
+)
+
+# Axis-index fields carrying the -1 sentinel by contract.
+_SIGNED_INDEX_FIELDS = frozenset(
+    {
+        "organization_technology",
+        "organization_activity",
+        "organization_bank",
+        "plot_activity",
+    }
+)
+
+# Residual snapshot slots are signed diagnostics, never quantity ledgers.
+_SIGNED_RESIDUAL_FIELDS = frozenset(
+    {
+        "material_balance_residual",
+        "material_balance_tolerance",
+        "finance_balance_residual",
+        "finance_balance_tolerance",
+    }
+)
+
 
 class AccountingError(ResearchGateError):
     """A stock-flow or cash invariant violation; the run must fail closed."""
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers (toy-4 accounting style, behaviour kept verbatim).
+# ---------------------------------------------------------------------------
 
 
 def tolerance_for(lhs: np.ndarray | float, rhs: np.ndarray | float) -> np.ndarray | float:
@@ -51,6 +177,7 @@ def _compare_cells(
     ledger: str,
     lhs: np.ndarray,
     rhs: np.ndarray,
+    labels: list[str] | None = None,
 ) -> tuple[float, float]:
     """Vectorized cell-wise equality within per-cell tolerance.
 
@@ -65,13 +192,11 @@ def _compare_cells(
             f"{lhs.shape} vs {rhs.shape}"
         )
     if not (np.all(np.isfinite(lhs)) and np.all(np.isfinite(rhs))):
-        index = int(
-            np.argmax(~(np.isfinite(lhs) & np.isfinite(rhs)).reshape(-1))
-        )
+        index = int(np.argmax(~(np.isfinite(lhs) & np.isfinite(rhs)).reshape(-1)))
         _fail(
             quarter,
             ledger,
-            _cell_key(ledger, index, lhs.shape),
+            labels[index] if labels is not None else _cell_key(ledger, index, lhs.shape),
             float(lhs.reshape(-1)[index]),
             float(rhs.reshape(-1)[index]),
         )
@@ -83,7 +208,7 @@ def _compare_cells(
         _fail(
             quarter,
             ledger,
-            _cell_key(ledger, index, lhs.shape),
+            labels[index] if labels is not None else _cell_key(ledger, index, lhs.shape),
             float(lhs.reshape(-1)[index]),
             float(rhs.reshape(-1)[index]),
         )
@@ -91,6 +216,51 @@ def _compare_cells(
         ratio = np.where(tol > 0, np.abs(residual) / tol, 0.0)
     return (
         float(np.max(np.abs(residual))) if residual.size else 0.0,
+        float(np.max(ratio)) if ratio.size else 0.0,
+    )
+
+
+def _compare_at_most(
+    quarter: str,
+    ledger: str,
+    lhs: np.ndarray,
+    rhs: np.ndarray,
+    labels: list[str] | None = None,
+) -> tuple[float, float]:
+    """Vectorized cell-wise ``lhs <= rhs`` within per-cell tolerance."""
+    lhs = np.ascontiguousarray(lhs, dtype=np.float64)
+    rhs = np.ascontiguousarray(rhs, dtype=np.float64)
+    if lhs.shape != rhs.shape:
+        raise AccountingError(
+            f"accounting shape mismatch in {quarter} ledger={ledger}: "
+            f"{lhs.shape} vs {rhs.shape}"
+        )
+    if not (np.all(np.isfinite(lhs)) and np.all(np.isfinite(rhs))):
+        index = int(np.argmax(~(np.isfinite(lhs) & np.isfinite(rhs)).reshape(-1)))
+        _fail(
+            quarter,
+            ledger,
+            labels[index] if labels is not None else _cell_key(ledger, index, lhs.shape),
+            float(lhs.reshape(-1)[index]),
+            float(rhs.reshape(-1)[index]),
+        )
+    residual = lhs - rhs
+    tol = np.asarray(tolerance_for(lhs, rhs), dtype=np.float64)
+    bad = residual > tol
+    if bad.any():
+        index = int(np.argmax(bad))
+        _fail(
+            quarter,
+            ledger,
+            labels[index] if labels is not None else _cell_key(ledger, index, lhs.shape),
+            float(lhs.reshape(-1)[index]),
+            float(rhs.reshape(-1)[index]),
+        )
+    excess = np.maximum(residual, 0.0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ratio = np.where(tol > 0, excess / tol, 0.0)
+    return (
+        float(np.max(excess)) if excess.size else 0.0,
         float(np.max(ratio)) if ratio.size else 0.0,
     )
 
@@ -110,848 +280,2038 @@ def _check_array(
         )
 
 
-def capture_mutable_stocks(state: Toy4State) -> Toy4State:
-    """Snapshot the four accounting-mutable stocks before a tick executes.
+def _require(condition: bool, quarter: str, message: str) -> None:
+    if not condition:
+        raise AccountingError(f"accounting structure violation in {quarter}: {message}")
 
-    Shares the static columns with the live state; unlike
-    :func:`snapshot_opening_stocks`, the mutable pools are copied from the
-    *pre-call* state rather than from the returned flows, so continuity is
-    established against the actual previously admitted state.
-    """
-    return Toy4State(
-        schema_version=state.schema_version,
-        completed_ticks=state.completed_ticks,
-        household_id=state.household_id,
-        household_region=state.household_region,
-        household_weight=state.household_weight,
-        household_size=state.household_size,
-        household_cash=state.household_cash.copy(),
-        organization_id=state.organization_id,
-        organization_region=state.organization_region,
-        organization_output_sector=state.organization_output_sector,
-        organization_capacity=state.organization_capacity,
-        organization_labor_capacity=state.organization_labor_capacity,
-        organization_input_coefficients=state.organization_input_coefficients,
-        organization_output_mix=state.organization_output_mix,
-        organization_input_inventory=state.organization_input_inventory.copy(),
-        wholesale_inventory=state.wholesale_inventory.copy(),
-        retail_inventory=state.retail_inventory.copy(),
-        region_equivalent_persons=state.region_equivalent_persons,
-        regional_share=state.regional_share,
+
+def _check_unit_interval(
+    quarter: str, ledger: str, values: np.ndarray, labels: list[str] | None = None
+) -> tuple[float, float]:
+    values = np.asarray(values, dtype=np.float64)
+    return _compare_cells(quarter, ledger, values, np.clip(values, 0.0, 1.0), labels=labels)
+
+
+def _accumulate(
+    per_ledger: dict[str, tuple[float, float]], ledger: str, residual: float, ratio: float
+) -> None:
+    previous = per_ledger.get(ledger)
+    if previous is None:
+        per_ledger[ledger] = (residual, ratio)
+    else:
+        per_ledger[ledger] = (max(previous[0], residual), max(previous[1], ratio))
+
+
+# ---------------------------------------------------------------------------
+# Cell / axis labels (built once per check; only read when a gate fails).
+# ---------------------------------------------------------------------------
+
+
+def _stock_cell_labels(network: MaterialNetwork) -> list[str]:
+    kinds = np.asarray(network.cell_owner_kind, dtype=np.int64)
+    owners = np.asarray(network.cell_owner_id, dtype=np.int64)
+    regions = np.asarray(network.cell_region, dtype=np.int64)
+    pools = np.asarray(network.cell_pool, dtype=np.int64)
+    commodities = np.asarray(network.cell_commodity, dtype=np.int64)
+    stages = np.asarray(network.cell_stage, dtype=np.int64)
+    commodity_ids = network.commodity_ids
+    return [
+        f"cell[{_KIND_NAMES.get(int(kinds[i]), int(kinds[i]))}/{int(owners[i])}"
+        f"|r{int(regions[i])}|{_POOL_NAMES.get(int(pools[i]), int(pools[i]))}"
+        f"|{commodity_ids[int(commodities[i])]}"
+        f"|{_STAGE_NAMES.get(int(stages[i]), int(stages[i]))}]"
+        for i in range(int(kinds.shape[0]))
+    ]
+
+
+def _purpose_labels(network: MaterialNetwork) -> list[str]:
+    return [
+        f"demand[{index}|{_PURPOSE_NAMES.get(int(code), int(code))}]"
+        for index, code in enumerate(np.asarray(network.demand_purpose, dtype=np.int64))
+    ]
+
+
+def _edge_labels(network: MaterialNetwork) -> list[str]:
+    return [f"edge[{int(edge_id)}]" for edge_id in np.asarray(network.edge_id)]
+
+
+# ---------------------------------------------------------------------------
+# Continuity reconstruction.
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class _Continuity:
+    """Per-cell reconstruction of one tick's stock movements."""
+
+    production: np.ndarray  # (S,) B.T @ realized
+    imports_in: np.ndarray  # (S,) channel imports into treasury pool cells
+    edge_receipts: np.ndarray  # (S,) deliveries with a stock-cell destination
+    edge_out_internal: np.ndarray  # (S,) deliveries leaving the source (dest >= 0)
+    edge_out_all: np.ndarray  # (S,) every delivery leaving the source
+    exports_out: np.ndarray  # (S,) export boundary deliveries by source
+    housing_out: np.ndarray  # (S,) housing boundary deliveries by source
+    household_edges_out: np.ndarray  # (S,) household boundary edges by source
+    production_used: np.ndarray  # (S,) K-input consumption by input cell
+    production_row_delivered: np.ndarray  # (S,) production-row deliveries by dest
+    logistics_used: np.ndarray  # (S,) edge logistics services by transport cell
+    project_installed: np.ndarray  # (S,) completed x per-unit into WIP cells
+    household_channel: np.ndarray  # (S,) plot self-use + direct market outflow
+    services_cells: np.ndarray  # (S,) bool services_transport cells
+    retail_org_cells: np.ndarray  # (S,) bool organization retail pool cells
+    retail_expected: np.ndarray  # (S,) group expected close (retail cells)
+    retail_close: np.ndarray  # (S,) group actual close (retail cells)
+    expected_close: np.ndarray  # (S,) expected closing stock (before expiry)
+    services_leftover: np.ndarray  # (S,) expiry needed so services close at 0
+    stock_residual: np.ndarray  # (S,) continuity residual (retail groups broadcast)
+    stock_tolerance: np.ndarray  # (S,) matching tolerance
+
+
+def _reconstruct(
+    opening: MaterialStockSnapshot,
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    network: MaterialNetwork,
+    prices: MaterialPrices | None,
+    parameters: MaterialParameters | None,
+) -> _Continuity:
+    quarter = flows.quarter
+    S = int(np.asarray(network.cell_owner_kind).shape[0])
+    K = int(np.asarray(network.input_cell).shape[0])
+    G = len(network.commodity_ids)
+    R = int(state.dwelling_stock.shape[0])
+
+    if prices is None:
+        prices = MaterialPrices(
+            standard=np.ones(G, dtype=np.float64), food_raw=1.0
+        )
+
+    open_ = np.asarray(opening.stock_value, dtype=np.float64)
+    close = np.asarray(state.stock_value, dtype=np.float64)
+    realized = np.asarray(flows.activity_realized, dtype=np.float64)
+    production = np.asarray(network.B.T @ realized).ravel().astype(np.float64)
+
+    src = np.asarray(network.edge_source_cell, dtype=np.int64)
+    dst = np.asarray(network.edge_destination_cell, dtype=np.int64)
+    purpose = np.asarray(network.edge_purpose, dtype=np.int64)
+    delivered_edges = np.asarray(flows.edge_delivered, dtype=np.float64)
+    _require(
+        bool(np.all((src >= 0) & (src < S))),
+        quarter,
+        "route edge source cell index outside the stock catalog",
+    )
+    _require(
+        bool(np.all((dst >= -1) & (dst < S))),
+        quarter,
+        "route edge destination cell index outside the stock catalog",
+    )
+    demand_cells = np.asarray(network.demand_cell, dtype=np.int64)
+    _require(
+        bool(np.all((demand_cells >= -1) & (demand_cells < S))),
+        quarter,
+        "demand destination cell index outside the stock catalog",
+    )
+
+    imports_in = np.zeros(S, dtype=np.float64)
+    import_cells = np.asarray(network.import_pool_cell, dtype=np.int64)
+    importable = import_cells >= 0
+    if bool(np.any(importable)):
+        imports_in[import_cells[importable]] = (
+            np.asarray(flows.cmea_imports, dtype=np.float64)[importable]
+            + np.asarray(flows.convertible_imports, dtype=np.float64)[importable]
+        )
+
+    internal = dst >= 0
+    edge_receipts = np.bincount(
+        dst[internal], weights=delivered_edges[internal], minlength=S
+    )
+    edge_out_internal = np.bincount(
+        src[internal], weights=delivered_edges[internal], minlength=S
+    )
+    edge_out_all = np.bincount(src, weights=delivered_edges, minlength=S)
+
+    def _boundary_out(code: int) -> np.ndarray:
+        mask = purpose == code
+        if bool(np.any(mask)):
+            return np.bincount(src[mask], weights=delivered_edges[mask], minlength=S)
+        return np.zeros(S, dtype=np.float64)
+
+    exports_out = _boundary_out(_P_EXPORT_CMEA) + _boundary_out(_P_EXPORT_CONVERTIBLE)
+    housing_out = _boundary_out(_P_HOUSING)
+    household_edges_out = _boundary_out(_P_HOUSEHOLD)
+
+    # Production input consumption, scattered onto the input stock cells.
+    input_index = np.asarray(network.demand_input_index, dtype=np.int64)
+    production_rows = input_index >= 0
+    k_rows = input_index[production_rows]
+    _require(
+        int(np.unique(k_rows).size) == int(k_rows.size),
+        quarter,
+        "production demand rows are not bijective with the K input axis",
+    )
+    k_used = np.zeros(K, dtype=np.float64)
+    k_used[k_rows] = np.asarray(flows.used, dtype=np.float64)[production_rows]
+    input_cells = np.asarray(network.input_cell, dtype=np.int64)
+    _require(
+        bool(np.all((input_cells >= 0) & (input_cells < S))),
+        quarter,
+        "technology input cell index outside the stock catalog",
+    )
+    production_used = np.bincount(input_cells, weights=k_used, minlength=S)
+    production_row_delivered = np.bincount(
+        demand_cells[production_rows],
+        weights=np.asarray(flows.delivered, dtype=np.float64)[production_rows],
+        minlength=S,
+    )
+
+    # Logistics services are consumed out of the transport org's output cell.
+    logistics_used = np.zeros(S, dtype=np.float64)
+    transport_orgs = np.asarray(network.edge_transport_org, dtype=np.int64)
+    org_output = np.asarray(network.org_output_cell, dtype=np.int64)
+    served = (transport_orgs >= 0) & (transport_orgs < org_output.shape[0])
+    if bool(np.any(served)):
+        cells = org_output[transport_orgs[served]]
+        ok = cells >= 0
+        if bool(np.any(ok)):
+            np.add.at(
+                logistics_used,
+                cells[ok],
+                np.asarray(flows.edge_service_used, dtype=np.float64)[served][ok],
+            )
+
+    # Project installation into the organization WIP cells.
+    completed = np.asarray(flows.organization_investment_completed, dtype=np.float64)
+    capital_unit = (
+        float(parameters.capacity_capital_goods_per_unit)
+        if parameters is not None
+        else _PER_UNIT_DEFAULT
+    )
+    construction_unit = (
+        float(parameters.capacity_construction_per_unit)
+        if parameters is not None
+        else _PER_UNIT_DEFAULT
+    )
+    project_installed = np.zeros(S, dtype=np.float64)
+    capital_cells = np.asarray(network.project_capital_cell, dtype=np.int64)
+    construction_wip_cells = np.asarray(network.project_construction_cell, dtype=np.int64)
+    capital_ok = capital_cells >= 0
+    construction_ok = construction_wip_cells >= 0
+    if bool(np.any(capital_ok)):
+        np.add.at(
+            project_installed,
+            capital_cells[capital_ok],
+            completed[capital_ok] * capital_unit,
+        )
+    if bool(np.any(construction_ok)):
+        np.add.at(
+            project_installed,
+            construction_wip_cells[construction_ok],
+            completed[construction_ok] * construction_unit,
+        )
+
+    # Household acquisition channels outside the organization retail pools:
+    # plot self-use (imputed value at the ready-food admin price) and the
+    # plot direct market (late cash receipts at the same admin price).
+    household_channel = np.zeros(S, dtype=np.float64)
+    commodity_ids = network.commodity_ids
+    food_g = commodity_ids.index(_FOOD_ID) if _FOOD_ID in commodity_ids else -1
+    if food_g >= 0:
+        ready_price = float(prices.standard[food_g])
+        _require(
+            ready_price > 0.0,
+            quarter,
+            "ready-food admin price must be positive to value plot channels",
+        )
+        weight = np.asarray(state.household_weight, dtype=np.float64)
+        region = np.asarray(state.household_region, dtype=np.int64)
+        self_use_value = np.bincount(
+            region,
+            weights=weight * np.asarray(flows.household_self_use, dtype=np.float64),
+            minlength=R,
+        )
+        direct_value = np.bincount(
+            region,
+            weights=weight
+            * np.asarray(flows.household_plot_income_direct, dtype=np.float64),
+            minlength=R,
+        )
+        plot_self = np.asarray(network.plot_ready_self_cell, dtype=np.int64)
+        plot_market = np.asarray(network.plot_ready_market_cell, dtype=np.int64)
+        self_ok = plot_self >= 0
+        market_ok = plot_market >= 0
+        if bool(np.any(self_ok)):
+            household_channel[plot_self[self_ok]] += self_use_value[self_ok] / ready_price
+        if bool(np.any(market_ok)):
+            household_channel[plot_market[market_ok]] += (
+                direct_value[market_ok] / ready_price
+            )
+    services_g = commodity_ids.index(_SERVICES_ID) if _SERVICES_ID in commodity_ids else -1
+    cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
+    cell_pool = np.asarray(network.cell_pool, dtype=np.int64)
+    cell_kind = np.asarray(network.cell_owner_kind, dtype=np.int64)
+    cell_region = np.asarray(network.cell_region, dtype=np.int64)
+    cell_stage = np.asarray(network.cell_stage, dtype=np.int64)
+    services_cells = (
+        (cell_commodity == services_g) if services_g >= 0 else np.zeros(S, dtype=bool)
+    )
+    retail_org_cells = (cell_pool == _POOL_RETAIL) & (cell_kind == _KIND_ORG)
+
+    inflow = open_ + production + imports_in + edge_receipts
+    outflow = (
+        edge_out_internal
+        + exports_out
+        + housing_out
+        + production_used
+        + logistics_used
+        + project_installed
+        + household_channel
+    )
+    expected_close = inflow - outflow
+
+    stock_residual = np.where(services_cells, close, expected_close - close)
+    stock_tolerance = np.where(
+        services_cells,
+        np.asarray(tolerance_for(close, np.zeros_like(close)), dtype=np.float64),
+        np.asarray(tolerance_for(expected_close, close), dtype=np.float64),
+    )
+    retail_expected = expected_close.copy()
+    retail_close = close.copy()
+    if bool(np.any(retail_org_cells)):
+        # Organization retail pools close via the regional sales channel;
+        # (region, commodity, stage) is the finest decomposable unit.
+        group_count = R * G * 3
+        retail = np.nonzero(retail_org_cells)[0]
+        keys = ((cell_region * G + cell_commodity) * 3 + cell_stage)[retail]
+        open_g = np.bincount(keys, weights=open_[retail], minlength=group_count)
+        receipts_g = np.bincount(
+            keys, weights=edge_receipts[retail], minlength=group_count
+        )
+        close_g = np.bincount(keys, weights=close[retail], minlength=group_count)
+        sales_g = np.zeros(group_count, dtype=np.float64)
+        retail_sales = np.asarray(flows.retail_sales, dtype=np.float64)
+        retail_cell_map = np.asarray(network.retail_cell, dtype=np.int64)
+        mapped = retail_cell_map >= 0
+        if bool(np.any(mapped)):
+            sales_keys = (
+                np.broadcast_to(np.arange(R, dtype=np.int64)[:, None], (R, G))[mapped]
+                * G
+                + np.broadcast_to(np.arange(G, dtype=np.int64)[None, :], (R, G))[mapped]
+            ) * 3 + cell_stage[retail_cell_map[mapped]]
+            sales_g = np.bincount(
+                sales_keys, weights=retail_sales[mapped], minlength=group_count
+            )
+        expected_g = open_g + receipts_g - sales_g
+        group_residual = expected_g[keys] - close_g[keys]
+        stock_residual[retail] = group_residual
+        stock_tolerance[retail] = np.asarray(
+            tolerance_for(expected_g[keys], close_g[keys]), dtype=np.float64
+        )
+        retail_expected[retail] = expected_g[keys]
+        retail_close[retail] = close_g[keys]
+
+    # Services are ephemeral: retail household service use drains the region's
+    # same-tick service pool before the residual is expired. Retail cells are
+    # pooled by region for this channel; allocate the remaining expiry across
+    # that region's service cells without making any cell negative.
+    services_leftover = np.where(services_cells, expected_close, 0.0)
+    if services_g >= 0:
+        regional_services = services_cells & (cell_region >= 0)
+        available_by_region = np.bincount(
+            cell_region[regional_services],
+            weights=services_leftover[regional_services],
+            minlength=R,
+        )
+        service_sales = np.asarray(flows.retail_sales, dtype=np.float64)[:, services_g]
+        _compare_at_most(
+            quarter,
+            "services_household_use_le_available",
+            service_sales,
+            available_by_region,
+            labels=[f"region[{region_id}]" for region_id in network.region_ids],
+        )
+        remaining_fraction = np.divide(
+            np.maximum(available_by_region - service_sales, 0.0),
+            available_by_region,
+            out=np.ones(available_by_region.shape, dtype=np.float64),
+            where=available_by_region > 0.0,
+        )
+        services_leftover[regional_services] *= remaining_fraction[
+            cell_region[regional_services]
+        ]
+
+    return _Continuity(
+        production=production,
+        imports_in=imports_in,
+        edge_receipts=edge_receipts,
+        edge_out_internal=edge_out_internal,
+        edge_out_all=edge_out_all,
+        exports_out=exports_out,
+        housing_out=housing_out,
+        household_edges_out=household_edges_out,
+        production_used=production_used,
+        production_row_delivered=production_row_delivered,
+        logistics_used=logistics_used,
+        project_installed=project_installed,
+        household_channel=household_channel,
+        services_cells=services_cells,
+        retail_org_cells=retail_org_cells,
+        retail_expected=retail_expected,
+        retail_close=retail_close,
+        expected_close=expected_close,
+        services_leftover=services_leftover,
+        stock_residual=stock_residual,
+        stock_tolerance=stock_tolerance,
     )
 
 
-def snapshot_opening_stocks(state: Toy4State, flows: TickFlows) -> Toy4State:
-    """Cheap opening copy: shares static columns, copies mutable stocks."""
-    return Toy4State(
-        schema_version=state.schema_version,
-        completed_ticks=flows.tick,
-        household_id=state.household_id,
-        household_region=state.household_region,
-        household_weight=state.household_weight,
-        household_size=state.household_size,
-        household_cash=flows.household_cash_open,
-        organization_id=state.organization_id,
-        organization_region=state.organization_region,
-        organization_output_sector=state.organization_output_sector,
-        organization_capacity=state.organization_capacity,
-        organization_labor_capacity=state.organization_labor_capacity,
-        organization_input_coefficients=state.organization_input_coefficients,
-        organization_output_mix=state.organization_output_mix,
-        organization_input_inventory=flows.organization_input_open,
-        wholesale_inventory=flows.wholesale_open,
-        retail_inventory=flows.retail_open,
-        region_equivalent_persons=state.region_equivalent_persons,
-        regional_share=state.regional_share,
-    )
-
-
-def total_stocks(state: Toy4State) -> np.ndarray:
-    """S_g = wholesale + sum_j organization input + sum_r regional retail."""
-    total: np.ndarray = (
-        state.wholesale_inventory
-        + state.organization_input_inventory.sum(axis=0)
-        + state.retail_inventory.sum(axis=0)
-    )
-    return total
-
-
-def _global_material_sides(
-    opening: Toy4State, closing: Toy4State, flows: TickFlows
-) -> tuple[np.ndarray, np.ndarray]:
-    lhs = total_stocks(closing) - total_stocks(opening)
-    rhs = (
-        flows.imports
-        + flows.organization_output.sum(axis=0)
-        - flows.used_input.sum(axis=0)
-        - flows.export_realized
-        - flows.retail_sales.sum(axis=0)
-    )
-    return lhs, rhs
+# ---------------------------------------------------------------------------
+# Residual helpers the kernel calls to fill the flow snapshot slots.
+# ---------------------------------------------------------------------------
 
 
 def material_balance_residuals(
-    closing: Toy4State, flows: TickFlows
+    opening: MaterialStockSnapshot,
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    network: MaterialNetwork,
+    *,
+    prices: MaterialPrices | None = None,
+    parameters: MaterialParameters | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Per-commodity global residual Sclose-Sopen-(M+Y-U-X-C) + tolerances."""
-    opening = snapshot_opening_stocks(closing, flows)
-    lhs, rhs = _global_material_sides(opening, closing, flows)
-    return lhs - rhs, np.asarray(tolerance_for(lhs, rhs), dtype=np.float64)
+    """Per-cell continuity residual ``(S,)`` plus matching tolerances.
 
-
-def _regional_cash_sides(
-    closing: Toy4State, flows: TickFlows, prices: np.ndarray
-) -> tuple[np.ndarray, np.ndarray]:
-    """Weighted cash change vs income source minus retail receipts, per region."""
-    regions = closing.retail_inventory.shape[0]
-    lhs = np.zeros(regions)
-    rhs = np.zeros(regions)
-    for region in range(regions):
-        mask = closing.household_region == region
-        weight = closing.household_weight[mask]
-        lhs[region] = np.sum(
-            weight * (flows.household_cash_close[mask] - flows.household_cash_open[mask])
-        )
-        income = np.sum(weight * flows.household_income[mask])
-        receipts = float(np.dot(prices, flows.retail_sales[region]))
-        rhs[region] = income - receipts
-    return lhs, rhs
-
-
-def cash_balance_residuals(
-    closing: Toy4State, flows: TickFlows, prices: np.ndarray
-) -> tuple[np.ndarray, np.ndarray]:
-    lhs, rhs = _regional_cash_sides(closing, flows, prices)
-    return lhs - rhs, np.asarray(tolerance_for(lhs, rhs), dtype=np.float64)
-
-
-def _weighted_realized(closing: Toy4State, flows: TickFlows) -> np.ndarray:
-    regions = closing.retail_inventory.shape[0]
-    out = np.zeros((regions, flows.household_realized.shape[1]))
-    for region in range(regions):
-        mask = closing.household_region == region
-        if mask.any():
-            out[region] = (
-                closing.household_weight[mask, None] * flows.household_realized[mask]
-            ).sum(axis=0)
-    return out
-
-
-def check_toy4_state_identities(
-    state: Toy4State,
-    parameters: Toy4Parameters,
-    quarter: str,
-    initial_household_cash: float,
-) -> None:
-    """Static/derived state identities recomputed from the declared parameters.
-
-    Organization capacities, labor capacities, input coefficients, output mix,
-    regional equivalent persons, shares and household weights are deterministic
-    functions of the scenario parameters and the index arrays; a state that
-    disagrees with them is not a valid Toy-4 state. Used by the runner's
-    per-tick gate and by checkpoint admission.
+    Organization retail pools carry their ``(region, commodity, stage)``
+    group residual (regional sales are not decomposed per retail org);
+    services cells carry their deviation from the mandatory zero closing
+    stock.  ``prices``/``parameters`` default to the plan constants and must
+    be supplied whenever the scenario declares private-plot food channels or
+    non-default investment per-unit coefficients.
     """
-    g = state.wholesale_inventory.shape[0]
-    sector_counts = np.bincount(
-        state.organization_output_sector, minlength=g
-    ).astype(np.float64)
-    expected_capacity = (
-        np.asarray(parameters.sector_capacity_totals, dtype=np.float64)[
-            state.organization_output_sector
+    if prices is None and bool(
+        np.any(np.asarray(network.plot_ready_self_cell, dtype=np.int64) >= 0)
+    ):
+        raise AccountingError(
+            "material_balance_residuals requires prices when the network "
+            "declares private-plot food channels"
+        )
+    continuity = _reconstruct(opening, state, flows, network, prices, parameters)
+    return continuity.stock_residual.copy(), continuity.stock_tolerance.copy()
+
+
+def finance_balance_residuals(
+    state: MaterialState, flows: MaterialTickFlows
+) -> tuple[np.ndarray, np.ndarray]:
+    """Bank-sheet and deposit-composition residuals with tolerances.
+
+    Pure measurement (no gate): ``assets - liabilities`` then
+    ``deposit_liability - (weighted household cash + organization cash +
+    treasury)`` per bank.  The domestic-currency Treasury fiscal account is
+    held at dense bank index 0; households bank at ``region % B`` and
+    organizations at their declared dense bank index.
+    """
+    banks = int(state.bank_reserves.shape[0])
+    loan = np.asarray(state.bank_loan_asset, dtype=np.float64)
+    receivable = np.asarray(state.bank_interest_receivable, dtype=np.float64)
+    reserves = np.asarray(state.bank_reserves, dtype=np.float64)
+    deposits = np.asarray(state.bank_deposit_liability, dtype=np.float64)
+    equity = np.asarray(state.bank_equity, dtype=np.float64)
+    assets = loan + receivable + reserves
+    liabilities = deposits + equity
+
+    sources = np.zeros(banks, dtype=np.float64)
+    if banks:
+        weight = np.asarray(state.household_weight, dtype=np.float64)
+        household_cash = np.asarray(state.household_cash, dtype=np.float64)
+        household_bank = np.asarray(state.household_region, dtype=np.int64) % banks
+        sources += np.bincount(
+            household_bank, weights=weight * household_cash, minlength=banks
+        )
+        org_bank = np.asarray(state.organization_bank, dtype=np.int64)
+        borrower = org_bank >= 0
+        if bool(np.any(borrower)):
+            sources += np.bincount(
+                org_bank[borrower],
+                weights=np.asarray(state.organization_cash, dtype=np.float64)[borrower],
+                minlength=banks,
+            )
+        sources[0] += float(state.treasury_deposit)
+
+    residual = np.concatenate([assets - liabilities, deposits - sources])
+    tolerance = np.concatenate(
+        [
+            np.asarray(tolerance_for(assets, liabilities), dtype=np.float64),
+            np.asarray(tolerance_for(deposits, sources), dtype=np.float64),
         ]
-        / sector_counts[state.organization_output_sector]
     )
-    _compare_cells(
-        quarter,
-        "state.organization_capacity_identity",
-        state.organization_capacity,
-        expected_capacity,
-    )
-    _compare_cells(
-        quarter,
-        "state.organization_labor_capacity_identity",
-        state.organization_labor_capacity,
-        expected_capacity,
-    )
-    expected_coefficients = np.asarray(
-        parameters.input_coefficients, dtype=np.float64
-    )[state.organization_output_sector]
-    _compare_cells(
-        quarter,
-        "state.organization_input_coefficients_identity",
-        state.organization_input_coefficients,
-        expected_coefficients,
-    )
-    expected_mix = np.zeros_like(state.organization_output_mix)
-    expected_mix[np.arange(state.organization_id.shape[0]), state.organization_output_sector] = 1.0
-    _compare_cells(
-        quarter,
-        "state.organization_output_mix_identity",
-        state.organization_output_mix,
-        expected_mix,
-    )
-    expected_persons = np.bincount(
-        state.household_region,
-        weights=state.household_weight * state.household_size,
-        minlength=state.retail_inventory.shape[0],
-    )
-    _compare_cells(
-        quarter,
-        "state.region_equivalent_persons_identity",
-        state.region_equivalent_persons,
-        expected_persons,
-    )
-    access = np.asarray(parameters.regional_access_multiplier, dtype=np.float64)
-    expected_share = expected_persons * access
-    expected_share = expected_share / expected_share.sum()
-    _compare_cells(
-        quarter,
-        "state.regional_share_identity",
-        state.regional_share,
-        expected_share,
-    )
-    n = state.household_id.shape[0]
-    expected_weight = np.full(
-        n, float(parameters.equivalent_households) / n, dtype=np.float64
-    )
-    _compare_cells(
-        quarter,
-        "state.household_weight_identity",
-        state.household_weight,
-        expected_weight,
-    )
-    e = state.organization_id.shape[0]
-    _compare_cells(
-        quarter,
-        "state.household_id_identity",
-        state.household_id,
-        np.arange(n, dtype=np.int64),
-    )
-    _compare_cells(
-        quarter,
-        "state.organization_id_identity",
-        state.organization_id,
-        np.arange(e, dtype=np.int64),
-    )
-    r = state.retail_inventory.shape[0]
-    _compare_cells(
-        quarter,
-        "state.household_region_identity",
-        state.household_region.astype(np.int64),
-        (np.arange(n, dtype=np.int64) % r),
-    )
-    _compare_cells(
-        quarter,
-        "state.organization_region_identity",
-        state.organization_region.astype(np.int64),
-        (np.arange(e, dtype=np.int64) % r),
-    )
-    _compare_cells(
-        quarter,
-        "state.organization_output_sector_identity",
-        state.organization_output_sector.astype(np.int64),
-        (np.arange(e, dtype=np.int64) % g),
-    )
-    # Toy-4 algebraic invariants of the fixed kernel: within a region all
-    # households share the same size-independent budget/rationing factors, so
-    # cash is proportional to household size; same-sector organizations are
-    # initialized identically and receive identical allocation and Leontief
-    # updates, so their input inventories stay equal.
-    for region in range(state.retail_inventory.shape[0]):
-        mask = state.household_region == region
-        if int(mask.sum()) > 1:
-            # cash_h = C0 + size_h * K_region (C0 uniform per household).
-            ratio = (
-                state.household_cash[mask] - float(initial_household_cash)
-            ) / state.household_size[mask]
-            if float(ratio.max() - ratio.min()) > 1e-9:
-                raise AccountingError(
-                    f"{quarter}: household cash minus the declared initial cash is "
-                    f"not proportional to size within region {region}"
-                )
-    for sector in range(g):
-        mask = state.organization_output_sector == sector
-        rows = state.organization_input_inventory[mask]
-        if rows.shape[0] > 1 and float(np.abs(rows - rows[0]).max()) > 1e-9:
-            raise AccountingError(
-                f"{quarter}: same-sector organization inventories diverge for sector "
-                f"{sector}"
-            )
+    return residual, tolerance
 
 
-def _check_all_state_arrays(state: Toy4State, quarter: str) -> None:
-    """Every numeric state array must be finite; stocks/cash/shares non-negative;
-    index arrays inside their axes and id arrays unique."""
-    n = state.household_id.shape[0]
-    e = state.organization_id.shape[0]
-    r = state.retail_inventory.shape[0]
-    g = state.wholesale_inventory.shape[0]
-    non_negative = (
-        "household_weight",
-        "household_size",
-        "household_cash",
-        "organization_capacity",
-        "organization_labor_capacity",
-        "organization_input_coefficients",
-        "organization_output_mix",
-        "organization_input_inventory",
-        "wholesale_inventory",
-        "retail_inventory",
-        "region_equivalent_persons",
-        "regional_share",
-    )
-    for name, values in (
-        ("household_id", state.household_id),
-        ("household_region", state.household_region),
-        ("household_weight", state.household_weight),
-        ("household_size", state.household_size),
-        ("household_cash", state.household_cash),
-        ("organization_id", state.organization_id),
-        ("organization_region", state.organization_region),
-        ("organization_output_sector", state.organization_output_sector),
-        ("organization_capacity", state.organization_capacity),
-        ("organization_labor_capacity", state.organization_labor_capacity),
-        ("organization_input_coefficients", state.organization_input_coefficients),
-        ("organization_output_mix", state.organization_output_mix),
-        ("organization_input_inventory", state.organization_input_inventory),
-        ("wholesale_inventory", state.wholesale_inventory),
-        ("retail_inventory", state.retail_inventory),
-        ("region_equivalent_persons", state.region_equivalent_persons),
-        ("regional_share", state.regional_share),
-    ):
-        values = np.asarray(values)
-        if not np.all(np.isfinite(values)):
-            raise AccountingError(
-                f"{quarter}: state array {name} is not finite"
-            )
-        if name in non_negative and values.size and float(np.min(values)) < -ATOL:
-            raise AccountingError(f"{quarter}: state array {name} is negative")
-    if (
-        int(state.household_region.min()) < 0
-        or int(state.household_region.max()) >= r
-        or int(state.organization_region.min()) < 0
-        or int(state.organization_region.max()) >= r
-        or int(state.organization_output_sector.min()) < 0
-        or int(state.organization_output_sector.max()) >= g
-        or state.organization_output_mix.shape != (e, g)
-        or state.organization_input_coefficients.shape != (e, g)
-    ):
-        raise AccountingError(f"{quarter}: state index/coefficient shapes are invalid")
-    if len(set(state.household_id.tolist())) != n or len(
-        set(state.organization_id.tolist())
-    ) != e:
-        raise AccountingError(f"{quarter}: state ids are not unique")
-    if abs(float(state.regional_share.sum()) - 1.0) > 1e-9 or float(
-        state.regional_share.min()
-    ) < 0:
-        raise AccountingError(f"{quarter}: regional shares are not a valid distribution")
+# ---------------------------------------------------------------------------
+# Invariant summary and the outer admission gate.
+# ---------------------------------------------------------------------------
 
 
-def _weighted_affordable(closing: Toy4State, flows: TickFlows) -> np.ndarray:
-    regions = closing.retail_inventory.shape[0]
-    out = np.zeros((regions, flows.household_affordable.shape[1]))
-    for region in range(regions):
-        mask = closing.household_region == region
-        if mask.any():
-            out[region] = (
-                closing.household_weight[mask, None] * flows.household_affordable[mask]
-            ).sum(axis=0)
-    return out
+@dataclass(frozen=True)
+class InvariantSummary:
+    """Maxima of every per-cell gate; ``per_ledger`` maps ledger name to
+    ``(max absolute residual, max tolerance ratio)``."""
+
+    max_material_abs_residual: float
+    max_material_tolerance_ratio: float
+    max_finance_abs_residual: float
+    max_finance_tolerance_ratio: float
+    checked_cells: int
+    per_ledger: dict[str, tuple[float, float]] = field(default_factory=dict)
 
 
-def check_toy4_invariants(
-    opening: Toy4State,
-    closing: Toy4State,
-    flows: TickFlows,
-    parameters: Toy4Parameters,
-) -> dict[str, float]:
-    """Verify every material/cash ledger; returns max residual/ratio summary."""
-    quarter = flows.quarter
-    prices = np.asarray(parameters.prices, dtype=np.float64)
-
-    max_material = 0.0
-    max_material_ratio = 0.0
-    max_cash = 0.0
-    max_cash_ratio = 0.0
-
-    def material(ledger: str, lhs: np.ndarray, rhs: np.ndarray) -> None:
-        nonlocal max_material, max_material_ratio
-        a, b = _compare_cells(quarter, ledger, lhs, rhs)
-        max_material = max(max_material, a)
-        max_material_ratio = max(max_material_ratio, b)
-
-    def cash(ledger: str, lhs: np.ndarray, rhs: np.ndarray) -> None:
-        nonlocal max_cash, max_cash_ratio
-        a, b = _compare_cells(quarter, ledger, lhs, rhs)
-        max_cash = max(max_cash, a)
-        max_cash_ratio = max(max_cash_ratio, b)
-
-    # --- finiteness / non-negativity over every state and flow array -----
-    from dataclasses import fields as dataclass_fields
-
-    non_negative_flow_fields = {
-        "imports",
-        "export_desired",
-        "export_realized",
-        "export_unmet",
-        "organization_target",
-        "organization_realized",
-        "desired_input",
-        "ordered_input",
-        "allocated_input",
-        "delivered_input",
-        "available_input",
-        "used_input",
-        "input_unmet",
-        "organization_output",
-        "organization_output_shortfall",
-        "household_income",
-        "household_desired",
-        "household_affordable",
-        "household_realized",
-        "budget_unmet",
-        "availability_unmet",
-        "total_unmet",
-        "household_spending",
-        "voluntary_saving",
-        "forced_saving",
-        "retail_planned",
-        "retail_incoming",
-        "retail_available",
-        "retail_sales",
-        "organization_input_open",
-        "organization_input_close",
-        "wholesale_open",
-        "wholesale_close",
-        "retail_open",
-        "retail_close",
-        "household_cash_open",
-        "household_cash_close",
-    }
-    for field_info in dataclass_fields(TickFlows):
+def _sweep_flows(flows: MaterialTickFlows, quarter: str) -> None:
+    """Every flow array is finite; quantity/money flows are non-negative."""
+    for field_info in dataclass_fields(MaterialTickFlows):
         value = getattr(flows, field_info.name)
         if not isinstance(value, np.ndarray):
             continue
         _check_array(
-            np.asarray(value, dtype=np.float64),
+            value,
             quarter=quarter,
             ledger=f"flows.{field_info.name}",
-            non_negative=field_info.name in non_negative_flow_fields,
+            non_negative=field_info.name not in _SIGNED_RESIDUAL_FIELDS,
         )
-    for name, values in (
-        ("opening.organization_input_inventory", opening.organization_input_inventory),
-        ("closing.organization_input_inventory", closing.organization_input_inventory),
-        ("opening.wholesale_inventory", opening.wholesale_inventory),
-        ("closing.wholesale_inventory", closing.wholesale_inventory),
-        ("opening.retail_inventory", opening.retail_inventory),
-        ("closing.retail_inventory", closing.retail_inventory),
-        ("opening.household_cash", opening.household_cash),
-        ("closing.household_cash", closing.household_cash),
-        ("closing.organization_capacity", closing.organization_capacity),
-        ("closing.organization_labor_capacity", closing.organization_labor_capacity),
+    for name in (
+        "cmea_import_payment",
+        "cmea_export_receipt",
+        "usd_import_payment",
+        "usd_export_receipt",
+        "usd_interest_paid",
+        "usd_interest_accrued",
+        "usd_principal_paid",
+        "usd_loan_drawn",
+        "expired_services",
     ):
-        _check_array(np.asarray(values, dtype=np.float64), quarter=quarter, ledger=name)
-    _check_all_state_arrays(opening, quarter)
-    _check_all_state_arrays(closing, quarter)
+        value = float(getattr(flows, name))
+        if not math.isfinite(value) or value < -ATOL:
+            raise AccountingError(
+                f"invalid flows.{name}={value!r} in {quarter} (must be finite, non-negative)"
+            )
+    if flows.official_fx_translation is not None:
+        value = float(flows.official_fx_translation)
+        if not math.isfinite(value) or value < -ATOL:
+            raise AccountingError(
+                f"invalid flows.official_fx_translation={value!r} in {quarter}"
+            )
 
-    # --- state <-> flow snapshot binding (the state is authoritative) -----
-    material(
-        "opening_org_input_vs_flows",
-        opening.organization_input_inventory,
-        flows.organization_input_open,
-    )
-    material(
-        "closing_org_input_vs_flows",
-        closing.organization_input_inventory,
-        flows.organization_input_close,
-    )
-    material("opening_wholesale_vs_flows", opening.wholesale_inventory, flows.wholesale_open)
-    material("closing_wholesale_vs_flows", closing.wholesale_inventory, flows.wholesale_close)
-    material("opening_retail_vs_flows", opening.retail_inventory, flows.retail_open)
-    material("closing_retail_vs_flows", closing.retail_inventory, flows.retail_close)
-    cash("opening_cash_vs_flows", opening.household_cash, flows.household_cash_open)
-    cash("closing_cash_vs_flows", closing.household_cash, flows.household_cash_close)
 
-    # --- declared flow identities (equalities, not just inequalities) ------
-    material(
-        "delivered_equals_allocated",
-        flows.delivered_input,
-        flows.allocated_input,
+def _sweep_arrays(
+    obj: MaterialState | MaterialStockSnapshot, quarter: str, prefix: str
+) -> None:
+    """State/snapshot arrays are finite; quantity arrays are non-negative.
+
+    Axis-index fields carry ``-1`` sentinels by contract and stay signed.
+    """
+    for field_info in dataclass_fields(obj):
+        value = getattr(obj, field_info.name)
+        if isinstance(value, np.ndarray):
+            _check_array(
+                value,
+                quarter=quarter,
+                ledger=f"{prefix}.{field_info.name}",
+                non_negative=field_info.name not in _SIGNED_INDEX_FIELDS,
+            )
+
+
+def _check_journal(
+    flows: MaterialTickFlows, quarter: str
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Structural journal gates; returns typed columns for cross-checks."""
+    columns = (
+        flows.journal_kind,
+        flows.journal_tick,
+        flows.journal_debit,
+        flows.journal_credit,
+        flows.journal_currency,
+        flows.journal_amount,
+        flows.journal_org,
+        flows.journal_leg,
     )
-    material(
-        "available_equals_open_plus_delivered",
-        flows.available_input,
-        flows.organization_input_open + flows.delivered_input,
+    lengths = {len(column) for column in columns}
+    _require(
+        len(lengths) == 1,
+        quarter,
+        f"journal column lengths differ: {sorted(lengths)}",
     )
-    material(
-        "input_unmet_equals_ordered_minus_delivered",
-        flows.input_unmet,
-        flows.ordered_input - flows.delivered_input,
+    kind = np.asarray(flows.journal_kind, dtype=object)
+    debit = np.asarray(flows.journal_debit, dtype=np.int64)
+    credit = np.asarray(flows.journal_credit, dtype=np.int64)
+    amount = np.asarray(flows.journal_amount, dtype=np.float64)
+    currency = np.asarray(flows.journal_currency, dtype=object)
+    leg = np.asarray(flows.journal_leg, dtype=np.int64)
+    count = int(kind.shape[0])
+    if count == 0:
+        return kind, debit, credit, amount, currency
+    _check_array(amount, quarter=quarter, ledger="journal_amount")
+    tick = np.asarray(flows.journal_tick, dtype=np.int64)
+    _require(
+        bool(np.all(tick == flows.tick)),
+        quarter,
+        "journal legs must all carry the flow tick",
     )
-    material(
-        "ordered_input_equals_desired_minus_opening",
-        flows.ordered_input,
-        np.maximum(flows.desired_input - flows.organization_input_open, 0.0),
-    )
-    material(
-        "org_close_equals_available_minus_used",
-        flows.organization_input_close,
-        flows.available_input - flows.used_input,
-    )
-    material(
-        "desired_input_equals_a_times_target",
-        flows.desired_input,
-        closing.organization_input_coefficients * flows.organization_target[:, None],
-    )
-    pre_wholesale = flows.wholesale_open + flows.imports
-    allocated_total = flows.allocated_input.sum(axis=0)
-    if allocated_total.size and np.any(
-        allocated_total > pre_wholesale + np.asarray(tolerance_for(allocated_total, pre_wholesale))
-    ):
-        raise AccountingError(
-            f"{quarter}: total allocated input exceeds available pre-production "
-            "wholesale per commodity"
+    _require(int(leg[0]) == 0, quarter, "first journal leg must start at index 0")
+    if count > 1:
+        restart = leg[1:] == 0
+        sequential = np.diff(leg) == 1
+        _require(
+            bool(np.all(restart | sequential)),
+            quarter,
+            "journal leg indices must restart at 0 and increment by 1 per transaction",
         )
-    material(
-        "household_income_definition",
-        flows.household_income,
-        np.asarray(closing.household_size) * float(parameters.income_per_person),
+    starts = np.nonzero(leg == 0)[0]
+    run_id = np.cumsum(leg == 0) - 1
+    _require(
+        bool(np.all(currency == currency[starts][run_id])),
+        quarter,
+        "a journal transaction mixes currencies",
     )
-    material(
-        "household_desired_definition",
-        flows.household_desired,
-        np.asarray(closing.household_size)[:, None]
-        * np.asarray(parameters.desired_per_person, dtype=np.float64)[None, :],
-    )
-    material(
-        "budget_unmet_definition",
-        flows.budget_unmet,
-        flows.household_desired - flows.household_affordable,
-    )
-    material(
-        "availability_unmet_definition",
-        flows.availability_unmet,
-        flows.household_affordable - flows.household_realized,
-    )
-    # Declared rationing rule: household realization is the affordable basket
-    # scaled by the regional availability factor beta.
-    weighted_affordable = _weighted_affordable(closing, flows)
-    beta = np.ones_like(weighted_affordable)
-    demand_mask = weighted_affordable > 0
-    np.divide(
-        flows.retail_available,
-        weighted_affordable,
-        out=beta,
-        where=demand_mask,
-    )
-    beta = np.minimum(beta, 1.0)
-    material(
-        "household_realized_equals_affordable_times_beta",
-        flows.household_realized,
-        flows.household_affordable * beta[closing.household_region, :],
-    )
-    material(
-        "total_unmet_definition",
-        flows.total_unmet,
-        flows.household_desired - flows.household_realized,
-    )
-    material(
-        "household_spending_definition",
-        flows.household_spending,
-        flows.household_realized @ np.asarray(parameters.prices, dtype=np.float64),
-    )
-    material(
-        "retail_planned_equals_incoming",
-        flows.retail_planned,
-        flows.retail_incoming,
-    )
-    # Declared distribution rule: release fraction and regional share bind the
-    # regional incoming transfer to the post-export wholesale supply.
-    after_production = (
-        flows.wholesale_open
-        + flows.imports
-        + flows.organization_output.sum(axis=0)
-        - flows.delivered_input.sum(axis=0)
-    )
-    material(
-        "export_realized_equals_min_orders_supply",
-        flows.export_realized,
-        np.minimum(flows.export_desired, after_production),
-    )
-    after_export = after_production - flows.export_realized
-    offer = (
-        np.asarray(parameters.retail_release_fraction, dtype=np.float64) * after_export
-    )
-    material(
-        "retail_incoming_equals_share_times_offer",
-        flows.retail_incoming,
-        closing.regional_share[:, None] * offer[None, :],
-    )
-    material(
-        "wholesale_close_equals_after_export_minus_offer",
-        flows.wholesale_close,
-        after_export - offer,
-    )
-    # Declared production rule: realized output is the Leontief minimum of the
-    # target and the positive-coefficient available-input limits.
-    ratio_limits = np.full(flows.available_input.shape, np.inf)
-    positive = closing.organization_input_coefficients > 0
-    np.divide(
-        flows.available_input,
-        closing.organization_input_coefficients,
-        out=ratio_limits,
-        where=positive,
-    )
-    expected_realized = np.minimum(flows.organization_target, np.min(ratio_limits, axis=1))
-    expected_realized = np.where(
-        np.isfinite(expected_realized), expected_realized, flows.organization_target
-    )
-    material(
-        "realized_equals_leontief_min",
-        flows.organization_realized,
-        expected_realized,
-    )
-    material(
-        "retail_available_definition",
-        flows.retail_available,
-        flows.retail_open + flows.retail_incoming,
-    )
-    material(
-        "retail_close_definition",
-        flows.retail_close,
-        flows.retail_available - flows.retail_sales,
-    )
-    material(
-        "weighted_sales_definition",
-        flows.retail_sales,
-        _weighted_realized(closing, flows),
-    )
-    weighted_cash_state_change = closing.household_cash - opening.household_cash
-    cash(
-        "state_cash_change",
-        weighted_cash_state_change,
-        flows.household_income - flows.household_spending,
-    )
-
-    if closing.household_id.shape != opening.household_id.shape:
-        raise AccountingError(f"{quarter}: household axis changed across the tick")
-    if closing.organization_id.shape != opening.organization_id.shape:
-        raise AccountingError(f"{quarter}: organization axis changed across the tick")
-    if closing.retail_inventory.shape != opening.retail_inventory.shape:
-        raise AccountingError(f"{quarter}: region/commodity axes changed across the tick")
-    if not np.array_equal(closing.household_id, opening.household_id):
-        raise AccountingError(f"{quarter}: household ids changed across the tick")
-    if not np.array_equal(closing.organization_id, opening.organization_id):
-        raise AccountingError(f"{quarter}: organization ids changed across the tick")
-
-    # --- organization ledger ----------------------------------------------
-    material(
-        "organization_input",
-        closing.organization_input_inventory,
-        opening.organization_input_inventory + flows.delivered_input - flows.used_input,
-    )
-
-    # --- wholesale ledger ---------------------------------------------------
-    material(
-        "wholesale",
-        closing.wholesale_inventory,
-        (
-            opening.wholesale_inventory
-            + flows.imports
-            + flows.organization_output.sum(axis=0)
-            - flows.delivered_input.sum(axis=0)
-            - flows.export_realized
-            - flows.retail_incoming.sum(axis=0)
-        ),
-    )
-
-    # --- retail ledger --------------------------------------------------------
-    weighted_realized = _weighted_realized(closing, flows)
-    material(
-        "retail",
-        closing.retail_inventory,
-        opening.retail_inventory + flows.retail_incoming - weighted_realized,
-    )
-
-    # --- global stock equation --------------------------------------------------
-    lhs, rhs = _global_material_sides(opening, closing, flows)
-    material("global_stock", lhs, rhs)
-
-    # --- production boundaries ---------------------------------------------------
-    material(
-        "output_equals_mix_times_y",
-        flows.organization_output,
-        closing.organization_output_mix * flows.organization_realized[:, None],
-    )
-    material(
-        "used_equals_a_times_y",
-        flows.used_input,
-        closing.organization_input_coefficients * flows.organization_realized[:, None],
-    )
-    material(
-        "delivered_le_ordered",
-        flows.delivered_input,
-        np.minimum(flows.delivered_input, flows.ordered_input),
-    )
-    material(
-        "used_le_available",
-        flows.used_input,
-        np.minimum(flows.used_input, flows.available_input),
-    )
-    material(
-        "realized_le_target",
-        flows.organization_realized,
-        np.minimum(
-            flows.organization_realized,
-            np.minimum(flows.organization_target, closing.organization_labor_capacity),
-        ),
-    )
-    material(
-        "target_le_capacity",
-        flows.organization_target,
-        np.minimum(flows.organization_target, closing.organization_capacity),
-    )
-    material(
-        "target_equals_min_util_capacity_labor",
-        flows.organization_target,
-        np.minimum(
-            float(parameters.target_utilization) * closing.organization_capacity,
-            closing.organization_labor_capacity,
-        ),
-    )
-    if closing.organization_input_coefficients.size and np.any(
-        flows.used_input[closing.organization_input_coefficients <= 0] > ATOL
-    ):
-        raise AccountingError(
-            f"{quarter}: organizations with zero coefficients must use no input"
-        )
-    material(
-        "exports_le_orders",
-        flows.export_realized,
-        np.minimum(flows.export_realized, flows.export_desired),
-    )
-    material(
-        "export_unmet_definition",
-        flows.export_unmet,
-        flows.export_desired - flows.export_realized,
-    )
-    material(
-        "production_shortfall_definition",
-        flows.organization_output_shortfall,
-        flows.organization_target - flows.organization_realized,
-    )
-
-    # --- household boundaries ------------------------------------------------------
-    material(
-        "affordable_le_desired",
-        flows.household_affordable,
-        np.minimum(flows.household_affordable, flows.household_desired),
-    )
-    material(
-        "realized_le_affordable",
-        flows.household_realized,
-        np.minimum(flows.household_realized, flows.household_affordable),
-    )
-    material(
-        "spending_le_income",
-        flows.household_spending,
-        np.minimum(flows.household_spending, flows.household_income),
-    )
-    material(
-        "total_unmet_decomposition",
-        flows.total_unmet,
-        flows.budget_unmet + flows.availability_unmet,
-    )
-    material(
-        "forced_saving_decomposition",
-        flows.forced_saving,
-        (flows.household_affordable - flows.household_realized) @ prices,
-    )
-    material(
-        "voluntary_saving_decomposition",
-        flows.voluntary_saving,
-        flows.household_income - flows.household_affordable @ prices,
-    )
-    material(
-        "sales_le_retail_available",
-        flows.retail_sales,
-        np.minimum(flows.retail_sales, flows.retail_available),
-    )
-
-    # --- cash ledgers ------------------------------------------------------------------
-    cash(
-        "household_cash",
-        flows.household_cash_close - flows.household_cash_open,
-        flows.household_income - flows.household_spending,
-    )
-    cash_lhs, cash_rhs = _regional_cash_sides(closing, flows, prices)
-    cash("regional_cash", cash_lhs, cash_rhs)
-    weighted_cash_change = float(
-        np.sum(
-            closing.household_weight
-            * (flows.household_cash_close - flows.household_cash_open)
-        )
-    )
-    weighted_income = float(np.sum(closing.household_weight * flows.household_income))
-    weighted_receipts = float(np.sum(prices @ flows.retail_sales.T))
-    if abs(weighted_cash_change - (weighted_income - weighted_receipts)) > float(
-        tolerance_for(weighted_cash_change, weighted_income - weighted_receipts)
-    ):
+    debit_side = np.where(debit >= 0, amount, 0.0)
+    credit_side = np.where(credit >= 0, amount, 0.0)
+    debit_totals = np.add.reduceat(debit_side, starts)
+    credit_totals = np.add.reduceat(credit_side, starts)
+    mismatch = np.abs(debit_totals - credit_totals) > ATOL
+    if bool(np.any(mismatch)):
+        run = int(np.argmax(mismatch))
         _fail(
             quarter,
-            "national_cash",
-            "weighted",
-            weighted_cash_change,
-            weighted_income - weighted_receipts,
+            "journal_transaction_balance",
+            f"transaction_at_row[{int(starts[run])}]",
+            float(debit_totals[run]),
+            float(credit_totals[run]),
         )
+    return kind, debit, credit, amount, currency
 
-    # --- recorded residual snapshots must equal recomputation --------------------------
-    recomputed, recomputed_tol = material_balance_residuals(closing, flows)
-    if not np.allclose(flows.material_balance_residual, recomputed, rtol=0, atol=ATOL):
-        raise AccountingError(
-            f"{quarter}: recorded material balance residual snapshot diverges from "
-            "recomputation"
-        )
-    if not np.allclose(
-        flows.material_balance_tolerance, recomputed_tol, rtol=0, atol=ATOL
-    ):
-        raise AccountingError(
-            f"{quarter}: recorded material tolerance snapshot diverges from "
-            "recomputation"
-        )
-    recomputed_cash, recomputed_cash_tol = cash_balance_residuals(closing, flows, prices)
-    if not np.allclose(flows.cash_balance_residual, recomputed_cash, rtol=0, atol=ATOL):
-        raise AccountingError(
-            f"{quarter}: recorded cash balance residual snapshot diverges from "
-            "recomputation"
-        )
-    if not np.allclose(
-        flows.cash_balance_tolerance, recomputed_cash_tol, rtol=0, atol=ATOL
-    ):
-        raise AccountingError(
-            f"{quarter}: recorded cash tolerance snapshot diverges from recomputation"
-        )
-    if recomputed.size:
-        max_material = max(max_material, float(np.max(np.abs(recomputed))))
-        if np.all(recomputed_tol > 0):
-            max_material_ratio = max(
-                max_material_ratio,
-                float(np.max(np.abs(recomputed) / recomputed_tol)),
-            )
-    cash_residual_scalar = float(np.max(np.abs(recomputed_cash))) if recomputed_cash.size else 0.0
-    max_cash = max(max_cash, cash_residual_scalar)
-    if recomputed_cash.size and np.all(recomputed_cash_tol > 0):
-        max_cash_ratio = max(
-            max_cash_ratio,
-            float(np.max(np.abs(recomputed_cash) / recomputed_cash_tol)),
-        )
 
-    summary = {
-        "max_material_abs_residual": max_material,
-        "max_material_tolerance_ratio": max_material_ratio,
-        "max_cash_abs_residual": max_cash,
-        "max_cash_tolerance_ratio": max_cash_ratio,
+def check_material_invariants(
+    opening: MaterialStockSnapshot,
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    parameters: MaterialParameters,
+    network: MaterialNetwork,
+) -> InvariantSummary:
+    """Verify every material/financial ledger of one completed tick.
+
+    Compares the authoritative closing ``state`` against the runner-captured
+    ``opening`` boundary and the returned flows; raises
+    :class:`AccountingError` on the first failing cell, otherwise returns
+    the residual maxima and fills the four flow residual snapshot slots.
+    """
+    quarter = flows.quarter
+    prices = build_material_prices(parameters)
+
+    S = int(np.asarray(network.cell_owner_kind).shape[0])
+    D = int(np.asarray(network.demand_cell).shape[0])
+    M = int(np.asarray(network.edge_source_cell).shape[0])
+    G = len(network.commodity_ids)
+    K = int(np.asarray(network.input_cell).shape[0])
+    ORG = int(state.organization_id.shape[0])
+    N = int(state.household_id.shape[0])
+    R = int(state.dwelling_stock.shape[0])
+    B = int(state.bank_reserves.shape[0])
+    P = int(np.asarray(network.activity_kind).shape[0])
+
+    max_material = 0.0
+    max_material_ratio = 0.0
+    max_finance = 0.0
+    max_finance_ratio = 0.0
+    per_ledger: dict[str, tuple[float, float]] = {}
+
+    def material(
+        ledger: str, lhs: np.ndarray, rhs: np.ndarray, labels: list[str] | None = None
+    ) -> None:
+        nonlocal max_material, max_material_ratio
+        a, b = _compare_cells(quarter, ledger, lhs, rhs, labels=labels)
+        max_material = max(max_material, a)
+        max_material_ratio = max(max_material_ratio, b)
+        _accumulate(per_ledger, ledger, a, b)
+
+    def material_at_most(
+        ledger: str, lhs: np.ndarray, rhs: np.ndarray, labels: list[str] | None = None
+    ) -> None:
+        nonlocal max_material, max_material_ratio
+        a, b = _compare_at_most(quarter, ledger, lhs, rhs, labels=labels)
+        max_material = max(max_material, a)
+        max_material_ratio = max(max_material_ratio, b)
+        _accumulate(per_ledger, ledger, a, b)
+
+    def finance(
+        ledger: str, lhs: np.ndarray, rhs: np.ndarray, labels: list[str] | None = None
+    ) -> None:
+        nonlocal max_finance, max_finance_ratio
+        a, b = _compare_cells(quarter, ledger, lhs, rhs, labels=labels)
+        max_finance = max(max_finance, a)
+        max_finance_ratio = max(max_finance_ratio, b)
+        _accumulate(per_ledger, ledger, a, b)
+
+    def finance_at_most(
+        ledger: str, lhs: np.ndarray, rhs: np.ndarray, labels: list[str] | None = None
+    ) -> None:
+        nonlocal max_finance, max_finance_ratio
+        a, b = _compare_at_most(quarter, ledger, lhs, rhs, labels=labels)
+        max_finance = max(max_finance, a)
+        max_finance_ratio = max(max_finance_ratio, b)
+        _accumulate(per_ledger, ledger, a, b)
+
+    def some(labels: list[str], mask: np.ndarray) -> list[str]:
+        return [labels[int(i)] for i in np.nonzero(mask)[0]]
+
+    # --- 0. structural shapes and finiteness ------------------------------
+    expected_shapes: dict[str, tuple[int, ...]] = {
+        "stock_value": (S,),
+        "household_cash": (N,),
+        "household_deferred_receipt": (N,),
+        "household_wage_claim": (N,),
+        "dwelling_stock": (R,),
+        "durable_stock": (R,),
+        "organization_cash": (ORG,),
+        "organization_wage_arrears": (ORG,),
+        "organization_interest_arrears": (ORG,),
+        "organization_principal": (ORG,),
+        "organization_shortage_expectation": (ORG,),
+        "organization_bailout_expectation": (ORG,),
+        "organization_project_approved": (ORG,),
+        "organization_capital_wip": (ORG,),
+        "organization_construction_wip": (ORG,),
+        "bank_reserves": (B,),
+        "bank_loan_asset": (B,),
+        "bank_deposit_liability": (B,),
+        "bank_equity": (B,),
+        "bank_interest_receivable": (B,),
     }
-    if not all(math.isfinite(value) for value in summary.values()):
-        raise AccountingError(f"{quarter}: accounting summary is not finite")
-    return summary
+    for name, shape in expected_shapes.items():
+        actual = np.asarray(getattr(state, name)).shape
+        _require(actual == shape, quarter, f"state.{name} shape {actual} != {shape}")
+    flow_shapes: dict[str, tuple[int, ...]] = {
+        "activity_target": (P,),
+        "activity_realized": (P,),
+        "desired": (D,),
+        "ordered": (D,),
+        "ordered_gross": (D,),
+        "unfunded_order": (D,),
+        "allocated": (D,),
+        "delivered": (D,),
+        "used": (D,),
+        "inventory_open": (D,),
+        "inventory_close": (D,),
+        "financial_delivery_blocked": (D,),
+        "edge_delivered": (M,),
+        "edge_allocated": (M,),
+        "edge_service_used": (M,),
+        "edge_service_fee": (M,),
+        "organization_target": (ORG,),
+        "organization_realized": (ORG,),
+        "organization_wage_due": (ORG,),
+        "organization_wage_paid": (ORG,),
+        "organization_interest_due": (ORG,),
+        "organization_interest_paid": (ORG,),
+        "organization_principal_paid": (ORG,),
+        "organization_credit_requested": (ORG,),
+        "organization_credit_approved": (ORG,),
+        "organization_credit_drawn": (ORG,),
+        "organization_investment_requested": (ORG,),
+        "organization_investment_approved": (ORG,),
+        "organization_investment_completed": (ORG,),
+        "organization_bailout_requested": (ORG,),
+        "organization_bailout_granted": (ORG,),
+        "organization_sales_receipts": (ORG,),
+        "organization_purchases": (ORG,),
+        "household_wage_income": (N,),
+        "household_plot_income_formal": (N,),
+        "household_plot_income_direct": (N,),
+        "household_late_wage": (N,),
+        "household_desired": (N, G),
+        "household_affordable": (N, G),
+        "household_realized": (N, G),
+        "household_budget_unmet": (N, G),
+        "household_availability_unmet": (N, G),
+        "household_spending": (N,),
+        "household_self_use": (N,),
+        "household_plot_input_funding": (N,),
+        "household_budget_available": (N,),
+        "household_forced_saving": (N,),
+        "household_voluntary_saving": (N,),
+        "household_cash_open": (N,),
+        "household_cash_close": (N,),
+        "retail_available": (R, G),
+        "retail_sales": (R, G),
+        "retail_unmet": (R, G),
+        "imports": (G,),
+        "cmea_imports": (G,),
+        "convertible_imports": (G,),
+        "cmea_exports": (G,),
+        "convertible_exports": (G,),
+    }
+    for name, shape in flow_shapes.items():
+        actual = np.asarray(getattr(flows, name)).shape
+        _require(actual == shape, quarter, f"flows.{name} shape {actual} != {shape}")
+    _sweep_flows(flows, quarter)
+    _sweep_arrays(state, quarter, "closing")
+    _sweep_arrays(opening, quarter, "opening")
+    for name, value in (
+        ("closing.treasury_deposit", state.treasury_deposit),
+        ("closing.usd_reserve", state.usd_reserve),
+        ("closing.usd_principal", state.usd_principal),
+        ("closing.usd_interest_arrears", state.usd_interest_arrears),
+        ("opening.treasury_deposit", opening.treasury_deposit),
+        ("opening.usd_reserve", opening.usd_reserve),
+        ("opening.usd_principal", opening.usd_principal),
+        ("opening.usd_interest_arrears", opening.usd_interest_arrears),
+    ):
+        if not math.isfinite(float(value)) or float(value) < -ATOL:
+            raise AccountingError(f"invalid {name}={value!r} in {quarter}")
+
+    cell_labels = _stock_cell_labels(network)
+    demand_labels = _purpose_labels(network)
+    edge_labels = _edge_labels(network)
+    org_labels = [f"org[{int(org_id)}]" for org_id in np.asarray(state.organization_id)]
+    household_labels = [
+        f"household[{int(h)}]" for h in np.asarray(state.household_id)
+    ]
+    region_labels = [f"region[{region_id}]" for region_id in network.region_ids]
+    commodity_labels = list(network.commodity_ids)
+    bank_labels = [f"bank[{index}]" for index in range(B)]
+
+    continuity = _reconstruct(opening, state, flows, network, prices, parameters)
+
+    # --- 1. flows snapshots bound to the authoritative boundaries ----------
+    material(
+        "household_cash_open_snapshot",
+        flows.household_cash_open,
+        opening.household_cash,
+        labels=household_labels,
+    )
+    material(
+        "household_cash_close_snapshot",
+        flows.household_cash_close,
+        state.household_cash,
+        labels=household_labels,
+    )
+    demand_cells = np.asarray(network.demand_cell, dtype=np.int64)
+    resident = demand_cells >= 0
+    material(
+        "demand_inventory_open_view",
+        flows.inventory_open[resident],
+        opening.stock_value[demand_cells][resident],
+        labels=[demand_labels[int(d)] for d in np.nonzero(resident)[0]],
+    )
+    material(
+        "demand_inventory_close_view",
+        flows.inventory_close[resident],
+        state.stock_value[demand_cells][resident],
+        labels=[demand_labels[int(d)] for d in np.nonzero(resident)[0]],
+    )
+    capital_cells = np.asarray(network.project_capital_cell, dtype=np.int64)
+    construction_wip_cells = np.asarray(network.project_construction_cell, dtype=np.int64)
+    wip_capital = capital_cells >= 0
+    wip_construction = construction_wip_cells >= 0
+    material(
+        "project_capital_wip_state_binding",
+        state.stock_value[capital_cells[wip_capital]],
+        state.organization_capital_wip[wip_capital],
+        labels=some(org_labels, wip_capital),
+    )
+    material(
+        "project_construction_wip_state_binding",
+        state.stock_value[construction_wip_cells[wip_construction]],
+        state.organization_construction_wip[wip_construction],
+        labels=some(org_labels, wip_construction),
+    )
+    material(
+        "project_capital_wip_opening_binding",
+        opening.stock_value[capital_cells[wip_capital]],
+        opening.organization_capital_wip[wip_capital],
+        labels=some(org_labels, wip_capital),
+    )
+    material(
+        "project_construction_wip_opening_binding",
+        opening.stock_value[construction_wip_cells[wip_construction]],
+        opening.organization_construction_wip[wip_construction],
+        labels=some(org_labels, wip_construction),
+    )
+    orphan_capital = ~wip_capital
+    orphan_construction = ~wip_construction
+    if bool(np.any(orphan_capital)):
+        material(
+            "project_capital_wip_orphan_zero",
+            state.organization_capital_wip[orphan_capital],
+            np.zeros(int(np.count_nonzero(orphan_capital))),
+            labels=some(org_labels, orphan_capital),
+        )
+    if bool(np.any(orphan_construction)):
+        material(
+            "project_construction_wip_orphan_zero",
+            state.organization_construction_wip[orphan_construction],
+            np.zeros(int(np.count_nonzero(orphan_construction))),
+            labels=some(org_labels, orphan_construction),
+        )
+
+    # --- 2. per-cell stock continuity --------------------------------------
+    stockable = ~continuity.services_cells & ~continuity.retail_org_cells
+    material(
+        "stock_continuity",
+        continuity.expected_close[stockable],
+        state.stock_value[stockable],
+        labels=some(cell_labels, stockable),
+    )
+    retail_mask = continuity.retail_org_cells & ~continuity.services_cells
+    if bool(np.any(retail_mask)):
+        material(
+            "retail_stock_continuity",
+            continuity.retail_expected[retail_mask],
+            continuity.retail_close[retail_mask],
+            labels=some(cell_labels, retail_mask),
+        )
+    material(
+        "services_cells_close_zero",
+        state.stock_value[continuity.services_cells],
+        np.zeros(int(np.count_nonzero(continuity.services_cells))),
+        labels=some(cell_labels, continuity.services_cells),
+    )
+    material(
+        "expired_services_reconciliation",
+        np.asarray([float(np.sum(continuity.services_leftover))]),
+        np.asarray([float(flows.expired_services)]),
+        labels=["expired_services"],
+    )
+    material_at_most(
+        "services_expiry_nonnegative",
+        np.zeros(S),
+        continuity.services_leftover,
+        labels=cell_labels,
+    )
+
+    # --- 3. six-segment identities and edge ceilings ------------------------
+    material_at_most(
+        "delivered_le_allocated",
+        flows.delivered,
+        flows.allocated,
+        labels=demand_labels,
+    )
+    material_at_most(
+        "allocated_le_ordered",
+        flows.allocated,
+        flows.ordered,
+        labels=demand_labels,
+    )
+    material(
+        "unfunded_plus_ordered_is_gross",
+        flows.unfunded_order + flows.ordered,
+        flows.ordered_gross,
+        labels=demand_labels,
+    )
+    material_at_most(
+        "blocked_le_allocated_minus_delivered",
+        flows.financial_delivery_blocked,
+        flows.allocated - flows.delivered,
+        labels=demand_labels,
+    )
+    material_at_most(
+        "edge_delivered_le_allocated",
+        flows.edge_delivered,
+        np.asarray(flows.edge_allocated, dtype=np.float64) * (1.0 + 1e-9),
+        labels=edge_labels,
+    )
+    edge_demand = np.asarray(network.edge_demand, dtype=np.int64)
+    _require(
+        bool(np.all((edge_demand >= 0) & (edge_demand < D))),
+        quarter,
+        "route edge demand index outside the demand axis",
+    )
+    material(
+        "edge_sum_per_demand_is_delivered",
+        np.bincount(edge_demand, weights=flows.edge_delivered, minlength=D),
+        flows.delivered,
+        labels=demand_labels,
+    )
+    # Retail may resell same-tick deliveries to households (plan section 2:
+    # "retail can sell opening + this tick's delivered stock"); every other
+    # source sells only out of opening stock plus its own same-tick
+    # production (transport) or realized imports.
+    source_ceiling = (
+        np.asarray(opening.stock_value, dtype=np.float64)
+        + continuity.production
+        + continuity.imports_in
+    )
+    source_ceiling = np.where(
+        continuity.retail_org_cells,
+        source_ceiling + continuity.edge_receipts,
+        source_ceiling,
+    )
+    material_at_most(
+        "source_stock_ceiling",
+        continuity.edge_out_all,
+        source_ceiling,
+        labels=cell_labels,
+    )
+    material_at_most(
+        "production_input_availability_ceiling",
+        continuity.production_used,
+        np.asarray(opening.stock_value, dtype=np.float64)
+        + continuity.production_row_delivered,
+        labels=cell_labels,
+    )
+    material_at_most(
+        "activity_realized_le_target",
+        flows.activity_realized,
+        flows.activity_target,
+        labels=[f"activity[{p}]" for p in range(P)],
+    )
+
+    # Leontief bottleneck rule: used[k] == realized(activity) * coefficient.
+    column_coefficients = np.asarray(network.A.sum(axis=0)).ravel().astype(np.float64)
+    input_activity = np.asarray(network.input_activity, dtype=np.int64)
+    input_index = np.asarray(network.demand_input_index, dtype=np.int64)
+    production_rows = input_index >= 0
+    k_rows = input_index[production_rows]
+    k_used = np.zeros(K, dtype=np.float64)
+    k_used[k_rows] = np.asarray(flows.used, dtype=np.float64)[production_rows]
+    material(
+        "production_used_matches_leontief",
+        k_used,
+        column_coefficients * flows.activity_realized[input_activity],
+        labels=[f"input[{k}]" for k in range(K)],
+    )
+
+    # Target binding: org target = min(utilization * capacity * season, labor cap).
+    org_types = np.asarray(state.organization_type, dtype=np.int64)
+    org_activity = np.asarray(state.organization_activity, dtype=np.int64)
+    producers = org_activity >= 0
+    if bool(np.any(producers)):
+        rows = np.nonzero(producers)[0]
+        activities = org_activity[rows]
+        season = np.where(
+            np.isin(org_types[rows], list(_FARM_TYPE_CODES)),
+            float(parameters.farm_seasonal_factors[int(flows.tick) % 4]),
+            1.0,
+        )
+        labor_per_activity = np.asarray(
+            state.organization_labor_per_activity, dtype=np.float64
+        )[rows]
+        _require(
+            bool(np.all(labor_per_activity > 0.0)),
+            quarter,
+            "productive organization lacks a positive labor_per_activity",
+        )
+        expected_target = np.minimum(
+            float(parameters.utilization)
+            * np.asarray(opening.organization_capacity, dtype=np.float64)[rows]
+            * season,
+            np.asarray(state.organization_labor_available, dtype=np.float64)[rows]
+            / labor_per_activity,
+        )
+        material(
+            "organization_target_rule",
+            flows.activity_target[activities],
+            expected_target,
+            labels=[f"activity[{int(a)}]" for a in activities],
+        )
+        material(
+            "organization_realized_view",
+            flows.organization_realized[rows],
+            flows.activity_realized[activities],
+            labels=[org_labels[int(o)] for o in rows],
+        )
+        material(
+            "organization_target_view",
+            flows.organization_target[rows],
+            flows.activity_target[activities],
+            labels=[org_labels[int(o)] for o in rows],
+        )
+
+    # --- 4. household acquisition channels vs boundary edges ---------------
+    retail_sales = np.asarray(flows.retail_sales, dtype=np.float64)
+    household_edges = np.asarray(network.edge_purpose, dtype=np.int64) == _P_HOUSEHOLD
+    cell_kind_arr = np.asarray(network.cell_owner_kind, dtype=np.int64)
+    cell_region_arr = np.asarray(network.cell_region, dtype=np.int64)
+    cell_commodity_arr = np.asarray(network.cell_commodity, dtype=np.int64)
+    hh_by_region_commodity = np.zeros(R * G, dtype=np.float64)
+    plot_hh_edges = np.zeros(R, dtype=np.float64)
+    if bool(np.any(household_edges)):
+        hh_src = np.asarray(network.edge_source_cell, dtype=np.int64)[household_edges]
+        hh_amounts = np.asarray(flows.edge_delivered, dtype=np.float64)[household_edges]
+        org_sources = cell_kind_arr[hh_src] == _KIND_ORG
+        if bool(np.any(org_sources)):
+            np.add.at(
+                hh_by_region_commodity,
+                cell_region_arr[hh_src[org_sources]] * G
+                + cell_commodity_arr[hh_src[org_sources]],
+                hh_amounts[org_sources],
+            )
+        plot_sources = cell_kind_arr[hh_src] == _KIND_PLOT
+        if bool(np.any(plot_sources)):
+            np.add.at(
+                plot_hh_edges,
+                cell_region_arr[hh_src[plot_sources]],
+                hh_amounts[plot_sources],
+            )
+    material(
+        "household_edges_mirror_retail_sales",
+        hh_by_region_commodity.reshape(R, G),
+        retail_sales,
+        labels=[
+            f"retail[{network.region_ids[r]},{network.commodity_ids[g]}]"
+            for r in range(R)
+            for g in range(G)
+        ],
+    )
+    commodity_ids = network.commodity_ids
+    food_g = commodity_ids.index(_FOOD_ID) if _FOOD_ID in commodity_ids else -1
+    weight = np.asarray(state.household_weight, dtype=np.float64)
+    household_region = np.asarray(state.household_region, dtype=np.int64)
+    if food_g >= 0:
+        ready_price = float(prices.standard[food_g])
+        direct_quantity = (
+            np.bincount(
+                household_region,
+                weights=weight
+                * np.asarray(flows.household_plot_income_direct, dtype=np.float64),
+                minlength=R,
+            )
+            / ready_price
+        )
+        self_quantity = (
+            np.bincount(
+                household_region,
+                weights=weight
+                * np.asarray(flows.household_self_use, dtype=np.float64),
+                minlength=R,
+            )
+            / ready_price
+        )
+        direct_from_households = (
+            np.bincount(
+                household_region,
+                weights=weight
+                * np.asarray(flows.household_realized, dtype=np.float64)[:, food_g],
+                minlength=R,
+            )
+            - retail_sales[:, food_g]
+            - self_quantity
+        )
+        material(
+            "plot_market_direct_channel_mirror_households",
+            direct_from_households,
+            direct_quantity,
+            labels=region_labels,
+        )
+        plot_self_cells = np.asarray(network.plot_ready_self_cell, dtype=np.int64)
+        self_ok = plot_self_cells >= 0
+        material_at_most(
+            "plot_self_use_le_opening_pool",
+            self_quantity[self_ok],
+            np.asarray(opening.stock_value, dtype=np.float64)[plot_self_cells[self_ok]],
+            labels=[region_labels[int(r)] for r in np.nonzero(self_ok)[0]],
+        )
+
+    # Household demand cells (region-major pinned D order) mirror retail sales.
+    household_goods = [
+        g for g in range(G) if commodity_ids[g] in _HOUSEHOLD_CHANNEL_IDS
+    ]
+    demand_purpose = np.asarray(network.demand_purpose, dtype=np.int64)
+    household_demand = np.nonzero(demand_purpose == _P_HOUSEHOLD)[0]
+    _require(
+        int(household_demand.shape[0]) == R * len(household_goods),
+        quarter,
+        "household demand block size contradicts the pinned region-major order",
+    )
+    if household_goods:
+        material(
+            "household_demand_delivered_is_retail_sales",
+            flows.delivered[household_demand].reshape(R, len(household_goods)),
+            retail_sales[:, household_goods],
+            labels=[
+                f"household_demand[{network.region_ids[r]},{network.commodity_ids[g]}]"
+                for r in range(R)
+                for g in household_goods
+            ],
+        )
+
+    # Retail availability = opening + delivered-in, per (region, commodity).
+    retail_available = np.asarray(flows.retail_available, dtype=np.float64)
+    open_map = np.zeros((R, G), dtype=np.float64)
+    receipts_map = np.zeros((R, G), dtype=np.float64)
+    retail_presence = continuity.retail_org_cells
+    if bool(np.any(retail_presence)):
+        np.add.at(
+            open_map,
+            (cell_region_arr[retail_presence], cell_commodity_arr[retail_presence]),
+            np.asarray(opening.stock_value, dtype=np.float64)[retail_presence],
+        )
+        np.add.at(
+            receipts_map,
+            (cell_region_arr[retail_presence], cell_commodity_arr[retail_presence]),
+            continuity.edge_receipts[retail_presence],
+        )
+    present = np.zeros((R, G), dtype=bool)
+    if bool(np.any(retail_presence)):
+        present[
+            cell_region_arr[retail_presence], cell_commodity_arr[retail_presence]
+        ] = True
+    rows_rg, columns_rg = np.nonzero(present)
+    if rows_rg.size:
+        material(
+            "retail_available_is_open_plus_delivered",
+            retail_available[rows_rg, columns_rg],
+            open_map[rows_rg, columns_rg] + receipts_map[rows_rg, columns_rg],
+            labels=[
+                f"retail[{network.region_ids[int(r)]},{network.commodity_ids[int(c)]}]"
+                for r, c in zip(rows_rg, columns_rg, strict=True)
+            ],
+        )
+    absent = ~present
+    if bool(np.any(absent)):
+        material(
+            "retail_columns_without_cells_are_zero",
+            np.concatenate(
+                [
+                    retail_available[absent],
+                    retail_sales[absent],
+                    np.asarray(flows.retail_unmet, dtype=np.float64)[absent],
+                ]
+            ),
+            np.zeros(3 * int(np.count_nonzero(absent))),
+            labels=[
+                f"retail[{network.region_ids[int(r)]},{network.commodity_ids[int(c)]}:{field_name}]"
+                for r, c in zip(*np.nonzero(absent), strict=True)
+                for field_name in ("available", "sales", "unmet")
+            ],
+        )
+
+    # --- 5. trade identities -------------------------------------------------
+    material(
+        "imports_split_into_channels",
+        flows.imports,
+        flows.cmea_imports + flows.convertible_imports,
+        labels=commodity_labels,
+    )
+    export_cells = np.asarray(network.export_demand_cell, dtype=np.int64)
+    channel_arrays = (flows.cmea_exports, flows.convertible_exports)
+    channel_names = ("cmea", "convertible")
+    for channel in (0, 1):
+        channel_present = export_cells[channel] >= 0
+        if bool(np.any(channel_present)):
+            material(
+                f"export_demand_delivered_{channel_names[channel]}",
+                flows.delivered[export_cells[channel][channel_present]],
+                channel_arrays[channel][channel_present],
+                labels=[
+                    f"export_{channel_names[channel]}[{network.commodity_ids[int(g)]}]"
+                    for g in np.nonzero(channel_present)[0]
+                ],
+            )
+        channel_absent = ~channel_present
+        if bool(np.any(channel_absent)):
+            material(
+                f"exports_without_demand_cell_{channel_names[channel]}",
+                channel_arrays[channel][channel_absent],
+                np.zeros(int(np.count_nonzero(channel_absent))),
+                labels=[
+                    f"export_{channel_names[channel]}[{network.commodity_ids[int(g)]}]"
+                    for g in np.nonzero(channel_absent)[0]
+                ],
+            )
+
+    # --- 6. finance -----------------------------------------------------------
+    bank_loan_open = np.asarray(opening.bank_loan_asset, dtype=np.float64)
+    bank_receivable_open = np.asarray(opening.bank_interest_receivable, dtype=np.float64)
+    bank_equity_open = np.asarray(opening.bank_equity, dtype=np.float64)
+    org_bank = np.asarray(state.organization_bank, dtype=np.int64)
+    borrower = org_bank >= 0
+
+    def _bank_sum(values: np.ndarray) -> np.ndarray:
+        out = np.zeros(B, dtype=np.float64)
+        if B and bool(np.any(borrower)):
+            out += np.bincount(org_bank[borrower], weights=values[borrower], minlength=B)
+        return out
+
+    finance(
+        "bank_assets_equal_liabilities",
+        np.asarray(state.bank_loan_asset, dtype=np.float64)
+        + np.asarray(state.bank_interest_receivable, dtype=np.float64)
+        + np.asarray(state.bank_reserves, dtype=np.float64),
+        np.asarray(state.bank_deposit_liability, dtype=np.float64)
+        + np.asarray(state.bank_equity, dtype=np.float64),
+        labels=bank_labels,
+    )
+    deposit_sources = np.zeros(B, dtype=np.float64)
+    if B:
+        deposit_sources += np.bincount(
+            household_region % B,
+            weights=weight * np.asarray(state.household_cash, dtype=np.float64),
+            minlength=B,
+        )
+        if bool(np.any(borrower)):
+            deposit_sources += np.bincount(
+                org_bank[borrower],
+                weights=np.asarray(state.organization_cash, dtype=np.float64)[borrower],
+                minlength=B,
+            )
+        deposit_sources[0] += float(state.treasury_deposit)
+    finance(
+        "deposit_liability_composition",
+        np.asarray(state.bank_deposit_liability, dtype=np.float64),
+        deposit_sources,
+        labels=bank_labels,
+    )
+    finance(
+        "bank_loan_asset_continuity",
+        np.asarray(state.bank_loan_asset, dtype=np.float64),
+        bank_loan_open
+        + _bank_sum(np.asarray(flows.organization_credit_drawn, dtype=np.float64))
+        - _bank_sum(np.asarray(flows.organization_principal_paid, dtype=np.float64)),
+        labels=bank_labels,
+    )
+    finance(
+        "bank_interest_receivable_continuity",
+        np.asarray(state.bank_interest_receivable, dtype=np.float64),
+        bank_receivable_open
+        + _bank_sum(np.asarray(flows.organization_interest_due, dtype=np.float64))
+        - _bank_sum(np.asarray(flows.organization_interest_paid, dtype=np.float64)),
+        labels=bank_labels,
+    )
+    finance(
+        "bank_equity_interest_accrual",
+        np.asarray(state.bank_equity, dtype=np.float64),
+        bank_equity_open
+        + _bank_sum(np.asarray(flows.organization_interest_due, dtype=np.float64)),
+        labels=bank_labels,
+    )
+
+    finance(
+        "organization_cash_continuity",
+        np.asarray(state.organization_cash, dtype=np.float64),
+        np.asarray(opening.organization_cash, dtype=np.float64)
+        + np.asarray(flows.organization_credit_drawn, dtype=np.float64)
+        + np.asarray(flows.organization_bailout_granted, dtype=np.float64)
+        + np.asarray(flows.organization_sales_receipts, dtype=np.float64)
+        - np.asarray(flows.organization_wage_paid, dtype=np.float64)
+        - np.asarray(flows.organization_interest_paid, dtype=np.float64)
+        - np.asarray(flows.organization_principal_paid, dtype=np.float64)
+        - np.asarray(flows.organization_purchases, dtype=np.float64),
+        labels=org_labels,
+    )
+    finance(
+        "organization_principal_continuity",
+        np.asarray(state.organization_principal, dtype=np.float64),
+        np.asarray(opening.organization_principal, dtype=np.float64)
+        + np.asarray(flows.organization_credit_drawn, dtype=np.float64)
+        - np.asarray(flows.organization_principal_paid, dtype=np.float64),
+        labels=org_labels,
+    )
+    finance(
+        "organization_wage_arrears_continuity",
+        np.asarray(state.organization_wage_arrears, dtype=np.float64),
+        np.asarray(opening.organization_wage_arrears, dtype=np.float64)
+        + np.asarray(flows.organization_wage_due, dtype=np.float64)
+        - np.asarray(flows.organization_wage_paid, dtype=np.float64),
+        labels=org_labels,
+    )
+    finance(
+        "organization_interest_arrears_continuity",
+        np.asarray(state.organization_interest_arrears, dtype=np.float64),
+        np.asarray(opening.organization_interest_arrears, dtype=np.float64)
+        + np.asarray(flows.organization_interest_due, dtype=np.float64)
+        - np.asarray(flows.organization_interest_paid, dtype=np.float64),
+        labels=org_labels,
+    )
+    finance(
+        "organization_wage_due_rule",
+        np.asarray(flows.organization_wage_due, dtype=np.float64),
+        float(parameters.wage_rate)
+        * np.asarray(state.organization_labor_available, dtype=np.float64),
+        labels=org_labels,
+    )
+    finance(
+        "organization_interest_due_rule",
+        np.asarray(flows.organization_interest_due, dtype=np.float64),
+        quarter_domestic_credit_rate(parameters)
+        * np.asarray(opening.organization_principal, dtype=np.float64),
+        labels=org_labels,
+    )
+    finance_at_most(
+        "organization_wage_paid_ceiling",
+        np.asarray(flows.organization_wage_paid, dtype=np.float64),
+        np.asarray(flows.organization_wage_due, dtype=np.float64)
+        + np.asarray(opening.organization_wage_arrears, dtype=np.float64),
+        labels=org_labels,
+    )
+    finance_at_most(
+        "organization_interest_paid_ceiling",
+        np.asarray(flows.organization_interest_paid, dtype=np.float64),
+        np.asarray(flows.organization_interest_due, dtype=np.float64)
+        + np.asarray(opening.organization_interest_arrears, dtype=np.float64),
+        labels=org_labels,
+    )
+    finance_at_most(
+        "organization_principal_paid_ceiling",
+        np.asarray(flows.organization_principal_paid, dtype=np.float64),
+        float(parameters.principal_repayment_fraction)
+        * np.asarray(opening.organization_principal, dtype=np.float64),
+        labels=org_labels,
+    )
+    finance_at_most(
+        "bailout_granted_le_requested",
+        np.asarray(flows.organization_bailout_granted, dtype=np.float64),
+        np.asarray(flows.organization_bailout_requested, dtype=np.float64),
+        labels=org_labels,
+    )
+    # The opening snapshot carries no capacity axis (mutable-only capture),
+    # so capacity growth is gated as "closing capacity covers this tick's
+    # completions"; exact capacity continuity is pinned through the WIP
+    # installation gates below.
+    finance_at_most(
+        "capacity_covers_completions",
+        np.asarray(flows.organization_investment_completed, dtype=np.float64),
+        np.asarray(state.organization_capacity, dtype=np.float64),
+        labels=org_labels,
+    )
+    capital_unit = float(parameters.capacity_capital_goods_per_unit)
+    construction_unit = float(parameters.capacity_construction_per_unit)
+    completed = np.asarray(flows.organization_investment_completed, dtype=np.float64)
+    delivered_capital_wip = np.zeros(ORG, dtype=np.float64)
+    delivered_construction_wip = np.zeros(ORG, dtype=np.float64)
+    if bool(np.any(wip_capital)):
+        delivered_capital_wip[wip_capital] = continuity.edge_receipts[
+            capital_cells[wip_capital]
+        ]
+    if bool(np.any(wip_construction)):
+        delivered_construction_wip[wip_construction] = continuity.edge_receipts[
+            construction_wip_cells[wip_construction]
+        ]
+    finance(
+        "capital_wip_continuity",
+        np.asarray(state.organization_capital_wip, dtype=np.float64),
+        np.asarray(opening.organization_capital_wip, dtype=np.float64)
+        + delivered_capital_wip
+        - completed * capital_unit,
+        labels=org_labels,
+    )
+    finance(
+        "construction_wip_continuity",
+        np.asarray(state.organization_construction_wip, dtype=np.float64),
+        np.asarray(opening.organization_construction_wip, dtype=np.float64)
+        + delivered_construction_wip
+        - completed * construction_unit,
+        labels=org_labels,
+    )
+    _unit_residual, ratio = _check_unit_interval(
+        quarter,
+        "shortage_expectation_unit_interval",
+        np.asarray(state.organization_shortage_expectation, dtype=np.float64),
+        labels=org_labels,
+    )
+    max_material_ratio = max(max_material_ratio, ratio)
+    _accumulate(per_ledger, "shortage_expectation_unit_interval", 0.0, ratio)
+    _unit_residual, ratio = _check_unit_interval(
+        quarter,
+        "bailout_expectation_unit_interval",
+        np.asarray(state.organization_bailout_expectation, dtype=np.float64),
+        labels=org_labels,
+    )
+    max_material_ratio = max(max_material_ratio, ratio)
+    _accumulate(per_ledger, "bailout_expectation_unit_interval", 0.0, ratio)
+
+    # Household cash identity and deferred receipts.
+    finance(
+        "household_cash_continuity",
+        np.asarray(state.household_cash, dtype=np.float64)
+        - np.asarray(opening.household_cash, dtype=np.float64),
+        np.asarray(flows.household_wage_income, dtype=np.float64)
+        + np.asarray(flows.household_plot_income_formal, dtype=np.float64)
+        + np.asarray(flows.household_plot_income_direct, dtype=np.float64)
+        + np.asarray(flows.household_late_wage, dtype=np.float64)
+        - np.asarray(flows.household_plot_input_funding, dtype=np.float64)
+        - np.asarray(flows.household_spending, dtype=np.float64),
+        labels=household_labels,
+    )
+    finance(
+        "household_deferred_receipt_close",
+        np.asarray(state.household_deferred_receipt, dtype=np.float64),
+        np.asarray(flows.household_plot_income_direct, dtype=np.float64)
+        + np.asarray(flows.household_late_wage, dtype=np.float64),
+        labels=household_labels,
+    )
+
+    # Treasury domestic account (bank 0): import sales at admin prices fund
+    # export procurement, housing construction, border freight and bailouts.
+    import_stage = np.zeros(G, dtype=np.int64)
+    if bool(np.any(importable := (np.asarray(network.import_pool_cell, dtype=np.int64) >= 0))):
+        pool_cells = np.asarray(network.import_pool_cell, dtype=np.int64)[importable]
+        import_stage[importable] = np.asarray(network.cell_stage, dtype=np.int64)[pool_cells]
+    import_prices = np.asarray(
+        [prices.price_for(g, int(import_stage[g])) for g in range(G)], dtype=np.float64
+    )
+    import_sales = np.zeros(G, dtype=np.float64)
+    edge_sources = np.asarray(network.edge_source_cell, dtype=np.int64)
+    import_edges = np.asarray(network.cell_owner_kind, dtype=np.int64)[edge_sources] == _KIND_IMPORT
+    if bool(np.any(import_edges)):
+        import_sales = np.bincount(
+            np.asarray(network.edge_commodity, dtype=np.int64)[import_edges],
+            weights=np.asarray(flows.edge_delivered, dtype=np.float64)[import_edges]
+            * import_prices[np.asarray(network.edge_commodity, dtype=np.int64)[import_edges]],
+            minlength=G,
+        )
+    imports_value = float(import_sales.sum())
+    export_stage = np.asarray(
+        [
+            STAGE_CODES["ready"] if cid == _FOOD_ID else STAGE_CODES["standard"]
+            for cid in commodity_ids
+        ],
+        dtype=np.int64,
+    )
+    export_prices = np.asarray(
+        [prices.price_for(g, int(export_stage[g])) for g in range(G)], dtype=np.float64
+    )
+    exports_quantity_total = np.asarray(flows.cmea_exports, dtype=np.float64) + np.asarray(
+        flows.convertible_exports, dtype=np.float64
+    )
+    exports_value = float(np.sum(exports_quantity_total * export_prices))
+    housing_cells = np.nonzero(demand_purpose == _P_HOUSING)[0]
+    _require(
+        int(housing_cells.shape[0]) == R,
+        quarter,
+        "housing demand block must carry exactly one cell per region",
+    )
+    construction_g = (
+        commodity_ids.index(_CONSTRUCTION_ID) if _CONSTRUCTION_ID in commodity_ids else -1
+    )
+    housing_value = 0.0
+    if construction_g >= 0:
+        housing_value = float(np.sum(flows.delivered[housing_cells])) * prices.price_for(
+            construction_g, STAGE_CODES["standard"]
+        )
+    border_purposes = np.isin(
+        np.asarray(network.edge_purpose, dtype=np.int64),
+        [_P_EXPORT_CMEA, _P_EXPORT_CONVERTIBLE, _P_HOUSING],
+    )
+    border_fees = float(
+        np.sum(np.asarray(flows.edge_service_fee, dtype=np.float64)[border_purposes])
+    )
+    finance(
+        "treasury_deposit_continuity",
+        np.asarray([float(state.treasury_deposit)]),
+        np.asarray(
+            [
+                float(opening.treasury_deposit)
+                + imports_value
+                - exports_value
+                - float(np.sum(flows.organization_bailout_granted))
+                - housing_value
+                - border_fees
+            ]
+        ),
+        labels=["treasury"],
+    )
+
+    # Foreign accounts (USD and CMEA close separately; CMEA may go negative).
+    finance(
+        "usd_reserve_continuity",
+        np.asarray([float(state.usd_reserve)]),
+        np.asarray(
+            [
+                float(opening.usd_reserve)
+                + float(flows.usd_export_receipt)
+                - float(flows.usd_interest_paid)
+                - float(flows.usd_principal_paid)
+                - float(flows.usd_import_payment)
+                + float(flows.usd_loan_drawn)
+            ]
+        ),
+        labels=["usd_reserve"],
+    )
+    finance(
+        "usd_principal_continuity",
+        np.asarray([float(state.usd_principal)]),
+        np.asarray(
+            [
+                float(opening.usd_principal)
+                + float(flows.usd_loan_drawn)
+                - float(flows.usd_principal_paid)
+            ]
+        ),
+        labels=["usd_principal"],
+    )
+    finance(
+        "usd_interest_arrears_continuity",
+        np.asarray([float(state.usd_interest_arrears)]),
+        np.asarray(
+            [
+                float(opening.usd_interest_arrears)
+                + float(flows.usd_interest_accrued)
+                - float(flows.usd_interest_paid)
+            ]
+        ),
+        labels=["usd_interest_arrears"],
+    )
+    finance(
+        "cmea_settlement_continuity",
+        np.asarray([float(state.cmea_settlement_balance)]),
+        np.asarray(
+            [
+                float(opening.cmea_settlement_balance)
+                + float(flows.cmea_export_receipt)
+                - float(flows.cmea_import_payment)
+            ]
+        ),
+        labels=["cmea_settlement_balance"],
+    )
+
+    # --- 7. journal -----------------------------------------------------------
+    kind, debit, credit, amount, currency = _check_journal(flows, quarter)
+    wage_journal_total = np.asarray([0.0])
+    bailout_journal_total = np.asarray([0.0])
+    if amount.size:
+        household_cash_ids = np.asarray(
+            household_account_ids(state, AccountKind.CASH_DEPOSIT), dtype=np.int64
+        )
+        organization_cash_ids = np.asarray(
+            organization_account_ids(state, AccountKind.CASH_DEPOSIT), dtype=np.int64
+        )
+        domestic = currency == DOMESTIC_CURRENCY
+        to_households = (kind == "wage_payment") & domestic & np.isin(debit, household_cash_ids)
+        wage_journal_total = np.asarray([float(np.sum(amount[to_households]))])
+        to_borrowers = (kind == "bailout_grant") & domestic & np.isin(
+            credit, organization_cash_ids
+        )
+        bailout_journal_total = np.asarray([float(np.sum(amount[to_borrowers]))])
+    finance(
+        "journal_wage_payment_vs_households",
+        wage_journal_total,
+        np.asarray(
+            [
+                float(
+                    np.sum(
+                        weight
+                        * (
+                            np.asarray(flows.household_wage_income, dtype=np.float64)
+                            + np.asarray(flows.household_late_wage, dtype=np.float64)
+                        )
+                    )
+                )
+            ]
+        ),
+        labels=["wage_payment"],
+    )
+    finance(
+        "journal_bailout_grant_vs_organizations",
+        bailout_journal_total,
+        np.asarray([float(np.sum(flows.organization_bailout_granted))]),
+        labels=["bailout_grant"],
+    )
+
+    # --- 8. regional household-channel stocks ---------------------------------
+    dwelling_delta = (
+        np.asarray(state.dwelling_stock, dtype=np.float64)
+        - np.asarray(opening.dwelling_stock, dtype=np.float64)
+    )
+    housing_delivered = flows.delivered[housing_cells]
+    material_at_most(
+        "dwelling_completion_le_housing_delivery",
+        dwelling_delta,
+        housing_delivered,
+        labels=region_labels,
+    )
+    material_at_most(
+        "dwelling_delta_nonnegative",
+        np.zeros(R),
+        dwelling_delta,
+        labels=region_labels,
+    )
+    durable_g = (
+        commodity_ids.index(_DURABLE_ID) if _DURABLE_ID in commodity_ids else -1
+    )
+    durable_sales = (
+        retail_sales[:, durable_g] if durable_g >= 0 else np.zeros(R, dtype=np.float64)
+    )
+    material(
+        "durable_stock_continuity",
+        np.asarray(state.durable_stock, dtype=np.float64)
+        - np.asarray(opening.durable_stock, dtype=np.float64),
+        durable_sales,
+        labels=region_labels,
+    )
+
+    # --- 9. distribution used views (memo tying flows.used to real releases) --
+    distribution_rows = np.nonzero(
+        np.isin(demand_purpose, [_P_PROCUREMENT, _P_RETAIL])
+        & (demand_cells >= 0)
+        & np.isin(
+            np.asarray(network.cell_pool, dtype=np.int64)[
+                np.clip(demand_cells, 0, S - 1)
+            ],
+            [_POOL_WHOLESALE, _POOL_RETAIL],
+        )
+    )[0]
+    if distribution_rows.size:
+        release = continuity.edge_out_all + continuity.household_channel
+        material(
+            "distribution_used_views_match_release",
+            flows.used[distribution_rows],
+            release[demand_cells[distribution_rows]],
+            labels=[demand_labels[int(d)] for d in distribution_rows],
+        )
+
+    # --- residual snapshot slots -------------------------------------------
+    flows.material_balance_residual = continuity.stock_residual.copy()
+    flows.material_balance_tolerance = continuity.stock_tolerance.copy()
+    finance_residual, finance_tolerance = finance_balance_residuals(state, flows)
+    flows.finance_balance_residual = finance_residual
+    flows.finance_balance_tolerance = finance_tolerance
+
+    return InvariantSummary(
+        max_material_abs_residual=max_material,
+        max_material_tolerance_ratio=max_material_ratio,
+        max_finance_abs_residual=max_finance,
+        max_finance_tolerance_ratio=max_finance_ratio,
+        checked_cells=S,
+        per_ledger=per_ledger,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Department aggregation (plan section 5; use-derived analytical layer).
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class DepartmentSummary:
+    """Use-derived Department I/II aggregation of one tick (admin prices).
+
+    Realized use values measure this tick's actual uses; attributed output
+    values split each source's gross production by its same-tick delivery
+    purpose shares, so the five buckets sum exactly to the gross domestic
+    output value.  ``service_attributed_output_value`` complements the pinned
+    field list with the services attribution bucket.
+    """
+
+    department_I_realized_use_value: float = 0.0
+    department_II_realized_use_value: float = 0.0
+    service_use_productive: float = 0.0
+    service_use_household: float = 0.0
+    exports_value: float = 0.0
+    unclassified_output_value: float = 0.0
+    department_I_attributed_output_value: float = 0.0
+    department_II_attributed_output_value: float = 0.0
+    service_attributed_output_value: float = 0.0
+    gross_domestic_output_value: float = 0.0
+    commodity_use_quantities: dict[str, dict[str, float]] = field(default_factory=dict)
+
+    @property
+    def use_value(self) -> dict[str, float]:
+        """Five-bucket use view (services = productive + household)."""
+        return {
+            "department_I": self.department_I_realized_use_value,
+            "department_II": self.department_II_realized_use_value,
+            "services": self.service_use_productive + self.service_use_household,
+            "exports": self.exports_value,
+            "unclassified": self.unclassified_output_value,
+        }
+
+    @property
+    def attributed_output_value(self) -> dict[str, float]:
+        """Five-bucket attributed gross output view."""
+        return {
+            "department_I": self.department_I_attributed_output_value,
+            "department_II": self.department_II_attributed_output_value,
+            "services": self.service_attributed_output_value,
+            "exports": self.exports_value,
+            "unclassified": self.unclassified_output_value,
+        }
+
+
+def derive_departments(
+    flows: MaterialTickFlows,
+    prices: MaterialPrices,
+    network: MaterialNetwork | None = None,
+    *,
+    state: MaterialState | None = None,
+    housing_completed: float | None = None,
+) -> DepartmentSummary:
+    """Aggregate one tick's flows into Department I/II use and output views.
+
+    Requires the network catalog (delivery purposes, cell ownership and the
+    commodity axis are not derivable from the flows alone) and the closing
+    state (household weights/regions for represented totals); both fail
+    closed with :class:`AccountingError` when omitted.  ``housing_completed``
+    is the total dwelling units completed this tick — a runner-boundary
+    quantity that must be supplied whenever construction is declared.
+    """
+    if network is None:
+        raise AccountingError(
+            "derive_departments requires the material network catalog "
+            "(delivery purposes are not derivable from flows alone)"
+        )
+    if state is None:
+        raise AccountingError(
+            "derive_departments requires the closing state "
+            "(household weights/regions for represented totals)"
+        )
+    commodity_ids = network.commodity_ids
+    G = len(commodity_ids)
+    S = int(np.asarray(network.cell_owner_kind).shape[0])
+    K = int(np.asarray(network.input_cell).shape[0])
+    R = int(state.dwelling_stock.shape[0])
+    services_g = commodity_ids.index(_SERVICES_ID) if _SERVICES_ID in commodity_ids else -1
+    construction_g = (
+        commodity_ids.index(_CONSTRUCTION_ID) if _CONSTRUCTION_ID in commodity_ids else -1
+    )
+    food_g = commodity_ids.index(_FOOD_ID) if _FOOD_ID in commodity_ids else -1
+    if housing_completed is None:
+        if construction_g >= 0:
+            raise AccountingError(
+                "derive_departments requires housing_completed (dwelling units "
+                "completed this tick) when construction is declared"
+            )
+        housing_completed = 0.0
+
+    cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
+    cell_stage = np.asarray(network.cell_stage, dtype=np.int64)
+    src = np.asarray(network.edge_source_cell, dtype=np.int64)
+    purpose = np.asarray(network.edge_purpose, dtype=np.int64)
+    edge_delivered = np.asarray(flows.edge_delivered, dtype=np.float64)
+
+    def _out(mask: np.ndarray) -> np.ndarray:
+        if bool(np.any(mask)):
+            return np.bincount(src[mask], weights=edge_delivered[mask], minlength=S)
+        return np.zeros(S, dtype=np.float64)
+
+    production = np.asarray(network.B.T @ np.asarray(flows.activity_realized)).ravel()
+    production = production.astype(np.float64)
+    services_cells = (
+        (cell_commodity == services_g) if services_g >= 0 else np.zeros(S, dtype=bool)
+    )
+
+    # Logistics services are consumed out of transport output cells.
+    logistics = np.zeros(S, dtype=np.float64)
+    transport_orgs = np.asarray(network.edge_transport_org, dtype=np.int64)
+    org_output = np.asarray(network.org_output_cell, dtype=np.int64)
+    served = (transport_orgs >= 0) & (transport_orgs < org_output.shape[0])
+    if bool(np.any(served)):
+        cells = org_output[transport_orgs[served]]
+        ok = cells >= 0
+        if bool(np.any(ok)):
+            np.add.at(
+                logistics,
+                cells[ok],
+                np.asarray(flows.edge_service_used, dtype=np.float64)[served][ok],
+            )
+
+    # Plot household channels (self-use and direct market), region-weighted.
+    plot_channel = np.zeros(S, dtype=np.float64)
+    self_quantity = np.zeros(R, dtype=np.float64)
+    direct_quantity = np.zeros(R, dtype=np.float64)
+    if food_g >= 0:
+        ready_price = float(prices.standard[food_g])
+        weight = np.asarray(state.household_weight, dtype=np.float64)
+        region = np.asarray(state.household_region, dtype=np.int64)
+        self_quantity = (
+            np.bincount(
+                region,
+                weights=weight * np.asarray(flows.household_self_use, dtype=np.float64),
+                minlength=R,
+            )
+            / ready_price
+        )
+        direct_quantity = (
+            np.bincount(
+                region,
+                weights=weight
+                * np.asarray(flows.household_plot_income_direct, dtype=np.float64),
+                minlength=R,
+            )
+            / ready_price
+        )
+        plot_self = np.asarray(network.plot_ready_self_cell, dtype=np.int64)
+        plot_market = np.asarray(network.plot_ready_market_cell, dtype=np.int64)
+        self_ok = plot_self >= 0
+        market_ok = plot_market >= 0
+        if bool(np.any(self_ok)):
+            plot_channel[plot_self[self_ok]] += self_quantity[self_ok]
+        if bool(np.any(market_ok)):
+            plot_channel[plot_market[market_ok]] += direct_quantity[market_ok]
+
+    i_purpose_out = (
+        _out(purpose == _P_INTERMEDIATE)
+        + _out(purpose == _P_INVESTMENT)
+        + _out(purpose == _P_PROCUREMENT)
+        + _out(purpose == _P_PRIVATE_PLOT)
+    )
+    ii_purpose_out = _out(purpose == _P_HOUSING) + _out(purpose == _P_RETAIL)
+    exports_purpose_out = _out(purpose == _P_EXPORT_CMEA) + _out(
+        purpose == _P_EXPORT_CONVERTIBLE
+    )
+    services_productive_out = (
+        logistics + _out(purpose == _P_INTERMEDIATE) + _out(purpose == _P_PRIVATE_PLOT)
+    )
+    services_household_out = _out(purpose == _P_RETAIL)
+
+    cell_price = np.asarray(
+        [prices.price_for(int(cell_commodity[c]), int(cell_stage[c])) for c in range(S)],
+        dtype=np.float64,
+    )
+    production_value = production * cell_price
+    gross_output = float(np.sum(production_value))
+
+    # Household edges never source producer cells (they mirror the retail and
+    # plot channels), so the channel terms complete the attribution outflows.
+    total_out = (
+        i_purpose_out
+        + ii_purpose_out
+        + exports_purpose_out
+        + services_productive_out
+        + services_household_out
+        + plot_channel
+    )
+    share = np.zeros(S, dtype=np.float64)
+    positive = total_out > 0.0
+    np.divide(1.0, total_out, out=share, where=positive)
+    # A cell whose recorded outflow has decayed into subnormal dust would give
+    # share = inf and poison the whole attribution; such output is nil.
+    share[~np.isfinite(share)] = 0.0
+
+    def _attributed(outflow: np.ndarray, mask: np.ndarray) -> float:
+        return float(np.sum(production_value * outflow * share * mask))
+
+    goods_mask = ~services_cells
+    attributed_i = _attributed(i_purpose_out, goods_mask)
+    attributed_ii = _attributed(ii_purpose_out + plot_channel, goods_mask)
+    attributed_exports = _attributed(exports_purpose_out, goods_mask)
+    attributed_services = _attributed(services_productive_out, services_cells) + (
+        _attributed(services_household_out, services_cells)
+    )
+    unclassified = max(
+        0.0,
+        gross_output - attributed_i - attributed_ii - attributed_exports - attributed_services,
+    )
+
+    # --- realized use values -------------------------------------------------
+    input_cells = np.asarray(network.input_cell, dtype=np.int64)
+    input_commodity = cell_commodity[input_cells]
+    input_index = np.asarray(network.demand_input_index, dtype=np.int64)
+    production_rows = input_index >= 0
+    k_rows = input_index[production_rows]
+    k_used = np.zeros(K, dtype=np.float64)
+    k_used[k_rows] = np.asarray(flows.used, dtype=np.float64)[production_rows]
+    input_price = cell_price[input_cells]
+    input_is_services = services_cells[input_cells]
+    intermediate_value = float(
+        np.sum(k_used[~input_is_services] * input_price[~input_is_services])
+    )
+    services_input_value = float(
+        np.sum(k_used[input_is_services] * input_price[input_is_services])
+    )
+    logistics_quantity = float(np.sum(np.asarray(flows.edge_service_used, dtype=np.float64)))
+    services_price = float(prices.standard[services_g]) if services_g >= 0 else 0.0
+    logistics_value = logistics_quantity * services_price
+
+    demand_purpose = np.asarray(network.demand_purpose, dtype=np.int64)
+    demand_cells = np.asarray(network.demand_cell, dtype=np.int64)
+    investment_rows = (demand_purpose == _P_INVESTMENT) & (demand_cells >= 0)
+    investment_quantities = np.bincount(
+        cell_commodity[demand_cells[investment_rows]],
+        weights=np.asarray(flows.used, dtype=np.float64)[investment_rows],
+        minlength=G,
+    )
+    investment_stages = cell_stage[demand_cells[investment_rows]]
+    investment_goods = cell_commodity[demand_cells[investment_rows]]
+    investment_prices = np.asarray(prices.standard, dtype=np.float64)[investment_goods].copy()
+    if food_g >= 0:
+        raw_food_investment = (investment_goods == food_g) & (
+            investment_stages == STAGE_CODES["raw"]
+        )
+        investment_prices[raw_food_investment] = float(prices.food_raw)
+    investment_value = float(
+        np.sum(np.asarray(flows.used, dtype=np.float64)[investment_rows] * investment_prices)
+    )
+
+    household_goods = [
+        g for g in range(G) if commodity_ids[g] in _HOUSEHOLD_CHANNEL_IDS and g != services_g
+    ]
+    realized = np.asarray(flows.household_realized, dtype=np.float64)
+    weight = np.asarray(state.household_weight, dtype=np.float64)
+    household_quantities = (
+        weight @ realized if realized.size else np.zeros(G, dtype=np.float64)
+    )
+    household_value = float(
+        sum(
+            float(household_quantities[g]) * float(prices.standard[g])
+            for g in household_goods
+        )
+    )
+    services_household_qty = (
+        float(household_quantities[services_g]) if services_g >= 0 else 0.0
+    )
+    services_household_value = services_household_qty * services_price
+    housing_value = (
+        float(housing_completed) * float(prices.standard[construction_g])
+        if construction_g >= 0
+        else 0.0
+    )
+    exports_quantity = (
+        np.asarray(flows.cmea_exports, dtype=np.float64)
+        + np.asarray(flows.convertible_exports, dtype=np.float64)
+    )
+    export_stage = np.asarray(
+        [
+            STAGE_CODES["ready"] if cid == _FOOD_ID else STAGE_CODES["standard"]
+            for cid in commodity_ids
+        ],
+        dtype=np.int64,
+    )
+    export_prices = np.asarray(
+        [prices.price_for(g, int(export_stage[g])) for g in range(G)], dtype=np.float64
+    )
+    exports_total_value = float(np.sum(exports_quantity * export_prices))
+
+    # --- per-commodity realized use quantities -------------------------------
+    commodity_use: dict[str, dict[str, float]] = {}
+    for g, cid in enumerate(commodity_ids):
+        is_services = services_g == g
+        input_qty = float(np.sum(k_used[input_commodity == g]))
+        department_i = 0.0 if is_services else input_qty
+        department_i += float(investment_quantities[g])
+        department_ii = float(household_quantities[g]) if g in household_goods else 0.0
+        if g == construction_g:
+            department_ii += float(housing_completed)
+        commodity_use[cid] = {
+            "department_I": department_i,
+            "department_II": department_ii,
+            "service_use_productive": (input_qty + logistics_quantity)
+            if is_services
+            else 0.0,
+            "service_use_household": services_household_qty if is_services else 0.0,
+            "exports": float(exports_quantity[g]),
+        }
+
+    return DepartmentSummary(
+        department_I_realized_use_value=intermediate_value + investment_value,
+        department_II_realized_use_value=household_value + housing_value,
+        service_use_productive=services_input_value + logistics_value,
+        service_use_household=services_household_value,
+        exports_value=exports_total_value,
+        unclassified_output_value=unclassified,
+        department_I_attributed_output_value=attributed_i,
+        department_II_attributed_output_value=attributed_ii,
+        service_attributed_output_value=attributed_services,
+        gross_domestic_output_value=gross_output,
+        commodity_use_quantities=commodity_use,
+    )
+
+
+__all__ = [
+    "ATOL",
+    "RTOL",
+    "AccountingError",
+    "DepartmentSummary",
+    "InvariantSummary",
+    "check_material_invariants",
+    "derive_departments",
+    "finance_balance_residuals",
+    "material_balance_residuals",
+    "tolerance_for",
+]

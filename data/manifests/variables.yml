@@ -1,135 +1,265 @@
-schema_version: "1"
+schema_version: '1'
 variables:
-  - variable_id: world_oil_price
-    semantic_kind: "external"
-    allowed_roles: ["exogenous_forcing"]
-    unit: null
-    original_frequency: "monthly"
-    aggregation: null
-    notes: "World oil price forcing candidate (World Bank Pink Sheet). Rights scope unconfirmed; no data admitted."
-  - variable_id: global_usd_rate
-    semantic_kind: "external"
-    allowed_roles: ["exogenous_forcing"]
-    unit: null
-    original_frequency: "monthly"
-    aggregation: null
-    notes: "Global USD interest-rate forcing candidate. FRED usage clause unresolved; no data admitted."
-  - variable_id: official_fx
-    semantic_kind: "external"
-    allowed_roles: ["exogenous_forcing"]
-    unit: null
-    original_frequency: "monthly"
-    aggregation: null
-    notes: "Official HUF/USD channel only. NOT the sole trade exchange rate: convertible, transferable rouble, bilateral CMEA settlement and domestic admin prices are distinct (BASELINE §21 error 3)."
-  - variable_id: gdp
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual target from 1960; quarterly simulation aggregates to annual for comparison. Never forced into state."
-  - variable_id: consumption
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual target; comparison only."
-  - variable_id: investment
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual target; comparison only. Must not double as forcing (BASELINE §21 error 1)."
-  - variable_id: wage
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual target from 1960."
-  - variable_id: cpi
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Administrative price index target; not a scarcity measure (BASELINE §21 error 4)."
-  - variable_id: industrial_output
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual target; future G1/G2 mapping, not one aggregated 'goods'."
-  - variable_id: trade
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual external-trade target; comparison only."
-  - variable_id: debt
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual target; hard-currency debt context."
-  - variable_id: housing
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual target."
-  - variable_id: retail
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual retail target; commodity-level shortage proxy availability still open (BASELINE §41)."
-  - variable_id: employment
-    semantic_kind: "outcome"
-    allowed_roles: ["target"]
-    unit: null
-    original_frequency: "annual"
-    aggregation: null
-    notes: "Annual target."
-  - variable_id: population_anchor
-    semantic_kind: "initial_anchor"
-    allowed_roles: ["initial_state"]
-    unit: "persons"
-    original_frequency: "dated"
-    aggregation: "end_of_period"
-    notes: "Census population stocks; anchors only at true census dates (BASELINE §24). Grade rules per BASELINE §5.3."
-  - variable_id: cmea_energy_price
-    semantic_kind: "external"
-    allowed_roles: ["exogenous_forcing"]
-    unit: null
-    original_frequency: "quarterly"
-    aggregation: null
-    notes: "RECONSTRUCTED ONLY: never an observed series. Anchor sources unresolved; evidence_status must be 'reconstructed' at admission."
-  - variable_id: sbc_strength
-    semantic_kind: "latent"
-    allowed_roles: ["latent_parameter"]
-    unit: null
-    original_frequency: "static"
-    aggregation: null
-    notes: "Soft budget constraint strength latent parameter: literature prior + calibration + sensitivity + uncertainty required; never observed evidence (BASELINE §22.5)."
-  - variable_id: "toy4_import_supply"
-    semantic_kind: "external"
-    allowed_roles: ["exogenous_forcing"]
-    unit: "toy4_commodity_unit"
-    original_frequency: "quarterly"
-    aggregation: "sum"
-    notes: "Deterministic Toy-4 import supply per commodity; synthetic engineering fixture, not a historical trade series. toy4_commodity_unit: one independent unit per commodity; never sum across commodities."
-  - variable_id: "toy4_export_orders"
-    semantic_kind: "external"
-    allowed_roles: ["exogenous_forcing"]
-    unit: "toy4_commodity_unit"
-    original_frequency: "quarterly"
-    aggregation: "sum"
-    notes: "Deterministic Toy-4 export orders per commodity; synthetic engineering fixture, not a historical trade series. toy4_commodity_unit: one independent unit per commodity; never sum across commodities."
+- variable_id: world_oil_price
+  semantic_kind: external
+  allowed_roles:
+  - exogenous_forcing
+  unit: USD_per_barrel
+  original_frequency: monthly
+  aggregation: mean
+  notes: World Bank Pink Sheet monthly crude oil (average), nominal USD per barrel. Observed forcing from
+    1960-01; 1957-1959 must be an explicit structural warm-up, never backfilled observations.
+- variable_id: global_usd_rate
+  semantic_kind: external
+  allowed_roles:
+  - exogenous_forcing
+  unit: percent_per_year
+  original_frequency: monthly
+  aggregation: mean
+  notes: 'Global USD interest-rate forcing: Federal Reserve H.15 RIFSPFF_N.M effective federal funds rate
+    (percent per year). Same-origin substitute for the rights-blocked FRED FEDFUNDS candidate.'
+- variable_id: official_fx
+  semantic_kind: external
+  allowed_roles:
+  - exogenous_forcing
+  unit: HUF_per_USD
+  original_frequency: dated
+  aggregation: end_of_period
+  notes: 'Official MNB HUF/USD daily quotes (page already normalized to HUF per 1 USD; never divided by
+    100). First batch is 1985 only; quarter diagnostics take the last actual quote per quarter, missing
+    dates stay missing. NOT the sole trade exchange rate: convertible, transferable rouble, bilateral
+    CMEA settlement and domestic admin prices are distinct (BASELINE §21 error 3).'
+- variable_id: gdp
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: index_1960_100
+  original_frequency: annual
+  aggregation: mean
+  notes: Annual GDP index (1960=100) from KSH gdp0002; quarterly simulation aggregates to annual by mean
+    for comparison. Never forced into state; gross material output is never passed off as GDP.
+- variable_id: consumption
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: index_1960_100
+  original_frequency: annual
+  aggregation: mean
+  notes: Household actual final consumption index (1960=100) from KSH gdp0002; comparison only.
+- variable_id: investment
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: index_1960_100
+  original_frequency: annual
+  aggregation: mean
+  notes: Gross fixed capital formation index (1960=100) from KSH gdp0002; comparison only. Must not double
+    as forcing (BASELINE §21 error 1).
+- variable_id: wage
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: null
+  original_frequency: annual
+  aggregation: null
+  notes: Annual target from 1960.
+- variable_id: cpi
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: null
+  original_frequency: annual
+  aggregation: null
+  notes: Administrative price index target; not a scarcity measure (BASELINE §21 error 4).
+- variable_id: industrial_output
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: index_1960_100
+  original_frequency: annual
+  aggregation: mean
+  notes: Volume index of industrial production (1960=100, KSH ipa0002; 1985=346). Independent of the five
+    featured physical product variables; not one aggregated 'goods'.
+- variable_id: trade
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: null
+  original_frequency: annual
+  aggregation: null
+  notes: Annual external-trade target; comparison only.
+- variable_id: debt
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: null
+  original_frequency: annual
+  aggregation: null
+  notes: Annual target; hard-currency debt context.
+- variable_id: housing
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: null
+  original_frequency: annual
+  aggregation: null
+  notes: Annual target.
+- variable_id: retail
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: null
+  original_frequency: annual
+  aggregation: null
+  notes: Annual retail target; commodity-level shortage proxy availability still open (BASELINE §41).
+- variable_id: employment
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: null
+  original_frequency: annual
+  aggregation: null
+  notes: Annual target.
+- variable_id: population_anchor
+  semantic_kind: initial_anchor
+  allowed_roles:
+  - initial_state
+  unit: persons
+  original_frequency: dated
+  aggregation: end_of_period
+  notes: Census population stocks; anchors only at true census dates (BASELINE §24). Grade rules per BASELINE
+    §5.3.
+- variable_id: cmea_energy_price
+  semantic_kind: external
+  allowed_roles:
+  - exogenous_forcing
+  unit: cmea_settlement_unit_per_p02_energy_unit
+  original_frequency: monthly
+  aggregation: piecewise_constant
+  notes: 'RECONSTRUCTED ONLY: never an observed series (evidence_status must be ''reconstructed'' at admission).
+    original_frequency is monthly because the reconstruction input is the admitted WB monthly oil workbook;
+    the cmea_five_year_contract transform (monthly->quarterly, piecewise_constant, five complete past
+    years only) produces the 1975Q1-1985Q4 quarterly artifact. 1957-1974 is the separate p02_cmea_contract_prior
+    latent prior, never this variable.'
+- variable_id: industrial_electricity
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: million_kWh
+  original_frequency: annual
+  aggregation: sum
+  notes: KSH ipa0002 gross electricity production (1960 = 7617 million kWh); physical energy-group outcome,
+    annual sum.
+- variable_id: industrial_crude_steel
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: thousand_tonnes
+  original_frequency: annual
+  aggregation: sum
+  notes: KSH ipa0002 crude steel (1960 = 1887 thousand tonnes); raw-materials group outcome, annual sum.
+- variable_id: industrial_fertilizer
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: thousand_tonnes
+  original_frequency: annual
+  aggregation: sum
+  notes: KSH ipa0002 mineral or chemical fertilizers (1960 = 102 thousand tonnes). The CSV does not declare
+    active-substance content, so the unit is kept as published; raw-materials group, annual sum.
+- variable_id: industrial_cement
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: thousand_tonnes
+  original_frequency: annual
+  aggregation: sum
+  notes: KSH ipa0002 cement (1960 = 1571 thousand tonnes); a construction input, not completed housing;
+    raw-materials group, annual sum.
+- variable_id: industrial_television
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: thousand_units
+  original_frequency: annual
+  aggregation: sum
+  notes: KSH ipa0002 television sets (1960 = 139 thousand units); durable-goods group outcome, annual
+    sum.
+- variable_id: ag_cereals
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: thousand_tonnes
+  original_frequency: annual
+  aggregation: sum
+  notes: KSH h_omf001b cereals total (1960 = 6960 thousand tonnes); food (raw) harvest outcome, annual
+    sum. Never used to schedule actual farm output.
+- variable_id: ag_wheat
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: thousand_tonnes
+  original_frequency: annual
+  aggregation: sum
+  notes: KSH h_omf001b wheat (1960 = 1803 thousand tonnes); food (raw) harvest outcome, annual sum.
+- variable_id: ag_maize
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: thousand_tonnes
+  original_frequency: annual
+  aggregation: sum
+  notes: KSH h_omf001b maize (1960 = 3534 thousand tonnes); food (raw) harvest outcome, annual sum.
+- variable_id: trade_import_volume_index
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: index_1960_100
+  original_frequency: annual
+  aggregation: mean
+  notes: KSH h_qkt001 volume index of goods imports (1960 = 100%, 1961 = 108); annual mean. An import
+    outcome, never an imports quota; CMEA composition is never inferred from the total index.
+- variable_id: trade_export_volume_index
+  semantic_kind: outcome
+  allowed_roles:
+  - target
+  unit: index_1960_100
+  original_frequency: annual
+  aggregation: mean
+  notes: KSH h_qkt001 volume index of goods exports (1960 = 100%, 1961 = 118); annual mean.
+- variable_id: sbc_strength
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: null
+  original_frequency: static
+  aggregation: null
+  notes: 'Soft budget constraint strength latent parameter: literature prior + calibration + sensitivity
+    + uncertainty required; never observed evidence (BASELINE §22.5).'
+- variable_id: oil_warmup_price
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: USD_per_barrel
+  original_frequency: static
+  aggregation: null
+  notes: Structural warm-up oil price for 1957Q1-1959Q4 (no observed World Bank oil before 1960-01; observations
+    are never backfilled). Selected value 1.6 with engineering bounds [1, 3]; not calibrated.
+- variable_id: cmea_base_energy_price
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: cmea_settlement_unit_per_p02_energy_unit
+  original_frequency: static
+  aggregation: null
+  notes: Early CMEA base contract price prior covering 1957-1974, before the five-year reconstruction
+    window starts 1975Q1. Bounds [0.5, 1.5]; not a calibrated estimate.
+- variable_id: cmea_uncertainty_multiplier
+  semantic_kind: latent
+  allowed_roles:
+  - latent_parameter
+  unit: ratio
+  original_frequency: static
+  aggregation: null
+  notes: Multiplier scaling the five-year-rule CMEA contract price reconstruction; selected value 1.0
+    with engineering bounds [0.5, 1.5]; not calibrated.

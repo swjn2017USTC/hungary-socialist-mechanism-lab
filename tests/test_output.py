@@ -10,9 +10,26 @@ import numpy as np
 import polars as pl
 import pytest
 
+from hsm_lab.contract.material import ORGANIZATION_TYPE_ORDER, legal_stages
 from hsm_lab.contract.schemas import ResearchGateError
 from hsm_lab.data.registry import DataRegistry
 from hsm_lab.engine.smoke import run_smoke
+from hsm_lab.engine.state import MaterialHistory
+from hsm_lab.storage.material_output import (
+    AGGREGATE_COLUMNS,
+    BUDGET_COLUMNS,
+    DEPARTMENT_COLUMNS,
+    DIAGNOSTIC_COLUMNS,
+    EVENT_COLUMNS,
+    FINANCIAL_COLUMNS,
+    MATERIAL_TICK_EVENT,
+    NATIONAL_COLUMNS,
+    ORGANIZATION_COLUMNS,
+    STAGE_COLUMNS,
+    TABLES,
+    history_frames,
+    write_material_tables,
+)
 from tests.conftest import REPO_ROOT, load_json, smoke_spec
 
 
@@ -343,3 +360,324 @@ def test_rng_constructor_failure_writes_failed_manifest(
     assert payload["finished_at"] is not None
     assert payload["rng_draws_count"] == 0
     assert payload["deterministic_replay_digest"] == ""
+
+# ---------------------------------------------------------------------------
+# P02: material compact tables (synthetic MaterialHistory; no engine import).
+# ---------------------------------------------------------------------------
+
+_MATERIAL_COMMODITIES = [
+    "energy",
+    "capital_goods",
+    "food",
+    "consumer_goods",
+    "raw_materials",
+    "construction",
+    "durable_goods",
+    "services_transport",
+]
+
+
+def _material_stage_combos() -> list[tuple[str, str]]:
+    return [
+        (commodity, stage)
+        for commodity in _MATERIAL_COMMODITIES
+        for stage in legal_stages(commodity)
+    ]
+
+
+def _synthetic_material_history(ticks: int = 2) -> MaterialHistory:
+    regions = ["r0", "r1", "r2"]
+    commodities = _MATERIAL_COMMODITIES
+    banks = 1
+    history = MaterialHistory()
+    for tick in range(ticks):
+        quarter = f"1957Q{tick + 1}" if tick < 4 else f"1958Q{tick - 3}"
+        for region in regions:
+            for commodity in commodities:
+                history.aggregate_rows.append(
+                    {
+                        "tick": tick,
+                        "quarter": quarter,
+                        "region_id": region,
+                        "commodity_id": commodity,
+                        **{
+                            name: float(tick + 1)
+                            for name in AGGREGATE_COLUMNS
+                            if name
+                            not in ("tick", "quarter", "region_id", "commodity_id")
+                        },
+                    }
+                )
+        for region in [*regions, None]:
+            for commodity, stage in _material_stage_combos():
+                history.stage_rows.append(
+                    {
+                        "tick": tick,
+                        "quarter": quarter,
+                        "region_id": region,
+                        "commodity_id": commodity,
+                        "stage": stage,
+                        "opening": float(tick),
+                        "closing": float(tick + 1),
+                        **{
+                            name: 1.0
+                            for name in STAGE_COLUMNS
+                            if name
+                            not in (
+                                "tick",
+                                "quarter",
+                                "region_id",
+                                "commodity_id",
+                                "stage",
+                                "opening",
+                                "closing",
+                            )
+                        },
+                    }
+                )
+        for commodity in commodities:
+            history.national_rows.append(
+                {
+                    "tick": tick,
+                    "quarter": quarter,
+                    "commodity_id": commodity,
+                    **{
+                        name: 2.0
+                        for name in NATIONAL_COLUMNS
+                        if name not in ("tick", "quarter", "commodity_id")
+                    },
+                }
+            )
+        for region in regions:
+            history.budget_rows.append(
+                {
+                    "tick": tick,
+                    "quarter": quarter,
+                    "region_id": region,
+                    **{
+                        name: 3.0
+                        for name in BUDGET_COLUMNS
+                        if name not in ("tick", "quarter", "region_id")
+                    },
+                }
+            )
+        for region in regions:
+            for type_index, org_type in enumerate(ORGANIZATION_TYPE_ORDER):
+                count = 1 if type_index == 0 and region == "r0" else 0
+                history.organization_rows.append(
+                    {
+                        "tick": tick,
+                        "quarter": quarter,
+                        "region_id": region,
+                        "organization_type": org_type.value,
+                        "organization_count": count,
+                        "capacity_sum": 10.0 if count else 0.0,
+                        "capacity_mean": 10.0 if count else None,
+                        "labor_sum": 5.0 if count else 0.0,
+                        "labor_mean": 5.0 if count else None,
+                        **{
+                            name: 0.0
+                            for name in ORGANIZATION_COLUMNS
+                            if name
+                            not in (
+                                "tick",
+                                "quarter",
+                                "region_id",
+                                "organization_type",
+                                "organization_count",
+                                "capacity_sum",
+                                "capacity_mean",
+                                "labor_sum",
+                                "labor_mean",
+                                "input_bottleneck_share",
+                            )
+                        },
+                        # ordered_sum is 0 everywhere in this fixture, so the
+                        # writer's bottleneck share must stay null, never 0/0.
+                        "input_bottleneck_share": None,
+                    }
+                )
+        for bank in range(banks):
+            history.financial_rows.append(
+                {
+                    "tick": tick,
+                    "quarter": quarter,
+                    "account_id": 100 + bank,
+                    "currency": "p02_domestic_currency",
+                    "account_label": f"bank_{bank}_loan_asset",
+                    "opening": 1.0,
+                    "closing": 4.0,
+                    **{
+                        name: 0.5
+                        for name in FINANCIAL_COLUMNS
+                        if name
+                        not in (
+                            "tick",
+                            "quarter",
+                            "account_id",
+                            "currency",
+                            "account_label",
+                            "opening",
+                            "closing",
+                        )
+                    },
+                }
+            )
+        for label, account_id, currency in (
+            ("treasury_cash", 200, "p02_domestic_currency"),
+            ("foreign_usd_reserve", 201, "USD"),
+            ("foreign_cmea_settlement", 202, "cmea_settlement_unit"),
+        ):
+            history.financial_rows.append(
+                {
+                    "tick": tick,
+                    "quarter": quarter,
+                    "account_id": account_id,
+                    "currency": currency,
+                    "account_label": label,
+                    "opening": None
+                    if (label == "treasury_cash" and tick == 0)
+                    else 7.0,
+                    "closing": 8.0,
+                    **{
+                        name: 0.25
+                        for name in FINANCIAL_COLUMNS
+                        if name
+                        not in (
+                            "tick",
+                            "quarter",
+                            "account_id",
+                            "currency",
+                            "account_label",
+                            "opening",
+                            "closing",
+                        )
+                    },
+                }
+            )
+        for department in (
+            "department_I",
+            "department_II",
+            "services",
+            "exports",
+            "unclassified",
+        ):
+            history.department_rows.append(
+                {
+                    "tick": tick,
+                    "quarter": quarter,
+                    "department": department,
+                    **{
+                        name: 6.0
+                        for name in DEPARTMENT_COLUMNS
+                        if name not in ("tick", "quarter", "department")
+                    },
+                }
+            )
+        history.diagnostic_rows.append(
+            {
+                "tick": tick,
+                "quarter": quarter,
+                "digest": f"digest-{tick}",
+                **{
+                    name: float(tick)
+                    for name in DIAGNOSTIC_COLUMNS
+                    if name not in ("tick", "quarter", "digest", "forcing_segment")
+                },
+                "forcing_segment": "synthetic_warmup",
+            }
+        )
+        history.event_rows.append(
+            {
+                "tick": tick,
+                "quarter": quarter,
+                "event_type": MATERIAL_TICK_EVENT,
+                "details_json": f'{{"digest": "digest-{tick}"}}',
+            }
+        )
+    return history
+
+
+def test_material_history_frames_shapes_and_columns() -> None:
+    ticks = 2
+    frames = history_frames(_synthetic_material_history(ticks))
+    assert set(frames) == set(TABLES)
+    stage_cells = len(_material_stage_combos())
+    assert stage_cells == 9  # 8 commodities + the second food stage
+    expected_heights = {
+        "aggregates": ticks * 3 * 8,
+        "stage_balances": ticks * (3 + 1) * stage_cells,
+        "national_accounts": ticks * 8,
+        "household_budgets": ticks * 3,
+        "organization_diagnostics": ticks * 3 * len(ORGANIZATION_TYPE_ORDER),
+        "financial_accounts": ticks * (1 + 3),
+        "departments": ticks * 5,
+        "tick_diagnostics": ticks,
+        "events": ticks,
+    }
+    for name, frame in frames.items():
+        assert frame.height == expected_heights[name], name
+        assert frame["tick"].dtype == pl.Int64, name
+    assert frames["aggregates"].columns == AGGREGATE_COLUMNS
+    assert frames["stage_balances"].columns == STAGE_COLUMNS
+    assert frames["national_accounts"].columns == NATIONAL_COLUMNS
+    assert frames["household_budgets"].columns == BUDGET_COLUMNS
+    assert frames["organization_diagnostics"].columns == ORGANIZATION_COLUMNS
+    assert frames["financial_accounts"].columns == FINANCIAL_COLUMNS
+    assert frames["departments"].columns == DEPARTMENT_COLUMNS
+    assert frames["tick_diagnostics"].columns == DIAGNOSTIC_COLUMNS
+    assert frames["events"].columns == EVENT_COLUMNS
+
+
+def test_material_stage_grid_contains_national_owner_row() -> None:
+    stage = history_frames(_synthetic_material_history(1))["stage_balances"]
+    national = stage.filter(pl.col("region_id").is_null())
+    assert national.height == 9
+    food_rows = stage.filter(pl.col("commodity_id") == "food")
+    assert set(food_rows["stage"].to_list()) == {"raw", "ready"}
+    non_food = stage.filter(pl.col("commodity_id") != "food")
+    assert set(non_food["stage"].to_list()) == {"standard"}
+
+
+def test_material_empty_organization_means_are_null_not_zero() -> None:
+    org = history_frames(_synthetic_material_history(1))["organization_diagnostics"]
+    empty = org.filter(pl.col("organization_count") == 0)
+    assert empty.height > 0
+    assert empty["capacity_mean"].is_null().all()
+    assert empty["labor_mean"].is_null().all()
+    occupied = org.filter(pl.col("organization_count") > 0)
+    assert occupied.height == 1
+    assert occupied["capacity_mean"][0] == 10.0
+    assert occupied["input_bottleneck_share"].is_null().all()
+
+
+def test_material_financial_null_opening_round_trips() -> None:
+    financial = history_frames(_synthetic_material_history(1))["financial_accounts"]
+    treasury = financial.filter(pl.col("account_label") == "treasury_cash")
+    assert treasury.height == 1
+    assert treasury["opening"][0] is None
+    assert (
+        financial.filter(pl.col("account_label") == "foreign_usd_reserve")["opening"][0]
+        == 7.0
+    )
+
+
+def test_material_tables_parquet_duckdb_parity(tmp_path) -> None:
+    frames = history_frames(_synthetic_material_history(2))
+    paths = write_material_tables(tmp_path, frames)
+    assert set(paths) == set(TABLES)
+    connection = duckdb.connect(str(tmp_path / "trajectory.duckdb"))
+    try:
+        for name, frame in frames.items():
+            parquet = pl.read_parquet(tmp_path / f"{name}.parquet")
+            assert parquet.equals(frame), name
+            stored = connection.execute(f"SELECT * FROM {name}").pl()
+            assert stored.equals(frame), name
+    finally:
+        connection.close()
+
+
+def test_material_events_carry_tick_literal() -> None:
+    events = history_frames(_synthetic_material_history(1))["events"]
+    assert set(events["event_type"].to_list()) == {MATERIAL_TICK_EVENT}
+    assert events["details_json"].dtype == pl.String

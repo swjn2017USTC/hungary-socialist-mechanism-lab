@@ -36,7 +36,14 @@ from hsm_lab.data.schemas import (
 
 _ARTIFACT_ADAPTER: TypeAdapter[ArtifactSpec] = TypeAdapter(ArtifactSpec)
 DERIVED_METHODS = frozenset(
-    {"monthly_to_quarterly", "quarterly_to_annual", "anchor_reconstruction", "literature_prior"}
+    {
+        "monthly_to_quarterly",
+        "quarterly_to_annual",
+        "dated_to_quarterly",
+        "cmea_five_year_contract",
+        "anchor_reconstruction",
+        "literature_prior",
+    }
 )
 _LONG_COLUMNS: list[tuple[str, Any]] = [
     ("variable_id", pl.String),
@@ -508,7 +515,18 @@ class DataRegistry:
         # variable declares (BASELINE §24: aggregation is per variable
         # nature); identity artifacts aggregate nothing and are exempt.
         method = artifact.provenance.transformation.method
-        if method in ("monthly_to_quarterly", "quarterly_to_annual"):
+        if method in (
+            "monthly_to_quarterly",
+            "quarterly_to_annual",
+            "dated_to_quarterly",
+            "cmea_five_year_contract",
+        ):
+            if method == "cmea_five_year_contract" and artifact.variable_id != "cmea_energy_price":
+                raise ResearchGateError(
+                    f"artifact {aid}: transformation cmea_five_year_contract is reserved "
+                    f"for variable cmea_energy_price, not {artifact.variable_id!r} "
+                    "(the five-year rule is not a generic annual interpolation)"
+                )
             if variable.aggregation is None:
                 raise ResearchGateError(
                     f"artifact {aid}: variable {variable.variable_id} declares no "

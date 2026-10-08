@@ -1,0 +1,15 @@
+{
+  "bounds": {
+    "lower": 0.5,
+    "upper": 1.5
+  },
+  "calibration_status": "not_calibrated",
+  "literature_refs": [
+    "structural assumption: constant early CMEA base contract price before the five-year reconstruction window"
+  ],
+  "prior_description": "Constant base CMEA energy contract price for 1957-1974; the reconstructed cmea_energy_price series only starts 1975Q1 where five complete prior years of World Bank oil exist.",
+  "schema_version": "1",
+  "sensitivity_status": "not_assessed",
+  "uncertainty_notes": "Engineering prior range only; no calibration and no sensitivity assessment were performed, and the selected value is not a historical estimate.",
+  "variable_id": "cmea_base_energy_price"
+}

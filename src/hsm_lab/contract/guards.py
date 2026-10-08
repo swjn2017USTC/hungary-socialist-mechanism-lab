@@ -22,7 +22,7 @@ from hsm_lab.contract.schemas import (
 )
 
 BASELINE_FILENAME = "BASELINE.md"
-AVAILABLE_SCENARIOS = ("smoke", "toy4")
+AVAILABLE_SCENARIOS = ("smoke", "intermediate8", "intermediate8_external")
 
 
 def sha256_bytes(data: bytes) -> str:

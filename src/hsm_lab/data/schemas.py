@@ -68,6 +68,8 @@ TransformationMethod = Literal[
     "identity",
     "monthly_to_quarterly",
     "quarterly_to_annual",
+    "dated_to_quarterly",
+    "cmea_five_year_contract",
     "anchor_reconstruction",
     "literature_prior",
     "synthetic_generation",
@@ -161,6 +163,28 @@ class Transformation(StrictModel):
                 raise ConfigError("quarterly_to_annual needs an annual result_frequency")
             if self.aggregation not in flow:
                 raise ConfigError(f"quarterly_to_annual aggregation must be one of {sorted(flow)}")
+        elif self.method == "dated_to_quarterly":
+            if self.source_frequency is not Frequency.DATED:
+                raise ConfigError("dated_to_quarterly needs a dated source_frequency")
+            if self.result_frequency is not Frequency.QUARTERLY:
+                raise ConfigError("dated_to_quarterly needs a quarterly result_frequency")
+            if self.aggregation != "end_of_period":
+                raise ConfigError(
+                    "dated_to_quarterly aggregation must be 'end_of_period' "
+                    "(last actual quote per quarter; quotes are never imputed)"
+                )
+        elif self.method == "cmea_five_year_contract":
+            if self.source_frequency is not Frequency.MONTHLY:
+                raise ConfigError("cmea_five_year_contract needs a monthly source_frequency")
+            if self.result_frequency is not Frequency.QUARTERLY:
+                raise ConfigError(
+                    "cmea_five_year_contract needs a quarterly result_frequency"
+                )
+            if self.aggregation != "piecewise_constant":
+                raise ConfigError(
+                    "cmea_five_year_contract aggregation must be 'piecewise_constant' "
+                    "(five-year contract rule, not generic interpolation)"
+                )
         elif self.method in ("anchor_reconstruction", "literature_prior"):
             if self.aggregation not in ("piecewise_constant", "event_date", None):
                 raise ConfigError(

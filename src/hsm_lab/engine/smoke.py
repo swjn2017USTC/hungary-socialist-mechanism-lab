@@ -20,6 +20,7 @@ import polars as pl
 
 from hsm_lab.contract.guards import BASELINE_FILENAME, verify_baseline
 from hsm_lab.contract.schemas import (
+    ConfigError,
     OutputPolicy,
     ResearchContract,
     ResearchGateError,
@@ -138,6 +139,9 @@ def run_smoke(
     root = registry.root
     baseline_hash = verify_baseline(root / BASELINE_FILENAME, contract)
     spec.validate_for_run(contract)
+    if spec.enterprises is None:  # the smoke scenario validator forbids this
+        raise ConfigError("smoke scenarios must declare enterprises")
+    enterprises = spec.enterprises
     if output_dir.exists() or output_dir.is_symlink():
         raise ResearchGateError(
             f"output directory {output_dir} already exists; refusing to overwrite any "
@@ -168,13 +172,13 @@ def run_smoke(
         n_regions = len(spec.region_ids)
         n_commodities = len(spec.commodities)
         household_ids = np.arange(spec.households, dtype=np.int64)
-        enterprise_ids = np.arange(spec.enterprises, dtype=np.int64)
+        enterprise_ids = np.arange(enterprises, dtype=np.int64)
         household_region = household_ids % n_regions
         enterprise_region = enterprise_ids % n_regions
         household_weights = np.ones(spec.households, dtype=np.float64)
-        enterprise_weights = np.ones(spec.enterprises, dtype=np.float64)
+        enterprise_weights = np.ones(enterprises, dtype=np.float64)
         household_probes = np.zeros((spec.households, n_commodities), dtype=np.float64)
-        enterprise_probes = np.zeros((spec.enterprises, n_commodities), dtype=np.float64)
+        enterprise_probes = np.zeros((enterprises, n_commodities), dtype=np.float64)
 
         aggregate_rows: list[dict[str, Any]] = []
         event_rows: list[dict[str, Any]] = []
@@ -200,7 +204,7 @@ def run_smoke(
                     HOUSEHOLD_MODULE, (spec.households, n_commodities)
                 )
                 enterprise_probes += rng.uniform(
-                    ENTERPRISE_MODULE, (spec.enterprises, n_commodities)
+                    ENTERPRISE_MODULE, (enterprises, n_commodities)
                 )
             else:
                 household_probes += 1.0
@@ -334,7 +338,7 @@ def run_smoke(
                     else None
                 ),
                 "enterprises_micro": (
-                    spec.enterprises * n_commodities * spec.ticks
+                    enterprises * n_commodities * spec.ticks
                     if enterprise_writer is not None
                     else None
                 ),

@@ -28,6 +28,7 @@ from hsm_lab.contract.guards import (
     load_scenario,
     verify_baseline,
 )
+from hsm_lab.contract.material import OrganizationProfile, OrganizationRecipe
 from hsm_lab.contract.schemas import (
     ConfigError,
     OutputPolicy,
@@ -276,47 +277,88 @@ def data_audit(
 
 @app.command()
 def run(
-    scenario: str = typer.Option("smoke", "--scenario", help="Scenario id (smoke | toy4)."),
+    scenario: str = typer.Option(
+        "smoke",
+        "--scenario",
+        help="Scenario id (smoke | intermediate8 | intermediate8_external).",
+    ),
     seed: int | None = typer.Option(None, "--seed", min=0, help="RNG seed override."),
     output_policy: str | None = typer.Option(
-        None, "--output-policy", help="research_full | ensemble_compact."
+        None,
+        "--output-policy",
+        help="research_full | ensemble_compact.",
     ),
     output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
     households: int | None = typer.Option(
-        None, "--households", help="Toy-4 household count override (1000-2000)."
+        None,
+        "--households",
+        help="Material household count override (1000-30000).",
+    ),
+    organizations: int | None = typer.Option(
+        None,
+        "--organizations",
+        help="Material organization profile size (100 | 200 | 400).",
     ),
     until: str | None = typer.Option(
-        None, "--until", help="Toy-4 inclusive stop quarter YYYYQn (pauses before horizon)."
+        None,
+        "--until",
+        help="Material inclusive stop quarter YYYYQn (pauses before horizon).",
     ),
     checkpoint_every: int = typer.Option(
-        0, "--checkpoint-every", min=0, help="Save a Toy-4 checkpoint every k completed ticks."
+        0,
+        "--checkpoint-every",
+        min=0,
+        help="Save a material checkpoint every k completed ticks.",
     ),
     resume: Path | None = typer.Option(
-        None, "--resume", help="Toy-4 checkpoint directory to resume from."
+        None,
+        "--resume",
+        help="Material checkpoint directory to resume from.",
     ),
     json_mode: bool = JsonOption,
 ) -> None:
-    """Run a scenario (smoke probe load or the Toy-4 economic slice)."""
+    """Run a scenario (smoke probe load or the Intermediate-8 material economy)."""
 
     def action() -> None:
         from hsm_lab.data.registry import DataRegistry
 
+        if scenario == "toy4":
+            raise ConfigError(
+                "--scenario toy4 was removed with the P01 Toy-4 engine and its "
+ "config; use --scenario intermediate8 (Intermediate-8 material economy)"
+            )
         root = _repo_root()
         contract = load_research_contract(root)
         spec = load_scenario(root, scenario)
-        toy4_only = {
+        if spec.kind not in ("smoke", "material"):
+            raise ConfigError(
+                f"scenario {scenario!r} carries kind {spec.kind!r}; only smoke and "
+                "material runs exist (the toy4 economic kind was removed)"
+            )
+        material_only = {
             "--households": households,
+            "--organizations": organizations,
             "--until": until,
             "--checkpoint-every": checkpoint_every if checkpoint_every else None,
             "--resume": resume,
         }
         if spec.kind == "smoke":
-            used = [flag for flag, value in toy4_only.items() if value is not None]
+            used = [flag for flag, value in material_only.items() if value is not None]
             if used:
                 raise ConfigError(
-                    f"option(s) {used} only apply to --scenario toy4, not smoke"
+                    f"option(s) {used} only apply to --scenario intermediate8, not smoke"
                 )
-        target = None
+            target = None
+        else:
+            target = _prepare_material_run(
+                spec=spec,
+                seed=seed,
+                households=households,
+                organizations=organizations,
+                output_policy=output_policy,
+                resume=resume,
+            )
+            spec = target
         if spec.kind == "smoke":
             from hsm_lab.engine.smoke import run_smoke
 
@@ -334,15 +376,15 @@ def run(
             if overrides:
                 spec = _revalidated_copy(spec, overrides)
             registry = DataRegistry.load(root)
-            target = _fresh_output_dir(output_dir, "run")
-            manifest = run_smoke(spec, target, contract, registry)
+            target_dir = _fresh_output_dir(output_dir, "run")
+            manifest = run_smoke(spec, target_dir, contract, registry)
             payload = {
                 "status": "ok",
                 "command": "run",
                 "run_id": manifest.run_id,
                 "run_kind": manifest.run_kind,
-                "output_dir": str(target),
-                "manifest_path": str(Path(target) / "manifest.json"),
+                "output_dir": str(target_dir),
+                "manifest_path": str(Path(target_dir) / "manifest.json"),
                 "seed": manifest.seed,
                 "output_policy": manifest.output_policy.value,
                 "ticks": manifest.ticks,
@@ -358,55 +400,19 @@ def run(
             }
             human = [
                 f"run {manifest.run_id} completed: {manifest.run_kind}",
-                f"output: {target}",
+                f"output: {target_dir}",
                 f"digest: {manifest.deterministic_replay_digest}",
                 f"rng draws: {manifest.rng_draws_count} "
                 f"({manifest.rng_draws_by_module})",
             ]
         else:
-            from hsm_lab.engine.toy4 import run_toy4
+            from hsm_lab.engine.material import run_material
 
-            if resume is not None:
-                if scenario != "toy4":
-                    raise ConfigError("--resume requires --scenario toy4")
-                conflicts = [
-                    flag
-                    for flag, value in (
-                        ("--seed", seed),
-                        ("--households", households),
-                        ("--output-policy", output_policy),
-                    )
-                    if value is not None
-                ]
-                if conflicts:
-                    raise ConfigError(
-                        f"option(s) {conflicts} are refused together with --resume: "
-                        "seed/households/policy come from the checkpoint scenario"
-                    )
-            toy4_overrides: dict[str, Any] = {}
-            if households is not None:
-                if not 1000 <= households <= 2000:
-                    raise ConfigError(
-                        f"--households must lie in [1000, 2000], got {households}"
-                    )
-                toy4_overrides["households"] = households
-            if seed is not None:
-                toy4_overrides["seed"] = seed
-            if output_policy is not None:
-                try:
-                    toy4_overrides["output_policy"] = OutputPolicy(output_policy)
-                except ValueError as exc:
-                    raise ConfigError(
-                        f"unknown output policy {output_policy!r}: use research_full or "
-                        "ensemble_compact"
-                    ) from exc
-            if toy4_overrides:
-                spec = _revalidated_copy(spec, toy4_overrides)
             registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
-            target = _fresh_output_dir(output_dir, "run")
-            manifest = run_toy4(
+            target_dir = _fresh_output_dir(output_dir, "run")
+            manifest = run_material(
                 spec,
-                target,
+                target_dir,
                 contract,
                 registry,
                 until=until,
@@ -419,8 +425,8 @@ def run(
                 "command": "run",
                 "run_id": manifest.run_id,
                 "run_kind": manifest.run_kind,
-                "output_dir": str(target),
-                "manifest_path": str(Path(target) / "manifest.json"),
+                "output_dir": str(target_dir),
+                "manifest_path": str(Path(target_dir) / "manifest.json"),
                 "seed": manifest.seed,
                 "output_policy": manifest.output_policy.value,
                 "ticks": manifest.ticks,
@@ -428,7 +434,7 @@ def run(
                 "last_completed_quarter": manifest.last_completed_quarter,
                 "horizon_reached": manifest.completed_ticks == manifest.ticks,
                 "checkpoint_paths": [
-                    str(target / path.rsplit("/metadata.json", 1)[0])
+                    str(target_dir / path.rsplit("/metadata.json", 1)[0])
                     for path in sorted(manifest.output_hashes)
                     if path.startswith("checkpoints/")
                     and path.endswith("/metadata.json")
@@ -442,7 +448,7 @@ def run(
             human = [
                 f"run {manifest.run_id} {'paused' if paused else 'completed'}: "
                 f"{manifest.run_kind}",
-                f"output: {target}",
+                f"output: {target_dir}",
                 f"completed ticks: {manifest.completed_ticks}/{manifest.ticks} "
                 f"(last quarter {manifest.last_completed_quarter})",
                 f"digest: {manifest.deterministic_replay_digest}",
@@ -452,6 +458,80 @@ def run(
         _emit(payload, json_mode, human)
 
     _guard(action, json_mode)
+
+
+def _prepare_material_run(
+    *,
+    spec: ScenarioSpec,
+    seed: int | None,
+    households: int | None,
+    organizations: int | None,
+    output_policy: str | None,
+    resume: Path | None,
+) -> ScenarioSpec:
+    """Validate material-only options and apply them to the scenario copy."""
+    if resume is not None:
+        conflicts = [
+            flag
+            for flag, value in (
+                ("--seed", seed),
+                ("--households", households),
+                ("--organizations", organizations),
+                ("--output-policy", output_policy),
+            )
+            if value is not None
+        ]
+        if conflicts:
+            raise ConfigError(
+                f"option(s) {conflicts} are refused together with --resume: "
+                "seed/households/organizations/policy come from the checkpoint scenario"
+            )
+        return spec
+    overrides: dict[str, Any] = {}
+    if households is not None:
+        if not 1000 <= households <= 30000:
+            raise ConfigError(
+                f"--households must lie in [1000, 30000], got {households}"
+            )
+        overrides["households"] = households
+    if organizations is not None:
+        profiles: dict[int, OrganizationProfile] = {
+            100: "p02_100",
+            200: "p02_200",
+            400: "p02_400",
+        }
+        profile = profiles.get(organizations)
+        if profile is None:
+            raise ConfigError(
+                f"--organizations must be one of 100/200/400 (defined profiles), "
+                f"got {organizations}"
+            )
+        recipe = spec.organization_recipe
+        if recipe is not None and recipe.overrides:
+            raise ConfigError(
+                "--organizations cannot switch the organization profile: the "
+                "scenario carries explicit organization_recipe overrides that a "
+                "count-only switch would silently drop; provide a config with a "
+                "consistent recipe"
+            )
+        overrides["organizations"] = organizations
+        if recipe is not None:
+            overrides["organization_recipe"] = OrganizationRecipe(
+                profile=profile, overrides=[]
+            )
+    if seed is not None:
+        overrides["seed"] = seed
+    if output_policy is not None:
+        try:
+            overrides["output_policy"] = OutputPolicy(output_policy)
+        except ValueError as exc:
+            raise ConfigError(
+                f"unknown output policy {output_policy!r}: use research_full or "
+                "ensemble_compact"
+            ) from exc
+    if overrides:
+        return _revalidated_copy(spec, overrides)
+    return spec
 
 
 def _revalidated_copy(spec: ScenarioSpec, overrides: dict[str, Any]) -> ScenarioSpec:
@@ -503,14 +583,16 @@ def benchmark_scaling(
 
 @app.command()
 def summary(
-    run_dir: Path = typer.Option(..., "--run-dir", help="Completed or paused Toy-4 run directory."),
+    run_dir: Path = typer.Option(
+        ..., "--run-dir", help="Completed or paused material run directory."
+    ),
     json_mode: bool = JsonOption,
 ) -> None:
-    """Read back a finished/paused Toy-4 run summary (never starts a simulation)."""
+    """Read back a finished/paused material run summary (never starts a simulation)."""
 
     def action() -> None:
-        from hsm_lab.engine.toy4 import TOY4_ENGINE_VERSION
         from hsm_lab.provenance.manifest import RunManifest
+        from hsm_lab.storage.checkpoint import ENGINE_VERSION
 
         manifest_path = run_dir / "manifest.json"
         summary_path = run_dir / "summary.json"
@@ -525,9 +607,10 @@ def summary(
             payload = json.loads(summary_path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise ResearchGateError(f"unreadable run outputs under {run_dir}: {exc}") from exc
-        if manifest.run_kind != "toy4_f0_simulation":
+        if manifest.run_kind != "intermediate8_material_simulation":
             raise ResearchGateError(
-                f"summary only reads toy4_f0_simulation runs, got {manifest.run_kind!r}"
+                "summary only reads intermediate8_material_simulation runs, got "
+                f"{manifest.run_kind!r}"
             )
         if manifest.status not in ("completed", "paused"):
             raise ResearchGateError(
@@ -558,7 +641,7 @@ def summary(
         _emit(
             payload,
             json_mode,
-            _summary_human(payload, manifest.engine_version or TOY4_ENGINE_VERSION),
+            _summary_human(payload, manifest.engine_version or ENGINE_VERSION),
         )
 
     _guard(action, json_mode)
@@ -566,7 +649,7 @@ def summary(
 
 def _summary_human(payload: dict[str, Any], engine_version: str) -> list[str]:
     lines = [
-        f"toy4 summary ({engine_version}): scenario {payload.get('scenario_id')} "
+        f"material summary ({engine_version}): scenario {payload.get('scenario_id')} "
         f"seed {payload.get('seed')}",
         f"quarters: {payload.get('completed_ticks')}/{payload.get('planned_ticks')} "
         f"completed (last {payload.get('last_completed_quarter')}, "
@@ -574,41 +657,167 @@ def _summary_human(payload: dict[str, Any], engine_version: str) -> list[str]:
         f"digest: {payload.get('deterministic_replay_digest')}",
     ]
     for commodity, stats in sorted((payload.get("by_commodity") or {}).items()):
+        if not isinstance(stats, dict):
+            continue
         lines.append(
-            f"  {commodity}: production {stats['production']:.1f}, imports "
-            f"{stats['imports']:.1f}, used {stats['used_input']:.1f}, exports "
-            f"{stats['exports']:.1f}, consumption {stats['consumption']:.1f}"
+            f"  {commodity}: production {stats.get('production', 0.0):.1f}, imports "
+            f"{stats.get('imports', 0.0):.1f}, used {stats.get('used_input', 0.0):.1f}, "
+            f"exports {stats.get('exports', 0.0):.1f}, consumption "
+            f"{stats.get('consumption', 0.0):.1f}"
         )
         lines.append(
-            f"    unmet budget {stats['budget_unmet']:.1f} / availability "
-            f"{stats['availability_unmet']:.1f} / total {stats['total_unmet']:.1f} "
-            f"(availability rate {stats['cumulative_availability_shortage_rate']:.3f})"
-        )
-        lines.append(
-            f"    closing stocks: wholesale {stats['final_wholesale_inventory']:.1f}, "
-            f"organization input {stats['final_organization_input_inventory']:.1f}, "
-            f"retail {stats['final_retail_inventory']:.1f}"
+            f"    unmet budget {stats.get('budget_unmet', 0.0):.1f} / availability "
+            f"{stats.get('availability_unmet', 0.0):.1f} / total "
+            f"{stats.get('total_unmet', 0.0):.1f} "
+            f"(availability rate {stats.get('cumulative_availability_shortage_rate', 0.0):.3f})"
         )
     invariants = payload.get("invariants") or {}
     lines.append(
-        f"  invariants ({invariants.get('checked_ticks')} ticks): max material "
-        f"residual {invariants.get('max_material_abs_residual')}, ratio "
-        f"{invariants.get('max_material_tolerance_ratio')}; max cash residual "
-        f"{invariants.get('max_cash_abs_residual')}, ratio "
-        f"{invariants.get('max_cash_tolerance_ratio')}"
+        f"  invariants: max material residual "
+        f"{invariants.get('max_material_abs_residual')}, ratio "
+        f"{invariants.get('max_material_tolerance_ratio')}; max finance residual "
+        f"{invariants.get('max_finance_abs_residual')}, ratio "
+        f"{invariants.get('max_finance_tolerance_ratio')}"
     )
     return lines
 
 
-@benchmark_app.command("toy4")
-def benchmark_toy4(
+INGEST_DEFAULT_WINDOWS: dict[str, tuple[str, str]] = {
+    "ksh_gdp": ("1960", "1985"),
+    "ksh_industry": ("1960", "1985"),
+    "ksh_agriculture_b": ("1960", "1985"),
+    "ksh_trade": ("1960", "1985"),
+    "worldbank_pink_sheet": ("1960-01", "1985-12"),
+    "federalreserve_h15": ("1957-01", "1985-12"),
+    "fred_fedfunds": ("1957-01", "1985-12"),
+    "mnb_official_fx": ("1985-01-01", "1985-12-31"),
+}
+
+
+@data_app.command("ingest")
+def data_ingest(
+    source: str = typer.Option(
+        ..., "--source", help="One ingestion source id from the fixed allowlist."
+    ),
+    offline: bool = typer.Option(
+        False, "--offline", help="Use the hash-verified cache only; miss exits 1."
+    ),
+    refresh: bool = typer.Option(
+        False, "--refresh", help="Download a new vintage even if cached."
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Download, cache, parse and register one whitelisted data source."""
+
+    def action() -> None:
+        from hsm_lab.data.ingestion import IngestionRequest, ingest_source
+
+        if source not in INGEST_DEFAULT_WINDOWS:
+            known = ", ".join(sorted(INGEST_DEFAULT_WINDOWS))
+            raise ConfigError(
+                f"unknown ingestion source {source!r}; allowlist: {known}"
+            )
+        start, end = INGEST_DEFAULT_WINDOWS[source]
+        root = _repo_root()
+        report = ingest_source(
+            root,
+            IngestionRequest(
+                source_id=source, start=start, end=end, offline=offline, refresh=refresh
+            ),
+        )
+        payload = {
+            "status": "ok",
+            "command": "data ingest",
+            "source": report.source_id,
+            "window": {"start": report.request.start, "end": report.request.end},
+            "offline": bool(offline),
+            "refresh": bool(refresh),
+            "cache_hit": report.cache_hit,
+            "downloaded": report.downloaded,
+            "raw_sha256": report.raw_sha256,
+            "raw_path": str(report.raw_path),
+            "retrieval_url": report.retrieval_url,
+            "variable_ids": list(report.variable_ids),
+            "artifact_ids": list(report.artifact_ids),
+        }
+        human = [
+            f"ingested {report.source_id}: {len(report.artifact_ids)} artifacts "
+            f"({'cache' if report.cache_hit else 'download'})",
+            f"raw sha256: {report.raw_sha256}",
+        ]
+        _emit(payload, json_mode, human)
+
+    _guard(action, json_mode)
+
+
+@data_app.command("build-material-forcing")
+def data_build_material_forcing(
+    profile: str = typer.Option(
+        ..., "--profile", help="synthetic (local fixture) | external (admitted data)."
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Build the material forcing pack (never runs during a simulation)."""
+
+    def action() -> None:
+        if profile not in ("synthetic", "external"):
+            raise ConfigError(
+                f"unknown profile {profile!r}: use synthetic or external"
+            )
+        root = _repo_root()
+        if profile == "synthetic":
+            from hsm_lab.data.material import (
+                MATERIAL_SYNTHETIC_PACK_PATH,
+                build_synthetic_material_fixtures,
+            )
+
+            report = build_synthetic_material_fixtures(root)
+            payload: dict[str, Any] = {
+                "status": "ok",
+                "command": "data build-material-forcing",
+                "profile": "synthetic",
+                "pack_path": str(root / MATERIAL_SYNTHETIC_PACK_PATH),
+                "artifact_ids": list(report.artifact_ids),
+                "variable_ids": list(report.variable_ids),
+                "raw_sha256": report.raw_sha256,
+            }
+            human = [
+                f"synthetic material fixtures built: {len(report.artifact_ids)} artifacts",
+                f"pack: {root / MATERIAL_SYNTHETIC_PACK_PATH}",
+            ]
+        else:
+            from hsm_lab.data.material import (
+                MATERIAL_EXTERNAL_PACK_PATH,
+                build_external_material_pack,
+            )
+
+            pack = build_external_material_pack(root, {})
+            payload = {
+                "status": "ok",
+                "command": "data build-material-forcing",
+                "profile": "external",
+                "pack_path": str(root / MATERIAL_EXTERNAL_PACK_PATH),
+                **{key: value for key, value in pack.items() if key != "bindings"},
+                "binding_count": len(pack.get("bindings", [])),
+            }
+            human = [
+                "external material pack built from admitted artifacts",
+                f"pack: {root / MATERIAL_EXTERNAL_PACK_PATH}",
+            ]
+        _emit(payload, json_mode, human)
+
+    _guard(action, json_mode)
+
+
+@benchmark_app.command("material")
+def benchmark_material(
     output_dir: Path | None = typer.Option(
         None, "--output-dir", help="Fresh directory for the benchmark report."
     ),
     json_mode: bool = JsonOption,
 ) -> None:
-    """Toy-4 economic-loop scaling benchmark (N in {1000,1600,2000} x {10,116})."""
-    _run_benchmark("toy4", output_dir, json_mode)
+    """Intermediate-8 material-path benchmark (plan section 9 exact cases)."""
+    _run_benchmark("material", output_dir, json_mode)
 
 
 def main() -> None:  # console entry: hsm = hsm_lab.cli.app:main

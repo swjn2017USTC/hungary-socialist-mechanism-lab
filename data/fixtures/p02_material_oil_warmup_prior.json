@@ -1,0 +1,15 @@
+{
+  "bounds": {
+    "lower": 1.0,
+    "upper": 3.0
+  },
+  "calibration_status": "not_calibrated",
+  "literature_refs": [
+    "structural assumption: fixed warm-up oil price for pre-1960 window"
+  ],
+  "prior_description": "Fixed nominal USD oil price used as the explicit structural warm-up forcing for 1957Q1-1959Q4; the World Bank monthly series starts 1960-01 and observed values are never backfilled into the warm-up.",
+  "schema_version": "1",
+  "sensitivity_status": "not_assessed",
+  "uncertainty_notes": "Engineering prior range only; no calibration and no sensitivity assessment were performed, and the selected value is not a historical estimate.",
+  "variable_id": "oil_warmup_price"
+}

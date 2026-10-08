@@ -168,9 +168,9 @@ class RunManifest(StrictModel):
 
     schema_version: Literal["1"] = "1"
     run_id: str
-    run_kind: Literal["synthetic_engine_smoke", "toy4_f0_simulation"] = (
-        "synthetic_engine_smoke"
-    )
+    run_kind: Literal[
+        "synthetic_engine_smoke", "toy4_f0_simulation", "intermediate8_material_simulation"
+    ] = "synthetic_engine_smoke"
     political_mode: None = None
     status: Literal["running", "completed", "paused", "failed"]
     failure_message: str | None = None
@@ -189,7 +189,8 @@ class RunManifest(StrictModel):
     parameter_hash: str
     seed: int
     households: int
-    enterprises: int
+    enterprises: int | None = None
+    organizations: int | None = None
     ticks: int
     commodity_ids: list[str]
     region_ids: list[str]
@@ -228,9 +229,9 @@ def manifest_preamble(
     contract: ResearchContract,
     root: Path,
     baseline_hash: str,
-    run_kind: Literal["synthetic_engine_smoke", "toy4_f0_simulation"] = (
-        "synthetic_engine_smoke"
-    ),
+    run_kind: Literal[
+        "synthetic_engine_smoke", "toy4_f0_simulation", "intermediate8_material_simulation"
+    ] = "synthetic_engine_smoke",
     parameter_vector: dict[str, float] | None = None,
     input_artifact_hashes: dict[str, str] | None = None,
     initial_recipe_hash: str | None = None,
@@ -260,6 +261,7 @@ def manifest_preamble(
         seed=spec.seed,
         households=spec.households,
         enterprises=spec.enterprises,
+        organizations=spec.organizations,
         ticks=spec.ticks,
         commodity_ids=list(spec.commodities),
         region_ids=list(spec.region_ids),

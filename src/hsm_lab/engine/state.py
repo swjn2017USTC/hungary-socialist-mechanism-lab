@@ -1,400 +1,704 @@
-"""Toy-4 runtime state, flows and the economic tick kernel (P01).
+"""Material runtime state, flows and declarations (P02).
 
-Typed dataclasses over NumPy column arrays. Every commodity axis is the last
-array axis: extending the commodity list to 8/16 later changes the declared
-vectors in ``Toy4Parameters``/``Toy4InitialRecipe`` only - no loop in this
-module is written over a hard-coded commodity count or a single goods scalar.
+Typed dataclasses over NumPy column arrays; every commodity axis is last.
+The authoritative material stock is the single ``stock_value[S]`` array over
+the canonical ``(owner_kind, owner_id, pool, commodity_id, stage)`` cell
+catalog compiled once into :class:`MaterialNetwork`. Household cash, finance
+accounts, regional dwelling/durable stocks and organization capacity/finance
+live in separate typed arrays. Bank organizations hold no material cell.
 
-Units: household income/cash are per represented household; material pools
-(organization input inventories, wholesale, regional retail) are weighted
-cohort totals. Household aggregates multiply by ``household_weight``;
-organization stocks are never multiplied by a weight again.
+Units: household cash/wage claims are per represented household; organization
+and cell stocks are physical quantities. Journal amounts are represented
+economy amounts (``weight *`` per-household deltas) — never double-weighted.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from hsm_lab.contract.schemas import ScenarioSpec, Toy4Parameters
-from hsm_lab.engine.rng import RngRegistry
+from hsm_lab.contract.material import (
+    ORGANIZATION_TYPE_ORDER,
+    CellOwnerKind,
+    MaterialInitialConditions,
+    MaterialParameters,
+    OrganizationSpec,
+    OrganizationType,
+)
+from hsm_lab.contract.schemas import ResearchGateError, ScenarioSpec
 
-TOY4_STATE_VERSION = "toy4-state-v1"
+if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
+    from hsm_lab.engine.network import MaterialNetwork
+
+MATERIAL_STATE_VERSION = "material-state-v1"
+
+POOL_CODES: dict[str, int] = {
+    "input": 0,
+    "output": 1,
+    "wholesale": 2,
+    "retail": 3,
+    "wip": 4,
+    "import_pool": 5,
+}
+
+
+def owner_kind_code(kind: CellOwnerKind) -> int:
+    return {
+        CellOwnerKind.ORGANIZATION: 0,
+        CellOwnerKind.PLOT: 1,
+        CellOwnerKind.PROJECT: 2,
+        CellOwnerKind.TREASURY_IMPORT: 3,
+    }[kind]
 
 
 @dataclass
-class Toy4State:
-    """The complete mutable simulation state at an end-of-quarter boundary."""
+class MaterialPrices:
+    """Compiled readonly price view: ``food`` raw/ready priced separately."""
+
+    standard: np.ndarray  # float64 (G,) admin price; food slot is ready food
+    food_raw: float
+
+    def price_for(self, commodity_index: int, stage_code: int) -> float:
+        if commodity_index == 2 and stage_code == 1:  # food/raw
+            return self.food_raw
+        return float(self.standard[commodity_index])
+
+
+@dataclass
+class MaterialForcing:
+    """Admitted deterministic quarterly forcing for the full horizon grid.
+
+    ``oil_price``/``global_usd_rate`` are (T,) scalars per quarter;
+    ``official_fx`` has NaN where no quote exists (1985-only in P02);
+    ``cmea_energy_price`` is the reconstructed contract price (NaN outside
+    its registered window); ``segment`` labels the evidence segment per tick.
+    """
+
+    quarters: list[str]
+    oil_price: np.ndarray  # float64 (T,)
+    global_usd_rate: np.ndarray  # float64 (T,)
+    official_fx: np.ndarray  # float64 (T,) NaN = no quote
+    cmea_energy_price: np.ndarray  # float64 (T,) NaN = outside window
+    segment: list[str]  # per-tick evidence segment label
+    input_artifact_hashes: dict[str, str]
+
+
+@dataclass
+class MaterialState:
+    """Complete mutable material-economy state at an end-of-quarter boundary."""
 
     schema_version: str
     completed_ticks: int
+    # --- stock cells (S,) authoritative material inventory -------------
+    stock_value: np.ndarray  # float64 (S,)
+    # --- households (N,) -----------------------------------------------
     household_id: np.ndarray  # int64 (N,)
     household_region: np.ndarray  # int32 (N,)
     household_weight: np.ndarray  # float64 (N,)
     household_size: np.ndarray  # float64 (N,)
     household_cash: np.ndarray  # float64 (N,)
-    organization_id: np.ndarray  # int64 (E,)
-    organization_region: np.ndarray  # int32 (E,)
-    organization_output_sector: np.ndarray  # int32 (E,)
-    organization_capacity: np.ndarray  # float64 (E,)
-    organization_labor_capacity: np.ndarray  # float64 (E,)
-    organization_input_coefficients: np.ndarray  # float64 (E, G)
-    organization_output_mix: np.ndarray  # float64 (E, G)
-    organization_input_inventory: np.ndarray  # float64 (E, G)
-    wholesale_inventory: np.ndarray  # float64 (G,)
-    retail_inventory: np.ndarray  # float64 (R, G)
-    region_equivalent_persons: np.ndarray  # float64 (R,)
-    regional_share: np.ndarray  # float64 (R,)
+    household_deferred_receipt: np.ndarray  # float64 (N,)
+    household_wage_claim: np.ndarray  # float64 (N,) unpaid wage claims
+    # --- regional household-channel stocks (R,) -------------------------
+    dwelling_stock: np.ndarray  # float64 (R,)
+    durable_stock: np.ndarray  # float64 (R,)
+    # --- organizations (O,) ---------------------------------------------
+    organization_id: np.ndarray  # int64 (O,)
+    organization_type: np.ndarray  # int8 (O,) OrganizationType ordinal
+    organization_region: np.ndarray  # int32 (O,)
+    organization_technology: np.ndarray  # int32 (O,) technology row or -1
+    organization_activity: np.ndarray  # int32 (O,) P-axis index or -1
+    organization_bank: np.ndarray  # int32 (O,) dense bank index or -1
+    organization_capacity: np.ndarray  # float64 (O,)
+    organization_labor_available: np.ndarray  # float64 (O,)
+    organization_labor_per_activity: np.ndarray  # float64 (O,) 0 if none
+    organization_cash: np.ndarray  # float64 (O,)
+    organization_wage_arrears: np.ndarray  # float64 (O,)
+    organization_interest_arrears: np.ndarray  # float64 (O,)
+    organization_principal: np.ndarray  # float64 (O,)
+    organization_shortage_expectation: np.ndarray  # float64 (O,)
+    organization_bailout_expectation: np.ndarray  # float64 (O,)
+    organization_project_approved: np.ndarray  # float64 (O,)
+    organization_capital_wip: np.ndarray  # float64 (O,)
+    organization_construction_wip: np.ndarray  # float64 (O,)
+    organization_capital_age: np.ndarray  # float64 (O,)
+    # --- plots (R,) ------------------------------------------------------
+    plot_capacity: np.ndarray  # float64 (R,) land capacity
+    plot_labor_budget: np.ndarray  # float64 (R,) spare-time labor
+    plot_activity: np.ndarray  # int32 (R,) P-axis index
+    # --- finance: banks (B,) ---------------------------------------------
+    bank_reserves: np.ndarray  # float64 (B,)
+    bank_loan_asset: np.ndarray  # float64 (B,)
+    bank_deposit_liability: np.ndarray  # float64 (B,)
+    bank_equity: np.ndarray  # float64 (B,)
+    bank_interest_receivable: np.ndarray  # float64 (B,)
+    treasury_deposit: float  # domestic fiscal account (banks with bank index 0)
+    # --- foreign accounts (scalars; separate currencies) ------------------
+    usd_reserve: float
+    usd_principal: float
+    usd_interest_arrears: float
+    cmea_settlement_balance: float  # may go negative (memo credit)
+
+    def copy_dynamic(self) -> MaterialState:
+        """Deep-copy every mutable array; shares nothing the tick mutates."""
+        import dataclasses
+
+        clone = dataclasses.replace(self)
+        for f in dataclasses.fields(self):
+            value = getattr(self, f.name)
+            if isinstance(value, np.ndarray):
+                setattr(clone, f.name, value.copy())
+        return clone
 
 
 @dataclass
-class Toy4Forcing:
-    """Admitted deterministic quarterly forcing for the full 116-quarter grid."""
+class MaterialStockSnapshot:
+    """Runner-captured opening boundary (mutable arrays only)."""
 
-    quarters: list[str]
-    imports: np.ndarray  # float64 (116, G)
-    export_orders: np.ndarray  # float64 (116, G)
-    input_artifact_hashes: dict[str, str]
+    stock_value: np.ndarray  # float64 (S,)
+    household_cash: np.ndarray  # float64 (N,)
+    organization_cash: np.ndarray  # float64 (O,)
+    dwelling_stock: np.ndarray  # float64 (R,)
+    durable_stock: np.ndarray  # float64 (R,)
+    bank_reserves: np.ndarray  # float64 (B,)
+    bank_loan_asset: np.ndarray  # float64 (B,)
+    bank_deposit_liability: np.ndarray  # float64 (B,)
+    bank_equity: np.ndarray  # float64 (B,)
+    bank_interest_receivable: np.ndarray  # float64 (B,)
+    treasury_deposit: float
+    usd_reserve: float
+    usd_principal: float
+    usd_interest_arrears: float
+    cmea_settlement_balance: float
+    # organization dynamic finance/expectation fields
+    organization_cash_open: np.ndarray  # alias of organization_cash above
+    organization_principal: np.ndarray
+    organization_wage_arrears: np.ndarray
+    organization_interest_arrears: np.ndarray
+    organization_shortage_expectation: np.ndarray
+    organization_bailout_expectation: np.ndarray
+    organization_project_approved: np.ndarray
+    organization_capital_wip: np.ndarray
+    organization_construction_wip: np.ndarray
+    organization_capacity: np.ndarray
+    household_wage_claim: np.ndarray
+    household_deferred_receipt: np.ndarray
+    completed_ticks: int
 
 
 @dataclass
-class TickFlows:
-    """All entity flows of one completed tick (micro quantities)."""
+class MaterialTickFlows:
+    """All material/financial flows of one completed tick.
+
+    Demand axis D covers every order intent (production inputs K, trader
+    replenishment, plot inputs, investment, housing, exports). Stock
+    conservation is checked once per unique stock cell — never by summing
+    overlapping demand views.
+    """
 
     tick: int
     quarter: str
-    # Organizations (E,) / (E, G)
-    organization_target: np.ndarray
-    organization_realized: np.ndarray
-    desired_input: np.ndarray
-    ordered_input: np.ndarray
-    allocated_input: np.ndarray
-    delivered_input: np.ndarray
-    available_input: np.ndarray
-    used_input: np.ndarray
-    input_unmet: np.ndarray
-    organization_output: np.ndarray
-    organization_output_shortfall: np.ndarray
-    # Households (N,) / (N, G)
-    household_income: np.ndarray
-    household_desired: np.ndarray
-    household_affordable: np.ndarray
-    household_realized: np.ndarray
-    budget_unmet: np.ndarray
-    availability_unmet: np.ndarray
-    total_unmet: np.ndarray
-    household_spending: np.ndarray
-    voluntary_saving: np.ndarray
-    forced_saving: np.ndarray
-    # National (G,)
-    imports: np.ndarray
-    export_desired: np.ndarray
-    export_realized: np.ndarray
-    export_unmet: np.ndarray
-    # Regional retail (R, G)
-    retail_planned: np.ndarray
-    retail_incoming: np.ndarray
-    retail_available: np.ndarray
-    retail_sales: np.ndarray
-    # Opening/closing stock snapshots (mutable pools only)
-    organization_input_open: np.ndarray
-    organization_input_close: np.ndarray
-    wholesale_open: np.ndarray
-    wholesale_close: np.ndarray
-    retail_open: np.ndarray
-    retail_close: np.ndarray
-    household_cash_open: np.ndarray
-    household_cash_close: np.ndarray
-    # Accounting residual snapshots (filled by engine.accounting)
-    material_balance_residual: np.ndarray  # (G,)
-    material_balance_tolerance: np.ndarray  # (G,)
-    cash_balance_residual: np.ndarray  # (R,)
-    cash_balance_tolerance: np.ndarray  # (R,)
+    # --- production (P activities) ---------------------------------------
+    activity_target: np.ndarray  # float64 (P,)
+    activity_realized: np.ndarray  # float64 (P,)
+    # --- demand cells (D,) six segments + opening/closing views ----------
+    desired: np.ndarray  # float64 (D,)
+    ordered: np.ndarray  # float64 (D,) after funding (cash-limited)
+    ordered_gross: np.ndarray  # float64 (D,) before funding/overorder scaling
+    unfunded_order: np.ndarray  # float64 (D,)
+    allocated: np.ndarray  # float64 (D,)
+    delivered: np.ndarray  # float64 (D,)
+    used: np.ndarray  # float64 (D,)
+    inventory_open: np.ndarray  # float64 (D,) destination cell opening view
+    inventory_close: np.ndarray  # float64 (D,) destination cell closing view
+    financial_delivery_blocked: np.ndarray  # float64 (D,)
+    # --- sparse route edges (M,) ------------------------------------------
+    edge_delivered: np.ndarray  # float64 (M,)
+    edge_allocated: np.ndarray  # float64 (M,)
+    edge_service_used: np.ndarray  # float64 (M,) logistics service consumed
+    edge_service_fee: np.ndarray  # float64 (M,) domestic currency fee
+    # --- organizations (O,) ------------------------------------------------
+    organization_target: np.ndarray  # float64 (O,) 0 for non-producers
+    organization_realized: np.ndarray  # float64 (O,)
+    organization_wage_due: np.ndarray  # float64 (O,)
+    organization_wage_paid: np.ndarray  # float64 (O,)
+    organization_interest_due: np.ndarray  # float64 (O,)
+    organization_interest_paid: np.ndarray  # float64 (O,)
+    organization_principal_paid: np.ndarray  # float64 (O,)
+    organization_credit_requested: np.ndarray  # float64 (O,)
+    organization_credit_approved: np.ndarray  # float64 (O,)
+    organization_credit_drawn: np.ndarray  # float64 (O,)
+    organization_investment_requested: np.ndarray  # float64 (O,)
+    organization_investment_approved: np.ndarray  # float64 (O,)
+    organization_investment_completed: np.ndarray  # float64 (O,)
+    organization_bailout_requested: np.ndarray  # float64 (O,)
+    organization_bailout_granted: np.ndarray  # float64 (O,)
+    organization_sales_receipts: np.ndarray  # float64 (O,)
+    organization_purchases: np.ndarray  # float64 (O,)
+    # --- households (N,) -----------------------------------------------------
+    household_wage_income: np.ndarray  # float64 (N,) pre-purchase wages
+    household_plot_income_formal: np.ndarray  # float64 (N,)
+    household_plot_income_direct: np.ndarray  # float64 (N,) late receipts
+    household_late_wage: np.ndarray  # float64 (N,)
+    household_desired: np.ndarray  # float64 (N, G)
+    household_affordable: np.ndarray  # float64 (N, G)
+    household_realized: np.ndarray  # float64 (N, G)
+    household_budget_unmet: np.ndarray  # float64 (N, G)
+    household_availability_unmet: np.ndarray  # float64 (N, G)
+    household_spending: np.ndarray  # float64 (N,)
+    household_self_use: np.ndarray  # float64 (N,) imputed value
+    household_plot_input_funding: np.ndarray  # float64 (N,)
+    household_budget_available: np.ndarray  # float64 (N,)
+    household_forced_saving: np.ndarray  # float64 (N,)
+    household_voluntary_saving: np.ndarray  # float64 (N,)
+    household_cash_open: np.ndarray  # float64 (N,)
+    household_cash_close: np.ndarray  # float64 (N,)
+    # --- regional retail (R, G) ----------------------------------------------
+    retail_available: np.ndarray  # float64 (R, G)
+    retail_sales: np.ndarray  # float64 (R, G)
+    retail_unmet: np.ndarray  # float64 (R, G)
+    # --- trade (G,) + channel scalars -----------------------------------------
+    imports: np.ndarray  # float64 (G,) realized total
+    cmea_imports: np.ndarray  # float64 (G,)
+    convertible_imports: np.ndarray  # float64 (G,)
+    cmea_exports: np.ndarray  # float64 (G,)
+    convertible_exports: np.ndarray  # float64 (G,)
+    cmea_import_payment: float
+    cmea_export_receipt: float
+    usd_import_payment: float
+    usd_export_receipt: float
+    usd_interest_paid: float
+    usd_interest_accrued: float
+    usd_principal_paid: float
+    usd_loan_drawn: float
+    official_fx_translation: float | None  # diagnostic only
+    expired_services: float  # services that expired unused this tick
+    # --- journal (typed columns; represented amounts) ---------------------------
+    journal_kind: list[str] = field(default_factory=list)
+    journal_tick: list[int] = field(default_factory=list)
+    journal_debit: list[int] = field(default_factory=list)
+    journal_credit: list[int] = field(default_factory=list)
+    journal_currency: list[str] = field(default_factory=list)
+    journal_amount: list[float] = field(default_factory=list)
+    journal_org: list[int | None] = field(default_factory=list)
+    journal_leg: list[int] = field(default_factory=list)
+
+    # --- residual snapshots (filled by engine.accounting) ------------------------
+    material_balance_residual: np.ndarray | None = None
+    material_balance_tolerance: np.ndarray | None = None
+    finance_balance_residual: np.ndarray | None = None
+    finance_balance_tolerance: np.ndarray | None = None
 
 
 @dataclass
-class Toy4History:
-    """Compact per-tick trajectory: O(T*R*G), never a household micro panel."""
+class MaterialHistory:
+    """Compact per-tick trajectory buffers (dict rows per table)."""
 
     aggregate_rows: list[dict[str, object]] = field(default_factory=list)
+    stage_rows: list[dict[str, object]] = field(default_factory=list)
     national_rows: list[dict[str, object]] = field(default_factory=list)
     budget_rows: list[dict[str, object]] = field(default_factory=list)
+    organization_rows: list[dict[str, object]] = field(default_factory=list)
+    financial_rows: list[dict[str, object]] = field(default_factory=list)
+    department_rows: list[dict[str, object]] = field(default_factory=list)
     diagnostic_rows: list[dict[str, object]] = field(default_factory=list)
     event_rows: list[dict[str, object]] = field(default_factory=list)
     digest_chain: str = ""
 
 
-def produce_leontief(
-    available: np.ndarray, coefficients: np.ndarray, target: np.ndarray
-) -> tuple[np.ndarray, np.ndarray]:
-    """One-round Leontief production: returns (realized output, used inputs).
-
-    ``y_j = min(target_j, min over commodities with a_jg > 0 of
-    available_jg / a_jg)``; zero coefficients never bind and never divide by
-    zero. Same-tick output is not an input to this round by construction.
-    """
-    ratio_lims = np.full(coefficients.shape, np.inf)
-    positive = coefficients > 0
-    np.divide(available, coefficients, out=ratio_lims, where=positive)
-    realized = np.minimum(target, np.min(ratio_lims, axis=1))
-    realized = np.where(np.isfinite(realized), realized, target)
-    used = coefficients * realized[:, None]
-    return realized, used
+def material_tick_event() -> str:
+    """The only per-tick event literal the material runner emits."""
+    return "material_tick_completed"
 
 
-def _region_bincount(state: Toy4State, values: np.ndarray) -> np.ndarray:
-    """Weighted (R, G) region sums of a per-household (N, G) matrix."""
-    regions = state.retail_inventory.shape[0]
-    return np.stack(
-        [
-            np.bincount(
-                state.household_region,
-                weights=state.household_weight * values[:, commodity],
-                minlength=regions,
+def initial_conditions_scenario_guard(spec: ScenarioSpec) -> None:
+    """Cheap structural assert reused by builders (kind/kind-fields coherence)."""
+    if spec.kind == "material":
+        if spec.material_parameters is None or spec.material_initial is None:
+            raise ValueError("material scenario lacks parameters/initial recipe")
+
+
+__all__ = [
+    "MATERIAL_STATE_VERSION",
+    "MaterialForcing",
+    "MaterialHistory",
+    "MaterialPrices",
+    "MaterialState",
+    "MaterialStockSnapshot",
+    "MaterialTickFlows",
+    "POOL_CODES",
+    "build_material_prices",
+    "capture_material_stocks",
+    "initial_conditions_scenario_guard",
+    "initialize_material",
+    "material_state_shapes",
+    "material_tick_event",
+    "owner_kind_code",
+]
+
+# ----------------------------------------------------------------------
+# P02 builders (ST additions): prices, initial state and opening snapshots.
+# Imports live here so the pinned declarations above stay byte-identical.
+
+def build_material_prices(parameters: MaterialParameters) -> MaterialPrices:
+    """Compile the readonly admin price view (plan step 1 price vector)."""
+    standard = np.array(parameters.prices, dtype=np.float64)
+    return MaterialPrices(standard=standard, food_raw=float(parameters.food_raw_price))
+
+
+def _dense_bank_index(
+    organizations: tuple[OrganizationSpec, ...],
+) -> tuple[np.ndarray, dict[int, int]]:
+    """Per-organization dense bank index (-1 for banks themselves)."""
+    bank_ids = sorted(
+        spec.organization_id
+        for spec in organizations
+        if spec.type == OrganizationType.BANK
+    )
+    if not bank_ids:
+        raise ValueError("material scenario requires at least one bank organization")
+    position = {bank_id: index for index, bank_id in enumerate(bank_ids)}
+    dense = np.full(len(organizations), -1, dtype=np.int32)
+    for row, spec in enumerate(organizations):
+        if spec.type == OrganizationType.BANK:
+            continue
+        if spec.bank_id is None or spec.bank_id not in position:
+            raise ValueError(
+                f"organization {spec.organization_id} binds unknown bank {spec.bank_id!r}"
             )
-            for commodity in range(values.shape[1])
-        ],
-        axis=1,
+        dense[row] = position[spec.bank_id]
+    return dense, position
+
+
+def _check_network_alignment(
+    initial: MaterialInitialConditions, network: MaterialNetwork
+) -> None:
+    """Fail closed when the compiled network disagrees with the initial draw."""
+    cell_columns = (
+        network.cell_owner_kind,
+        network.cell_owner_id,
+        network.cell_region,
+        network.cell_pool,
+        network.cell_commodity,
+        network.cell_stage,
     )
+    cell_count = int(np.asarray(cell_columns[0]).shape[0])
+    if any(np.asarray(column).shape != (cell_count,) for column in cell_columns):
+        raise ValueError("network cell catalog columns disagree in length")
+    if tuple(network.commodity_ids) != tuple(initial.commodity_ids):
+        raise ValueError("network commodity axis does not match the initial conditions")
+    if tuple(network.region_ids) != tuple(initial.region_ids):
+        raise ValueError("network region axis does not match the initial conditions")
+    activity_count = int(np.asarray(network.activity_kind).shape[0])
+    for name in ("activity_org_index", "activity_region", "activity_capacity"):
+        if np.asarray(getattr(network, name)).shape != (activity_count,):
+            raise ValueError(f"network {name} does not match the activity axis")
+    input_count = int(np.asarray(network.input_activity).shape[0])
+    if np.asarray(network.input_cell).shape != (input_count,):
+        raise ValueError("network input_cell/input_activity disagree in length")
+    if network.A.shape != (activity_count, input_count):
+        raise ValueError("network A matrix does not match its activity/input axes")
+    if network.B.shape != (activity_count, cell_count):
+        raise ValueError("network B matrix does not match its activity/cell axes")
 
 
-def initialize_toy4(spec: ScenarioSpec, rng: RngRegistry) -> Toy4State:
-    """Build the initial end-of-quarter-0 state from the declared recipe."""
-    parameters = spec.toy4_parameters
-    recipe = spec.toy4_initial
-    if parameters is None or recipe is None:  # pragma: no cover - guarded earlier
-        raise ValueError("toy4 scenario is missing parameters/initial recipe")
-    n = spec.households
-    e = spec.enterprises
-    r = len(spec.region_ids)
-    g = len(spec.commodities)
+def initialize_material(
+    spec: ScenarioSpec,
+    initial: MaterialInitialConditions,
+    network: MaterialNetwork,
+) -> MaterialState:
+    """Build the opening state from the single initialization draw (plan §3).
 
-    household_id = np.arange(n, dtype=np.int64)
-    household_region = (household_id % r).astype(np.int32)
-    household_weight = np.full(n, parameters.equivalent_households / n, dtype=np.float64)
-    if spec.stochastic:
-        uniforms = rng.uniform("toy4.initial_households", n)
-        household_size = (2.0 + np.floor(3.0 * uniforms)).astype(np.float64)
-    else:
-        household_size = np.full(n, 3.0, dtype=np.float64)
-    household_cash = np.full(n, recipe.household_cash, dtype=np.float64)
+    ``initial`` is readonly — every array is copied, nothing is re-drawn.
+    Org input/output cells hold ``initial_recipe`` quarters of one quarter's
+    A/B target flow at ``min(utilization * capacity, labor cap)`` with
+    seasonal factor 1; plot cells hold exactly one quarter of the plot
+    target flow; wholesale, retail, project-WIP, import-pool and the
+    non-stockable services cells open at zero. Deposit liabilities include
+    weighted household cash, non-bank organization deposits and the
+    Treasury fiscal account (bank dense index 0); reserves balance the
+    sheet: ``reserves = deposits + equity - loans``.
+    """
+    initial_conditions_scenario_guard(spec)
+    _check_network_alignment(initial, network)
 
-    organization_id = np.arange(e, dtype=np.int64)
-    organization_region = (organization_id % r).astype(np.int32)
-    output_sector = (organization_id % g).astype(np.int32)
-    sector_counts = np.bincount(output_sector, minlength=g).astype(np.float64)
-    capacity = np.asarray(parameters.sector_capacity_totals, dtype=np.float64)[
-        output_sector
-    ] / sector_counts[output_sector]
-    labor_capacity = capacity.copy()
-    output_mix = np.zeros((e, g), dtype=np.float64)
-    output_mix[np.arange(e), output_sector] = 1.0
-    coefficients = np.asarray(parameters.input_coefficients, dtype=np.float64)[
-        output_sector
-    ].copy()
-    target = np.minimum(parameters.target_utilization * capacity, labor_capacity)
-    input_inventory = coefficients * target[:, None] * recipe.input_stock_target_quarters
+    parameters = initial.parameters
+    recipe = initial.initial_recipe
+    region_ids = initial.region_ids
+    commodity_ids = initial.commodity_ids
+    region_count = len(region_ids)
+    org_count = initial.organization_count
 
-    wholesale = np.asarray(recipe.wholesale_inventory, dtype=np.float64).copy()
-    region_persons = np.bincount(
-        household_region, weights=household_weight * household_size, minlength=r
+    # --- organizations: static identity + seeded dynamic fields ------------
+    org_specs = initial.organizations
+    region_index = {region: index for index, region in enumerate(region_ids)}
+    technology_index = {
+        tech.technology_id: index for index, tech in enumerate(initial.technologies)
+    }
+    for s in org_specs:
+        if s.technology_id is not None and s.technology_id not in technology_index:
+            raise ValueError(
+                f"organization {s.organization_id} declares unknown technology "
+                f"{s.technology_id!r}"
+            )
+    organization_id = np.array([s.organization_id for s in org_specs], dtype=np.int64)
+    organization_type = np.array(
+        [ORGANIZATION_TYPE_ORDER.index(s.type) for s in org_specs], dtype=np.int8
     )
-    access = np.asarray(parameters.regional_access_multiplier, dtype=np.float64)
-    share = region_persons * access
-    share = share / share.sum()
-    retail = share[:, None] * np.asarray(
-        recipe.retail_inventory_totals, dtype=np.float64
-    )[None, :]
+    organization_region = np.array(
+        [region_index[s.region_id] for s in org_specs], dtype=np.int32
+    )
+    organization_technology = np.array(
+        [-1 if s.technology_id is None else technology_index[s.technology_id] for s in org_specs],
+        dtype=np.int32,
+    )
+    organization_capacity = np.array([s.capacity for s in org_specs], dtype=np.float64)
+    organization_labor_available = np.array(
+        [s.labor_available for s in org_specs], dtype=np.float64
+    )
+    organization_labor_per_activity = np.array(
+        [0.0 if s.labor_per_activity is None else s.labor_per_activity for s in org_specs],
+        dtype=np.float64,
+    )
+    organization_cash = np.array([s.initial_cash for s in org_specs], dtype=np.float64)
+    organization_principal = np.array(
+        [s.initial_loan_principal for s in org_specs], dtype=np.float64
+    )
+    organization_bailout_expectation = np.array(
+        [s.initial_bailout_expectation for s in org_specs], dtype=np.float64
+    )
+    organization_bank, bank_position = _dense_bank_index(org_specs)
+    bank_count = len(bank_position)
 
-    return Toy4State(
-        schema_version=TOY4_STATE_VERSION,
+    # --- activity axis: org rows from the network, one activity per org ----
+    activity_kind = np.asarray(network.activity_kind)
+    activity_count = int(activity_kind.shape[0])
+    org_activity_mask = activity_kind == 0
+    org_activity_rows = np.nonzero(org_activity_mask)[0]
+    org_axis_rows = np.asarray(network.activity_org_index)[org_activity_rows]
+    organization_activity = np.full(org_count, -1, dtype=np.int32)
+    if org_axis_rows.size:
+        if int(org_axis_rows.min()) < 0 or int(org_axis_rows.max()) >= org_count:
+            raise ValueError("network org activity references an unknown organization row")
+        if np.unique(org_axis_rows).size != org_axis_rows.size:
+            raise ValueError("an organization row carries more than one activity")
+        organization_activity[org_axis_rows] = org_activity_rows
+
+    # --- plots: land/labor budgets derived here from the household draw ----
+    households = initial.households
+    household_id = np.array(households.household_id, dtype=np.int64, copy=True)
+    household_region = np.array(households.region, dtype=np.int32, copy=True)
+    household_weight = np.array(households.weight, dtype=np.float64, copy=True)
+    household_size = np.array(households.size, dtype=np.float64, copy=True)
+    household_count = int(household_id.shape[0])
+    if household_region.size and (
+        int(household_region.min()) < 0 or int(household_region.max()) >= region_count
+    ):
+        raise ValueError("household region index outside the declared region axis")
+    participating = np.asarray(households.plot_participating, dtype=bool)
+    participating_persons = np.bincount(
+        household_region[participating],
+        weights=(household_weight * household_size)[participating],
+        minlength=region_count,
+    ).astype(np.float64, copy=True)
+    plot_recipe = initial.plot_recipe
+    plot_capacity = participating_persons * plot_recipe.capacity_per_participating_person
+    plot_labor_budget = participating_persons * plot_recipe.spare_time_labor_fraction
+    plot_activity = np.full(region_count, -1, dtype=np.int32)
+    plot_rows = np.nonzero(activity_kind == 1)[0]
+    plot_row_regions = np.asarray(network.activity_region)[plot_rows]
+    if (
+        plot_rows.size != region_count
+        or int(plot_row_regions.min()) < 0
+        or int(plot_row_regions.max()) >= region_count
+        or np.unique(plot_row_regions).size != region_count
+    ):
+        raise ValueError("network must carry exactly one plot activity per region")
+    plot_activity[plot_row_regions] = plot_rows
+
+    # --- one quarter of target flow (seasonal factor 1 at initialization) --
+    utilization = float(parameters.utilization)
+    target = np.zeros(activity_count, dtype=np.float64)
+    if org_axis_rows.size:
+        per_activity = organization_labor_per_activity[org_axis_rows]
+        if np.any(per_activity <= 0.0):
+            raise ValueError("productive activity lacks a positive labor_per_activity")
+        target[org_activity_rows] = np.minimum(
+            utilization * organization_capacity[org_axis_rows],
+            organization_labor_available[org_axis_rows] / per_activity,
+        )
+    plot_target = np.minimum(
+        utilization * plot_capacity,
+        plot_labor_budget / plot_recipe.plot_labor_per_activity,
+    )
+    target[plot_rows] = plot_target[plot_row_regions]
+
+    # --- authoritative stock cells ----------------------------------------
+    cell_count = int(np.asarray(network.cell_owner_kind).shape[0])
+    stock_value = np.zeros(cell_count, dtype=np.float64)
+    input_quarters = np.where(org_activity_mask, float(recipe.input_stock_quarters), 1.0)
+    output_quarters = np.where(org_activity_mask, float(recipe.output_stock_quarters), 1.0)
+    a_rows = np.repeat(np.arange(activity_count), np.diff(np.asarray(network.A.indptr)))
+    a_amounts = np.asarray(network.A.data) * target[a_rows] * input_quarters[a_rows]
+    np.add.at(
+        stock_value, np.asarray(network.input_cell)[np.asarray(network.A.indices)], a_amounts
+    )
+    b_rows = np.repeat(np.arange(activity_count), np.diff(np.asarray(network.B.indptr)))
+    b_amounts = np.asarray(network.B.data) * target[b_rows] * output_quarters[b_rows]
+    np.add.at(stock_value, np.asarray(network.B.indices), b_amounts)
+    if "services_transport" in commodity_ids:  # never stockable, opens at zero
+        services = commodity_ids.index("services_transport")
+        stock_value[np.asarray(network.cell_commodity) == services] = 0.0
+    if not np.all(np.isfinite(stock_value)):
+        raise ValueError("initial material stock contains non-finite values")
+    if np.any(stock_value < 0.0):
+        raise ValueError("initial material stock must be non-negative")
+
+    # --- households / regional stocks --------------------------------------
+    household_cash = np.full(
+        household_count, float(recipe.household_cash), dtype=np.float64
+    )
+    household_deferred_receipt = np.zeros(household_count, dtype=np.float64)
+    household_wage_claim = np.zeros(household_count, dtype=np.float64)
+    region_persons = np.array(
+        initial.region_equivalent_persons, dtype=np.float64, copy=True
+    )
+    if region_persons.shape != (region_count,):
+        raise ValueError("region_equivalent_persons must match the region axis")
+    dwelling_stock = float(recipe.dwelling_per_person) * region_persons
+    durable_stock = np.zeros(region_count, dtype=np.float64)
+
+    # --- finance: deposits/equity/reserves, treasury and foreign accounts --
+    national_wage_bill = float(parameters.wage_rate) * float(
+        organization_labor_available.sum()
+    )
+    treasury_deposit = float(recipe.treasury_deposit_quarters) * national_wage_bill
+    # M2-neutral distribution working capital: the Treasury's idle opening
+    # deposit funds the wholesale/retail bridge (already included in the
+    # generated organizations' initial cash), so total money is unchanged.
+    treasury_deposit -= float(initial.distribution_working_capital)
+    if treasury_deposit < 0.0:
+        raise ResearchGateError(
+            "distribution working capital exceeds the Treasury's opening deposit; "
+            "reduce distribution_working_capital_quarters"
+        )
+    nonbank = organization_bank >= 0
+    bank_deposit_liability = np.zeros(bank_count, dtype=np.float64)
+    bank_deposit_liability += np.bincount(
+        organization_bank[nonbank],
+        weights=organization_cash[nonbank],
+        minlength=bank_count,
+    )
+    bank_deposit_liability += np.bincount(
+        household_region % bank_count,
+        weights=household_weight * household_cash,
+        minlength=bank_count,
+    )
+    bank_deposit_liability[0] += treasury_deposit  # Treasury banks at index 0
+    bank_equity = np.full(
+        bank_count,
+        float(recipe.bank_equity_quarters) * national_wage_bill,
+        dtype=np.float64,
+    )
+    bank_loan_asset = np.bincount(
+        organization_bank[nonbank],
+        weights=organization_principal[nonbank],
+        minlength=bank_count,
+    ).astype(np.float64, copy=True)
+    bank_reserves = bank_deposit_liability + bank_equity - bank_loan_asset
+    bank_interest_receivable = np.zeros(bank_count, dtype=np.float64)
+
+    return MaterialState(
+        schema_version=MATERIAL_STATE_VERSION,
         completed_ticks=0,
+        stock_value=stock_value,
         household_id=household_id,
         household_region=household_region,
         household_weight=household_weight,
         household_size=household_size,
         household_cash=household_cash,
+        household_deferred_receipt=household_deferred_receipt,
+        household_wage_claim=household_wage_claim,
+        dwelling_stock=dwelling_stock,
+        durable_stock=durable_stock,
         organization_id=organization_id,
+        organization_type=organization_type,
         organization_region=organization_region,
-        organization_output_sector=output_sector,
-        organization_capacity=capacity,
-        organization_labor_capacity=labor_capacity,
-        organization_input_coefficients=coefficients,
-        organization_output_mix=output_mix,
-        organization_input_inventory=input_inventory,
-        wholesale_inventory=wholesale,
-        retail_inventory=retail,
-        region_equivalent_persons=region_persons,
-        regional_share=share,
+        organization_technology=organization_technology,
+        organization_activity=organization_activity,
+        organization_bank=organization_bank,
+        organization_capacity=organization_capacity,
+        organization_labor_available=organization_labor_available,
+        organization_labor_per_activity=organization_labor_per_activity,
+        organization_cash=organization_cash,
+        organization_wage_arrears=np.zeros(org_count, dtype=np.float64),
+        organization_interest_arrears=np.zeros(org_count, dtype=np.float64),
+        organization_principal=organization_principal,
+        organization_shortage_expectation=np.zeros(org_count, dtype=np.float64),
+        organization_bailout_expectation=organization_bailout_expectation,
+        organization_project_approved=np.zeros(org_count, dtype=np.float64),
+        organization_capital_wip=np.zeros(org_count, dtype=np.float64),
+        organization_construction_wip=np.zeros(org_count, dtype=np.float64),
+        organization_capital_age=np.zeros(org_count, dtype=np.float64),
+        plot_capacity=plot_capacity,
+        plot_labor_budget=plot_labor_budget,
+        plot_activity=plot_activity,
+        bank_reserves=bank_reserves,
+        bank_loan_asset=bank_loan_asset,
+        bank_deposit_liability=bank_deposit_liability,
+        bank_equity=bank_equity,
+        bank_interest_receivable=bank_interest_receivable,
+        treasury_deposit=treasury_deposit,
+        usd_reserve=float(parameters.trade.convertible_opening_reserve),
+        usd_principal=float(parameters.trade.convertible_opening_principal),
+        usd_interest_arrears=0.0,
+        cmea_settlement_balance=0.0,
     )
 
 
-def tick_toy4(
-    state: Toy4State, forcing: Toy4Forcing, parameters: Toy4Parameters
-) -> TickFlows:
-    """Advance exactly one quarter; invariant-checked before it counts.
-
-    Executes the fixed P01 order: (1) freeze opening stocks + forcing,
-    (2) organization orders/allocation on pre-production wholesale, (3) one
-    production round whose output enters wholesale immediately, (4) exports
-    then retail release, (5) household budget/availability rationing,
-    (6) accounting invariants; only then does ``completed_ticks`` advance.
-    """
-    from hsm_lab.engine.accounting import (
-        cash_balance_residuals,
-        check_toy4_invariants,
-        material_balance_residuals,
-        snapshot_opening_stocks,
+def capture_material_stocks(state: MaterialState) -> MaterialStockSnapshot:
+    """Deep-copy the mutable opening boundary (arrays share no memory)."""
+    return MaterialStockSnapshot(
+        stock_value=state.stock_value.copy(),
+        household_cash=state.household_cash.copy(),
+        organization_cash=state.organization_cash.copy(),
+        dwelling_stock=state.dwelling_stock.copy(),
+        durable_stock=state.durable_stock.copy(),
+        bank_reserves=state.bank_reserves.copy(),
+        bank_loan_asset=state.bank_loan_asset.copy(),
+        bank_deposit_liability=state.bank_deposit_liability.copy(),
+        bank_equity=state.bank_equity.copy(),
+        bank_interest_receivable=state.bank_interest_receivable.copy(),
+        treasury_deposit=float(state.treasury_deposit),
+        usd_reserve=float(state.usd_reserve),
+        usd_principal=float(state.usd_principal),
+        usd_interest_arrears=float(state.usd_interest_arrears),
+        cmea_settlement_balance=float(state.cmea_settlement_balance),
+        organization_cash_open=state.organization_cash.copy(),
+        organization_principal=state.organization_principal.copy(),
+        organization_wage_arrears=state.organization_wage_arrears.copy(),
+        organization_interest_arrears=state.organization_interest_arrears.copy(),
+        organization_shortage_expectation=state.organization_shortage_expectation.copy(),
+        organization_bailout_expectation=state.organization_bailout_expectation.copy(),
+        organization_project_approved=state.organization_project_approved.copy(),
+        organization_capital_wip=state.organization_capital_wip.copy(),
+        organization_construction_wip=state.organization_construction_wip.copy(),
+        organization_capacity=state.organization_capacity.copy(),
+        household_wage_claim=state.household_wage_claim.copy(),
+        household_deferred_receipt=state.household_deferred_receipt.copy(),
+        completed_ticks=int(state.completed_ticks),
     )
 
-    tick = state.completed_ticks
-    if tick >= len(forcing.quarters):
-        raise ValueError(
-            f"tick {tick} beyond forcing coverage ({len(forcing.quarters)} quarters)"
-        )
-    quarter = forcing.quarters[tick]
-    r = state.retail_inventory.shape[0]
-    g = state.wholesale_inventory.shape[0]
 
-    # --- Step 1: opening snapshots -------------------------------------
-    org_open = state.organization_input_inventory.copy()
-    wholesale_open = state.wholesale_inventory.copy()
-    retail_open = state.retail_inventory.copy()
-    cash_open = state.household_cash.copy()
-    imports = forcing.imports[tick].copy()
-    export_orders = forcing.export_orders[tick].copy()
+def material_state_shapes(state: MaterialState) -> dict[str, tuple[int, ...]]:
+    """Shape map of every ndarray field (diagnostics/tests)."""
+    import dataclasses
 
-    # --- Step 2: organization demand, orders, allocation ---------------
-    target = np.minimum(
-        parameters.target_utilization * state.organization_capacity,
-        state.organization_labor_capacity,
-    )
-    desired_input = state.organization_input_coefficients * target[:, None]
-    ordered_input = np.maximum(desired_input - org_open, 0.0)
-    total_orders = ordered_input.sum(axis=0)
-    pre_wholesale = wholesale_open + imports
-    rho = np.ones(g)
-    ordered_mask = total_orders > 0
-    rho[ordered_mask] = np.minimum(
-        1.0, pre_wholesale[ordered_mask] / total_orders[ordered_mask]
-    )
-    allocated_input = ordered_input * rho[None, :]
-    delivered_input = allocated_input.copy()
-    available_input = org_open + delivered_input
-    input_unmet = ordered_input - delivered_input
-    delivered_total = delivered_input.sum(axis=0)
-
-    # --- Step 3: one production round ----------------------------------
-    realized, used_input = produce_leontief(
-        available_input, state.organization_input_coefficients, target
-    )
-    organization_output = state.organization_output_mix * realized[:, None]
-    org_close = available_input - used_input
-    output_total = organization_output.sum(axis=0)
-
-    # --- Step 4: exports, retail release --------------------------------
-    after_production = pre_wholesale - delivered_total + output_total
-    export_realized = np.minimum(export_orders, after_production)
-    export_unmet = export_orders - export_realized
-    after_export = after_production - export_realized
-    offer = (
-        np.asarray(parameters.retail_release_fraction, dtype=np.float64) * after_export
-    )
-    retail_incoming = state.regional_share[:, None] * offer[None, :]
-    retail_planned = retail_incoming.copy()
-    retail_available = retail_open + retail_incoming
-    wholesale_close = after_export - offer
-
-    # --- Step 5: household demand, budget, availability -----------------
-    income = parameters.income_per_person * state.household_size
-    desired = (
-        np.asarray(parameters.desired_per_person, dtype=np.float64)[None, :]
-        * state.household_size[:, None]
-    )
-    prices = np.asarray(parameters.prices, dtype=np.float64)
-    cost = desired @ prices
-    alpha = np.ones(state.household_id.shape[0])
-    binding = cost > 0
-    alpha[binding] = np.minimum(1.0, income[binding] / cost[binding])
-    affordable = desired * alpha[:, None]
-    budget_unmet = desired - affordable
-
-    weighted_affordable = _region_bincount(state, affordable)
-    beta = np.ones((r, g))
-    demand_mask = weighted_affordable > 0
-    np.divide(retail_available, weighted_affordable, out=beta, where=demand_mask)
-    beta = np.minimum(beta, 1.0)
-    realized_household = affordable * beta[state.household_region, :]
-    availability_unmet = affordable - realized_household
-    total_unmet = desired - realized_household
-    spending = realized_household @ prices
-    voluntary_saving = income - affordable @ prices
-    forced_saving = availability_unmet @ prices
-    cash_close = cash_open + income - spending
-
-    retail_sales = _region_bincount(state, realized_household)
-    retail_close = retail_available - retail_sales
-
-    # --- Step 6: write back, verify accounting, then advance ------------
-    state.organization_input_inventory = org_close
-    state.wholesale_inventory = wholesale_close
-    state.retail_inventory = retail_close
-    state.household_cash = cash_close
-
-    flows = TickFlows(
-        tick=tick,
-        quarter=quarter,
-        organization_target=target,
-        organization_realized=realized,
-        desired_input=desired_input,
-        ordered_input=ordered_input,
-        allocated_input=allocated_input,
-        delivered_input=delivered_input,
-        available_input=available_input,
-        used_input=used_input,
-        input_unmet=input_unmet,
-        organization_output=organization_output,
-        organization_output_shortfall=target - realized,
-        household_income=income,
-        household_desired=desired,
-        household_affordable=affordable,
-        household_realized=realized_household,
-        budget_unmet=budget_unmet,
-        availability_unmet=availability_unmet,
-        total_unmet=total_unmet,
-        household_spending=spending,
-        voluntary_saving=voluntary_saving,
-        forced_saving=forced_saving,
-        imports=imports,
-        export_desired=export_orders,
-        export_realized=export_realized,
-        export_unmet=export_unmet,
-        retail_planned=retail_planned,
-        retail_incoming=retail_incoming,
-        retail_available=retail_available,
-        retail_sales=retail_sales,
-        organization_input_open=org_open,
-        organization_input_close=org_close,
-        wholesale_open=wholesale_open,
-        wholesale_close=wholesale_close,
-        retail_open=retail_open,
-        retail_close=retail_close,
-        household_cash_open=cash_open,
-        household_cash_close=cash_close,
-        material_balance_residual=np.zeros(g),
-        material_balance_tolerance=np.zeros(g),
-        cash_balance_residual=np.zeros(r),
-        cash_balance_tolerance=np.zeros(r),
-    )
-    flows.material_balance_residual, flows.material_balance_tolerance = (
-        material_balance_residuals(state, flows)
-    )
-    flows.cash_balance_residual, flows.cash_balance_tolerance = (
-        cash_balance_residuals(state, flows, prices)
-    )
-    check_toy4_invariants(
-        snapshot_opening_stocks(state, flows), state, flows, parameters
-    )
-    state.completed_ticks = tick + 1
-    return flows
+    shapes: dict[str, tuple[int, ...]] = {}
+    for f in dataclasses.fields(state):
+        value = getattr(state, f.name)
+        if isinstance(value, np.ndarray):
+            shapes[f.name] = tuple(int(n) for n in value.shape)
+    return shapes

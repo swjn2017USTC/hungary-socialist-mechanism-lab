@@ -8,6 +8,7 @@ __pycache__/
 
 # local run outputs (manifests stay local; compact summaries may be copied on purpose)
 outputs/
+.omp/config.yml.lock
 
 # raw / private / large data: never commit microdata or large tables
 data/raw/
@@ -18,5 +19,12 @@ data/private/
 *.duckdb
 *.duckdb.wal
 *.parquet
-!data/fixtures/p01_toy4_import_supply.parquet
-!data/fixtures/p01_toy4_export_orders.parquet
+!data/fixtures/p02_material_world_oil_monthly.parquet
+!data/fixtures/p02_material_world_oil_quarterly.parquet
+!data/fixtures/p02_material_global_usd_rate_monthly.parquet
+!data/fixtures/p02_material_global_usd_rate_quarterly.parquet
+# synthetic fixture priors + pack (locally generated, no third-party rights)
+!data/fixtures/p02_material_oil_warmup_prior.json
+!data/fixtures/p02_material_cmea_contract_prior.json
+!data/fixtures/p02_material_cmea_uncertainty_prior.json
+!data/fixtures/p02_material_synthetic_pack.json

@@ -1,0 +1,15 @@
+{
+  "bounds": {
+    "lower": 0.5,
+    "upper": 1.5
+  },
+  "calibration_status": "not_calibrated",
+  "literature_refs": [
+    "structural assumption: neutral CMEA reconstruction multiplier"
+  ],
+  "prior_description": "Unit multiplier scaling the five-year-rule CMEA contract price reconstruction; the selected value 1.0 leaves the base price and the world-oil ratio unchanged.",
+  "schema_version": "1",
+  "sensitivity_status": "not_assessed",
+  "uncertainty_notes": "Engineering prior range only; no calibration and no sensitivity assessment were performed, and the selected value is not a historical estimate.",
+  "variable_id": "cmea_uncertainty_multiplier"
+}

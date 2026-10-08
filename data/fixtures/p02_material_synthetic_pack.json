@@ -1,0 +1,42 @@
+{
+  "binding_hash": "6a762101225ec87d21c4fa2553f3318751857c067d17d68621123ee6f3646f8d",
+  "generated_at": "2026-10-07T00:00:00Z",
+  "locator": "fixture:p02-material",
+  "period": {
+    "end": "1985Q4",
+    "frequency": "quarterly",
+    "start": "1957Q1"
+  },
+  "profile": "synthetic",
+  "reconstruction_params": null,
+  "reconstruction_params_hash": null,
+  "schema_version": "1",
+  "segments": {
+    "global_usd_rate": {
+      "artifact_id": "p02_material_global_usd_rate_quarterly",
+      "evidence": "synthetic_fixture",
+      "path": "data/fixtures/p02_material_global_usd_rate_quarterly.parquet",
+      "period": {
+        "end": "1985Q4",
+        "frequency": "quarterly",
+        "start": "1957Q1"
+      },
+      "sha256": "16df220d707d6800ce9e749df5a887e8207310246cd3bfabbd65416cd6652882",
+      "variable_id": "global_usd_rate"
+    },
+    "world_oil_price": {
+      "artifact_id": "p02_material_world_oil_quarterly",
+      "evidence": "synthetic_fixture",
+      "path": "data/fixtures/p02_material_world_oil_quarterly.parquet",
+      "period": {
+        "end": "1985Q4",
+        "frequency": "quarterly",
+        "start": "1957Q1"
+      },
+      "sha256": "93709a3aae211376debb0143a8567ef236e39818bcf653606402c8e53bc364cb",
+      "variable_id": "world_oil_price"
+    }
+  },
+  "source_id": "p02_material_fixture",
+  "warning": "material_synthetic_fixture_not_historical_fit"
+}

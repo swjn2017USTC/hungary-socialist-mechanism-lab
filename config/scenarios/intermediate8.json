@@ -1,0 +1,467 @@
+{
+  "commodities": [
+    "energy",
+    "capital_goods",
+    "food",
+    "consumer_goods",
+    "raw_materials",
+    "construction",
+    "durable_goods",
+    "services_transport"
+  ],
+  "forcing_ids": [],
+  "forcing_pack": "data/fixtures/p02_material_synthetic_pack.json",
+  "households": 5000,
+  "initial_ids": [],
+  "kind": "material",
+  "material_initial": {
+    "bank_equity_quarters": 1.0,
+    "bank_initial_bailout_prior": 0.0,
+    "dwelling_per_person": 0.4,
+    "evidence_status": "structural_assumption",
+    "grade": "S",
+    "household_cash": 0.0,
+    "initial_bailout_prior": 0.5,
+    "input_stock_quarters": 1.0,
+    "observation_at": null,
+    "organization_deposit_quarters": 2.0,
+    "output_stock_quarters": 1.0,
+    "role": "initial_state",
+    "treasury_deposit_quarters": 10.0
+  },
+  "material_parameters": {
+    "allocation_order": "production_first",
+    "bailout_alpha": 0.25,
+    "bailout_envelope_fraction": 0.25,
+    "calibration_status": "not_calibrated",
+    "capacity_capital_goods_per_unit": 0.25,
+    "capacity_construction_per_unit": 0.25,
+    "cmea_base_energy_price": 1.0,
+    "cmea_uncertainty_multiplier": 1.0,
+    "credit_envelope_fraction": 0.5,
+    "desired_per_person": [
+      0.4,
+      0.0,
+      2.0,
+      1.0,
+      0.0,
+      0.0,
+      0.02,
+      0.2
+    ],
+    "domestic_credit_rate_annual": 0.04,
+    "equivalent_households": 5000.0,
+    "evidence_status": "structural_assumption",
+    "farm_seasonal_factors": [
+      0.5,
+      0.8,
+      1.8,
+      0.9
+    ],
+    "food_raw_price": 0.8,
+    "handling_work_per_unit": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "hoarding_quarters": 0.0,
+    "housing_request_per_person": 0.002,
+    "hungary_spread_annual": 0.02,
+    "hunger_bailout": 0.05,
+    "hunger_base": 0.02,
+    "hunger_shortage": 0.05,
+    "notes": "Synthetic Intermediate-8 engineering constants; not historical Hungarian magnitudes and not calibrated against any observed series.",
+    "oil_warmup_price": 1.6,
+    "overorder_strength": 0.0,
+    "prices": [
+      1.0,
+      4.0,
+      2.0,
+      3.0,
+      1.5,
+      5.0,
+      12.0,
+      1.0
+    ],
+    "principal_repayment_fraction": 0.05,
+    "role": "latent_parameter",
+    "sensitivity_status": "not_assessed",
+    "service_split": [
+      0.7,
+      0.2,
+      0.1
+    ],
+    "shortage_alpha": 0.25,
+    "trade": {
+      "cmea_credit_envelope": 10000.0,
+      "cmea_desired_imports": [
+        3000.0,
+        500.0,
+        0.0,
+        0.0,
+        5000.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cmea_export_demands": [
+        0.0,
+        100.0,
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cmea_prices": [
+        1.0,
+        4.0,
+        2.0,
+        3.0,
+        1.5,
+        5.0,
+        12.0,
+        1.0
+      ],
+      "convertible_desired_imports": [
+        500.0,
+        1000.0,
+        100.0,
+        200.0,
+        1000.0,
+        0.0,
+        50.0,
+        0.0
+      ],
+      "convertible_export_demands": [
+        0.0,
+        100.0,
+        0.0,
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "convertible_loan_limit": 5000.0,
+      "convertible_opening_principal": 0.0,
+      "convertible_opening_reserve": 20000.0,
+      "convertible_prices": [
+        1.0,
+        4.0,
+        2.0,
+        3.0,
+        1.5,
+        5.0,
+        12.0,
+        1.0
+      ]
+    },
+    "transport_per_unit": 0.05,
+    "utilization": 0.9,
+    "wage_rate": 6.0,
+    "world_oil_reference": 1.63
+  },
+  "organization_recipe": {
+    "overrides": [],
+    "profile": "p02_200"
+  },
+  "organizations": 200,
+  "output_policy": "ensemble_compact",
+  "parameter_ids": [],
+  "region_ids": [
+    "budapest",
+    "pest",
+    "borsod_abauj_zemplen",
+    "heves",
+    "nograd",
+    "fejer",
+    "komarom",
+    "veszprem",
+    "gyor_sopron",
+    "vas",
+    "zala",
+    "baranya",
+    "somogy",
+    "tolna",
+    "hajdu_bihar",
+    "szabolcs_szatmar",
+    "szolnok",
+    "bacs_kiskun",
+    "bekes",
+    "csongrad"
+  ],
+  "routes": null,
+  "scenario_id": "intermediate8",
+  "schema_version": "1",
+  "seed": 1729,
+  "start": "1957Q1",
+  "stochastic": true,
+  "technologies": [
+    {
+      "inputs": [
+        {
+          "coefficient": 0.05,
+          "commodity_id": "energy",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "raw_materials",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.005,
+          "commodity_id": "capital_goods",
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "energy",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "energy_generation"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.3,
+          "commodity_id": "energy",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.08,
+          "commodity_id": "raw_materials",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.005,
+          "commodity_id": "capital_goods",
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "raw_materials",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "raw_materials_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.25,
+          "commodity_id": "energy",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.5,
+          "commodity_id": "raw_materials",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.02,
+          "commodity_id": "services_transport",
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "capital_goods",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "capital_goods_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 1.25,
+          "commodity_id": "food",
+          "stage": "raw"
+        },
+        {
+          "coefficient": 0.15,
+          "commodity_id": "energy",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.1,
+          "commodity_id": "raw_materials",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.005,
+          "commodity_id": "capital_goods",
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "food",
+          "stage": "ready"
+        }
+      ],
+      "technology_id": "food_processing"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.15,
+          "commodity_id": "energy",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.3,
+          "commodity_id": "raw_materials",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.005,
+          "commodity_id": "capital_goods",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.02,
+          "commodity_id": "services_transport",
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "consumer_goods",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "consumer_goods_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.25,
+          "commodity_id": "energy",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.8,
+          "commodity_id": "raw_materials",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.01,
+          "commodity_id": "capital_goods",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.03,
+          "commodity_id": "services_transport",
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "durable_goods",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "durable_goods_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.1,
+          "commodity_id": "energy",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.6,
+          "commodity_id": "raw_materials",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.01,
+          "commodity_id": "capital_goods",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.02,
+          "commodity_id": "services_transport",
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "construction",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "building_construction"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.05,
+          "commodity_id": "energy",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.002,
+          "commodity_id": "capital_goods",
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "services_transport",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "freight_transport"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.05,
+          "commodity_id": "energy",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.03,
+          "commodity_id": "raw_materials",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.002,
+          "commodity_id": "capital_goods",
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "food",
+          "stage": "raw"
+        }
+      ],
+      "technology_id": "field_farming"
+    }
+  ],
+  "ticks": 116
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "1",
+  "seed": 1729,
+  "regions": 20,
+  "commodities": [
+    "energy",
+    "capital_goods",
+    "food",
+    "consumer_goods",
+    "raw_materials",
+    "construction",
+    "durable_goods",
+    "services_transport"
+  ],
+  "workers": 1,
+  "warmups": 1,
+  "repeats": 3,
+  "household_equivalents": 5000,
+  "cases": [
+    {"households": 2500, "organizations": 100, "ticks": 10},
+    {"households": 2500, "organizations": 200, "ticks": 10},
+    {"households": 5000, "organizations": 100, "ticks": 10},
+    {"households": 5000, "organizations": 200, "ticks": 10},
+    {"households": 10000, "organizations": 200, "ticks": 10},
+    {"households": 5000, "organizations": 400, "ticks": 10},
+    {"households": 2500, "organizations": 100, "ticks": 116},
+    {"households": 2500, "organizations": 200, "ticks": 116},
+    {"households": 5000, "organizations": 100, "ticks": 116},
+    {"households": 5000, "organizations": 200, "ticks": 116},
+    {"households": 10000, "organizations": 200, "ticks": 116},
+    {"households": 5000, "organizations": 400, "ticks": 116},
+    {"households": 5000, "organizations": 200, "ticks": 116, "checkpoint_every": 20}
+  ],
+  "wall_gate_s": 30.0,
+  "checkpoint_wall_gate_s": 45.0,
+  "normal_peak_rss_bytes": 16000000000,
+  "hard_peak_rss_bytes": 22000000000,
+  "scaling_household_axis": [[2500, 5000, 10000], 200],
+  "scaling_organization_axis": [5000, [200, 400]],
+  "max_scaling_ratio": 3.5,
+  "notes": [
+    "PASS gate: F1 5000/200/116 median end-to-end <= 30s without checkpoints; checkpoint case <= 45s.",
+    "Peak RSS <= 16e9 normal PASS; 16-22e9 is documented overage, never a silent pass; >22e9 hard refusal.",
+    "Scaling ratios (households doubling at O=200; organizations 200->400 at N=5000) must stay <= 3.5 median.",
+    "Threads pinned to 1 before numpy import in workers; DuckDB threads=1."
+  ]
+}
