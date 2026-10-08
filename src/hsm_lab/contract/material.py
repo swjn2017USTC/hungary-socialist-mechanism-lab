@@ -127,9 +127,16 @@ INDUSTRIAL_TECHNOLOGY_IDS: tuple[str, ...] = (
 )
 
 # Six industrial capacity totals: energy/raw/capital/food-processing/consumer/durable.
+# energy 36,000 and raw_materials 34,000 are the smallest declared totals that keep
+# the declared target vector input-feasible with headroom. At the 0.9 utilization
+# target the whole-economy input requirement is 22,365 + 0.045 * C_energy for energy
+# and 21,150 + 0.072 * C_raw for raw materials (both sectors consume themselves), so
+# the earlier 30,000 / 20,000 pair demanded 22,590 raw-material units against an
+# 18,000 supply (ratio 0.797) and made the synthetic fixture physically infeasible.
+# The chosen pair holds supply/use ratios of ~1.35 and ~1.30 respectively.
 INDUSTRIAL_CAPACITY_TOTALS: tuple[float, ...] = (
-    30000.0,
-    20000.0,
+    36000.0,
+    34000.0,
     8000.0,
     40000.0,
     22000.0,

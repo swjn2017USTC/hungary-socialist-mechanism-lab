@@ -80,10 +80,10 @@ external rates), 12 (services expiry, housing/durable stock, bank no-goods).
 `uv run hsm run --scenario intermediate8 --output-dir outputs/p02-default --json`
 (5,000 households / 200 organizations / seed 1729 declared by the scenario)
 → status ok, 116 ticks, last 1985Q4, `run_kind=intermediate8_material_simulation`,
-digest `cbb42e5a17999ce8451c82230ee0f48e3e71f95b45201903a2f01e65204eca03`.
+digest `56eab3619cbdac6b47970128b583b9f28ac01b820dfbfebb0173d41fdb646e5c`.
 
 - Re-run into a second directory with identical inputs → same digest
-  `cbb42e5a…`; pause/resume equivalence is pinned by
+  `56eab361…`; pause/resume equivalence is pinned by
   `test_run_material_pause_then_resume_matches_uninterrupted` and
   `test_resume_refuses_a_terminal_checkpoint` (both passing).
 - Every table row-count equals the pinned grid: `aggregates` 18560,
@@ -92,13 +92,16 @@ digest `cbb42e5a17999ce8451c82230ee0f48e3e71f95b45201903a2f01e65204eca03`.
   `financial_accounts` 464, `departments` 580, `tick_diagnostics` 116,
   `events` 116; Parquet and DuckDB contents agree.
 - Invariant maxima over the 116 admitted ticks: material tolerance ratio
-  `2.728e-03`, finance tolerance ratio `2.354e-04` (both ≤ 1), max absolute
-  material residual `7.276e-12`, max absolute finance residual `8.848e-08`;
+  `3.717e-03`, finance tolerance ratio `2.577e-04` (both ≤ 1), max absolute
+  material residual `7.276e-12`, max absolute finance residual `7.637e-08`;
   `parameter_hash=a6aa7ca637f0525f3da950a1c085f57a3da11d76361f2f67224bf398cdc553e3`,
-  `initial_recipe_hash=5a893a75f2637113bbc2b8d51b4eec7a6a854def310010135a1cea525ac7e465`.
-- Shortage mechanism diagnostics are active, not synthesised: 18,593 bottleneck
-  demand events and 71.7 units of financial delivery blocking across the run;
-  all `departments` attribution rows are finite.
+  `initial_recipe_hash=5a893a75f2637113bbc2b8d51b4eec7a6a854def310010135a1cea525ac7e465`
+  (both unchanged by the capacity calibration below, which lives in the contract
+  capacity totals rather than in the recipe or parameter vectors).
+- Shortage mechanism diagnostics are active, not synthesised: 18,725 bottleneck
+  demand events across the run; financial delivery blocking is ~`6e-13` (nil),
+  as expected now that clearing-limited deliveries are charged at the delivered
+  quantity; all `departments` attribution rows are finite.
 - No politics, LLM or social-attitude fields exist in state, and the summary
   carries `assessment_status="not_assessed"` mechanism diagnostics only.
 
@@ -107,7 +110,7 @@ digest `cbb42e5a17999ce8451c82230ee0f48e3e71f95b45201903a2f01e65204eca03`.
 `uv run hsm data build-material-forcing --profile external` then
 `uv run hsm run --scenario intermediate8_external --output-dir outputs/p02-external --json`
 → status ok, 116 ticks, digest
-`5a199187ae26ed128de34e50e982ab3bc8ee2df242a650a8dbfdbefe7815bbb2`. The
+`046efacfcebe2e656e238afeb7b715b887d7a76ce5d93cb85e28a85fd8b94129`. The
 synthetic pack rebuilds byte-identically (`raw_sha256 = 92d143a7…5de7b`).
 
 ### Real data ingestion (download → hash-cache → parse → derive → admission)
@@ -146,11 +149,11 @@ closed; `--offline` miss exits 1; `--offline --refresh` exits 2.
 `status=ok`, `overall_gate=pass`, 13 cases, single-threaded worker
 (`OMP/MKL/OPENBLAS/VECLIB/NUMEXPR/POLARS/duckdb` threads pinned to 1).
 F1 (5,000 households / 200 organizations / 116 ticks, no checkpoints): median
-worker wall **5.906 s**, peak RSS **0.413 GB**. Checkpoint case
-(`checkpoint_every=20`): **6.382 s**, ratio vs F1 **1.081**, **9.21 MB** per
-checkpoint. Max peak RSS across all cases **0.440 GB** (≤ 16 GB normal gate).
+worker wall **3.446 s**, peak RSS **0.408 GB**. Checkpoint case
+(`checkpoint_every=20`): **3.733 s**, ratio vs F1 **1.083**, **9.06 MB** per
+checkpoint. Max peak RSS across all cases **0.442 GB** (≤ 16 GB normal gate).
 Scaling medians (households 2,500→5,000→10,000 at O=200; organizations
-200→400 at N=5,000): **1.128 / 1.605 / 1.159** (≤ 3.5 threshold). Every case
+200→400 at N=5,000): **1.371 / 1.552 / 1.146** (≤ 3.5 threshold). Every case
 passes `digest_stable`, `invariants_ok`, `peak_rss_ok` (long cases also
 `wall_s_ok`); each case's protected dimensions (`S,K,D,M,P`) and
 `effective_scalar_updates` are recorded in the report JSON. The kernel builds
@@ -195,97 +198,99 @@ not by inspection; each fix is covered by the permanent suite.
    gross demand is now formed net of the destination's opening wholesale stock,
    which keeps the hub's reservation equal to its genuine pipeline need.
 
-## Known limitation: material-chain absorption under the pinned fixed-point rules
+## Fixture calibration: input feasibility of the declared target vector (committed)
 
-The synthetic fixture is *not* self-sustaining over the full horizon, and this is
-a property of the pinned fixed-point rules rather than an accounting break. None
-of the growth-scalar logic or state/ledger invariants is affected: within every
-admitted tick `delivered ≤ allocated ≤ ordered ≤ gross`, stocks are continuous,
-every Journal transaction is paired, and the run completes all 116 ticks.
+An audit of the declared synthetic target vector against the declared sector
+capacities (all activities at `utilization = 0.9`, technology coefficients from
+`contract/material.py`) showed the fixture was **physically infeasible**:
 
-Measured on the frozen default scenario (5,000 households / 200 organizations):
+| commodity | whole-economy input requirement at target | declared supply | ratio |
+|---|---|---|---|
+| `raw_materials` | 22,590 | 18,000 | **0.797** |
+| `energy` | 23,715 | 27,000 | 1.139 |
+| `capital_goods` | 819 | 7,200 | 8.79 |
+| `food` | 45,000 | 90,000 | 2.00 |
 
-- gross attributed output by tick 0…4 = `344,901`, `59,713`, `352,762`,
-  `28,607`, `35,860`, alternating at period two and decaying; by tick 17 the
-  1,000-household profile is at exactly `0` and stays there.
-- the funnel narrows at every stage in the trough quarters: intermediate-input
-  orders `131,742 → allocated 82,844 → delivered 9,324` (tick 1) and
-  `49,782 → 20,887 → 4,119` (tick 3).
-- the binding constraint is the transport sector: its realized activity is
-  `63,000`, `0`, `30,371`, `0`, `0` for ticks 0…4, with `min_input_ratio = 0`
-  in every dead quarter (its own opening energy/capital-goods buffer is empty).
-  Once transport output is zero, every cross-region route factor is zero, so
-  deliveries stop; production then has no same-quarter inputs and the state is
-  absorbing. Raising only the transport input buffer is not sufficient
-  (`input_stock_quarters` 2/3/4/6/8 all still collapse), while an effectively
-  unbounded transport buffer sustains the same fixture for the whole horizon
-  (mean activity 77,006, minimum 51,232), which isolates the cause to the
-  input-buffer/pipeline interaction and not to a leak in the ledger.
+`raw_materials` demand exceeded supply by 25%, and the sector also consumes
+itself (`0.08` per unit), so the shortage compounded instead of clearing. No
+ordering, buffering or routing rule can repair an infeasible input-output
+vector, so this was corrected at the declared fixture rather than in the
+mechanism: `INDUSTRIAL_CAPACITY_TOTALS` raw materials `20,000 → 34,000` and
+energy `30,000 → 36,000`. Both totals were solved, not guessed, from the
+self-input fixed point (`0.828·C_raw ≥ 21,150`; `0.855·C_energy ≥ 22,365`) and
+now hold supply/use ratios of ~1.30 and ~1.35. This remains a synthetic
+structural assumption with no historical claim; `parameter_hash` and
+`initial_recipe_hash` are unchanged because capacities live in the contract
+totals, and the run digest changes to `56eab361…`.
 
-Cause chain, all of it pinned by the approved plan: input orders are
-`max(desired − opening_input, 0)` with `desired` equal to one quarter of need, so
-a full opening buffer suppresses the order that would replenish it; deliveries
-arrive in the same quarter the inputs are consumed; regional sourcing is limited
-to the nearest two producers; and a production input may only be delivered
-through a transport route, including the transport sector's own fuel. The
-combination has a feasible steady state but also an absorbing deadlock, and the
-initial transient can land in it.
+**Effect (default scenario, 116 ticks).** The exact-zero absorption state is
+gone: previously the run flatlined to exactly `0`; it now never reaches zero,
+with a floor of `161`–`581` units alternating at period two over the last
+quarters. Aggregate output still decays from `369,294` (tick 0) through
+`60,408`, `371,411`, `32,018`, `39,029`, `27,614`, `18,492`, `13,994`, i.e. the
+economy remains **degenerate**, at ~0.1% of the declared target scale. All
+invariants, determinism, checkpoint and benchmark gates remain green.
 
-Resolving this requires a *mechanism* decision that the approved P02 plan does
-not authorise (it pins the net-order rule, the nearest-two sourcing rule and the
-transport-service requirement).
+## Known limitation: the material chain still decays to a degenerate floor
 
-### Order-up-to-cover experiment (run, measured, rejected)
+The remaining decay is a property of the pinned quarter sequence, not an
+accounting break: within every admitted tick `delivered ≤ allocated ≤ ordered ≤
+gross`, stocks are continuous, every Journal transaction is paired, and the run
+completes all 116 ticks.
 
-The pinned `hoarding_quarters` parameter already implements order-up-to-cover
-(`gross = max(desired × (1 + hoarding) − opening_input, 0)`), so the candidate
-remedy was measured by switching that existing toggle on rather than by changing
-code. It softens the transient but does **not** remove the absorbing state, and
-it was therefore not committed:
+Per-tick tracing (temporary instrumentation, reverted) isolates the chain on the
+default scenario (5,000 households / 200 organizations):
 
-| configuration (1,000 households / 100 organizations, 116 ticks) | mean activity | zero ticks |
-|---|---|---|
-| baseline (`hoarding_quarters = 0`) | 3,665 | 110 |
-| cover 0.5 quarter | 4,457 | 107 |
-| cover 1 quarter | 4,759 | 107 |
-| cover 2 quarters | 5,039 | 108 |
-| raw-materials capacity 34,000, no cover | 3,779 | 111 |
-| cover 1 quarter + raw-materials capacity 34,000 | 5,333 | 109 |
-| transport self-haul, no cover | 3,924 | 110 |
-| transport self-haul + cover 1 / 2 quarters | 4,768 / 5,041 | 107 / 108 |
+- ticks 0–2 run at target (`224,300`, `234,385`, `233,432` against a growing
+  target of `206,300` → `248,445`);
+- **tick 3: the transport sector dies** (`63,000 → 59,835 → 594 → 0` realized
+  against a `68,258` target) and `services_transport@region-0` becomes the
+  binding input with ratio `0`, starving `132 → 383` of 648 input rows;
+- intermediate-input deliveries collapse with it (`ordered 155,419 → allocated
+  68,612 → delivered 38,808`, and progressively less thereafter);
+- the deep floor is a joint material and monetary deadlock: intermediate orders
+  fall to `837` while `allocated → 0` (seller cells empty) because no production
+  means no sales, no cash and therefore no funded orders.
 
-Per-tick tracing (temporary instrumentation, reverted) shows three compounding
-constraints rather than one, and cover only moves which of them binds:
+The structural reason transport cannot stay alive is that `services_transport`
+never carries over between quarters — its cells open at zero, are filled only by
+same-quarter deliveries, and any unused remainder expires within the quarter
+(step 9) — while it is *also* a production input of
+`capital_goods_production`, `consumer_goods_production`,
+`durable_goods_production` and `building_construction`, and its own delivery
+occupies a transport route. The sector consumes only its *opening* input stock
+the pinned transport-first exception), so its buffer must be laid down a quarter
+ahead; under the pinned net-order rule there is no positive-stock fixed point for
+that buffer, and one short quarter is sufficient to stop the sector that every
+cross-region route depends on.
 
-1. *Delivery collapse, baseline.* Intermediate-input orders
-   `131,742 → allocated 82,845 → delivered 9,324` at tick 1: 63% is allocated
-   but only 11% of the allocation is delivered, because transport output is
-   `63,000, 0, 30,371, 0, 0` for ticks 0…4 and cross-region routes carry ~89% of
-   the intermediate edges. Allocation itself is fine in this configuration.
-2. *Allocation collapse, cover on.* With a cover the orders run closer to
-   target (`181,032` at tick 1) and now the sellers ration instead:
-   `ordered 181,032 → allocated 74,269` (41%), and the binding input becomes a
-   *regional* raw-materials shortage (`raw_materials@region-19` ratio 0.587,
-   then `food@region-11` 0.084, then `raw_materials@region-0/1` at 0), with
-   42 → 221 of 354 input rows below ratio 1. Regional sourcing is limited to the
-   nearest two domestic producers, so raising the national raw-materials
-   capacity total does not help a region whose two declared sources are empty.
-3. *Transport decay.* The transport sector consumes only its *opening* input
-   stock (the pinned transport-first exception), so its buffer must be built one
-   quarter ahead; under any of these configurations its realized activity decays
-   `63,000 → 52,524 → 43,887 → 12,775 → 0` because its own energy/capital-goods
-   replenishment is itself rationed (and, in the baseline, gated by the transport
-   service it provides).
+### Levers measured (all temporary, none committed except the capacity calibration)
 
-A fix therefore needs a *re-balancing package* over fixture topology and
-capacity — enough raw-material producers (or a source fallback) so that every
-region can actually reach a universal input, a capacity total consistent with
-the declared target vector (aggregate raw-materials supply/use is 0.797 at
-target), a buffer policy that covers the transport sector's one-quarter pipeline,
-and a decision on whether the transport sector's own inputs are self-hauled.
-None of that is implemented or committed; the shipped default remains the
-baseline above, and the engine, invariants, determinism, checkpointing and
-benchmark gates are unaffected.
+| configuration (116 ticks) | mean activity | zero ticks | floor |
+|---|---|---|---|
+| default profile, baseline capacities | 3,665 | 110 | 0 |
+| + raw/energy capacity calibration | 5,216 | **0** | 100 |
+| + `input_stock_quarters = 4` | 9,571 | **0** | 100 |
+| + `hoarding_quarters = 2` (order-up-to-cover) | 11,908 | **0** | 200 |
+| 1,000 hh / 100 org, cover 0.5 / 1 / 2 quarters | 4,457 / 4,759 / 5,039 | 107 / 107 / 108 | 0 |
+| 1,000 hh / 100 org, raw capacity 34,000 alone | 3,779 | 111 | 0 |
+| 1,000 hh / 100 org, transport self-haul | 3,924 | 110 | 0 |
+| 1,000 hh / 100 org, transport self-haul + cover 1 / 2 | 4,768 / 5,041 | 107 / 108 | 0 |
+
+Every lever moves which constraint binds without restoring a viable economy: the
+capacity calibration removes the exact-zero trap, order-up-to-cover and larger
+input buffers raise the floor and the transient, and exempting the transport
+sector's own inputs from the route service does not prevent the sector's decay
+because its fuel must still be *stocked* a quarter ahead.
+
+### Next step (approved, not yet implemented)
+
+A self-consistent steady-state initial state: solve the model's own fixed point
+over the input matrix, the transport pipeline, the tiered rationing and the
+monetary bridge, and declare that solution as the synthetic initial recipe
+instead of "one quarter of target". That is calibration engineering and is
+tracked as the follow-up to this phase; the engine, ledger, determinism,
+checkpoint and benchmark contracts are unaffected by it.
 
 ## Deviations and boundaries
 
@@ -306,6 +311,11 @@ benchmark gates are unaffected.
   source is the selected rate feed. MNB data is restricted
   (`redistribution_allowed=false`); only its normalized numeric output is
   derived, and no raw/normalized MNB or Fed bytes are committed.
+- **Capacity calibration is a structural assumption.** `INDUSTRIAL_CAPACITY_TOTALS`
+  energy `36,000` and raw materials `34,000` are the smallest declared totals that
+  make the declared target vector input-feasible with ~1.3 headroom (see the
+  fixture-calibration section). They are synthetic engineering values chosen for
+  internal consistency, not calibrated historical capacities.
 - **Distribution-layer working capital (structural assumption, M2-neutral).** The
   pinned net-order rule (`max(desired − opening_input, 0)`) funds purchases out
   of existing deposit cash, and a wholesale/retail layer that starts with no
