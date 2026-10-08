@@ -411,6 +411,51 @@ generation, the reservation rule, the ledger invariant and the fixture — and i
 has not been completed, so nothing here is committed and the shipped default is
 unchanged.
 
+### Transport-first support service (implemented, measured, not committed)
+
+The transport-insolvency diagnosis above was implemented as a three-part
+mechanism change and measured; it did not meet the acceptance gate (116 ticks,
+no dead tick, floor at least half of target), so it is **not committed** and the
+shipped default is unchanged.
+
+1. **Gross ordering for the transport sector's own inputs.** The sector consumes
+   fuel at the opening of the quarter, so a net-of-stock order lets a full buffer
+   suppress its own replenishment: at tick 0 the buffer was full (393.8 units per
+   row) so `ordered = 0`, the buffer emptied, and tick 1 arrived with nothing.
+2. **A recorded support-service bridge** for the cash the transport sector cannot
+   fund (`flows.transport_support_gap`, never hidden — it is a declared flow).
+3. **Self-hauled fuel edges** (`_SELF_HAULED`): a carrier cannot be hired to
+   deliver the fuel it needs in order to produce. Measured directly: one fuel
+   route ran from the regional producer (no carrier) to the national buffer and
+   back into the region **on carrier 169's service**, so a quarter in which that
+   carrier produced nothing delivered 4.5 of the 393.8 units required.
+
+**Measured effect (default scenario, 60 ticks).** Before: activity alternated
+`224,300 / 52,957 / 222,895 / 30,376 / …` with transport alive only on even
+ticks and 93 of 176 activities stalling on odd ticks — a period-two oscillation.
+After: `224,300 / 188,064 / 148,192 / 101,751 / 48,950 / …`, transport alive
+through tick 3 and the odd-quarter cliff **eliminated**. The sequence is now a
+smooth monotone decay instead of an oscillation, which confirms the diagnosis:
+the oscillation was the transport sector starving its own fuel.
+
+**What still blocks the gate.** At tick 4 the transport sector's fuel buffer is
+empty again and transport output goes to zero; every cross-region route factor
+then goes to zero and the chain locks. Measured at that point: retail orders stay
+at `88,000–107,000` per quarter while retail deliveries fall to `1,195`, and 96
+to 148 allocated retail edges are blocked, all of them edges **with** a carrier
+(`without_carrier = 0`). Retail stock is therefore pinned at ~25 units while
+producer output stock accumulates to `467,428` — the same single chain one step
+further down: transport fuel → transport survival → carrier service → the whole
+cross-region distribution layer.
+
+The remaining requirement is therefore a *quantitative steady-state* of the
+transport sector's own fuel balance, not another discrete mechanism fix: its
+per-quarter fuel requirement is `0.05 × capacity` and its fuel arrives only in
+the quarter it is ordered, so the buffer needs a cover policy of at least one
+production pipeline (order-up-to-cover on the transport rows specifically, not
+globally). That is a fixture parameter (`input_stock_quarters` for the transport
+sector) plus one more round of measurement; it was not attempted here.
+
 ### Next step (approved, not yet implemented)
 
 A self-consistent steady state: solve the model's own fixed point jointly over
