@@ -5,7 +5,7 @@
     "sha256": "221a4d91aed427f6c622fbc10edf3b18e5fcbd6ef69fec382d2fe84992b3ed65"
   },
   "locator": "fixture:p04-politics",
-  "pack_sha256": "dc0c687dc2c0271932d0dbd317c63766f28c7e80f126b0cd3d03bcbc751ce44b",
+  "pack_sha256": "71642a27e454097b2c52b2948daaa5492e263a3084c3cfe9a46b6d04b76ed0a8",
   "profile": "synthetic",
   "quarters": [
     "1957Q1",
@@ -125,6 +125,26 @@
     "1985Q3",
     "1985Q4"
   ],
+  "recipe_params": {
+    "base_cmea_demand": 1.0,
+    "base_credit_availability": 1.0,
+    "base_energy_quota": 1.0,
+    "base_geopolitical_tension": 0.3,
+    "base_soviet_constraint": 0.5,
+    "base_technology_access": 0.5,
+    "base_western_demand": 1.0,
+    "base_western_inflation": 0.0,
+    "debt_reference": 10000.0,
+    "default_loading": 0.2,
+    "signal_clip": 1.0,
+    "signal_lower": -1.0,
+    "signal_persistence": 0.8,
+    "signal_upper": 1.0,
+    "soviet_constraint_multiplier": 1.0,
+    "tension_regime_weight": 0.5,
+    "western_price_index_initial": 1.0
+  },
+  "recipe_params_hash": "65333cf741eae388a41965bf0313ddc489751a1196ae106b895bbc5ea1c1aba0",
   "schema_version": "1",
   "source_id": "p04_fixture",
   "variables": {

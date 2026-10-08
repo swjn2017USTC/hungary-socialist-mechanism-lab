@@ -144,7 +144,7 @@ the efficacy channel move independently, and grievance is never deleted.
 
 ## 4. Verification evidence (exercised, not asserted)
 
-- `uv run pytest -q` → **290 passed** (13 new P04 tests across
+- `uv run pytest -q` → **295 passed** (17 new P04 tests across
   `test_politics.py`, `test_information.py`, `test_opposition.py`,
   `test_external_history.py`, `test_political_run.py`, plus extensions to
   `test_data_roles.py` and `test_output.py`).
@@ -165,14 +165,19 @@ the efficacy channel move independently, and grievance is never deleted.
 
 ## 5. Known gaps / honest limitations
 
-1. **SocioVerse2 longitudinal adapter layer is not implemented.** Branching uses
-   the project's own checkpoint/replay (the fallback the plan explicitly permits
-   when the framework's `WarmStartSpec` action replay cannot serve as a state
-   branch), and the existing real-store smoke (`hsm doctor --socioverse-smoke`)
-   still passes. The `EnvironmentProvider/PopulationProvider/DecisionModel/
-   MetricCollector` adapters and a real `LongitudinalSimulator` panel over the
-   26 institutional IDs are **not** wired. Plan acceptance criterion 7 is
-   therefore **partial**.
+1. **SocioVerse2 longitudinal adapter layer is not implemented — the dependency
+   is installed, the wiring is not.** `socioverse2==0.2.0` is present in the
+   project `.venv` (`hsm doctor --socioverse-smoke` exercises its real
+   `DuckDbTrajectoryStore` and passes on every run), and its `LongitudinalSimulator`,
+   `EnvironmentProvider` / `PopulationProvider` / `DecisionModel` /
+   `MetricCollector` ABCs and `InformationEnvironment` were read from the
+   installed wheel. Nothing about the machine blocked this: the native runner
+   (`engine/political_run.py` + `storage/fork.py`) already provides the
+   checkpoint/replay branch mechanism the plan permits as the fallback, so the
+   adapter layer is a *scope trade-off*, not an environment failure. Concretely,
+   wiring it requires lifting the quarter body out of `_execute` into a stepwise
+   session that `Environment.apply` can drive, plus the 26-institution panel.
+   Until that lands, plan acceptance criterion 7 stays **partial**.
 2. **P02 material-chain degeneration persists.** With the mandated
    `p02_100`/N=1000 recipe the synthetic economy collapses toward zero realized
    production over the horizon (this is the pre-existing P02/P03 degeneration;
@@ -193,3 +198,65 @@ the efficacy channel move independently, and grievance is never deleted.
 5. **`p04_*_external` scenarios** require the admitted P02 external pack
    (`hsm data build-material-forcing --profile external`); the external P04
    profile refuses without it and never falls back to synthetic.
+
+---
+
+## 6. Independent-audit patches (PATCH verdict, applied)
+
+A separate adversarial audit returned **PATCH**. Four defects were reproduced and
+fixed; each now has a permanent regression test.
+
+**A1 — `soviet_constraint_multiplier` was a silent no-op.** The allowlist entry,
+the `_InterventionState.soviet_multiplier` resolver and the checkpointed
+`soviet_constraint_multiplier` state all existed, but nothing consumed them:
+`_project_soviet` read the raw external value. Fixed by resolving the effective
+constraint once per quarter (`external.soviet_constraint × multiplier`, clipped),
+writing it into the political state, and threading it through the feedback,
+broker projection, closing truth and output diagnostics.
+Evidence: multiplier `2.0` now changes the digest and compresses broker autonomy
+(`0.275 → 0.200`, i.e. `cap = 1 − 1·(1 − 0.2)`); test
+`test_soviet_multiplier_intervention_changes_behaviour`.
+
+**A2 — chained forks (C from C) were impossible.** `PoliticalRunSpec` rejects a
+*scenario* declaring `mode=counterfactual`, so re-loading a child checkpoint's
+embedded scenario failed, `resolve_root_base_mode` did not exist and
+`inherited_interventions` was never populated. Fixed with
+`parse_parent_scenario` (relaxes the stored mode to its resolved root base for
+validation, restores `counterfactual` in memory), `resolve_root_base_mode`,
+`inherited_interventions_of`, `root_base_mode` on `load_counterfactual_origin`,
+branch-aware `load_material_checkpoint`, and a `--resume` path that restores a
+child's branch context (root base mode + every intervention already in force).
+Evidence: a grandchild fork now succeeds with
+`branch.base_mode = endogenous_politics`, `inherited = [pest-cf]`,
+`own = [sov-late]`; resuming a C child keeps delivering the inherited broadcast
+to `pest`; tests `test_chained_fork_inherits_root_base_and_interventions`,
+`test_resume_counterfactual_child_keeps_inherited_interventions`.
+A related restore bug was fixed at the same time: checkout/resume dropped the
+P04 row buffers, so a fork's output tables contained only the suffix — they now
+carry the shared prefix plus the suffix, like the material history.
+
+**A3 — the external pack was not bound to `external_recipe`.** `build_p04_inputs`
+hard-coded `PoliticalParameters()` and `load_external_pack` verified only
+`pack_sha256`; a scenario overriding the recipe silently consumed a stale pack.
+The pack now records `recipe_params` + `recipe_params_hash` and the loader
+refuses any disagreement, mirroring the material pack's `reconstruction_params`
+gate. Evidence: `test_external_pack_is_bound_to_the_declared_recipe`.
+
+**A4 — declared state and traceability were dead or mislabelled.**
+`prediction_history` / `objective_history` were never written and
+`policy_error` ignored the plan's definition; `contributions_json` stored
+objective *ids*; the coalition contributions were computed but never emitted;
+`intervention_ttl` was always zero; `_selection_violation` was dead code.
+Fixed: the policy error is now `mean|clip(A @ normalize(previous_policy)) −
+objective|` and both 9-slot rings are written; broker rows carry the four
+additive utility terms (their sum reproduces `utility` exactly) and per-candidate
+binding constraints; `political_quarters` gains
+`coalition_contributions_json` (W×(F+1), row sums rebuild the coalition score);
+the branch TTL ledger is rebuilt for each branch's own schedule and written per
+quarter; the dead helper is deleted. Evidence:
+`test_decision_and_coalition_contributions_rebuild_from_output`.
+
+Re-verified after the patches: `uv run pytest -q` → 295 passed; full CLI A/B runs
+reach 1985Q4 (116 ticks, `replay` / `broker` sources, max material tolerance
+ratio ≤ 0.0073); a no-op fork is still bit-identical to a plain resume
+(`596a658e8e53195b…` both).

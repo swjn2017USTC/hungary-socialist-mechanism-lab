@@ -59,7 +59,9 @@ from hsm_lab.storage.material_output import (
 from hsm_lab.storage.political_output import (
     INFORMATION_QUARTERS,
     OPPOSITION_REGIONS,
+    POLICY_DECISIONS,
     POLITICAL_COLUMNS,
+    POLITICAL_EVENTS,
     POLITICAL_INT_COLUMNS,
     POLITICAL_KEYS,
     POLITICAL_QUARTERS,
@@ -1094,11 +1096,13 @@ def load_material_checkpoint(
     P04-enabled run consumes (e.g. ``{"p04_observation.measurement": L*F}``), so
     the restored PCG64 state is checked against the full profile.
     """
+    from hsm_lab.storage.fork import parse_parent_scenario
+
     metadata = _load_metadata(directory)
     _gate_versions(metadata)
     _verify_payload_hashes(directory, metadata)
 
-    snapshot = ScenarioSpec.model_validate(metadata.get("scenario"))
+    snapshot = parse_parent_scenario(metadata)
     for field in (
         "scenario_id",
         "kind",
@@ -1230,6 +1234,11 @@ def load_material_checkpoint(
         department_rows=frames["departments"].to_dicts(),
         diagnostic_rows=diagnostics.to_dicts(),
         event_rows=frames["events"].to_dicts(),
+        political_quarter_rows=frames[POLITICAL_QUARTERS].to_dicts(),
+        opposition_rows=frames[OPPOSITION_REGIONS].to_dicts(),
+        information_rows=frames[INFORMATION_QUARTERS].to_dicts(),
+        policy_decision_rows=frames[POLICY_DECISIONS].to_dicts(),
+        political_event_rows=frames[POLITICAL_EVENTS].to_dicts(),
         digest_chain=chain,
     )
     rng = RngRegistry.from_snapshot(cast("dict[str, object]", metadata.get("rng_snapshot")))

@@ -284,25 +284,27 @@ def choose_policy(
     targets = np.clip(target_base + target_response @ features, -1.0, 1.0)
 
     utilities = np.empty(candidate_count, dtype=np.float64)
+    terms = np.zeros((candidate_count, 4), dtype=np.float64)
     for index in range(candidate_count):
         normalized_policy = normalize_policy_vector(policies[index])
         residual = a_matrix @ normalized_policy - targets
-        utility = -float(np.sum(q * residual * residual))
+        objective_term = -float(np.sum(q * residual * residual))
 
         cohesion = float(
             np.sum(coalition_weights * np.sum((normalized_policy - normalized_ideals) ** 2, axis=1))
         )
-        utility -= float(parameters.cohesion_penalty) * cohesion
+        cohesion_term = -float(parameters.cohesion_penalty) * cohesion
 
         inertia = float(np.sum((normalized_policy - normalized_previous) ** 2))
-        utility -= float(parameters.inertia_penalty) * inertia
+        inertia_term = -float(parameters.inertia_penalty) * inertia
 
         normalized_repression = float(normalized_policy[_REPRESSION])
-        utility -= (
-            float(parameters.repression_cost_penalty) * normalized_repression * repression_cost
+        repression_term = (
+            -float(parameters.repression_cost_penalty) * normalized_repression * repression_cost
         )
 
-        utilities[index] = utility
+        terms[index] = (objective_term, cohesion_term, inertia_term, repression_term)
+        utilities[index] = objective_term + cohesion_term + inertia_term + repression_term
 
     selected_index = int(np.argmax(utilities))
     selected_policy = policies[selected_index].copy()
@@ -316,4 +318,6 @@ def choose_policy(
         binding_constraints=list(constraints_per_candidate[selected_index]),
         source="broker",
         elite_cohesion=0.0,
+        candidate_terms=terms,
+        candidate_binding=[list(items) for items in constraints_per_candidate],
     )

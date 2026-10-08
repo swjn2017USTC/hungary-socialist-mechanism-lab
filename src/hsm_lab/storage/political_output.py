@@ -12,7 +12,6 @@ from typing import Any
 import numpy as np
 
 from hsm_lab.contract.politics import (
-    BROKER_OBJECTIVE_IDS,
     COALITION_IDS,
     INFORMATION_DIMENSION_IDS,
     OPPOSITION_AXIS_IDS,
@@ -47,6 +46,7 @@ POLITICAL_QUARTER_COLUMNS: list[str] = [
     "soviet_violation",
     "selected_candidate",
     "information_capability",
+    "coalition_contributions_json",
 ]
 
 OPPOSITION_COLUMNS: list[str] = [
@@ -113,6 +113,7 @@ POLITICAL_STRING_COLUMNS: dict[str, set[str]] = {
         "mode",
         "policy_source",
         "selected_candidate",
+        "coalition_contributions_json",
     },
     OPPOSITION_REGIONS: {"quarter", "region_id"},
     INFORMATION_QUARTERS: {"quarter", "feature_id", "source_quarter"},
@@ -160,6 +161,7 @@ def political_quarter_row(
     soviet_violation: float,
     selected_candidate: str,
     information_capability: float,
+    coalition_contributions: np.ndarray | None = None,
 ) -> dict[str, Any]:
     row: dict[str, Any] = {
         "tick": int(tick),
@@ -171,6 +173,11 @@ def political_quarter_row(
         "soviet_violation": float(soviet_violation),
         "selected_candidate": selected_candidate,
         "information_capability": float(information_capability),
+        "coalition_contributions_json": canonical_json(
+            []
+            if coalition_contributions is None
+            else [[float(value) for value in row_] for row_ in coalition_contributions]
+        ).decode("utf-8"),
     }
     for index, name in enumerate(COALITION_IDS):
         row[f"weight_{name}"] = float(coalition_weights[index])
@@ -247,20 +254,40 @@ def policy_decision_rows(
     quarter: str,
     candidate_ids: list[str],
     utilities: np.ndarray,
-    binding_constraints: list[str],
-    objective_ids: list[str] | None = None,
+    terms: np.ndarray | None = None,
+    binding_per_candidate: list[list[str]] | None = None,
 ) -> list[dict[str, Any]]:
-    objectives = list(objective_ids or BROKER_OBJECTIVE_IDS)
+    """One row per evaluated broker candidate.
+
+    ``contributions_json`` carries the additive utility terms
+    ``{objective, cohesion, inertia, repression_cost}`` whose sum reproduces the
+    row's ``utility`` exactly, so a reader can rebuild the broker's choice from
+    the output alone.
+    """
     rows: list[dict[str, Any]] = []
     for index, candidate_id in enumerate(candidate_ids):
+        if terms is not None and index < len(terms):
+            payload = {
+                "objective": float(terms[index][0]),
+                "cohesion": float(terms[index][1]),
+                "inertia": float(terms[index][2]),
+                "repression_cost": float(terms[index][3]),
+            }
+        else:  # pragma: no cover - declared for callers without a decomposition
+            payload = {"objective": float(utilities[index])}
+        bindings = (
+            ",".join(binding_per_candidate[index])
+            if binding_per_candidate is not None and index < len(binding_per_candidate)
+            else ""
+        )
         rows.append(
             {
                 "tick": int(tick),
                 "quarter": quarter,
                 "candidate_id": candidate_id,
                 "utility": float(utilities[index]),
-                "binding_constraints": ",".join(binding_constraints),
-                "contributions_json": canonical_json(objectives).decode("utf-8"),
+                "binding_constraints": bindings,
+                "contributions_json": canonical_json(payload).decode("utf-8"),
             }
         )
     return rows

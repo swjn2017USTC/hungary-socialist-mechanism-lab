@@ -1165,6 +1165,12 @@ class PolicyDecision:
     binding_constraints: list[str]
     source: str  # "broker" | "replay"
     elite_cohesion: float
+    #: Per-candidate additive utility terms (C, 4):
+    #: [objective, cohesion, inertia, repression_cost]; their row sum reproduces
+    #: ``candidate_utilities`` exactly, so the decision is auditable from output.
+    candidate_terms: np.ndarray | None = None
+    #: Per-candidate binding constraint names (Soviet bound / 3T boundary).
+    candidate_binding: list[list[str]] | None = None
 
 
 @dataclass

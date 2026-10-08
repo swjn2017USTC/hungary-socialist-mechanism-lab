@@ -154,3 +154,24 @@ def _initial_policy_payload() -> dict[str, float]:
         "repression": 0.3,
         "information_investment": 0.0,
     }
+
+
+def test_external_pack_is_bound_to_the_declared_recipe() -> None:
+    """A stale pack (built from another external_recipe) must be refused."""
+    from hsm_lab.contract.guards import load_scenario
+
+    registry = DataRegistry.load(REPO_ROOT)
+    spec = load_scenario(REPO_ROOT, "p04_endogenous")
+    politics = spec.politics
+    load_external_pack(politics, registry)  # matching recipe is accepted
+
+    stale_recipe = politics.parameters.external_recipe.model_copy(
+        update={"base_soviet_constraint": 0.9}
+    )
+    stale = politics.model_copy(
+        update={
+            "parameters": politics.parameters.model_copy(update={"external_recipe": stale_recipe})
+        }
+    )
+    with pytest.raises(Exception, match="recipe_params disagree"):
+        load_external_pack(stale, registry)

@@ -61,6 +61,7 @@ from hsm_lab.contract.politics import (
     PoliticalSignals,
     TruthSnapshot,
     U,
+    normalize_policy_vector,
     resolve_political_parameters,
 )
 from hsm_lab.contract.schemas import (
@@ -248,6 +249,8 @@ class PoliticalRuntime:
     branch: Any = None
     root_parameter_hash: str = ""
     branch_parameter_hash: str = ""
+    resuming_counterfactual: bool = False
+    logical_mode: PoliticalMode | None = None
 
 
 def _external_pressure(pack: ExternalWorldPack, tick: int) -> float:
@@ -276,7 +279,7 @@ def _feedback(
     valid: np.ndarray,
     external: ExternalWorldSlice,
     tick: int,
-    soviet_violation: float,
+    soviet_constraint: float,
     cohesion: float,
     capability: float,
 ) -> PoliticalFeedback:
@@ -289,14 +292,14 @@ def _feedback(
     # A coordinate with no valid published measurement keeps the declared
     # initial prior (zero) rather than a fabricated value.
     features = np.where(np.asarray(valid, dtype=bool), features, 0.0)
-    features[_SOVIET] = float(np.clip(external.get("soviet_constraint", 0.5), 0.0, 1.0))
+    features[_SOVIET] = float(np.clip(soviet_constraint, 0.0, 1.0))
     features[_EXTERNAL_PRESSURE] = _external_pressure(runtime.pack, tick)
     features[_TECHNOLOGY] = float(np.clip(capability, 0.0, 1.0))
     features[_COHESION] = float(np.clip(cohesion, 0.0, 1.0))
     objective = np.array(
         [
             1.0 - float(features[_UNREST]),
-            1.0 - float(np.clip(soviet_violation, 0.0, 1.0)),
+            1.0 - float(np.clip(soviet_constraint, 0.0, 1.0)),
             1.0 - float(features[_CONTRACT_GAP]),
             float(features[_COHESION]),
             1.0 - float(features[_DEBT]),
@@ -314,17 +317,38 @@ def _feedback(
     )
 
 
-def _policy_error(runtime: PoliticalRuntime, features: np.ndarray, objective: np.ndarray) -> float:
-    parameters = runtime.politics.parameters.broker
-    target_base = np.asarray(parameters.target_base, dtype=np.float64)
-    target_response = np.asarray(parameters.target_response, dtype=np.float64)
-    targets = np.clip(target_base + target_response @ features, -1.0, 1.0)
-    return float(np.clip(np.mean(np.abs(targets - objective)), 0.0, 1.0))
+def _policy_error(
+    previous_policy: PolicyVector, objective: np.ndarray, a_matrix: np.ndarray
+) -> tuple[float, np.ndarray]:
+    """Compare the previous policy's five-objective proxy with the observed one.
+
+    ``prediction = clip(A @ normalize(previous_policy), -1, 1)`` is the declared
+    structural proxy for what the coalition expected the five objectives to be
+    under the policy it just ran; the error is the mean absolute deviation from
+    the same quarter's reported/clipped objective vector.
+    """
+    prediction = np.clip(a_matrix @ normalize_policy_vector(previous_policy.to_vector()), -1.0, 1.0)
+    error = float(
+        np.clip(np.mean(np.abs(prediction - np.asarray(objective, dtype=np.float64))), 0.0, 1.0)
+    )
+    return error, prediction
 
 
-def _selection_violation(policy: PolicyVector) -> float:
-    """Normalized distance of the chosen policy from the Soviet feasible set."""
-    return 0.0
+def _update_policy_error(
+    *,
+    runtime: PoliticalRuntime,
+    political: PoliticalState,
+    previous_policy: PolicyVector,
+    objective: np.ndarray,
+    tick: int,
+) -> None:
+    """Write the prediction/objective rings and the current policy error."""
+    a_matrix = np.asarray(runtime.politics.parameters.broker.A, dtype=np.float64)
+    error, prediction = _policy_error(previous_policy, objective, a_matrix)
+    slot = int(tick) % POLITICAL_RING_LENGTH
+    political.prediction_history[slot] = prediction
+    political.objective_history[slot] = np.asarray(objective, dtype=np.float64)
+    political.policy_error = np.array([error], dtype=np.float64)
 
 
 # ---------------------------------------------------------------------------
@@ -367,19 +391,51 @@ def run_political(
     effective_spec = spec
     politics = spec.politics
     assert isinstance(politics, PoliticalRunSpec)
+
+    # Resuming a counterfactual child must restore its branch context: the root
+    # base mode and every intervention already in force.  `run --resume` never
+    # appends interventions (a new divergence requires a new fork).
+    resuming_counterfactual = False
+    compiled_interventions: list[CompiledIntervention] = []
+    if resume_from is not None:
+        from hsm_lab.storage.fork import (
+            inherited_interventions_of,
+            resolve_root_base_mode,
+        )
+
+        resume_metadata_path = Path(resume_from) / "metadata.json"
+        if not resume_metadata_path.is_file():
+            raise ResearchGateError(f"resume source is not a checkpoint directory: {resume_from}")
+        resume_metadata = json.loads(resume_metadata_path.read_text(encoding="utf-8"))
+        if resume_metadata.get("branch") is not None:
+            politics = politics.model_copy(update={"mode": PoliticalMode.COUNTERFACTUAL})
+            compiled_interventions = compile_interventions(
+                inherited_interventions_of(resume_metadata), spec.start.to_ordinal()
+            )
+            resuming_counterfactual = True
+            # The root base mode is authoritative over whatever the template
+            # scenario declares.
+            resume_base_mode = resolve_root_base_mode(resume_metadata)
+        else:
+            resume_base_mode = None
+    else:
+        resume_base_mode = None
     from hsm_lab.engine.policy import default_initial_policy as _dip
 
     resolved_parameters = resolve_political_parameters(politics.parameters, _dip(spec))
     politics = politics.model_copy(update={"parameters": resolved_parameters})
-    base_mode = politics.mode if fork_from is None else fork_from.base_mode
-    compiled_interventions: list[CompiledIntervention] = []
     if fork_from is not None:
+        base_mode = fork_from.base_mode
         compiled_interventions = compile_interventions(
             [*fork_from.inherited_interventions, *fork_from.interventions],
             spec.start.to_ordinal(),
         )
-    elif interventions:
-        compiled_interventions = compile_interventions(interventions, spec.start.to_ordinal())
+    elif resume_base_mode is not None:
+        base_mode = resume_base_mode
+    else:
+        base_mode = politics.mode
+        if interventions:
+            compiled_interventions = compile_interventions(interventions, spec.start.to_ordinal())
 
     forcing = load_material_forcing(effective_spec, registry)
     parameter_vector = {
@@ -444,6 +500,7 @@ def run_political(
         branch=branch,
         root_parameter_hash=parameter_hash,
         branch_parameter_hash=parameter_hash,
+        resuming_counterfactual=resuming_counterfactual,
     )
     return _execute(runtime, output_dir, registry, until, checkpoint_every, resume_from, fork_from)
 
@@ -548,6 +605,10 @@ def _execute(
             {name: np.asarray(value) for name, value in restored_metadata["political"].items()},
             axes,
         )
+        # The branch intervention ledger is branch-defined: a child fork has its
+        # own (inherited + declared) schedule, so rebuild the TTL axis to match.
+        if political.intervention_ttl.shape[0] != len(runtime.interventions):
+            political.intervention_ttl = np.zeros(len(runtime.interventions), dtype=np.int64)
         parent_run_id = str(restored_metadata.get("source_run_id") or "")
     else:
         rng = RngRegistry(spec.seed)
@@ -615,7 +676,12 @@ def _execute(
         parent_run_id=parent_run_id or None,
         resumed_from_checkpoint=str(restore_source) if restore_source is not None else None,
     )
-    logical_mode = PoliticalMode.COUNTERFACTUAL if runtime.branch is not None else runtime.base_mode
+    logical_mode = (
+        PoliticalMode.COUNTERFACTUAL
+        if (runtime.branch is not None or runtime.resuming_counterfactual)
+        else runtime.base_mode
+    )
+    runtime.logical_mode = logical_mode
     running = running.model_copy(
         update={
             "run_kind": POLITICAL_RUN_KIND,
@@ -689,6 +755,19 @@ def _execute(
             government = _government_signals(signals, external, cf_government)
             political.signals = signals
 
+            # Declared counterfactual controls resolved for this quarter: the
+            # Soviet-constraint multiplier and the branch broadcast TTL ledger.
+            multiplier = cf_state.soviet_multiplier(tick)
+            if multiplier is None:
+                multiplier = 1.0
+            political.soviet_constraint_multiplier = np.array([float(multiplier)], dtype=np.float64)
+            soviet_constraint = float(
+                np.clip(external.get("soviet_constraint", 0.0) * float(multiplier), 0.0, 1.0)
+            )
+            ttl = _remaining_ttl(cf_state, tick)
+            if political.intervention_ttl.shape[0] == ttl.shape[0]:
+                political.intervention_ttl = ttl
+
             decision_policy, coalition_transition, decision = _decision_step(
                 runtime=runtime,
                 political=political,
@@ -699,6 +778,7 @@ def _execute(
                 cf_state=cf_state,
                 government=government,
                 county_signals=county_signals,
+                soviet_constraint=soviet_constraint,
             )
 
             # --- 3. commit transitions, compile effective policy ------------
@@ -821,6 +901,7 @@ def _execute(
                 debt_reference=parameters.external_recipe.debt_reference,
                 capability=new_info.capability,
                 tick=tick,
+                soviet_constraint=soviet_constraint,
             )
             _commit_report_ring(
                 political=political,
@@ -926,6 +1007,7 @@ def _execute(
                 region_ids=list(spec.region_ids),
                 governance=government,
                 info_state=new_info,
+                soviet_constraint=soviet_constraint,
             )
 
             boundary = state.completed_ticks
@@ -1271,6 +1353,19 @@ class _InterventionState:
         return patches
 
 
+def _remaining_ttl(cf_state: _InterventionState, tick: int) -> np.ndarray:
+    """Remaining TTL (in quarters) of every branch broadcast at this tick."""
+    out = np.zeros(len(cf_state.interventions), dtype=np.int64)
+    step = int(tick) + 1
+    for index, item in enumerate(cf_state.interventions):
+        message = item.message
+        if message is None:
+            continue
+        if message.at_step <= step < message.at_step + message.ttl:
+            out[index] = message.at_step + message.ttl - step
+    return out
+
+
 def _classification_and_multiplier(
     sensitivity: float, policy: PolicyVector, parameters: Any
 ) -> tuple[str, float]:
@@ -1430,6 +1525,7 @@ def _decision_step(
     cf_state: _InterventionState,
     government: dict[str, float],
     county_signals: np.ndarray,
+    soviet_constraint: float,
 ) -> tuple[PolicyVector, CoalitionTransition | None, PolicyDecision | None]:
     parameters = runtime.politics.parameters
     capability = float(political.information_capability[0])
@@ -1446,7 +1542,7 @@ def _decision_step(
         valid=valid,
         external=external,
         tick=tick,
-        soviet_violation=0.0,
+        soviet_constraint=soviet_constraint,
         cohesion=float(political.elite_cohesion[0]),
         capability=capability,
     )
@@ -1501,8 +1597,14 @@ def _decision_step(
                 elite_cohesion=float(political.elite_cohesion[0]),
             )
     else:
-        policy = _project_soviet(policy, external, broker_parameters)
-    _update_policy_error(runtime, political, feedback, policy, information)
+        policy = _project_soviet(policy, soviet_constraint, broker_parameters)
+    _update_policy_error(
+        runtime=runtime,
+        political=political,
+        previous_policy=previous_policy,
+        objective=feedback.objective_vector,
+        tick=tick,
+    )
     return policy, transition, decision
 
 
@@ -1515,27 +1617,15 @@ def _replay_policy(runtime: PoliticalRuntime, tick: int, previous: PolicyVector)
 
 
 def _project_soviet(
-    policy: PolicyVector, external: ExternalWorldSlice, parameters: BrokerParameters
+    policy: PolicyVector, constraint: float, parameters: BrokerParameters
 ) -> PolicyVector:
-    constraint = float(np.clip(external.get("soviet_constraint", 0.0), 0.0, 1.0))
-    cap = 1.0 - constraint * (1.0 - float(parameters.soviet_floor))
+    cap = 1.0 - float(np.clip(constraint, 0.0, 1.0)) * (1.0 - float(parameters.soviet_floor))
     updated = policy.model_dump()
     if updated["enterprise_autonomy"] > cap:
         updated["enterprise_autonomy"] = cap
     if updated["cultural_openness"] > cap:
         updated["cultural_openness"] = cap
     return PolicyVector.model_validate(updated)
-
-
-def _update_policy_error(
-    runtime: PoliticalRuntime,
-    political: PoliticalState,
-    feedback: PoliticalFeedback,
-    policy: PolicyVector,
-    information: InformationState,
-) -> None:
-    error = _policy_error(runtime, feedback.features, feedback.objective_vector)
-    political.policy_error = np.array([error], dtype=np.float64)
 
 
 def _select_published(
@@ -1611,6 +1701,7 @@ def _closing_truth(
     debt_reference: float,
     capability: float,
     tick: int,
+    soviet_constraint: float,
 ) -> TruthSnapshot:
     # Gross material output index: total realized physical activity (a quantity
     # index, never GDP and never an admin-price-weighted value).
@@ -1654,7 +1745,7 @@ def _closing_truth(
     features[_DEBT] = debt_pressure
     features[_UNREST] = worker_unrest
     features[_CONTRACT_GAP] = contract_gap
-    features[_SOVIET] = float(np.clip(external.get("soviet_constraint", 0.5), 0.0, 1.0))
+    features[_SOVIET] = float(np.clip(soviet_constraint, 0.0, 1.0))
     features[_EXTERNAL_PRESSURE] = _external_pressure_from_slice(external)
     features[_POLICY_ERROR] = float(np.clip(political.policy_error[0], 0.0, 1.0))
     features[_COHESION] = float(np.clip(political.elite_cohesion[0], 0.0, 1.0))
@@ -1799,11 +1890,12 @@ def _append_political_rows(
     region_ids: list[str],
     governance: dict[str, float],
     info_state: InformationState,
+    soviet_constraint: float,
 ) -> None:
     parameters = runtime.politics.parameters
     base_mode = runtime.base_mode
     policy = PolicyVector.from_vector(np.asarray(political.policy, dtype=np.float64))
-    constr = float(np.clip(external.get("soviet_constraint", 0.0), 0.0, 1.0))
+    constr = float(np.clip(soviet_constraint, 0.0, 1.0))
     cap = 1.0 - constr * (1.0 - float(parameters.broker.soviet_floor))
     if base_mode is PoliticalMode.HISTORICAL_REPLAY:
         violation = max(
@@ -1824,7 +1916,7 @@ def _append_political_rows(
         political_quarter_row(
             tick=tick,
             quarter=str(quarter),
-            mode=str(runtime.branch is not None and PoliticalMode.COUNTERFACTUAL or base_mode),
+            mode=str(runtime.logical_mode if runtime.logical_mode is not None else base_mode),
             policy_source=source,
             coalition_weights=np.asarray(political.coalition_weights, dtype=np.float64),
             policy=policy.to_vector(),
@@ -1833,6 +1925,11 @@ def _append_political_rows(
             soviet_violation=violation,
             selected_candidate=selected,
             information_capability=float(info_state.capability),
+            coalition_contributions=(
+                None
+                if coalition_transition is None
+                else np.asarray(coalition_transition.contributions, dtype=np.float64)
+            ),
         )
     )
     weight = np.asarray(state.household_weight, dtype=np.float64)
@@ -1888,7 +1985,12 @@ def _append_political_rows(
             quarter=str(quarter),
             candidate_ids=decision.candidate_ids,
             utilities=np.asarray(decision.candidate_utilities, dtype=np.float64),
-            binding_constraints=decision.binding_constraints,
+            terms=(
+                None
+                if decision.candidate_terms is None
+                else np.asarray(decision.candidate_terms, dtype=np.float64)
+            ),
+            binding_per_candidate=decision.candidate_binding,
         ):
             history.policy_decision_rows.append(row)
     for row in deliverables:

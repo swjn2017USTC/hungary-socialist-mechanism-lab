@@ -870,7 +870,6 @@ def fork(
     def action() -> None:
         from hsm_lab.contract.guards import load_research_contract
         from hsm_lab.contract.politics import InterventionSpec, PoliticalMode
-        from hsm_lab.contract.schemas import ScenarioSpec
         from hsm_lab.data.registry import DataRegistry
         from hsm_lab.engine.political_run import run_political
         from hsm_lab.storage.fork import load_counterfactual_origin
@@ -880,9 +879,16 @@ def fork(
         metadata_path = checkpoint / "metadata.json"
         if not metadata_path.is_file():
             raise ResearchGateError(f"fork source is not a checkpoint directory: {checkpoint}")
-        parent = ScenarioSpec.model_validate(
-            json.loads(metadata_path.read_text(encoding="utf-8"))["scenario"]
+        from hsm_lab.storage.fork import (
+            inherited_interventions_of,
+            parse_parent_scenario,
+            resolve_root_base_mode,
         )
+
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        parent = parse_parent_scenario(metadata)
+        root_base_mode = resolve_root_base_mode(metadata)
+        already_in_force = inherited_interventions_of(metadata)
         if parent.politics is None:
             raise ConfigError("fork requires a politics-enabled checkpoint")
         if not intervention.is_file():
@@ -899,7 +905,14 @@ def fork(
             }
         )
         registry = DataRegistry.load(root, allowed_commodities=child.commodities)
-        origin = load_counterfactual_origin(checkpoint, child, contract, interventions=specs)
+        origin = load_counterfactual_origin(
+            checkpoint,
+            child,
+            contract,
+            interventions=specs,
+            inherited_interventions=already_in_force,
+            root_base_mode=root_base_mode,
+        )
         target_dir = _fresh_output_dir(output_dir, "fork")
         manifest = run_political(
             child,

@@ -530,6 +530,7 @@ def build_p04_inputs(root: Path, profile: str) -> dict[str, Any]:
 
     # --- external pack ----------------------------------------------------
     values, meta = _external_values(root, profile, parameters, quarters)
+    recipe_params = parameters.external_recipe.flatten()
     pack = {
         "schema_version": "1",
         "profile": profile,
@@ -538,6 +539,8 @@ def build_p04_inputs(root: Path, profile: str) -> dict[str, Any]:
         "generated_at": P04_FIXTURE_GENERATED_AT,
         "warning": P04_WARNING,
         "quarters": quarters,
+        "recipe_params": recipe_params,
+        "recipe_params_hash": canonical_digest(recipe_params),
         "variables": {
             variable: {
                 "unit": meta[variable]["unit"],
@@ -831,6 +834,25 @@ def load_external_pack(politics: PoliticalRunSpec, registry: DataRegistry) -> Ex
         {k: v for k, v in pack.items() if k != "pack_sha256"}
     ):
         raise ResearchGateError(f"external pack {rel}: pack_sha256 integrity gate failed")
+    # The pack is a *precompiled* external history: it must have been built from
+    # the scenario's declared external recipe, exactly like the material pack's
+    # reconstruction_params gate.  A stale pack is refused, never silently used.
+    recipe_params = politics.parameters.external_recipe.flatten()
+    declared = pack.get("recipe_params")
+    if declared != recipe_params:
+        differing = sorted(
+            key
+            for key in set(declared or {}) | set(recipe_params)
+            if (declared or {}).get(key) != recipe_params.get(key)
+        )
+        raise ResearchGateError(
+            f"external pack {rel}: recipe_params disagree with the scenario's "
+            f"external_recipe on {differing}; rebuild with 'hsm data build-p04-inputs'"
+        )
+    if pack.get("recipe_params_hash") != canonical_digest(recipe_params):
+        raise ResearchGateError(
+            f"external pack {rel}: recipe_params_hash does not match recipe_params"
+        )
     quarters = tuple(pack.get("quarters", ()))
     if not quarters:
         raise ResearchGateError(f"external pack {rel}: no quarters")
