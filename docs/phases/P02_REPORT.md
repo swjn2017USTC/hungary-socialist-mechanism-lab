@@ -324,6 +324,40 @@ per-pool buffers and the monetary bridge — which is what the approved
 self-consistent steady-state step is for, and which cannot be reached by tuning
 one scalar at a time.
 
+### Billing and topology experiments (run, measured, not committed)
+
+Three further approved-direction changes were implemented temporarily and
+measured on the default profile, and none was kept because the acceptance gate
+(a viable 116-tick run) was not met and the uncalibrated default would regress:
+
+1. **Same-region freight is billed** (`_transport_pair` no longer returns a free
+   carrier-less leg; every routed leg is carried by a transport organization at
+   the `0.05`-per-unit tariff). This is the root-cause correction for transport
+   solvency and it works as intended: tariff revenue rises from ~`711` to
+   ~`11,000–15,000` per quarter, so with the sector resized
+   (`TRANSPORT_CAPACITY_TOTAL` 70,000 → 36,000) and the tariff raised
+   (`prices[7]` 1.0 → 2.0) the sector becomes profitable — transport cash rises
+   `26,131 → 41,971` with zero wage arrears — and the whole economy then holds
+   `193,700 / 187,390 / 164,293 / 185,754 / 176,383` over ticks 0–4 instead of
+   dying in the first trough.
+2. **Nearest-carrier assignment** instead of round-robin
+   (`region % n_carriers`), to balance the per-carrier logistics pools.
+3. **Logistics reservation share** raised (`service_split` 0.7 → 0.85 / 0.9).
+
+With billing enabled the chain still degrades from tick 5, and the limiting
+factor becomes *per-carrier* logistics capacity: `235` (then `174`) of the active
+edges get a transport factor of exactly `0` because the individual carrier
+assigned to them produced no service that quarter. Raising the reservation share
+and reassigning carriers by distance did not change the outcome (mean activity
+17,485–20,000 with 76–96 dead ticks over 116), so the chain cannot be repaired by
+these three levers alone: the carrier-level fuel/pool balance and the per-pool
+buffers have to be solved *jointly* with the monetary bridge, which is the
+steady-state step below.
+
+Uncalibrated, the billing change on its own makes the shipped default worse
+(dead ticks return, transport wage arrears reach ~1.9M over the horizon), so it
+is not committed on its own; it belongs in the same change as the joint solve.
+
 ### Next step (approved, not yet implemented)
 
 A self-consistent steady state: solve the model's own fixed point jointly over
