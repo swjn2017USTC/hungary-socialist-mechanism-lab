@@ -1949,6 +1949,59 @@ def check_material_invariants(
     flows.finance_balance_residual = finance_residual
     flows.finance_balance_tolerance = finance_tolerance
 
+    # --- P03 household identities: time endowment, postponement, sources ----
+    household_parameters = getattr(network, "household_parameters", None)
+    if household_parameters is not None:
+        time = household_parameters.time
+        welfare_p = household_parameters.welfare
+        working = np.asarray(state.household_working_adults, dtype=np.float64)
+        time_lhs = (
+            time.formal_hours_per_worker * working
+            + np.asarray(flows.household_plot_hours, dtype=np.float64)
+            + np.asarray(flows.household_second_hours, dtype=np.float64)
+            + np.asarray(flows.household_queue_hours, dtype=np.float64)
+            + np.asarray(flows.household_search_hours, dtype=np.float64)
+            + np.asarray(flows.household_leisure_hours, dtype=np.float64)
+        )
+        material(
+            "household_time_endowment",
+            time_lhs,
+            time.time_endowment_hours * working,
+            labels=household_labels,
+        )
+        durable_backlog = np.asarray(state.household_durable_backlog, dtype=np.float64)
+        durable_wait = np.asarray(state.household_durable_wait, dtype=np.float64)
+        housing_wait = np.asarray(state.household_housing_wait, dtype=np.float64)
+        expected_postponement = (
+            welfare_p.durable_postponement_cost
+            * (durable_backlog.sum(axis=1) * (1.0 + durable_wait.mean(axis=1)))
+            + welfare_p.housing_postponement_cost
+            * np.asarray(flows.household_overcrowding, dtype=np.float64)
+            * (1.0 + housing_wait)
+        )
+        material(
+            "household_postponement_cost",
+            np.asarray(flows.household_postponement_cost, dtype=np.float64),
+            expected_postponement,
+            labels=household_labels,
+        )
+        sources = (
+            np.asarray(flows.household_formal_h, dtype=np.float64)
+            + np.asarray(flows.household_plot_self_h, dtype=np.float64)
+            + np.asarray(flows.household_plot_market_h, dtype=np.float64)
+            + np.asarray(flows.household_second_h, dtype=np.float64)
+        )
+        _require(
+            bool(
+                np.all(
+                    sources
+                    <= np.asarray(flows.household_realized_h, dtype=np.float64) + 1e-6
+                )
+            ),
+            quarter,
+            "household source channels exceed the realised H-level basket",
+        )
+
     return InvariantSummary(
         max_material_abs_residual=max_material,
         max_material_tolerance_ratio=max_material_ratio,

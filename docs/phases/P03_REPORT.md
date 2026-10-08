@@ -108,6 +108,44 @@ spec incl. multi-axis arrays, new RNG profile), `storage/material_output.py`
    plan's expectation values `0.6024609375` (quarter 4) and `0.60041171875`
    (quarter 5); no protest quantity exists; compliance ≠ `1 − grievance`.
 
+## Audit remediation (post-review patches D1–D5)
+
+An independent audit flagged five defects; all are fixed and regression-tested:
+
+* **D1 — degenerate `price_stability`.** Was `planned_spending / (affordable @
+  price_h)` — a tautology ≡ 1. Now a **fixed declared basket**
+  (`demand.base_per_equivalent_person @ price_h`) priced at current admin
+  prices versus the previous index, so it moves with prices by construction.
+* **D2 — plot self-use missing from H-level welfare.** `household_plot_self_h`
+  is now added to `household_realized_h` and `household_goal_credit_h`, so the
+  self-user's realised basket and `real_consumption` entitlement are non-zero
+  (regression: `test_plot_self_use_enters_realised_basket_and_entitlement`).
+* **D3 — substitution did not relieve the residual gap.** Substituted source
+  units are now subtracted from `availability_unmet`, so queue/search hours no
+  longer double-count relieved demand
+  (`test_substitution_relieves_residual_availability_and_queue`).
+  *Fix uncovered a real payment/quantity bug*: the substitution **target**
+  physical units had been stored as source units, desynchronising money paid
+  from goods/stock drawn (deposit-coverage gate fired). Split into
+  `substitution` (source units) and `substitution_target_units` (target units).
+* **D4 — queue/search/substitution/postponement were not accounted.** Added
+  three ledgers inside `check_material_invariants`: `household_time_endowment`
+  (`formal+plot+second+queue+search+leisure == 520·working_adults`),
+  `household_postponement_cost` (recomputed from backlog/wait/overcrowding), and
+  a source-channel ≤ realised-basket check. (Also fixed: second-economy reserved
+  hours were not recorded when the aggregate idled, breaking the time identity.)
+* **D5 — entitlement denominator drifted.** `real_consumption` now divides by a
+  static `household_initial_service_value` captured at initialization, not the
+  moving consumption reference.
+
+New regression test `test_real_wage_growth_can_lower_welfare_when_goods_unavailable`
+proves the income-up / welfare-down path (higher affordable demand against zero
+availability ⇒ higher queue and substitution cost ⇒ lower `welfare_net`).
+
+Post-patch state: `pytest -q` → **267 passed**; `ruff` clean; `mypy` clean;
+full horizon still 116 ticks, digest
+`2a48e4695ef0cce6faf43c0fc67ac32b679a39dab2e281dd34c7914e5604547a`.
+
 ## Explicit deferrals (documented, not silently dropped)
 
 Per the approved nucleus cut, the following plan items are **not** in this

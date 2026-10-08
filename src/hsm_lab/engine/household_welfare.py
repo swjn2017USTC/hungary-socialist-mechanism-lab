@@ -144,15 +144,19 @@ def account_household_welfare(
     entitlement[:, 0] = job_security
     real_service_value = realized @ np.asarray(catalog.price_h, dtype=np.float64)
     initial_reference = np.asarray(
-        state.household_consumption_reference, dtype=np.float64
-    ) @ np.asarray(catalog.price_h, dtype=np.float64)
-    entitlement[:, 1] = real_service_value / np.maximum(real_service_value + initial_reference, eps)
-    basket_price = np.asarray(catalog.price_h, dtype=np.float64)
-    last_index = np.asarray(state.household_last_price_index, dtype=np.float64)
-    current_index = np.asarray(flows.household_planned_spending, dtype=np.float64) / np.maximum(
-        (np.asarray(flows.household_affordable_h, dtype=np.float64) @ basket_price), eps
+        state.household_initial_service_value, dtype=np.float64
     )
-    current_index = np.where(np.isfinite(current_index) & (current_index > 0.0), current_index, 1.0)
+    entitlement[:, 1] = real_service_value / np.maximum(real_service_value + initial_reference, eps)
+    # D1: the admin price index is a *fixed declared basket* priced at current
+    # admin prices -- never a planned/affordable tautology.  With scenario-static
+    # admin prices it stays at one, but it moves with prices by construction.
+    basket_price = np.asarray(catalog.price_h, dtype=np.float64)
+    declared_basket = np.asarray(parameters.demand.base_per_equivalent_person, dtype=np.float64)
+    current_index = np.full(n, float(declared_basket @ basket_price), dtype=np.float64)
+    current_index = np.where(
+        np.isfinite(current_index) & (current_index > 0.0), current_index, 1.0
+    )
+    last_index = np.asarray(state.household_last_price_index, dtype=np.float64)
     entitlement[:, 2] = np.exp(
         -np.abs(np.log(np.maximum(current_index, eps) / np.maximum(last_index, eps)))
     )

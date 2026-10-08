@@ -136,6 +136,7 @@ class MaterialState:
     household_last_income: np.ndarray  # float64 (N,)
     household_reference_income: np.ndarray  # float64 (N,)
     household_last_price_index: np.ndarray  # float64 (N,)
+    household_initial_service_value: np.ndarray  # float64 (N,) fixed initial basket value
     household_reserved_plot_hours: np.ndarray  # float64 (N,)
     household_reserved_second_hours: np.ndarray  # float64 (N,)
     household_formal_effort: np.ndarray  # float64 (N,)
@@ -712,6 +713,9 @@ def initialize_material(
     base = np.asarray(household_parameters.demand.base_per_equivalent_person, dtype=np.float64)
     consumption_reference = base[None, :] * equivalence[:, None]
     last_price_index = np.ones(household_count, dtype=np.float64)
+    initial_service_value = consumption_reference @ np.asarray(
+        catalog.price_h, dtype=np.float64
+    )
     compliance = np.full(
         household_count, household_parameters.welfare.compliance_baseline, dtype=np.float64
     )
@@ -786,6 +790,7 @@ def initialize_material(
         household_last_income=reference_income.copy(),
         household_reference_income=reference_income.copy(),
         household_last_price_index=last_price_index,
+        household_initial_service_value=initial_service_value,
         household_reserved_plot_hours=np.zeros(household_count, dtype=np.float64),
         household_reserved_second_hours=np.zeros(household_count, dtype=np.float64),
         household_formal_effort=np.ones(household_count, dtype=np.float64),

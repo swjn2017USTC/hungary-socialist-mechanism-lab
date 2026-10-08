@@ -205,6 +205,85 @@ def test_entitlement_ratchet_sequence() -> None:
     assert not hasattr(flows, "protest")
 
 
+def test_substitution_relieves_residual_availability_and_queue() -> None:
+    from hsm_lab.contract.households import H_INDEX
+
+    hvf = H_INDEX["higher_value_food"]
+    worker = producer(1, "energy_generation", capacity=1.0)
+    base = [0.0] * len(HOUSEHOLD_GOOD_IDS)
+    base[hvf] = 4.0
+    fixture = Fixture(
+        [bank(0), worker, retail(2)],
+        [idle_source_tech("energy_generation", "energy")],
+        commodities=NO_CAPITAL_COMMODITIES,
+        parameters=default_params(),
+        households=[(0, 1.0, 1.0)],
+        household_cash=1000.0,
+        household_parameters=HouseholdParameters(
+            demand=DemandParameters(
+                base_per_equivalent_person=base,
+                minimum_per_equivalent_person=[0.0] * len(HOUSEHOLD_GOOD_IDS),
+            )
+        ),
+        ticks=1,
+    )
+    fixture.state.stock_value[:] = 0.0
+    fixture.state.stock_value[fixture.cell("organization", 2, 0, "retail", "food", "ready")] = 2.0
+    fixture.state.household_deferred_receipt[0] = 20.0  # fund the desired basket
+    flow = fixture.tick(1)[0]
+    substituted_source = float(flow.household_substitution[0, 0])
+    assert substituted_source > 0.0
+    # kernel identity: the residual source gap = pre-substitution gap minus the
+    # relieved source units (never the unrelieved pre-substitution gap).
+    unmet_pre = float(flow.household_affordable_h[0, hvf]) - float(
+        flow.household_realized_h[0, hvf]
+    )
+    assert flow.household_availability_unmet_h[0, hvf] == pytest.approx(
+        max(0.0, unmet_pre - substituted_source)
+    )
+    assert flow.household_queue_hours[0] >= 0.0
+
+
+def test_plot_self_use_enters_realised_basket_and_entitlement() -> None:
+    from tests.test_material import _plot_ready_fixture
+
+    fixture = _plot_ready_fixture()
+    food_g = fixture.g("food")
+    flow = fixture.tick(1)[0]
+    # self-user (household 4) consumes 2 units through the plot channel; that
+    # consumption must appear in the H-level realised basket, not vanish.
+    assert flow.household_plot_self_h[4, 1] == pytest.approx(2.0)
+    assert flow.household_realized_h[4, 1] == pytest.approx(2.0)
+    assert fixture.state.household_entitlement[4, 1] > 0.0  # real_consumption
+    assert flow.household_realized[4, food_g] >= 2.0
+
+
+def test_real_wage_growth_can_lower_welfare_when_goods_unavailable() -> None:
+    def run(wage_rate: float):
+        worker = producer(1, "energy_generation", capacity=2.0)
+        fixture = Fixture(
+            [bank(0), worker, retail(2)],
+            [idle_source_tech("energy_generation", "energy")],
+            commodities=NO_CAPITAL_COMMODITIES,
+            parameters=default_params(wage_rate=wage_rate),
+            households=[(0, 1.0, 1.0)],
+            household_cash=100000.0,
+            household_parameters=_params(),
+            ticks=3,
+        )
+        fixture.state.stock_value[:] = 0.0  # no goods anywhere
+        flows = fixture.tick(3)
+        return flows[-1]
+
+    low = run(1.0)
+    high = run(4.0)
+    # higher income with the same zero availability raises affordable demand,
+    # which raises queue time and substitution cost, so welfare can fall.
+    assert high.household_budget_available[0] > low.household_budget_available[0]
+    assert high.household_realized_h.sum() == pytest.approx(0.0)
+    assert high.household_welfare_net[0] < low.household_welfare_net[0]
+
+
 def test_compliance_is_not_one_minus_grievance() -> None:
     parameters = HouseholdParameters()
     # compliance uses its own slow rule with a declared baseline, not 1 - grievance

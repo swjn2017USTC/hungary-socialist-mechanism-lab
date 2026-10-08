@@ -161,6 +161,7 @@ def allocate_household_baskets(
     # --- plot direct market (G5): the participant cohort's ready market food ---
     plot_direct_receipt = np.zeros(n, dtype=np.float64)
     plot_direct_spend = np.zeros(n, dtype=np.float64)
+    plot_market_h = np.zeros((n, h_count), dtype=np.float64)
     market_cells = np.asarray(network.plot_ready_market_cell, dtype=np.int64)
     if "food" in network.commodity_ids and market_cells.size and bool(np.all(market_cells >= 0)):
         shares = np.asarray(parameters.allocation.plot_food_shares, dtype=np.float64)
@@ -178,6 +179,7 @@ def allocate_household_baskets(
             factor = np.where(demand_region > 0.0, got_region / np.maximum(demand_region, eps), 0.0)
             bought = want * factor[region]
             realized[:, channel] += bought
+            plot_market_h[:, channel] += bought
             plot_direct_spend += bought * price_h[channel]
             availability_unmet[:, channel] = np.maximum(
                 availability_unmet[:, channel] - bought, 0.0
@@ -205,6 +207,7 @@ def allocate_household_baskets(
 
     # --- forced substitution (Q; one pass, availability-driven only) ---------
     substitution = np.zeros((n, len(catalog.substitution_ids)), dtype=np.float64)
+    substitution_target_units = np.zeros((n, len(catalog.substitution_ids)), dtype=np.float64)
     goal_credit = realized.copy()
     substitution_spend = np.zeros(n, dtype=np.float64)
     for q in range(len(catalog.substitution_ids)):
@@ -237,15 +240,25 @@ def allocate_household_baskets(
         )
         substituted = substituted * pay_factor[region]
         substitution[:, q] = substituted / ratio
+        substitution_target_units[:, q] = substituted
         goal_credit[:, source_h] += substituted * credit / ratio
         substitution_spend += substituted * price_h[target_h]
+        # D3: the substituted source units are relieved -- do not re-count them
+        # in the residual availability gap / queue hours.
+        availability_unmet[:, source_h] = np.maximum(
+            availability_unmet[:, source_h] - substituted / ratio, 0.0
+        )
 
     # physical realised units include the substituted target units; the target's
     # own goal credit is untouched (a substitute never upgrades its own goal).
     substitution_h = np.zeros((n, h_count), dtype=np.float64)
     for q in range(len(catalog.substitution_ids)):
-        substitution_h[:, int(catalog.substitute_target_h[q])] += substitution[:, q]
+        substitution_h[:, int(catalog.substitute_target_h[q])] += substitution_target_units[:, q]
     realized = realized + substitution_h
+    # D2: plot self-use is real household consumption and belongs in the
+    # H-level realised basket and goal credit that welfare/entitlement consume.
+    realized = realized + plot_self
+    goal_credit = goal_credit + plot_self
 
     formal_spend = formal_bought @ price_h
     second_spend = second_bought @ price_h
@@ -348,6 +361,7 @@ def allocate_household_baskets(
     flows.household_availability_unmet_h = availability_unmet
     flows.household_formal_h = formal_bought
     flows.household_plot_self_h = plot_self
+    flows.household_plot_market_h = plot_market_h
     flows.household_self_use = plot_self_value
     flows.household_second_h = second_bought
     flows.household_goal_credit_h = goal_credit
@@ -367,12 +381,9 @@ def allocate_household_baskets(
     flows.household_second_income_direct = receipt.copy()
     flows.household_plot_income_direct = plot_direct_receipt.copy()
     # Material-ledger acquisition view (N, G): every realised source projected
-    # to its parent commodity, plus plot self-use on the food column.
+    # to its parent commodity (plot self-use is already inside ``realized``).
     realized_g = realized @ np.asarray(catalog.to_material, dtype=np.float64)
     desired_g = (desired + plot_self) @ np.asarray(catalog.to_material, dtype=np.float64)
-    if "food" in network.commodity_ids:
-        food_g = network.commodity_ids.index("food")
-        realized_g[:, food_g] += plot_self[:, H_INDEX["basic_food"]]
     flows.household_desired = desired_g
     flows.household_realized = realized_g
     flows.household_budget_unmet = np.maximum(desired_g - realized_g, 0.0)

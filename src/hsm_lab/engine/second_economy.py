@@ -86,6 +86,9 @@ def settle_second_economy(
     household_cash = np.asarray(state.household_cash, dtype=np.float64)
     region_count = int(np.asarray(state.dwelling_stock).shape[0])
     g_count = len(network.commodity_ids)
+    flows.household_second_hours = np.asarray(
+        state.household_reserved_second_hours, dtype=np.float64
+    ).copy()
 
     capacity = np.zeros(region_count, dtype=np.float64)
     reserved = np.zeros(region_count, dtype=np.float64)
@@ -215,9 +218,6 @@ def settle_second_economy(
     state.second_output_stock = np.asarray(state.second_output_stock, dtype=np.float64) + pool
 
     flows.household_second_input_funding += input_funding
-    flows.household_second_hours = np.asarray(
-        state.household_reserved_second_hours, dtype=np.float64
-    ).copy()
 
     # Journal: aggregated household debit -> organization/treasury credit.
     represented = float((weight * input_funding).sum())
