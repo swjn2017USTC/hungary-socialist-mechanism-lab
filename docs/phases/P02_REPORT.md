@@ -264,6 +264,37 @@ ahead; under the pinned net-order rule there is no positive-stock fixed point fo
 that buffer, and one short quarter is sufficient to stop the sector that every
 cross-region route depends on.
 
+### Step-2 diagnosis: the transport sector is structurally insolvent in this fixture
+
+Quantified on the calibrated default run (5,000 households / 200 organizations):
+
+| transport sector, per quarter | value |
+|---|---|
+| organizations / labour | 8 / 3,361.35 |
+| wage bill at `wage_rate = 6.0` | **20,168** |
+| freight tariff revenue (`service_price = 1.0` × service used ≈ 711) | **~711** |
+| reserved-but-expired logistics service (ticks 0–2) | 77,743 |
+
+The sector must produce ~63,000 service units because `service_split` reserves 70%
+of its capacity as logistics, but the route graph consumes only ~700–5,500 units
+because same-region edges are free by construction (`per_unit = 0`) and only
+cross-region legs pay the `0.05`-per-unit tariff. Revenue therefore covers ~3.5%
+of the wage bill: transport cash goes `3,088 → 7,754 → 0` and its wage arrears
+climb `8,057 → 23,351 → 38,781 → 184,584`. Once the sector is insolvent its fuel
+orders stop being funded, its production goes to zero, every cross-region route
+factor becomes zero, and — because `services_transport` is a same-quarter input
+of `capital_goods_production`, `consumer_goods_production`,
+`durable_goods_production` and `building_construction` — those sectors stop in the
+same quarter and cannot be restarted within it.
+
+The goods stop then becomes a money trap: retail cells stay empty (`retail_close
+= 0` from tick 3 while hub stock sits at ~37,000 and producer output stock
+accumulates to ~465,000), households cannot spend their income, and the money
+stock drains out of the enterprise sector into household balances (household cash
+`3,007 → 903,779` by tick 13; organization cash `393,165 → 178,653` with credit
+drawn rising to `480,112`). With no sales there is no revenue, with no revenue no
+funded orders, so the floor cannot restart.
+
 ### Levers measured (all temporary, none committed except the capacity calibration)
 
 | configuration (116 ticks) | mean activity | zero ticks | floor |
@@ -276,21 +307,35 @@ cross-region route depends on.
 | 1,000 hh / 100 org, raw capacity 34,000 alone | 3,779 | 111 | 0 |
 | 1,000 hh / 100 org, transport self-haul | 3,924 | 110 | 0 |
 | 1,000 hh / 100 org, transport self-haul + cover 1 / 2 | 4,768 / 5,041 | 107 / 108 | 0 |
+| default profile, cover 1, `output_stock_quarters` 2 / 4 / 8 | 10,745 all three | 0 | 200 |
+| default profile, cover 1, `TRANSPORT_CAPACITY_TOTAL` 30,000 / 15,000 / 8,000 | 12,649 / 14,898 / 11,857 | 0 | 200 |
+| default profile, transport self-haul + cover 1 / 2 (calibrated capacities) | 10,556 / 11,936 | 0 | 200 |
 
-Every lever moves which constraint binds without restoring a viable economy: the
-capacity calibration removes the exact-zero trap, order-up-to-cover and larger
-input buffers raise the floor and the transient, and exempting the transport
-sector's own inputs from the route service does not prevent the sector's decay
-because its fuel must still be *stocked* a quarter ahead.
+Every lever moves which constraint binds without restoring a viable economy, and
+once the transport sector is insolvent none of them can: the capacity calibration
+removes the exact-zero trap, order-up-to-cover and larger input or output buffers
+raise the transient (the export/wholesale buffers do nothing measurable because
+the cut is upstream of them), resizing the transport sector raises the mean but
+does not remove the floor, and exempting the transport sector's own inputs from
+the route service changes nothing once every region already has a local energy
+producer (the fuel edge is then same-region and free anyway). The remaining
+requirement is a *joint* solution — transport size and billing, route pricing,
+per-pool buffers and the monetary bridge — which is what the approved
+self-consistent steady-state step is for, and which cannot be reached by tuning
+one scalar at a time.
 
 ### Next step (approved, not yet implemented)
 
-A self-consistent steady-state initial state: solve the model's own fixed point
-over the input matrix, the transport pipeline, the tiered rationing and the
-monetary bridge, and declare that solution as the synthetic initial recipe
-instead of "one quarter of target". That is calibration engineering and is
-tracked as the follow-up to this phase; the engine, ledger, determinism,
-checkpoint and benchmark contracts are unaffected by it.
+A self-consistent steady state: solve the model's own fixed point jointly over
+(a) the declared stock buffers for every pool, (b) the transport sector's size and
+its billing so that tariff revenue covers its wage bill, (c) route pricing for
+same-region legs, and (d) the monetary bridge that lets a halted chain restart.
+It must be solved numerically — the measurements above show that single-scalar
+tuning only relocates the binding constraint — and then declared as the synthetic
+initial recipe instead of "one quarter of target". This is calibration
+engineering that changes declared synthetic assumptions (and, for (c), a pinned
+route rule), so it needs its own explicit decision; the engine, ledger,
+determinism, checkpoint and benchmark contracts are unaffected by it.
 
 ## Deviations and boundaries
 
