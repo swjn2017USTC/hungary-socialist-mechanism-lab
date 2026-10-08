@@ -456,6 +456,39 @@ production pipeline (order-up-to-cover on the transport rows specifically, not
 globally). That is a fixture parameter (`input_stock_quarters` for the transport
 sector) plus one more round of measurement; it was not attempted here.
 
+### Transport fuel cover (measured, not committed)
+
+Following the transport-first change above, the remaining blocker was tested as a
+declared buffer cover rather than another mechanism edit:
+`MaterialInitialRecipe.transport_input_stock_quarters` (default 3.0) gives the
+transport sector's own input cells a three-pipeline fuel buffer instead of one,
+because the sector consumes its fuel at the opening of the quarter.
+
+**Measured on the default scenario (116 ticks, target scale 251,501).**
+
+| | tick 0 | 1 | 2 | 3 | 4 | 5 | 6 | mean | floor |
+|---|---|---|---|---|---|---|---|---|---|
+| baseline | 224,300 | 52,957 | 222,895 | 30,376 | 49,914 | 21,466 | 13,204 | 3,665 | 0 |
+| + transport-first | 224,300 | 188,064 | 148,192 | 101,751 | 48,950 | 40,917 | 32,211 | 13,922 | 100 |
+| + fuel cover (3 pipelines) | 224,300 | 188,064 | 174,906 | **191,988** | 155,133 | 99,697 | 49,457 | 10,416 | 100 |
+
+The cover removes the remaining oscillation and lifts the peak (191,988 at tick 3
+versus 101,751), and transport now survives to tick 5 (67,773 realized) instead of
+dying on the first odd quarter. But the run still decays monotonically to the
+same ~100-unit floor, i.e. **0.04% of the declared target scale** — far below the
+50% acceptance gate, so nothing is committed and the shipped default is
+unchanged.
+
+**What the floor is now.** With transport alive to tick 5 the chain runs
+`retail orders 88,000–107,000` per quarter against `retail deliveries 1,344`; 96
+to 148 allocated retail edges are blocked and all of them carry a carrier
+(`without_carrier = 0`), while wholesale stock sits at ~47,000 and producer
+output stock accumulates past 500,000. The binding constraint has moved one step
+down the same chain: transport fuel → transport survival → carrier service →
+cross-region distribution. The transport-side fix is real and measurable, but it
+exposes rather than closes the distribution-side shortage, so the phase gate is
+still not met.
+
 ### Next step (approved, not yet implemented)
 
 A self-consistent steady state: solve the model's own fixed point jointly over
