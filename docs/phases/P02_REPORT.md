@@ -373,6 +373,44 @@ Uncalibrated, the billing change on its own makes the shipped default worse
 joint search above shows no viable point in that space either, so it is not
 committed; it belongs in the same change as the joint solve.
 
+### Carrier/reservation redesign attempt (implemented, measured, reverted)
+
+Three mechanism changes were implemented and measured, and all were reverted
+because none met the acceptance gate (116 ticks with no dead tick and a floor of
+at least half the target):
+
+1. **Every routed leg billed, nearest carrier assigned** (`_transport_pair` no
+   longer returns a free, carrier-less local leg; it assigns the carrier with the
+   smallest cyclic distance from the source region). Transport becomes solvent,
+   as intended.
+2. **Self-haul for the transport sector's own production inputs** (`_SELF_HAULED`
+   sentinel in the edge builder: no external carrier service, no freight tariff),
+   which breaks the fuel/vehicles circular dependency that earlier restored the
+   per-carrier lock.
+3. **Logistics reservation as one national pool** instead of a per-carrier pool,
+   so a carrier that produced nothing cannot strand the edges assigned to it.
+
+Measured outcomes (default profile, 116 ticks, one process per point):
+
+- (1)+(2) with the per-carrier pool: 104 dead ticks, floor `0`, mean activity
+  `11,708`.
+- (1)+(2)+(3): more deliveries clear, but the run **fails a ledger invariant**:
+  `services_household_use_le_available` at `region[fejer]`, `lhs = 62.14`,
+  `rhs = -176.94`, residual `239.09`. A national pool lets an edge be *served and
+  charged* by a carrier that produced no service, while service consumption is
+  still drawn per edge from the **source region's** services cell, so the cell
+  goes negative. The invariant is correct and the redesign was incomplete, not
+  the check.
+
+That last failure identifies precisely what a correct redesign needs: service
+consumption must be drawn from the **carrier's own output cell** (carrier-indexed
+service accounting) rather than from the source region's cell, jointly with the
+reservation semantics, the tariff, and the steady-state solve. That is a
+carrier-indexed redesign of the transport-service flow — kernel accounting, edge
+generation, the reservation rule, the ledger invariant and the fixture — and it
+has not been completed, so nothing here is committed and the shipped default is
+unchanged.
+
 ### Next step (approved, not yet implemented)
 
 A self-consistent steady state: solve the model's own fixed point jointly over
