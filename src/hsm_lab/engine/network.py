@@ -46,9 +46,11 @@ from scipy.sparse import csr_matrix  # type: ignore[import-untyped]
 from hsm_lab.contract.base import ConfigError, ResearchGateError
 from hsm_lab.contract.material import (
     COMMODITY_INDEX,
-    P02_COMMODITY_SPECS,
+    HUB_COMMODITY_STAGES,
+    INVESTMENT_COMMODITY_IDS,
     PRODUCTIVE_TYPES,
     PURPOSE_CODES,
+    RETAIL_COMMODITY_STAGES,
     STAGE_CODES,
     CellOwnerKind,
     CommoditySpec,
@@ -59,8 +61,10 @@ from hsm_lab.contract.material import (
     OutputCoefficient,
     PrivatePlotRecipe,
     RoutePurpose,
+    Stage,
     StockCellRef,
     TechnologySpec,
+    commodity_spec,
     wholesale_hub_regions,
 )
 from hsm_lab.contract.schemas import ResearchContract, ScenarioSpec
@@ -79,25 +83,11 @@ _POOL_NAMES = {code: name for name, code in POOL_CODES.items()}
 _STAGE_NAMES = {code: name for name, code in STAGE_CODES.items()}
 _KIND_NAMES = {owner_kind_code(kind): kind.value for kind in CellOwnerKind}
 
-# What the wholesale hubs stock (and therefore collect); subset of declared.
-HUB_COMMODITY_STAGES: tuple[tuple[str, str], ...] = (
-    ("food", "raw"),
-    ("food", "ready"),
-    ("energy", "standard"),
-    ("consumer_goods", "standard"),
-    ("durable_goods", "standard"),
-)
-# What regional retail holds (services arrive same-tick into the ephemeral
-# retail pool and expire at the end of the quarter).
-RETAIL_COMMODITY_STAGES: tuple[tuple[str, str], ...] = (
-    ("energy", "standard"),
-    ("food", "ready"),
-    ("consumer_goods", "standard"),
-    ("durable_goods", "standard"),
-    ("services_transport", "standard"),
-)
+# The wholesale-hub, retail and investment commodity sets are derived from the
+# commodity registry in ``contract.material`` (see HUB_COMMODITY_STAGES,
+# RETAIL_COMMODITY_STAGES, INVESTMENT_COMMODITY_IDS); a new commodity joins the
+# distribution or investment layer by declaring the flag, not by editing engine code.
 PLOT_INPUT_COMMODITY_IDS: tuple[str, ...] = ("energy", "capital_goods", "raw_materials")
-INVESTMENT_COMMODITY_IDS: tuple[str, ...] = ("capital_goods", "construction")
 # Exports ship from the sources nearest the national origin (region 0).
 EXPORT_ORIGIN_REGION = 0
 
@@ -499,9 +489,13 @@ class _Compiler:
         for g in range(self.commodity_count):
             if not self.importable[g]:
                 continue
-            stage = "ready" if self.commodity_ids[g] == "food" else "standard"
             self.import_cell_map[g] = self._add_cell(
-                kind_treasury, -1, -1, _POOL_IMPORT, g, STAGE_CODES[stage]
+                kind_treasury,
+                -1,
+                -1,
+                _POOL_IMPORT,
+                g,
+                STAGE_CODES[self._consumable_stage(g)],
             )
 
     def _finalize_cells(self) -> None:
@@ -766,6 +760,15 @@ class _Compiler:
         self.edge_transport_list.append(transport_org)
         self.edge_per_unit_list.append(per_unit)
         self.edge_buyer_list.append(buyer_org)
+
+    def _consumable_stage(self, g: int) -> Stage:
+        """The stage a commodity is delivered, imported or exported in.
+
+        Read from the registry (retail stage, else hub stage, else the first
+        declared stage) so a new commodity never needs an engine change.
+        """
+        spec = commodity_spec(self.commodity_ids[g])
+        return spec.consumable_stage()
 
     def _transport_pair(self, source_region: int, destination_region: int) -> tuple[int, float]:
         """Local (same-region) edges are free; cross-owner edges pay transport."""
@@ -1073,10 +1076,10 @@ class _Compiler:
             purpose = (
                 RoutePurpose.PRIVATE_PLOT if activity >= plot_base else RoutePurpose.INTERMEDIATE
             )
-            if (
-                self.commodity_ids[g],
-                _STAGE_NAMES[stage_code],
-            ) == ("food", "raw"):
+            spec = commodity_spec(self.commodity_ids[g])
+            if len(spec.stages) > 1 and spec.stages[0] == _STAGE_NAMES[stage_code]:
+                # A staged commodity is collected through the wholesale hubs in its
+                # first stage (raw food); everything else comes from producers.
                 input_sources = self._nearest_hubs(g, stage_code, buyer_region)
             else:
                 input_sources = self._standard_sources(g, stage_code, buyer_region)
@@ -1129,11 +1132,7 @@ class _Compiler:
                 demand = int(self.export_demand_index[channel, g])
                 if demand < 0:
                     continue
-                stage_code = (
-                    STAGE_CODES["ready"]
-                    if self.commodity_ids[g] == "food"
-                    else STAGE_CODES["standard"]
-                )
+                stage_code = STAGE_CODES[self._consumable_stage(g)]
                 candidates: list[tuple[int, int, int]] = [
                     (cell, 0, int(self.cell_region_np[cell]))
                     for cell, _ in self.producers.get((g, stage_code), [])
@@ -1159,11 +1158,7 @@ class _Compiler:
         for region in range(self.region_count):
             for hh_g in self.household_goods:
                 demand = self.household_demand[(region, hh_g)]
-                stage_code = (
-                    STAGE_CODES["ready"]
-                    if self.commodity_ids[hh_g] == "food"
-                    else STAGE_CODES["standard"]
-                )
+                stage_code = STAGE_CODES[self._consumable_stage(hh_g)]
                 household_sources: list[int] = []
                 for hh_position in self.region_retail_positions[region][:2]:
                     household_cell = self.retail_cells.get(
@@ -1732,10 +1727,7 @@ def build_material_network(
         raise ConfigError("scenario region ids do not match the contract order")
     specs: list[CommoditySpec] = []
     for commodity_id in initial.commodity_ids:
-        match = next((item for item in P02_COMMODITY_SPECS if item.id == commodity_id), None)
-        if match is None:
-            raise ConfigError(f"commodity {commodity_id!r} has no declared CommoditySpec")
-        specs.append(match)
+        specs.append(commodity_spec(commodity_id))
     return compile_material_network(
         initial,
         initial.technologies,

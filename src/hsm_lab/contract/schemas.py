@@ -32,10 +32,9 @@ from hsm_lab.contract.base import (
     StrictModel,
 )
 from hsm_lab.contract.material import (
-    INTERMEDIATE8_COMMODITY_IDS,
     MATERIAL_FORCING_VARIABLE_IDS,
     ORGANIZATION_PROFILES,
-    P02_COMMODITY_SPECS,
+    P02_COMMODITY_IDS,
     ForcingBinding,
     MaterialInitialRecipe,
     MaterialParameters,
@@ -353,7 +352,7 @@ class ScenarioSpec(StrictModel):
                 "material scenarios take forcing only via forcing_pack/forcing_bindings: "
                 "forcing_ids/initial_ids/parameter_ids must be empty"
             )
-        known = {spec.id for spec in P02_COMMODITY_SPECS}
+        known = set(P02_COMMODITY_IDS)
         for binding in self.forcing_bindings:
             if binding.variable_id not in MATERIAL_FORCING_VARIABLE_IDS:
                 raise ConfigError(
@@ -394,11 +393,24 @@ class ScenarioSpec(StrictModel):
 
     def _validate_material_for_run(self, contract: ResearchContract) -> None:
         """Formal material run gates (P02 plan step 1/7)."""
-        if self.commodities != list(INTERMEDIATE8_COMMODITY_IDS):
+        declared = P02_COMMODITY_IDS
+        unknown = [cid for cid in self.commodities if cid not in declared]
+        if unknown:
             raise ConfigError(
-                "intermediate8 commodity ids and order must equal "
-                f"{list(INTERMEDIATE8_COMMODITY_IDS)}"
+                f"commodity ids are not declared in the registry: {unknown}"
             )
+        if len(set(self.commodities)) != len(self.commodities):
+            raise ConfigError("commodity ids must be unique")
+        missing = [cid for cid in declared if cid not in self.commodities]
+        if missing:
+            raise ConfigError(
+                f"material scenarios must declare every registry commodity; "
+                f"missing {missing}"
+            )
+        # Commodity-indexed parameter vectors must match the declared axis length.
+        if self.material_parameters is None:
+            raise ConfigError("material scenarios must declare material_parameters")
+        self.material_parameters.check_axis(self.commodities)
         if self.start.to_ordinal() != contract.core_start.to_ordinal():
             raise ConfigError(
                 f"material scenarios must start at the core window start {contract.core_start}"

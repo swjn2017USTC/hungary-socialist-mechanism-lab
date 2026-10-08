@@ -24,6 +24,7 @@ from hsm_lab.contract.material import (
     OrganizationType,
     RoutePurpose,
     StockCellRef,
+    TradeParameters,
 )
 from hsm_lab.contract.schemas import ScenarioSpec
 from hsm_lab.engine.network import produce_leontief
@@ -32,6 +33,7 @@ from tests.test_material import (
     NO_CAPITAL_COMMODITIES,
     Fixture,
     bank,
+    default_params,
     hub,
     idle_source_tech,
     producer,
@@ -369,3 +371,132 @@ def test_unknown_route_endpoint_is_refused() -> None:
             commodities=NO_CAPITAL_COMMODITIES,
             routes=[bad],
         )
+
+
+# ---------------------------------------------------------------------------
+# Commodity-axis extensibility (audit item 2)
+# ---------------------------------------------------------------------------
+
+
+def test_a_ninth_commandity_is_a_registry_plus_data_change(monkeypatch) -> None:
+    """Adding a commodity must not require touching the engine.
+
+    The ninth commodity is declared in the registry and then flows through the
+    network compiler like any other commodity: it gets a stock cell, a Leontief
+    input row and a real output row.  Before the axis was registry-driven this
+    failed on a fixed-length pin or an unknown-id gate; the point of the test is
+    that no ``min_length=8``-style assumption survives.
+    """
+    import hsm_lab.contract.material as material_contract
+    from hsm_lab.contract.material import (
+        CommoditySpec,
+        HouseholdInitial,
+        InputCoefficient,
+        MaterialInitialConditions,
+        MaterialInitialRecipe,
+        OutputCoefficient,
+        PrivatePlotRecipe,
+        TechnologySpec,
+        default_technologies,
+    )
+    from hsm_lab.engine.network import compile_material_network
+
+    new_id = "nitrogenous_fertilizer"
+    assert new_id not in material_contract.P02_COMMODITY_IDS
+    specs = [
+        *material_contract.P02_COMMODITY_SPECS,
+        CommoditySpec(id=new_id, unit="p02_fertilizer_unit", stages=("standard",)),
+    ]
+    axis = tuple(spec.id for spec in specs)
+    monkeypatch.setattr(material_contract, "P02_COMMODITY_IDS", axis)
+    monkeypatch.setattr(
+        material_contract,
+        "COMMODITY_INDEX",
+        {cid: i for i, cid in enumerate(axis)},
+    )
+    for spec in specs:
+        monkeypatch.setitem(material_contract._COMMODITY_SPEC_BY_ID, spec.id, spec)
+
+    technologies = [
+        *default_technologies(),
+        TechnologySpec(
+            technology_id="fertilizer_blending",
+            inputs=[InputCoefficient(commodity_id="energy", coefficient=0.1)],
+            outputs=[
+                OutputCoefficient(
+                    commodity_id=new_id, stage="standard", coefficient=1.0
+                )
+            ],
+        ),
+    ]
+    orgs = [
+        bank(0),
+        producer(1, "fertilizer_blending", region="R0", capacity=8.0),
+        producer(2, "energy_generation", region="R0", capacity=4.0),
+        hub(3, region="R0"),
+        retail(4, region="R0"),
+    ]
+    params = default_params(
+        prices=[1.0] * len(axis),
+        desired_per_person=[0.0] * len(axis),
+        handling_work_per_unit=[1.0] * len(axis),
+        trade=TradeParameters(
+            cmea_prices=[1.0] * len(axis),
+            convertible_prices=[1.0] * len(axis),
+            cmea_desired_imports=[0.0] * len(axis),
+            convertible_desired_imports=[0.0] * len(axis),
+            cmea_export_demands=[0.0] * len(axis),
+            convertible_export_demands=[0.0] * len(axis),
+            convertible_opening_reserve=0.0,
+            convertible_loan_limit=0.0,
+        ),
+    )
+    initial = MaterialInitialConditions(
+        scenario_id="p02_axis9",
+        region_ids=("R0",),
+        commodity_ids=axis,
+        seed=1729,
+        stochastic=False,
+        households=HouseholdInitial(
+            household_id=np.arange(1, dtype=np.int64),
+            region=np.zeros(1, dtype=np.int32),
+            weight=np.ones(1, dtype=np.float64),
+            size=np.ones(1, dtype=np.float64),
+            plot_participating=np.zeros(1, dtype=bool),
+        ),
+        organizations=tuple(orgs),
+        technologies=tuple(technologies),
+        routes=None,
+        plot_recipe=PrivatePlotRecipe(),
+        equivalent_persons=1.0,
+        region_equivalent_persons=np.ones(1, dtype=np.float64),
+        parameters=params,
+        initial_recipe=MaterialInitialRecipe(),
+    )
+    network = compile_material_network(
+        initial,
+        initial.technologies,
+        None,
+        specs,
+        initial.region_ids,
+        initial.plot_recipe,
+    )
+
+    # the compiler accepted a nine-wide axis and wired the new commodity in
+    assert len(network.commodity_ids) == len(axis) == 9
+    assert network.commodity_ids[-1] == new_id
+    g = network.commodity_ids.index(new_id)
+    assert int(np.sum(np.asarray(np.asarray(network.cell_commodity)) == g)) > 0
+
+    # it has a real Leontief output row feeding a producer output cell
+    # it has a real Leontief output row feeding a producer output cell
+    outputs = network.B.tocsr()
+    cells = np.asarray(network.cell_commodity)
+    produced = np.flatnonzero(
+        (np.asarray(outputs.data) > 0.0) & (cells[np.asarray(outputs.indices)] == g)
+    )
+    assert produced.size >= 1
+    row = int(produced[0])
+    activity = int(np.searchsorted(np.asarray(outputs.indptr), row, side="right") - 1)
+    assert float(np.asarray(outputs.data)[row]) == 1.0
+    assert float(np.asarray(network.activity_capacity)[activity]) == pytest.approx(8.0)

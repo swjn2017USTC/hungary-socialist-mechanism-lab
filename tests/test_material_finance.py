@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from hsm_lab.contract.material import (
-    INTERMEDIATE8_COMMODITY_IDS,
+    P02_COMMODITY_IDS,
     MaterialParameters,
 )
 from hsm_lab.engine import accounting, finance
@@ -30,7 +30,7 @@ from tests.test_material import (
 # Intermediate-8 minus capital_goods: a housing fixture declares construction
 # but has no capital-goods producer, so the capital axis is omitted.
 CONSTRUCTION_COMMODITIES = tuple(
-    c for c in INTERMEDIATE8_COMMODITY_IDS if c != "capital_goods"
+    c for c in P02_COMMODITY_IDS if c != "capital_goods"
 )
 
 

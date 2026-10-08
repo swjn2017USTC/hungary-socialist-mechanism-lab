@@ -63,6 +63,7 @@ from hsm_lab.contract.guards import BASELINE_FILENAME, verify_baseline
 from hsm_lab.contract.material import (
     COMMODITY_INDEX,
     ORGANIZATION_TYPE_ORDER,
+    P02_COMMODITY_IDS,
     PURPOSE_CODES,
     RETAIL_HANDLING_TOTAL,
     WHOLESALE_HANDLING_TOTAL,
@@ -70,6 +71,7 @@ from hsm_lab.contract.material import (
     MaterialParameters,
     PrivatePlotRecipe,
     RoutePurpose,
+    commodity_spec,
 )
 from hsm_lab.contract.schemas import (
     Quarter,
@@ -377,19 +379,25 @@ def _build_tick_index(network: MaterialNetwork) -> _TickIndex:
 
 def _commodity_specs(network: MaterialNetwork) -> list[CommoditySpec]:
     """Declared CommoditySpec view aligned with the network commodity axis."""
-    from hsm_lab.contract.material import P02_COMMODITY_SPECS
-
-    by_id = {spec.id: spec for spec in P02_COMMODITY_SPECS}
-    return [by_id[cid] for cid in network.commodity_ids]
+    return [commodity_spec(cid) for cid in network.commodity_ids]
 
 
 def _fixed_network_vector(values: list[float], network: MaterialNetwork) -> np.ndarray:
-    """Map a fixed 8-axis parameter vector onto the network commodity axis."""
+    """Map a declared commodity-indexed vector onto the network commodity axis.
+
+    Vectors are indexed by the declared axis (``P02_COMMODITY_IDS``), so the
+    engine carries no assumption about how many commodities exist.
+    """
+    axis = P02_COMMODITY_IDS
+    if len(values) != len(axis):
+        raise ConfigError(
+            f"parameter vector has {len(values)} entries but the declared axis has "
+            f"{len(axis)} commodities"
+        )
     mapped = np.zeros(len(network.commodity_ids), dtype=np.float64)
     for g, commodity_id in enumerate(network.commodity_ids):
-        fixed = COMMODITY_INDEX.get(commodity_id)
-        if fixed is not None:
-            mapped[g] = float(values[fixed])
+        if commodity_id in COMMODITY_INDEX:
+            mapped[g] = float(values[COMMODITY_INDEX[commodity_id]])
     return mapped
 
 

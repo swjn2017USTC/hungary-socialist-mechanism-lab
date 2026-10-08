@@ -24,7 +24,7 @@ import numpy as np
 import pytest
 
 from hsm_lab.contract.material import (
-    INTERMEDIATE8_COMMODITY_IDS,
+    P02_COMMODITY_IDS,
     P02_COMMODITY_SPECS,
     PURPOSE_CODES,
     CellOwnerKind,
@@ -62,7 +62,7 @@ START = "1957Q1"
 
 # The canonical tiny axis: Intermediate-8 minus ``construction`` (see module
 # docstring).  Order matches the fixed Intermediate-8 order.
-TINY_COMMODITIES = tuple(c for c in INTERMEDIATE8_COMMODITY_IDS if c != "construction")
+TINY_COMMODITIES = tuple(c for c in P02_COMMODITY_IDS if c != "construction")
 
 # Fixtures with no capital-goods producer must not declare capital_goods:
 # investment demand cells for a producer would then have no supplier, and the
@@ -184,10 +184,12 @@ def idle_source_tech(technology_id: str, commodity: str, stage: str = "standard"
 
 
 def default_params(**overrides) -> MaterialParameters:
+    # Vectors are sized by the declared commodity axis, never by a literal 8.
+    axis = len(P02_COMMODITY_IDS)
     base: dict = {
-        "prices": [1.0] * 8,
+        "prices": [1.0] * axis,
         "food_raw_price": 1.0,
-        "desired_per_person": [0.0] * 8,
+        "desired_per_person": [0.0] * axis,
         "utilization": 1.0,
         "service_split": [1.0, 0.0, 0.0],
         "overorder_strength": 0.0,
@@ -200,10 +202,10 @@ def default_params(**overrides) -> MaterialParameters:
         "farm_seasonal_factors": [1.0, 1.0, 1.0, 1.0],
         "housing_request_per_person": 0.0,
         "trade": TradeParameters(
-            cmea_desired_imports=[0.0] * 8,
-            convertible_desired_imports=[0.0] * 8,
-            cmea_export_demands=[0.0] * 8,
-            convertible_export_demands=[0.0] * 8,
+            cmea_desired_imports=[0.0] * axis,
+            convertible_desired_imports=[0.0] * axis,
+            cmea_export_demands=[0.0] * axis,
+            convertible_export_demands=[0.0] * axis,
             convertible_opening_reserve=0.0,
             convertible_loan_limit=0.0,
         ),

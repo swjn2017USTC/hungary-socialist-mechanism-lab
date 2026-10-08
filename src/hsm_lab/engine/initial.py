@@ -26,9 +26,9 @@ from hsm_lab.contract.material import (
     FARM_CAPACITY_TOTAL,
     INDUSTRIAL_CAPACITY_TOTALS,
     INDUSTRIAL_TECHNOLOGY_IDS,
-    INTERMEDIATE8_COMMODITY_IDS,
     ORGANIZATION_PROFILES,
     ORGANIZATION_TYPE_ORDER,
+    P02_COMMODITY_IDS,
     PRODUCTIVE_TYPES,
     RETAIL_HANDLING_TOTAL,
     TRADER_TYPES,
@@ -217,7 +217,7 @@ def _quarterly_flow_value(
             input_value += row.coefficient * price * target
     household_value = sum(
         float(parameters.desired_per_person[index]) * float(parameters.prices[index])
-        for index, commodity_id in enumerate(INTERMEDIATE8_COMMODITY_IDS)
+        for index, commodity_id in enumerate(P02_COMMODITY_IDS)
         if commodity_id in price_by_id
     ) * equivalent_persons
     return input_value + household_value

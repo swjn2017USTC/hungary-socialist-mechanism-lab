@@ -13,6 +13,7 @@ raw->ready happens only inside a declared food-processing technology.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated, Literal, Self, cast
@@ -21,20 +22,6 @@ import numpy as np
 from pydantic import Field, model_validator
 
 from hsm_lab.contract.base import ConfigError, FiniteFloat, StrictModel
-
-INTERMEDIATE8_COMMODITY_IDS = (
-    "energy",
-    "capital_goods",
-    "food",
-    "consumer_goods",
-    "raw_materials",
-    "construction",
-    "durable_goods",
-    "services_transport",
-)
-"""Fixed Intermediate-8 commodity axis order (plan step 1)."""
-
-COMMODITY_INDEX = {cid: i for i, cid in enumerate(INTERMEDIATE8_COMMODITY_IDS)}
 
 Stage = Literal["standard", "raw", "ready"]
 STAGES: tuple[Stage, ...] = ("standard", "raw", "ready")
@@ -45,38 +32,138 @@ class StockableStageError(ConfigError):
     """A stage/commodity combination that the ontology forbids."""
 
 
-def legal_stages(commodity_id: str) -> tuple[Stage, ...]:
-    """The stages a commodity may legally sit in (food: raw+ready, else standard)."""
-    if commodity_id == "food":
-        return ("raw", "ready")
-    if commodity_id in INTERMEDIATE8_COMMODITY_IDS:
-        return ("standard",)
-    return STAGES
-
-
 class CommoditySpec(StrictModel):
-    """One declared material commodity; the registry supports any count."""
+    """One declared material commodity.
+
+    ``stages`` is the commodity's declared stage axis.  ``hub_stages`` /
+    ``retail_stages`` mark the stages the distribution layer stocks (a commodity
+    can be collected in one stage and sold in another, as food is), and
+    ``investment`` marks the commodity that can be installed as project WIP.
+    Adding a commodity is therefore a data change: the stage rules are read from
+    here instead of being hardcoded per id.
+    """
 
     id: str = Field(min_length=1)
     unit: str = Field(min_length=1)
     stockable: bool = True
     household_channel: bool = False
+    stages: tuple[Stage, ...] = ("standard",)
+    hub_stages: tuple[Stage, ...] = ()
+    retail_stages: tuple[Stage, ...] = ()
+    investment: bool = False
+
+    def stage_codes(self) -> tuple[int, ...]:
+        return tuple(STAGE_CODES[stage] for stage in self.stages)
+
+    def consumable_stage(self) -> Stage:
+        """The stage a commodity is delivered, imported or exported in."""
+        return (self.retail_stages or self.hub_stages or self.stages)[0]
+
+
+def commodity_spec(commodity_id: str) -> CommoditySpec:
+    """Declared spec for one commodity id (raises ``ConfigError`` if unknown)."""
+    spec = _COMMODITY_SPEC_BY_ID.get(commodity_id)
+    if spec is None:
+        raise ConfigError(f"commodity {commodity_id!r} is not declared in the registry")
+    return spec
+
+
+def legal_stages(commodity_id: str) -> tuple[Stage, ...]:
+    """The stages a commodity may legally sit in, read from the registry."""
+    return commodity_spec(commodity_id).stages
 
 
 P02_COMMODITY_SPECS: tuple[CommoditySpec, ...] = (
-    CommoditySpec(id="energy", unit="p02_energy_unit", household_channel=True),
-    CommoditySpec(id="capital_goods", unit="p02_capital_unit"),
-    CommoditySpec(id="food", unit="p02_food_unit", household_channel=True),
-    CommoditySpec(id="consumer_goods", unit="p02_consumer_unit", household_channel=True),
+    CommoditySpec(
+        id="energy",
+        unit="p02_energy_unit",
+        household_channel=True,
+        hub_stages=("standard",),
+        retail_stages=("standard",),
+    ),
+    CommoditySpec(
+        id="capital_goods",
+        unit="p02_capital_unit",
+        investment=True,
+    ),
+    CommoditySpec(
+        id="food",
+        unit="p02_food_unit",
+        household_channel=True,
+        stages=("raw", "ready"),
+        hub_stages=("raw", "ready"),
+        retail_stages=("ready",),
+    ),
+    CommoditySpec(
+        id="consumer_goods",
+        unit="p02_consumer_unit",
+        household_channel=True,
+        hub_stages=("standard",),
+        retail_stages=("standard",),
+    ),
     CommoditySpec(id="raw_materials", unit="p02_raw_unit"),
-    CommoditySpec(id="construction", unit="p02_construction_unit"),
-    CommoditySpec(id="durable_goods", unit="p02_durable_unit", household_channel=True),
+    CommoditySpec(id="construction", unit="p02_construction_unit", investment=True),
+    CommoditySpec(
+        id="durable_goods",
+        unit="p02_durable_unit",
+        household_channel=True,
+        hub_stages=("standard",),
+        retail_stages=("standard",),
+    ),
     CommoditySpec(
         id="services_transport",
         unit="p02_service_unit",
         stockable=False,
         household_channel=True,
+        retail_stages=("standard",),
     ),
+)
+
+P02_COMMODITY_IDS: tuple[str, ...] = tuple(spec.id for spec in P02_COMMODITY_SPECS)
+COMMODITY_INDEX: dict[str, int] = {
+    spec_id: index for index, spec_id in enumerate(P02_COMMODITY_IDS)
+}
+_COMMODITY_SPEC_BY_ID = {spec.id: spec for spec in P02_COMMODITY_SPECS}
+
+
+def _declared_pairs(pairs: tuple[tuple[str, str], ...]) -> tuple[tuple[str, str], ...]:
+    """Filter ``(commodity, stage)`` pairs to declared ones, order preserved.
+
+    The order is part of the canonical cell ordering (and therefore of the run
+    digest), so it is declared once here rather than implied by registry order.
+    A new commodity joins the distribution layer by adding its pair below.
+    """
+    declared = {
+        (spec.id, stage)
+        for spec in P02_COMMODITY_SPECS
+        for stage in (*spec.hub_stages, *spec.retail_stages)
+    }
+    return tuple(pair for pair in pairs if pair in declared)
+
+
+# What the wholesale hubs stock (and therefore collect), in canonical order.
+HUB_COMMODITY_STAGES: tuple[tuple[str, str], ...] = _declared_pairs(
+    (
+        ("food", "raw"),
+        ("food", "ready"),
+        ("energy", "standard"),
+        ("consumer_goods", "standard"),
+        ("durable_goods", "standard"),
+    )
+)
+# What regional retail holds: services arrive same-tick into the ephemeral
+# retail pool and expire at the end of the quarter.
+RETAIL_COMMODITY_STAGES: tuple[tuple[str, str], ...] = _declared_pairs(
+    (
+        ("energy", "standard"),
+        ("food", "ready"),
+        ("consumer_goods", "standard"),
+        ("durable_goods", "standard"),
+        ("services_transport", "standard"),
+    )
+)
+INVESTMENT_COMMODITY_IDS: tuple[str, ...] = tuple(
+    spec.id for spec in P02_COMMODITY_SPECS if spec.investment
 )
 
 
@@ -605,24 +692,23 @@ class TradeParameters(StrictModel):
     """Channel x commodity trade vectors (plan section 5, exact defaults)."""
 
     cmea_prices: list[FiniteFloat] = Field(
-        default=[1.0, 4.0, 2.0, 3.0, 1.5, 5.0, 12.0, 1.0], min_length=8, max_length=8
+        default=[1.0, 4.0, 2.0, 3.0, 1.5, 5.0, 12.0, 1.0], min_length=1
     )
     convertible_prices: list[FiniteFloat] = Field(
-        default=[1.0, 4.0, 2.0, 3.0, 1.5, 5.0, 12.0, 1.0], min_length=8, max_length=8
+        default=[1.0, 4.0, 2.0, 3.0, 1.5, 5.0, 12.0, 1.0], min_length=1
     )
     cmea_desired_imports: list[FiniteFloat] = Field(
-        default=[3000.0, 500.0, 0.0, 0.0, 5000.0, 0.0, 0.0, 0.0], min_length=8, max_length=8
+        default=[3000.0, 500.0, 0.0, 0.0, 5000.0, 0.0, 0.0, 0.0], min_length=1
     )
     convertible_desired_imports: list[FiniteFloat] = Field(
         default=[500.0, 1000.0, 100.0, 200.0, 1000.0, 0.0, 50.0, 0.0],
-        min_length=8,
-        max_length=8,
+        min_length=1,
     )
     cmea_export_demands: list[FiniteFloat] = Field(
-        default=[0.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0], min_length=8, max_length=8
+        default=[0.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0], min_length=1
     )
     convertible_export_demands: list[FiniteFloat] = Field(
-        default=[0.0, 100.0, 0.0, 100.0, 0.0, 0.0, 0.0, 0.0], min_length=8, max_length=8
+        default=[0.0, 100.0, 0.0, 100.0, 0.0, 0.0, 0.0, 0.0], min_length=1
     )
     cmea_credit_envelope: PositiveFloat = 10000.0
     convertible_opening_reserve: NonNegativeFloat = 20000.0
@@ -668,6 +754,23 @@ class TradeParameters(StrictModel):
                 raise ConfigError(f"trade.{name} must be strictly positive")
         return self
 
+    def check_axis(self, commodity_ids: Sequence[str]) -> None:
+        """Validate the six commodity-indexed trade vectors against a declared axis."""
+        size = len(commodity_ids)
+        for name in (
+            "cmea_prices",
+            "convertible_prices",
+            "cmea_desired_imports",
+            "convertible_desired_imports",
+            "cmea_export_demands",
+            "convertible_export_demands",
+        ):
+            if len(getattr(self, name)) != size:
+                raise ConfigError(
+                    f"trade.{name} must have one entry per declared commodity "
+                    f"({size}), got {len(getattr(self, name))}"
+                )
+
 
 class MaterialParameters(StrictModel):
     """Intermediate-8 model constants (plan step 1 load-bearing literal keys)."""
@@ -683,11 +786,11 @@ class MaterialParameters(StrictModel):
     equivalent_households: PositiveFloat = 5000.0
     # Admin prices (standard food slot represents ready food).
     prices: list[FiniteFloat] = Field(
-        default=[1.0, 4.0, 2.0, 3.0, 1.5, 5.0, 12.0, 1.0], min_length=8, max_length=8
+        default=[1.0, 4.0, 2.0, 3.0, 1.5, 5.0, 12.0, 1.0], min_length=1
     )
     food_raw_price: PositiveFloat = 0.8
     desired_per_person: list[FiniteFloat] = Field(
-        default=[0.4, 0.0, 2.0, 1.0, 0.0, 0.0, 0.02, 0.2], min_length=8, max_length=8
+        default=[0.4, 0.0, 2.0, 1.0, 0.0, 0.0, 0.02, 0.2], min_length=1
     )
     utilization: Annotated[FiniteFloat, Field(gt=0.0, le=1.0)] = 0.9
     # Same-tick service split: logistics / productive / household, sums to 1.
@@ -714,7 +817,7 @@ class MaterialParameters(StrictModel):
     # Transport and handling.
     transport_per_unit: NonNegativeFloat = 0.05
     handling_work_per_unit: list[FiniteFloat] = Field(
-        default=[1.0] * 8, min_length=8, max_length=8
+        default=[1.0] * 8, min_length=1
     )
     # External anchors.
     world_oil_reference: PositiveFloat = 1.63
@@ -742,6 +845,25 @@ class MaterialParameters(StrictModel):
         if any(not math.isfinite(v) or v < 0 for v in self.farm_seasonal_factors):
             raise ConfigError("farm_seasonal_factors must be finite and non-negative")
         return self
+
+    def check_axis(self, commodity_ids: Sequence[str]) -> None:
+        """Validate every commodity-indexed vector against a declared axis.
+
+        Called by the scenario/registry gate once the commodity axis is known, so
+        the parameter set itself carries no fixed commodity count.
+        """
+        size = len(commodity_ids)
+        for name in (
+            "prices",
+            "desired_per_person",
+            "handling_work_per_unit",
+        ):
+            if len(getattr(self, name)) != size:
+                raise ConfigError(
+                    f"{name} must have one entry per declared commodity "
+                    f"({size}), got {len(getattr(self, name))}"
+                )
+        self.trade.check_axis(commodity_ids)
 
     def flatten(self) -> dict[str, float]:
         """Field/index-path flattening for the run's parameter hash."""
@@ -889,7 +1011,7 @@ __all__ = [
     "HouseholdInitial",
     "INDUSTRIAL_CAPACITY_TOTALS",
     "INDUSTRIAL_TECHNOLOGY_IDS",
-    "INTERMEDIATE8_COMMODITY_IDS",
+    "P02_COMMODITY_IDS",
     "InputCoefficient",
     "MaterialInitialConditions",
     "MaterialInitialRecipe",
@@ -913,6 +1035,10 @@ __all__ = [
     "TYPE_TECHNOLOGY_IDS",
     "TradeParameters",
     "WHOLESALE_HANDLING_TOTAL",
+    "commodity_spec",
+    "HUB_COMMODITY_STAGES",
+    "RETAIL_COMMODITY_STAGES",
+    "INVESTMENT_COMMODITY_IDS",
     "legal_stages",
     "default_technologies",
     "wholesale_hub_regions",
