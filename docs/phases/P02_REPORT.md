@@ -547,6 +547,54 @@ national source fallback when a demand's declared nearest-two sources are empty.
 Both are mechanism amendments that touch pinned behaviour and its tests, and
 neither is implemented or committed.
 
+### Source fallback, combined with the transport-first fixes (implemented, measured, not committed)
+
+The approved rule amendment — *when a demand's declared nearest-two sources come
+up empty, it may pool to the nearest sources of the same commodity and stage that
+still hold stock* — was implemented and then measured together with the
+transport-first fixes from the sections above.
+
+**Implementation.** Fallback edges are ordinary edges carrying the demand's own
+purpose (so department, ledger and journal attribution are untouched) and are
+marked by a new static `edge_fallback` flag on the compiled network (added to the
+checkpoint field spec; `MATERIAL_NETWORK_VERSION` → `material-network-v2`). The
+allocator runs each priority tier twice: once over the declared sources, once
+over the pooled fallback sources of the same tier, and the pooled round may claim
+only `ordered − allocated_so_far`, so `allocated ≤ ordered` still holds. Weights
+are distance-decayed inside the pooled group and normalised to one, giving the
+nearer fallback source the larger share. The transport sector's own inputs get no
+fallback edges: they are served by the transport-first reservation and are
+self-hauled, and declaring both would double the claim (that combination failed
+the allocation invariant until it was scoped out). 1,364 of 3,856 edges on the
+default scenario are fallback edges.
+
+**Measured (default scenario, 116 ticks).**
+
+| | t0 | 1 | 2 | 3 | 4 | 5 | 7 | 9 | mean | sub-half ticks | floor |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| baseline | 224,300 | 52,957 | 222,895 | 30,376 | 49,914 | 21,466 | 13,204 | 14,319 | 5,216 | 114 | 0 |
+| transport-first only | 224,300 | 188,064 | 148,192 | 101,751 | 48,950 | 40,917 | 32,211 | 28,896 | 13,922 | 113 | 100 |
+| transport-first + fallback | 224,300 | 210,275 | 197,204 | **235,000** | 161,449 | 87,865 | 77,175 | 30,514 | 11,942 | 111 | 100 |
+
+The fallback lifts the transient further (tick 1 at 210,275 versus 188,064, and a
+peak of 235,000 at tick 3, above the initial scale), but the trajectory still
+decays smoothly to the same ~100-unit floor and stalls completely by tick 26.
+
+**Conclusion, now with three independent paths falsified.** Fixture-only tuning
+(numerical solve, 232-tick stationarity test), the transport-first support
+service, the transport fuel cover, and now source pooling each improve the
+transient and each still converge to the same dead floor. The attractor is
+therefore not a buffer, pricing, capacity, ordering or sourcing artefact: under
+the pinned quarter sequence the economy systematically consumes less than it
+produces and accumulates the difference upstream (producer output stock past
+500,000 while every demand cell empties), so production, delivery and demand
+cannot reach a joint fixed point. What remains is a research-grade step —
+solving the steady state of the whole input-output/allocation/monetary system
+directly (an LP or fixed-point formulation over the pinned rules) rather than
+searching its parameter space — or accepting the limitation as scoped. Neither is
+implemented; the transport-first plus fallback work is preserved as a stash and
+is not committed.
+
 ### Next step (approved, not yet implemented)
 
 A self-consistent steady state: solve the model's own fixed point jointly over
