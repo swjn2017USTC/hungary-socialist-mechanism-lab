@@ -336,3 +336,10 @@ intervention targets. Dependencies name the registry `artifact_id`, not the `var
 Two open items are carried into P06 explicitly: the H4 ladder rung's periodic output residual
 (1.3666e-6 vs 1e-6) must be fixed or documented, and the window-protocol refusal must be wired
 into the target-loading path (audit finding R4).
+
+## 2026-10-10 — W1 mechanism-card preregistrations — PASS
+
+- Evidence: `config/p06/cards/M1.json`–`M11.json`, `src/hsm_lab/calibration/mechanism_cards.py`, `tests/test_p06_mechanism_cards.py`, `docs/phases/P06_MECHANISM_CARDS.md`.
+- Change: registered all eleven Annex A faces without verdicts; loader resolves dependencies against parameter-registry `artifact_id` values and refuses unknown dependencies or a SUPPORTED-only category list for cards depending on unidentified blocks.
+- Check: `.venv/bin/ruff check src tests` → clean; `.venv/bin/pytest -q -p no:cacheprovider` → 391 passed.
+- Implementation commit: `ee7e227132427a7c905230bfa9154947bb52d6df`.
