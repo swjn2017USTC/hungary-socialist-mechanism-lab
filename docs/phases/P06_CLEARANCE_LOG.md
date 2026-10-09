@@ -124,7 +124,7 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   direction metrics; missing-pair and constant-statistic inputs are refused. The real
   fidelity command still returns `NO_IDENTIFIABLE_PARAMETERS`; no model comparison or
   inference ran because B1 linkage is not supplied.
-- Commit: recorded with B4/D5 infrastructure below.
+- Commit: `4475a2d feat(p06): add fidelity window and reproducibility infrastructure`.
 
 ### Track B4 — hold-out/reserved access protocol (infrastructure PASS)
 
@@ -134,7 +134,7 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   explicit phase/inference/manifest requirements are met. Hold-out projection contains
   only a hash and identity. The helper is not wired into the target-loading path; the
   reserved window remains closed.
-- Commit: recorded with B2/D5 infrastructure below.
+- Commit: `4475a2d feat(p06): add fidelity window and reproducibility infrastructure`.
 
 ### Track D5 — reproducibility bundle (smoke PASS; production integration partial)
 
@@ -144,4 +144,22 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   output directory with matching digest and parameter hash; tampered capture is refused.
   The helper currently is not wired to a CLI and only supports completed material runs
   ending by 1985Q4.
-- Commit: recorded with B2/B4 infrastructure below.
+- Commit: `4475a2d feat(p06): add fidelity window and reproducibility infrastructure`.
+
+### Track A4 — demand-following target retest (completed; negative)
+
+- Plan: `P05_A4_TARGET_RETEST_PLAN.md`; results: `P05_A4_TARGET_RETEST_EXPERIMENT.md`.
+- Check: baseline, lean-plan non-stockable cap, and lean-plan plus all-activity cap each ran
+  116 ticks through 1985Q4 with accounting passing. Neither target rule reached T1/T2;
+  terminal production was 59.94/44.30 and consumption 210.43/212.20 for the two target
+  arms. Household guardrails regressed.
+- No candidate met both T1 and T2; A5 was ineligible because fewer than two candidates
+  individually improved terminals. A7 is the required honest exit.
+
+### Track A7 — structural review (completed; P06 blocked)
+
+- Evidence: `docs/phases/P06_STRUCTURAL_REVIEW.md`; P05_REPORT §§E8–E9 and §11.
+- Decision: no valid arm from A1–A4 meets both terminal floors. Frozen liveness, service,
+  treasury-self-financing and expiry gates remain blocked. Interest-remittance arms fail on
+  negative bank reserves. No default or calibration claim is adopted.
+- Commit: recorded with the A4/A7 report commit.

@@ -624,7 +624,38 @@ not triggered, H2 is supported in A1, H3 is falsified, and H4 did not hold. **No
 default is adopted; the result is partial, not validated.** See the
 [full arm table, guardrails, residuals, and hypothesis verdicts](P05_INPUT_CREDIT_EXPERIMENT.md).
 
+### E8 — interest sink and Treasury circuit (A1)
+
+The seven-arm transfer experiment is recorded in
+[P05_INTEREST_FISCAL_EXPERIMENT.md](P05_INTEREST_FISCAL_EXPERIMENT.md). All four arms that
+redirect paid interest were rejected because bank reserves became negative before 1985Q4.
+The fiscal-only arm kept Treasury solvent but failed household guardrails (terminal
+consumption 319 versus the 1,668 baseline; unmet availability rose). Among complete runs,
+money-stock growth was strictly better than B0 in only 51/96 (F1) and 45/96 (N1) quarters
+after tick 20; neither operated interest remittance. H1 was observed only in the rejected
+fiscal arm, H2 lacks a valid full-horizon interest arm, H3 is falsified, and H4 is partial.
+No parameter default is adopted.
+
+### E9 — Track A2–A4 and termination
+
+A2 investment-first source priority failed both terminal floors and worsened household
+availability. A3's bounded savings re-entry drew only 246.81 total weighted currency units
+at its highest tested rate; it did not meet either terminal floor and raised unmet
+availability. A4's demand-following target rules reduced terminal production to 59.94 and
+44.30, with consumption 210.43 and 212.20. Their complete arm tables and guardrails are
+recorded in the [A2](P05_A2_SOURCE_PRIORITY_EXPERIMENT.md),
+[A3](P05_A3_SAVINGS_REENTRY_EXPERIMENT.md), and
+[A4](P05_A4_TARGET_RETEST_EXPERIMENT.md) reports. No valid arm meets both T1 and T2; A5's
+two-candidate prerequisite is unmet, so the Track A7 structural review is complete at
+[P06_STRUCTURAL_REVIEW.md](P06_STRUCTURAL_REVIEW.md). P06 is blocked by a structural design
+question; no validation claim is made.
+
 ## 11. Status summary — Gate 1 / Gate 2 (2026-10-09)
+
+> **Track A closure update (2026-10-10):** the following dated snapshot was superseded by
+> A1–A4. No valid arm met both terminal floors; A5's prerequisite did not occur and A7 is
+> complete. See [P06_STRUCTURAL_REVIEW.md](P06_STRUCTURAL_REVIEW.md) and the phase reports
+> linked below. The model remains not validated and P06 remains structurally blocked.
 
 This is the one-page state of P05 as it actually stands after the E4/E5 work.
 
@@ -665,33 +696,40 @@ Frozen acceptance gates on the historical replay baseline (116 ticks):
 | treasury cash | zero from tick 17-18 | self-financing | FAIL |
 | accounting invariants | all enforced gates pass | unchanged | PASS |
 
-Parameter classification (§6): **calibrated 0 / fixed 8 / weakly identified 0 /
-unidentified 6**. The three interest/fiscal design rules and the input-credit rule are
-fixed structural declarations; nothing is labelled estimated.
+Parameter classification (§6): **calibrated 0 / fixed 9 / weakly identified 0 /
+unidentified 6**. Fixed structural declarations include input credit, interest/fiscal
+transfers, and bounded savings re-entry; nothing is labelled estimated.
 
-### Steps 1-2 of §12's list (the two candidate levers) are measured and negative
+### Track A1–A4 closure ladder (2026-10-10)
 
-`credit_envelope_fraction` and transport capacity were swept on the replay baseline
-(§E6): neither restores liveness, so neither is adopted and F2 remains
-`not_validated`. The blocking work is now the stock-flow / money-flow audit.
+The subsequent declared experiments found: the interest-remittance arms were rejected on
+negative bank reserves; the treasury-refill arm kept Treasury positive but failed household
+guardrails; investment-first source priority worsened terminal output and access; bounded
+savings re-entry did not clear physical availability; and both demand-following target
+variants collapsed output and consumption. A5 was not eligible because its prerequisite of
+two terminal-improving candidates was unmet. A7 therefore records the honest structural
+exit: no tested arm meets T1 and T2, no default is adopted, and a named mechanism redesign is
+needed before restarting the ladder.
 
-### P06 readiness (updated 2026-10-10, after the two structural experiments)
+### P06 readiness (updated 2026-10-10, after Track A7)
 
 | P06 prerequisite | status |
 |---|---|
 | OMP_PLAN §9 dependency: Gate 1 passed (includes the closure audit) | **NO** — H' `audit-closure` still reports `status collapsed`, `output_liveness = 0.0` |
 | Gate 2 calibration / validation complete | **NO** — `linkage = []`, `screen` = `NO_IDENTIFIABLE_PARAMETERS`, `inference_status = NOT_RUN` |
 | F2 validated | **NO** — 4 of the 5 frozen gates fail (liveness, service ratios, treasury, expiry) |
-| structural closure (acceptance gates pass on the replay) | in progress — funding-channel experiment negative, earmark experiment partial/rejected, interest/fiscal plan written |
-| parameter identification for the §10.2 sensitivity funnel | **NO** — `calibrated 0 / fixed 8 / weakly identified 0 / unidentified 6`; `linkage = []` |
+| structural closure (acceptance gates pass on the replay) | **NO — A7 reached**; see [structural review](P06_STRUCTURAL_REVIEW.md) |
+| parameter identification for the §10.2 sensitivity funnel | **NO** — `calibrated 0 / fixed 9 / weakly identified 0 / unidentified 6`; `linkage = []` |
 | mechanism-card schema M1-M11 | schema and validator present; no cards or verdicts registered |
 | forcing ladder H0-H4 | configured and run on `intermediate8`; H0-H3 pass, H4 misses periodic output tolerance; F2 stays blocked on Track A |
-| Morris / targeted ABC / Sobol | Morris absent, ABC inference unimplemented (`PAIRED_STUDY_NOT_IMPLEMENTED`); only per-axis sweeps exist |
-| reserved-window evaluation (1986Q1-1988Q4) | cannot start — window closed and no validated model |
-| reproducibility bundle | partial (run kinds, manifests, digests, parameter hashes) |
+| B2 fidelity comparator | smoke infrastructure passes; actual paired F1/F2 comparison is blocked by B1's empty linkage |
+| B3 inference / Morris / Sobol | B3 not run pending linkage; Morris absent and Sobol remains gated on identification |
+| B4 hold-out / reserved protocol | hash-only/refusal infrastructure tests pass; no hold-out values read and reserved window stays closed |
+| D5 reproducibility bundle | 1-tick material run replay smoke passes; standalone helper is not yet CLI-integrated |
 
-Two dependency chains, both incomplete: **(i) model closure** — the frozen gates must pass,
-which no tested structural rule has achieved (two experiments, both rejected on evidence);
+Two dependency chains remain incomplete: **(i) model closure** — the frozen gates must pass,
+which no candidate in A1–A4 achieved; A7 records that the current structural ladder is
+exhausted;
 **(ii) identification** — a parameter→target linkage must be declared before any ABC/F1-F2
 inference exists, and that chain has not started. P06's mechanism verdicts, forcing ladder
 and sensitivity funnel all consume a validated, identified model, so their results would not
@@ -732,7 +770,9 @@ and F2 binding are recorded in `docs/phases/P06_FORCING_LADDER.md`.
 
 ## 12. Next steps
 
-Ordered by the evidence, not by the plan's original sequence:
+The Track A sequence is complete through its honest exit. Any continuation requires a
+separately declared structural redesign; the existing plan authorizes no additional
+mechanism. Ordered non-Track-A blockers remain:
 
 1. **Audit one tick's stock-flow and money-flow** (§E6): the credit and transport
    axes are measured and neither is the driver, so find where the value and the
