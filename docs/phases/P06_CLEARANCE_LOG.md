@@ -364,3 +364,10 @@ into the target-loading path (audit finding R4).
 - Change: added deterministic Morris elementary-effects screening for the eight declared W2 structural axes, an intermediate8 runner and CLI, and a Sobol guard that refuses an empty or non-identified parameter set. No Sobol calculation was run; no parameter identity or calibration status changed.
 - Check: `.venv/bin/hsm calibration morris-screen --trajectories 2 --levels 4 --seed 1729 --output-dir outputs/p06-w3-morris --json` → 18/18 arms completed 116 ticks with accounting checks; `.venv/bin/ruff check src tests` clean; `.venv/bin/pytest -q -p no:cacheprovider` → 403 passed.
 - Implementation commit: `9fc9963c1d878a3d737808d6ddf39f086a28f779`.
+
+## 2026-10-10 — W5 1968 institutional forks — OPEN
+
+- Evidence: `docs/phases/P06_1968_FORK.md`; all five named `tick-0044` checkpoints; `outputs/p06-w5-cost-no-reform/` refusal attempt.
+- Finding: all candidate checkpoints exist but are `material-checkpoint-v3`; current code requires v4. The pilot and all four alternate checkpoint probes refuse before simulation. The 0.633 s pilot and 0.573–0.657 s alternatives are CLI refusal times, not political-run cost; the degradation ladder cannot be applied. No arms or mechanism verdicts are fabricated.
+- Check: `.venv/bin/hsm fork --checkpoint outputs/p04-replay/checkpoints/tick-0044 --intervention config/interventions/no-reform.json --until 1985Q4 --output-dir outputs/p06-w5-cost-no-reform --json` → unsupported checkpoint version; `.venv/bin/python /tmp/probe_p06_checkpoints.py` → all alternatives same refusal.
+- Report commit: `4ed536be0c99d9658d85cdb0c55365e9cb748e42`.
