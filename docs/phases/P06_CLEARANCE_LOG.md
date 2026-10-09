@@ -24,3 +24,19 @@ own exit evidence and implementation commit; open gates remain explicitly open.
 - Check: `.venv/bin/ruff check src tests` → clean;
   `.venv/bin/pytest -q` → 358 passed.
 - Commit: `2eae29b feat(p06): add mechanism card schema and validator`.
+
+## 2026-10-10 — D2 Forcing ladder — PASS WITH H4 CERTIFICATE FAILURE RECORDED
+
+- Evidence: `config/p06/forcing_ladder.json`,
+  `docs/phases/P06_FORCING_LADDER.md`,
+  `outputs/p06-forcing-ladder-intermediate8-envelope/`.
+- Change: configured H0–H4 as the declared `credit_envelope_fraction` ramp 0.5–0.9,
+  with an explicit `intermediate8`-only runner and refusal of any other catalog. A
+  preliminary certified-price intervention was discarded after it hit the existing
+  deposit-coverage invariant; no gate was relaxed. F2 remains bound to Track A.
+- Check: `.venv/bin/hsm calibration forcing-ladder --output-dir
+  outputs/p06-forcing-ladder-intermediate8-envelope --json` completed 232 synthetic
+  ticks for all five rungs. H0–H3 certificates pass; H4 records periodic output residual
+  `1.3666e-6` against the `1e-6` cutoff. All accounting checks pass.
+  `.venv/bin/ruff check src tests` → clean; `.venv/bin/pytest -q` → 361 passed.
+- Commit: `021197b feat(p06): add intermediate H0-H4 forcing ladder`.
