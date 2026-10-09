@@ -500,6 +500,23 @@ logistics_pool[org] = transport_realized[transport activities of org]
 and the transport activities are the early-service tier, whose realized output is
 `produce_leontief(opening stock of their inputs, ...)`.
 
+Instrumenting `_group_factor` by call site over a full run ranks the binding
+constraints directly:
+
+| site | meaning | mean factor | zero-capacity groups | need |
+|---|---|---|---|---|
+| `material.py:1103` | **input funding** (producer cash for inputs) | **0.606** | 14 851 | **20.8 M** |
+| `material.py:1307` / `1314` | source availability, tier allocation rounds | 0.799 / **0.209** | 5 814 / 14 618 | 13.0 M / 4.2 M |
+| `material.py:1328` | fallback sourcing round | 0.567 | 3 899 | 0.42 M |
+| `material.py:1351` | **transport logistics pool** | **0.056** | 874 | 0.35 M |
+| `material.py:1373` / `1391` / `1410` | wholesale/retail handling, bank reserves | ~1.000 | 0 | - |
+
+So the largest loss by volume is **input funding**: organisations can fund only
+~61% of the inputs they order (20.8 M of need, 14 851 groups funded at zero), which
+starves production; the transport pool then caps what remains at ~6% of freight
+demand, and the source cells themselves hold only ~21% of what is claimed. This is
+a coupled financial-physical contraction, not a single bad parameter.
+
 Instrumenting `_group_factor` over a full run (1 739 calls) shows most groups at
 their capacity (mean factor 0.87-1.00) but a subset with **zero** capacity while
 still carrying need (e.g. a group with need 30 233 against capacity 304 013
