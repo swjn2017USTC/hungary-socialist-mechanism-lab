@@ -1,0 +1,191 @@
+{
+  "schema_version": "1",
+  "scope_decision": {
+    "decision": "path_b_reproduction_scope",
+    "decided_by": "user",
+    "date": "2026-10-10",
+    "statement": "The study is re-scoped to historical reproduction under declared behavioural assumptions. calibrated = 0 is the final disposition, not a pending gap: no behavioural parameter block is estimated, and none is promoted to identified.",
+    "basis": [
+      "B1 linkage decision: 0 of 6 behavioural blocks demonstrably identified (docs/phases/P05_B1_LINKAGE_PROMPT.md review, P06_CLEARANCE_LOG.md B1 entry).",
+      "Code audit: the one conditional candidate is broken. engine/trade.py::build_export_demands uses the declared trade parameter vectors scaled by Treasury cash, and engine/material.py consumes no external world slice, so p04_external_recipe_* has zero sensitivity to the admitted trade targets.",
+      "The observation layer collides across blocks: noise = measurement_error x observation.noise_scale x observation.declared_scale, and feature_bias_loading is identified only through its ratio with the reference denominators."
+    ],
+    "consequences": [
+      "P06 may start on the reproduction-scope basis; it must not claim inferred coalitions, ideology, information quality, opposition pressure or the external-policy process.",
+      "Mechanism cards may carry SUPPORTED/CONDITIONAL/WEAK/REJECTED only for mechanisms that do not require estimated parameters; calibration-dependent cards stay UNIDENTIFIED.",
+      "No Sobol or second-order sensitivity on unidentified parameters. Morris screening remains legitimate for reproduction-scope sensitivity and is deferred into the P06 funnel (OMP_PLAN 10.2).",
+      "The reserved window 1986Q1-1988Q4 stays closed; the hold-out is never used for selection."
+    ]
+  },
+  "waivers": [
+    {
+      "item": "gate1_closure_audit",
+      "reason": "The F2 kernel closure audit fails (status collapsed, output_liveness 0.0). Track A reached its honest exit A7: no tested structural rule met both terminal floors.",
+      "decided_by": "user",
+      "date": "2026-10-10"
+    },
+    {
+      "item": "frozen_acceptance_gates",
+      "reason": "Liveness, household service ratios, treasury self-financing and expiry still fail on the replay. Under the reproduction scope the gate table is reported as a result, not cleared.",
+      "decided_by": "user",
+      "date": "2026-10-10"
+    },
+    {
+      "item": "calibration_and_inference",
+      "reason": "identifiable_set is empty and no linkage exists, so no paired F1/F2 study and no ABC inference can run. Inference_status stays NOT_RUN.",
+      "decided_by": "user",
+      "date": "2026-10-10"
+    },
+    {
+      "item": "morris_screening",
+      "reason": "Deferred into P06 itself: the sensitivity funnel of OMP_PLAN 10.2 is a P06 work item, not a P06 precondition, and under the reproduction scope it screens declared structural parameters rather than estimating them.",
+      "decided_by": "user",
+      "date": "2026-10-10"
+    },
+    {
+      "item": "data_path_acquisition",
+      "reason": "Admitting the seven unadmitted target-role variables and the P05_REPORT 10b observables is a rights/coverage workstream owned by the user and is not required for the reproduction scope.",
+      "decided_by": "user",
+      "date": "2026-10-10"
+    }
+  ],
+  "items": [
+    {
+      "id": "gate1_closure_audit",
+      "kind": "unsatisfied",
+      "note": "hsm calibration audit-closure --scenario historical_f2_replay reports status collapsed with output_liveness 0.0",
+      "description": "the F2 kernel closure audit passes",
+      "required": true
+    },
+    {
+      "id": "frozen_acceptance_gates",
+      "kind": "unsatisfied",
+      "note": "liveness, household service ratios, treasury self-financing and expiry still fail on the replay",
+      "description": "all five frozen acceptance gates pass on the F2 replay",
+      "required": true
+    },
+    {
+      "id": "calibration_and_inference",
+      "kind": "unsatisfied",
+      "note": "identifiable_set is empty and no linkage exists, so no paired F1/F2 study or ABC inference can run",
+      "description": "a paired F1/F2 study and an ABC inference exist with convergence evidence",
+      "required": true
+    },
+    {
+      "id": "morris_screening",
+      "kind": "unsatisfied",
+      "note": "no Morris module exists; the OMP_PLAN 10.2 funnel is a P06 work item and is deferred into P06",
+      "description": "the Morris screening harness exists and runs",
+      "required": true
+    },
+    {
+      "id": "data_path_acquisition",
+      "kind": "unsatisfied",
+      "note": "the seven unadmitted target-role variables and the P05_REPORT 10b observables are not admitted",
+      "description": "new admissible observables are registered and frozen",
+      "required": true
+    },
+    {
+      "id": "suite_and_lint",
+      "kind": "local_checks",
+      "description": "ruff check src tests is clean and the recorded pytest evidence shows no failures",
+      "pytest_evidence": "outputs/p06-clearance/pytest.json",
+      "required": true
+    },
+    {
+      "id": "legacy_digest_reproduces",
+      "kind": "digest_reproduces",
+      "description": "the default historical_f2_replay run still yields digest 92f9ea0a...",
+      "expected": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "required": true
+    },
+    {
+      "id": "registry_consistency",
+      "kind": "internal",
+      "check": "registry_consistency",
+      "description": "every scenario name in the control file is a registered scenario",
+      "required": true
+    },
+    {
+      "id": "control_structure",
+      "kind": "internal",
+      "check": "control_structure",
+      "description": "terminal floors declared, linkage empty, identification counts as recorded",
+      "required": true
+    },
+    {
+      "id": "scope_statement_recorded",
+      "kind": "internal",
+      "check": "scope_statement",
+      "description": "P05_REPORT.md records the reproduction-scope decision in its classification and status sections",
+      "required": true
+    },
+    {
+      "id": "reserved_window_unread",
+      "kind": "internal",
+      "check": "reserved_window",
+      "description": "no recorded run ends at or after 1986Q1",
+      "required": true
+    },
+    {
+      "id": "data_manifest_frozen",
+      "kind": "json_field",
+      "path": "data/manifests/DATA_MANIFEST_v2.json",
+      "field": "missing_required",
+      "equals": [],
+      "description": "the frozen manifest declares no missing required artifacts",
+      "required": true
+    },
+    {
+      "id": "performance_benchmark",
+      "kind": "json_field",
+      "path": "outputs/p05-f2-benchmark/benchmark.json",
+      "field": "overall_gate",
+      "equals": "pass",
+      "description": "the Mac F2 performance gate passed",
+      "required": true
+    },
+    {
+      "id": "mechanism_cards",
+      "kind": "file_exists",
+      "paths": [
+        "config/p06/mechanism_card.schema.json",
+        "src/hsm_lab/calibration/mechanism_cards.py",
+        "tests/test_p06_mechanism_cards.py"
+      ],
+      "description": "M1-M11 card schema and validator",
+      "required": true
+    },
+    {
+      "id": "forcing_ladder",
+      "kind": "file_exists",
+      "paths": [
+        "config/p06/forcing_ladder.json",
+        "src/hsm_lab/calibration/forcing_ladder.py",
+        "docs/phases/P06_FORCING_LADDER.md"
+      ],
+      "description": "H0-H4 forcing ladder on the intermediate catalog",
+      "required": true
+    },
+    {
+      "id": "window_protocol",
+      "kind": "file_exists",
+      "paths": [
+        "src/hsm_lab/calibration/window_protocol.py",
+        "tests/test_p06_window_protocol.py"
+      ],
+      "description": "hold-out and reserved access policy",
+      "required": true
+    },
+    {
+      "id": "reproducibility_bundle",
+      "kind": "file_exists",
+      "paths": [
+        "src/hsm_lab/calibration/reproducibility_bundle.py",
+        "tests/test_p06_reproducibility_bundle.py"
+      ],
+      "description": "bundle assembler that reruns a recorded digest",
+      "required": true
+    }
+  ]
+}

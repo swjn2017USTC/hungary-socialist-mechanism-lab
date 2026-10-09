@@ -1,0 +1,314 @@
+"""Machine-checkable P06 clearance checklist (plan section 10).
+
+The checklist is declarative: ``config/calibration/p06_clearance.json`` carries the item
+list, the scope decision and the waivers, and this module only evaluates them.  A missing
+artifact fails loudly (status OPEN) unless the item is explicitly waived with a reason,
+a decider and a date — a waiver can never be silent.
+
+Statuses: ``PASS`` (checked and true), ``WAIVED`` (explicitly not required, with reason),
+``OPEN`` (checked and false, or not yet run).
+"""
+
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+
+@dataclass
+class ClearanceItem:
+    id: str
+    status: str
+    description: str
+    evidence: str = ""
+    waiver: dict[str, Any] | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "status": self.status,
+            "description": self.description,
+            "evidence": self.evidence,
+            "waiver": self.waiver,
+        }
+
+
+@dataclass
+class ClearanceReport:
+    scope_decision: dict[str, Any]
+    items: list[ClearanceItem] = field(default_factory=list)
+
+    @property
+    def open_items(self) -> list[ClearanceItem]:
+        return [item for item in self.items if item.status == "OPEN"]
+
+    @property
+    def cleared(self) -> bool:
+        return not self.open_items
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "scope_decision": self.scope_decision,
+            "cleared": self.cleared,
+            "counts": {
+                status: sum(1 for item in self.items if item.status == status)
+                for status in ("PASS", "WAIVED", "OPEN")
+            },
+            "items": [item.as_dict() for item in self.items],
+        }
+
+
+def _waiver_for(config: dict[str, Any], item_id: str) -> dict[str, Any] | None:
+    for waiver in config.get("waivers", []):
+        if str(waiver.get("item")) == item_id:
+            return waiver
+    return None
+
+
+def _check_local_checks(root: Path, item: dict[str, Any]) -> tuple[bool, str]:
+    lint = subprocess.run(
+        [".venv/bin/ruff", "check", "src", "tests"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if lint.returncode != 0:
+        return False, f"ruff exit {lint.returncode}: {lint.stdout.strip()[:200]}"
+    evidence = root / str(item.get("pytest_evidence", ""))
+    if not evidence.exists():
+        return False, (
+            f"pytest evidence missing at {item.get('pytest_evidence')}; regenerate with "
+            ".venv/bin/python -m pytest -q -p no:cacheprovider and record passed/failed "
+            "in that JSON (run outputs are local by policy)"
+        )
+    payload = json.loads(evidence.read_text())
+    failed = int(payload.get("failed", -1))
+    passed = int(payload.get("passed", 0))
+    if failed != 0 or passed <= 0:
+        return False, f"recorded pytest evidence: {passed} passed, {failed} failed"
+    return True, f"ruff clean; pytest evidence {passed} passed, 0 failed"
+
+
+def _check_digest(root: Path, item: dict[str, Any], *, with_runs: bool) -> tuple[bool, str]:
+    if not with_runs:
+        return False, "not run (pass --with-runs to reproduce the digest)"
+    from hsm_lab.contract.guards import load_research_contract, load_scenario
+    from hsm_lab.data.registry import DataRegistry
+    from hsm_lab.engine.material import run_material
+
+    scenario = str(item.get("scenario", "historical_f2_replay"))
+    spec = load_scenario(root, scenario)
+    contract = load_research_contract(root)
+    registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
+    output = root / "outputs" / "p06-clearance-digest"
+    if output.exists():
+        shutil.rmtree(output)
+    run = run_material(spec, output, contract, registry, checkpoint_every=0)
+    expected = str(item["expected"])
+    digest = str(run.deterministic_replay_digest)
+    return digest == expected, f"{scenario} digest {digest[:16]}... (expected {expected[:16]}...)"
+
+
+def _check_registry_consistency(root: Path) -> tuple[bool, str]:
+    from hsm_lab.contract.guards import AVAILABLE_SCENARIOS
+
+    control = json.loads((root / "config" / "calibration" / "p05.json").read_text())
+    declared = sorted(set(str(v) for v in (control.get("scenarios") or {}).values()))
+    unknown = [name for name in declared if name not in AVAILABLE_SCENARIOS]
+    if unknown:
+        return False, f"control-file scenario names not registered: {unknown}"
+    return True, f"all {len(declared)} control-file scenario names are registered"
+
+
+def _check_control_structure(root: Path) -> tuple[bool, str]:
+    control = json.loads((root / "config" / "calibration" / "p05.json").read_text())
+    floors = (control.get("gates") or {}).get("terminal_floor")
+    if not floors:
+        return False, "gates.terminal_floor is not declared"
+    identity = control.get("identification") or {}
+    counts: dict[str, int] = {}
+    for label in identity.values():
+        counts[str(label)] = counts.get(str(label), 0) + 1
+    if counts.get("fixed", 0) != 9 or counts.get("unidentified", 0) != 6:
+        return False, f"identification counts changed: {counts}"
+    if control.get("linkage") != []:
+        return False, f"linkage is not empty under the reproduction scope: {control.get('linkage')}"
+    return True, (
+        f"terminal floors declared; linkage empty; identification {counts}"
+    )
+
+
+def _normalize_whitespace(text: str) -> str:
+    """Collapse whitespace so a markdown line wrap cannot break a content check."""
+    return " ".join(text.split())
+
+
+def _check_scope_statement(root: Path, marker: str) -> tuple[bool, str]:
+    report = root / "docs" / "phases" / "P05_REPORT.md"
+    if not report.exists():
+        return False, "P05_REPORT.md missing"
+    text = _normalize_whitespace(report.read_text())
+    if _normalize_whitespace(marker) not in text:
+        return False, f"scope statement marker absent from P05_REPORT.md: {marker!r}"
+    return True, "P05_REPORT.md records the reproduction-scope decision"
+
+
+def _check_reserved_window(root: Path) -> tuple[bool, str]:
+    offenders: list[str] = []
+    checked = 0
+    for manifest in sorted(root.glob("outputs/*/manifest.json")):
+        try:
+            payload = json.loads(manifest.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        quarter = payload.get("last_completed_quarter")
+        if not quarter:
+            continue
+        checked += 1
+        try:
+            year = int(str(quarter)[:4])
+        except ValueError:
+            offenders.append(f"{manifest.parent.name}: unparseable {quarter!r}")
+            continue
+        if year >= 1986:
+            offenders.append(f"{manifest.parent.name} ends {quarter}")
+    if offenders:
+        return False, "runs reaching the reserved window: " + "; ".join(offenders[:5])
+    return True, f"{checked} recorded runs end at or before 1985Q4"
+
+
+def _check_json_field(root: Path, item: dict[str, Any]) -> tuple[bool, str]:
+    path = root / str(item["path"])
+    if not path.exists():
+        return False, f"missing artifact {item['path']}"
+    payload = json.loads(path.read_text())
+    actual = payload.get(str(item["field"]))
+    expected = item["equals"]
+    if actual != expected:
+        return False, f"{item['path']}[{item['field']}] = {actual!r}, expected {expected!r}"
+    return True, f"{item['path']}[{item['field']}] = {actual!r}"
+
+
+def _check_files_exist(root: Path, item: dict[str, Any]) -> tuple[bool, str]:
+    missing = [str(p) for p in item.get("paths", []) if not (root / str(p)).exists()]
+    if missing:
+        return False, "missing: " + ", ".join(missing)
+    return True, f"{len(item.get('paths', []))} artifacts present"
+
+
+def run_clearance(
+    root: Path,
+    *,
+    config_path: Path | None = None,
+    with_runs: bool = False,
+    scope_marker: str = "reproduction under declared behavioural assumptions",
+) -> ClearanceReport:
+    """Evaluate every declared clearance item against the repository state."""
+    root = Path(root)
+    config_file = config_path or root / "config" / "calibration" / "p06_clearance.json"
+    config = json.loads(Path(config_file).read_text())
+    report = ClearanceReport(scope_decision=dict(config.get("scope_decision") or {}))
+
+    for item in config.get("items", []):
+        item_id = str(item["id"])
+        kind = str(item["kind"])
+        if kind == "local_checks":
+            passed, evidence = _check_local_checks(root, item)
+        elif kind == "digest_reproduces":
+            passed, evidence = _check_digest(root, item, with_runs=with_runs)
+        elif kind == "json_field":
+            passed, evidence = _check_json_field(root, item)
+        elif kind == "unsatisfied":
+            # An item that is required by default and can only disappear through an
+            # explicit, recorded waiver: without one it is OPEN, never silently absent.
+            passed, evidence = False, f"not satisfied: {item.get('note', 'no note')}"
+        elif kind == "file_exists":
+            passed, evidence = _check_files_exist(root, item)
+        elif kind == "internal":
+            check = str(item.get("check"))
+            if check == "registry_consistency":
+                passed, evidence = _check_registry_consistency(root)
+            elif check == "control_structure":
+                passed, evidence = _check_control_structure(root)
+            elif check == "scope_statement":
+                passed, evidence = _check_scope_statement(root, scope_marker)
+            elif check == "reserved_window":
+                passed, evidence = _check_reserved_window(root)
+            else:
+                passed, evidence = False, f"unknown internal check {check!r}"
+        else:
+            passed, evidence = False, f"unknown item kind {kind!r}"
+
+        waiver = _waiver_for(config, item_id)
+        if passed:
+            status = "PASS"
+        elif waiver is not None:
+            status = "WAIVED"
+        else:
+            status = "OPEN"
+        report.items.append(
+            ClearanceItem(
+                id=item_id,
+                status=status,
+                description=str(item.get("description", "")),
+                evidence=evidence,
+                waiver=waiver,
+            )
+        )
+    return report
+
+
+def render_markdown(report: ClearanceReport) -> str:
+    """Render the checklist as the committed clearance document."""
+    decision = report.scope_decision
+    lines = [
+        "# P06 clearance checklist",
+        "",
+        "Generated by `hsm calibration p06-clearance`. Statuses: PASS (checked true), "
+        "WAIVED (explicitly not required, with a recorded reason), OPEN (checked false or "
+        "not yet run — the command exits non-zero while any OPEN item remains).",
+        "",
+        f"- Scope decision: `{decision.get('decision', 'undecided')}` "
+        f"(decided by {decision.get('decided_by', '?')} on {decision.get('date', '?')})",
+        f"- Statement: {decision.get('statement', '')}",
+        "",
+        "## Items",
+        "",
+        "| id | status | evidence |",
+        "|---|---|---|",
+    ]
+    for item in report.items:
+        lines.append(f"| `{item.id}` | **{item.status}** | {item.evidence} |")
+    lines += ["", "## Waivers", ""]
+    waiver_rows = [item for item in report.items if item.waiver is not None]
+    if waiver_rows:
+        lines += ["| id | reason | decided by | date |", "|---|---|---|---|"]
+        for item in waiver_rows:
+            waiver = item.waiver or {}
+            reason = str(waiver.get("reason", "")).replace("|", "/")
+            lines.append(
+                f"| `{item.id}` | {reason} | {waiver.get('decided_by', '?')} | "
+                f"{waiver.get('date', '?')} |"
+            )
+    else:
+        lines.append("None.")
+    lines += ["", "## Consequences recorded with the decision", ""]
+    for consequence in decision.get("consequences", []):
+        lines.append(f"- {consequence}")
+    lines += [
+        "",
+        f"**Cleared:** {'yes' if report.cleared else 'no'} "
+        f"({len(report.open_items)} open item(s) not waived).",
+        "",
+    ]
+    if report.open_items:
+        lines.append("Open items:")
+        for item in report.open_items:
+            lines.append(f"- `{item.id}`: {item.evidence}")
+        lines.append("")
+    return "\n".join(lines)

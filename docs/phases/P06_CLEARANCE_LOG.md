@@ -287,3 +287,29 @@ they change what P06 may claim:
   dependent items).
 
 Not acceptable under either path: promoting a block to `identified` to unblock the pipeline.
+
+## 2026-10-10 — Scope decision: path B (reproduction), and the executable clearance checklist
+
+The user chose **path B**: the study is re-scoped to *historical reproduction under declared
+behavioural assumptions* with `calibrated = 0` as the final disposition. Rationale and
+consequences are recorded in `config/calibration/p06_clearance.json` and `P05_REPORT.md` §6.1;
+Track B is closed and the master plan carries the amendment.
+
+Delivered with the decision:
+
+- **`config/calibration/p06_clearance.json`** — declarative item list, scope decision and five
+  waivers (each with reason, decider and date).
+- **`src/hsm_lab/calibration/clearance.py`** + **`hsm calibration p06-clearance`** — evaluates
+  every item against repository state, writes `docs/phases/P06_CLEARANCE.md`, and **exits
+  non-zero while any item is OPEN and unwaived**. Statuses: PASS / WAIVED / OPEN.
+- **`docs/phases/P06_CLEARANCE.md`** (generated) — 12 items PASS, 5 items WAIVED, 0 open.
+- Tests: `tests/test_p06_clearance.py` now has 6 tests, including one that pins the
+  silent-waiver hole found during implementation (a waiver written for an item absent from the
+  item list rendered "Waivers: None" while the decision claimed five).
+
+Verified by the checklist itself: legacy digest `92f9ea0a…` reproduced in a fresh run; ruff
+clean; recorded pytest evidence 388 passed / 0 failed; control structure (floors declared,
+`linkage = []`, identification 9 fixed / 6 unidentified); registry consistency; manifest
+`missing_required = []`; performance `overall_gate = pass`; the four scaffolding artifacts;
+and **93 recorded runs all ending at or before 1985Q4** (the reserved window has never been
+reached).

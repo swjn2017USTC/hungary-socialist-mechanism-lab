@@ -218,21 +218,69 @@ coverage** (policy strengths are carried-forward/literature proxies) and the
 political run is a prior-constrained mechanism baseline, not an autonomous
 explanation of historical policy.
 
-## 6. Parameter classification
+## 6. Parameter classification (final disposition: reproduction scope)
 
 | Class | Count | Parameters |
 |---|---|---|
-| calibrated | **0** | — (no admissible linkage ⇒ nothing estimated; `inference_status = NOT_RUN`) |
-| fixed (structurally determined) | 4 | `p02_material_cmea_contract_prior`, `p02_material_cmea_uncertainty_prior`, `p02_material_oil_warmup_prior`, `p04_broker_prior` |
+| calibrated | **0** | — (no admissible linkage exists; `inference_status = NOT_RUN`) |
+| fixed (structurally determined) | 9 | the three P02 material priors, `p04_broker_prior`, and the five P05 structural design rules (`input_credit_earmark`, `interest_sink_remittance`, `interest_sink_recipient`, `fiscal_turnover_remittance`, `household_savings_reentry`) |
 | weakly identified | **0** | — |
 | unidentified (prior-constrained) | 6 | `p04_coalition_prior`, `p04_culture_prior`, `p04_external_recipe_prior`, `p04_information_prior`, `p04_observation_prior`, `p04_opposition_prior` |
 
-Identity and disposition are recorded separately: all ten parameters run at a
-fixed value, but an `UNIDENTIFIED` label means "prior-constrained", not
-"historically determined".
+Identity and disposition are recorded separately: all fifteen parameters run at a fixed
+value, but an `UNIDENTIFIED` label means "prior-constrained", not "historically
+determined". No hidden scalar was introduced; every declared latent parameter is
+accounted for in exactly one class.
 
-No hidden scalar was introduced; every declared latent parameter is accounted
-for in exactly one class.
+### 6.1 Scope decision (path B, decided 2026-10-10)
+
+The study is **re-scoped to historical reproduction under declared behavioural
+assumptions**. `calibrated = 0` is the *final disposition*, not a pending gap: no
+behavioural block is estimated and none is promoted to `identified`. This is the
+consequence of the B1 linkage decision and of the code audit recorded in
+`P06_CLEARANCE_LOG.md`.
+
+What the study may claim: how well the model reproduces the admitted annual series
+(industrial output and the five featured physical products, the three harvest series,
+consumption, investment, import/export volume indices) **under externally stipulated
+behavioural assumptions**.
+
+What it may **not** claim: that it inferred coalition preferences, ideology, bureaucratic
+information quality, reporting incentives, opposition pressure, or the external-policy
+process from those economic observations. Mechanism cards may carry
+SUPPORTED/CONDITIONAL/WEAK/REJECTED only for mechanisms that do not require estimated
+parameters; calibration-dependent cards stay UNIDENTIFIED. No Sobol or second-order
+sensitivity may be reported for unidentified parameters.
+
+### 6.2 Why the six blocks are unidentified (code-level, not a data complaint)
+
+1. **No route to the admitted observations.** `engine/trade.py::build_export_demands`
+   builds desired exports from the declared parameter vectors
+   `trade.cmea_export_demands` / `convertible_export_demands` scaled by the Treasury's
+   payable cash, and `engine/material.py` consumes no external world slice at all
+   (`ExternalWorldSlice` appears only in `politics.py`, `opposition.py`, `policy.py`,
+   `technology.py`, `political_run.py`). The `p04_external_recipe_*` parameters therefore
+   have **zero sensitivity** to the admitted trade targets; imports are the same
+   (declared vectors plus a credit envelope). The one candidate linkage considered during
+   review fails its own first test and is rejected.
+2. **Cross-block collision in the observation layer.** `engine/observation.py` publishes
+   `clip(truth + noise + bias, lower, upper)` with
+   `noise ∝ information.measurement_error × observation.noise_scale × observation.declared_scale`.
+   Only that three-way product is identified — a collision spanning two blocks.
+3. **Ratio-only identification of the bias loading.** `bias = feature_bias_loading @
+   (discrepancy / reference)` with `need`/`inventory`/`capacity` references, so each
+   loading is identified only through its ratio with its reference.
+4. **Clipping nonlinearity** whenever a feature rests on its `[0, 1]` (or `[-1, 1]` for
+   growth) bound.
+
+The six blocks also collide *with each other* through the same policy input: coalition
+betas multiply the published features while the information and observation blocks
+determine when and how accurately those features are formed, so aggregate outcomes cannot
+separate them without independent measurements of the reporting chain.
+
+Any promotion of a block to `identified` — or any calibration claim — would require new
+admissible observables (P05_REPORT 10b) and a new registry version; it is out of scope for
+this study as re-scoped.
 
 ## 7. Data acquisition, rights, coverage, exposure
 
@@ -727,46 +775,49 @@ needed before restarting the ladder.
 | B4 hold-out / reserved protocol | hash-only/refusal infrastructure tests pass; no hold-out values read and reserved window stays closed |
 | D5 reproducibility bundle | 1-tick material run replay smoke passes; standalone helper is not yet CLI-integrated |
 
-Two dependency chains remain incomplete: **(i) model closure** — the frozen gates must pass,
-which no candidate in A1–A4 achieved; A7 records that the current structural ladder is
-exhausted;
-**(ii) identification** — a parameter→target linkage must be declared before any ABC/F1-F2
-inference exists, and that chain has not started. P06's mechanism verdicts, forcing ladder
-and sensitivity funnel all consume a validated, identified model, so their results would not
-be interpretable today.
+### Can P06 start? **Yes — on the reproduction scope, with named waivers** (2026-10-10)
 
-What can start now without a validated model: the mechanism-card schema, the Morris/Sobol
-harness (on the toy catalog), and the H-ladder *infrastructure*. Their verdicts cannot.
+Path B was chosen: the study is re-scoped to historical reproduction under declared
+behavioural assumptions (§6.1). Under that decision the two dependency chains are
+dispositioned as follows.
 
-### Can P06 start? **No.**
+**(i) Model closure.** A7 is the honest exit: no candidate in A1–A4 met both terminal floors,
+and the frozen gates still fail. Under the reproduction scope the gate table is *reported as
+a result*, not required to pass. Waived with reason in the checklist.
 
-Three independent reasons, each from this report's own measurements:
+**(ii) Identification.** The chain is closed, not pending. B1 concluded that no linkage
+exists, and the code audit confirmed the one conditional candidate is broken (§6.2), so
+`calibrated = 0` is final. Waived with reason in the checklist.
 
-1. **The plan's own dependency.** OMP_PLAN §9 makes Gate 1 (which includes the
-   closure audit) a precondition for Gate 2, and P06 assumes a frozen engine that
-   is "原则上不再大改" (§10.1). Gate 1 has a FAILED dimension and the engine is not
-   frozen.
-2. **P06's outputs would not be interpretable.** Its deliverables are M1-M11
-   mechanism verdicts, the H0-H4 forcing ladder, the 1968/1973/political
-   counterfactual arms and the final release. On the measured F2 baseline the
-   economy collapses (production ratio 0.11, treasury zero at tick 17, 70% of the
-   allocated plan never delivered, producers funding only 61% of ordered inputs),
-   so every counterfactual difference would be read off a collapse trajectory
-   instead of off the mechanisms.
-3. **The classification is empty.** `calibrated = 0` and `weakly identified = 0`,
-   with six priors declared UNIDENTIFIED. P06's sensitivity funnel
-   (OAT → Morris → 6-10 key parameters → Sobol) needs a model whose parameters are
-   at least identified; running it now would produce Sobol indices for parameters
-   that no observable constrains.
+| P06 prerequisite | status under the reproduction scope |
+|---|---|
+| Gate 1 closure audit (H') | **WAIVED** — still `status collapsed`; reported as a result |
+| Gate 2 calibration / validation | **WAIVED** — `linkage = []`, `identifiable_set = []`, `inference_status = NOT_RUN` |
+| F2 validated | **WAIVED** — 4 of 5 frozen gates fail; reported |
+| parameter identification for the §10.2 funnel | **WAIVED** — no Sobol on unidentified parameters |
+| Morris screening | **DEFERRED into P06** (§10.2 is a P06 work item, not a precondition) |
+| mechanism-card schema M1–M11 | present (schema + validator); no verdicts registered |
+| forcing ladder H0–H4 | present on `intermediate8` (H0–H3 pass, H4 misses the periodic output tolerance); F2 binding recorded |
+| B2 fidelity comparator / B3 inference | infrastructure present; the run stays blocked by the final `linkage = []` |
+| B4 hold-out / reserved protocol | present; no hold-out values read, reserved window never run (verified: 0 of 92 recorded runs reach 1986Q1) |
+| D5 reproducibility bundle | 1-tick replay smoke passes; not yet CLI-integrated |
+| legacy digest preserved | verified — `92f9ea0a…` through every mechanism commit |
 
-What is safe to begin **before** P06, and is genuinely P06-precursor work: the
-sensitivity **infrastructure** (Morris/Sobol harness on a working toy catalog) and
-the mechanism-card **schema**, both of which need no validated engine. The
-verdicts themselves must wait.
+The machine-checkable checklist is `docs/phases/P06_CLEARANCE.md`, generated by
+`hsm calibration p06-clearance` from `config/calibration/p06_clearance.json`; it exits
+non-zero while any item is OPEN and unwaived, so a silent waiver is impossible. The
+precursor work log is `docs/phases/P06_CLEARANCE_LOG.md`.
 
-The precursor work status is tracked in `docs/phases/P06_CLEARANCE_LOG.md`; D1 evidence
-is in `tests/test_p06_mechanism_cards.py`, and D2's intermediate-catalog certificates
-and F2 binding are recorded in `docs/phases/P06_FORCING_LADDER.md`.
+**What P06 must not do** under this scope: promote any block to `identified`; report Sobol
+or second-order indices for unidentified parameters; write SUPPORTED verdicts for
+calibration-dependent mechanism cards; use the hold-out for selection; or read the reserved
+window (its harness refuses without an explicit P06 opening recorded in a manifest).
+
+**What P06 can deliver** on this basis: the reproduction-scope baseline report, mechanism
+cards whose verdicts rest on declared structural rules and on the admitted series, the
+forcing ladder and 1968/1973 counterfactuals interpreted as *conditional* on the declared
+behavioural assumptions, and the reproducibility bundle. Their interpretation must carry
+that qualification everywhere.
 
 ## 12. Next steps
 

@@ -608,6 +608,44 @@ def calibration_audit_leak(
     _guard(action, json_mode)
 
 
+@calibration_app.command("p06-clearance")
+def calibration_p06_clearance(
+    output: Path = typer.Option(
+        Path("docs/phases/P06_CLEARANCE.md"), "--output", help="Checklist document to write."
+    ),
+    with_runs: bool = typer.Option(
+        False, "--with-runs", help="Also reproduce the legacy digest (adds one 116-tick run)."
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Evaluate the declared P06 clearance checklist and write the document."""
+
+    def action() -> None:
+        from hsm_lab.calibration.clearance import render_markdown, run_clearance
+
+        root = _repo_root()
+        report = run_clearance(root, with_runs=with_runs)
+        target = Path(output)
+        if not target.is_absolute():
+            target = root / target
+        target.write_text(render_markdown(report))
+        payload = report.as_dict()
+        payload["checklist_path"] = str(target)
+        _emit(
+            payload,
+            json_mode,
+            [
+                f"{item.id}: {item.status} - {item.evidence}"
+                for item in report.items
+            ]
+            + [f"cleared: {report.cleared}"],
+        )
+        if report.open_items:
+            raise typer.Exit(1)
+
+    _guard(action, json_mode)
+
+
 @data_app.command("audit")
 def data_audit(
     online: bool = typer.Option(False, "--online", help="HEAD-check metadata locators."),
