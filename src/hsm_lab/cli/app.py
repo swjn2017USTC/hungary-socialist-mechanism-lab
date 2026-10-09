@@ -449,6 +449,62 @@ def calibration_audit_closure(
     _guard(action, json_mode)
 
 
+@calibration_app.command("axis-sweep")
+def calibration_axis_sweep(
+    axis: str = typer.Option(
+        ...,
+        "--axis",
+        help="credit_envelope_fraction or transport_capacity_scale.",
+    ),
+    points: str = typer.Option(
+        ..., "--points", help="Comma-separated axis values, e.g. 0.5,0.75,1.0."
+    ),
+    scenario: str = typer.Option(
+        "historical_f2_replay", "--scenario", help="Material scenario to sweep."
+    ),
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Run the gate metrics once per value of one declared axis (P05 §E6)."""
+
+    def action() -> None:
+        from hsm_lab.calibration.axis_sweep import AXES, run_axis_sweep
+        from hsm_lab.data.registry import DataRegistry
+
+        if axis not in AXES:
+            raise typer.BadParameter(f"unknown axis {axis!r}; expected one of {AXES}")
+        values = [float(part) for part in points.split(",") if part.strip()]
+        if not values:
+            raise typer.BadParameter("--points must list at least one value")
+        root = _repo_root()
+        contract = load_research_contract(root)
+        spec = load_scenario(root, scenario)
+        registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
+        target = _fresh_output_dir(output_dir, f"p05-axis-{axis}")
+        results = run_axis_sweep(
+            spec, contract, registry, axis=axis, points=values, output_root=target
+        )
+        _emit(
+            {
+                "status": "measured",
+                "command": "calibration axis-sweep",
+                "axis": axis,
+                "scenario_id": spec.scenario_id,
+                "points": [point.as_dict() for point in results],
+                "output_dir": str(target),
+            },
+            json_mode,
+            [
+                f"{point.value:g}: liveness {point.liveness:.4f} "
+                f"expired tail {point.expired_services_tail:,.0f} "
+                f"treasury zero {point.treasury_zero_tick}"
+                for point in results
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
 @data_app.command("audit")
 def data_audit(
     online: bool = typer.Option(False, "--online", help="HEAD-check metadata locators."),

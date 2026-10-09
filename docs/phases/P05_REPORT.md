@@ -545,6 +545,56 @@ delivered + physical_delivery_blocked + financial_delivery_blocked == allocated
 
 for every demand cell, which is why that table can be read directly.
 
+### E6 — the two candidate levers, measured (steps 1-2-3)
+
+The E5 ranking named input funding first and transport cover second, so both were
+swept with the new, re-runnable tool (`hsm calibration axis-sweep`, which runs the
+historical replay baseline once per declared value and reports the frozen gate
+metrics; outputs stay under the git-ignored `outputs/`).
+
+```
+hsm calibration axis-sweep --axis credit_envelope_fraction --points 0.5,0.75,1.0
+hsm calibration axis-sweep --axis transport_capacity_scale --points 1,4,16
+```
+
+| `credit_envelope_fraction` | liveness | expired tail | treasury zero |
+|---|---|---|---|
+| 0.5 (as declared) | 0.1116 | 11 273 | tick 18 |
+| 0.75 | 0.1160 | 9 290 | tick 31 |
+| 1.0 | **0.0396** | **5 160** | **tick 48** |
+
+| `transport_capacity_scale` | liveness | expired tail | treasury zero |
+|---|---|---|---|
+| 1 (as declared) | 0.1116 | 11 273 | tick 18 |
+| 4 | 0.2612 | 18 571 | tick 6 |
+| 16 | 0.3190 | 32 448 | tick 4 |
+
+Readings:
+
+* **Raising the credit envelope does not restore liveness** and at 1.0 it makes the
+  ratio worse (0.0396) while it *does* prolong the payment chain (treasury zero
+  moves 18 → 48) and nearly eliminates expiry (11 273 → 5 160). It funds a longer
+  run of a still-contracting economy.
+* **Raising transport capacity helps but saturates**: 0.11 → 0.26 → 0.32 at x4/x16,
+  with fresh expiry and an earlier treasury break because more goods now move
+  through a chain the payment system cannot settle. Far from the 0.8 gate, and x32
+  is refused by the Treasury working-capital gate at initialisation.
+* The transport sector was never starved of *input cover* (its declared capacity is
+  60 000, its target 54 000 and its realised output 54 000 at tick 0 with several
+  quarters of inputs seeded); what binds is the ratio of transport *capacity* to
+  the freight the goods flows demand (pool/need ~0.54 at the declared capacity).
+* Handling capacity, ordering and funding are all excluded by measurement (§E5).
+
+**Verdict: neither lever is the collapse driver, so neither is adopted.** Changing
+`credit_envelope_fraction` or the transport capacity constant would move every
+baseline without fixing the failure, which the project's own rules forbid. The
+remaining explanation is a per-tick **value/money leak** that no single parameter
+axis exposes: production, delivered goods and the payment chain all contract
+together from the first quarters, and both sweeps only change *how fast* the same
+contraction is reached. The next work is a stock-flow / money-flow audit of one
+tick (where each unit of money and each unit of produced value goes), not another
+parameter search.
+
 ## 11. Status summary — Gate 1 / Gate 2 (2026-10-09)
 
 This is the one-page state of P05 as it actually stands after the E4/E5 work.
@@ -589,6 +639,12 @@ Frozen acceptance gates on the historical replay baseline (116 ticks):
 Parameter classification (unchanged, §6): **calibrated 0 / fixed 4 / weakly
 identified 0 / unidentified 6**. Nothing is labelled estimated.
 
+### Steps 1-2 of §12's list (the two candidate levers) are measured and negative
+
+`credit_envelope_fraction` and transport capacity were swept on the replay baseline
+(§E6): neither restores liveness, so neither is adopted and F2 remains
+`not_validated`. The blocking work is now the stock-flow / money-flow audit.
+
 ### Can P06 start? **No.**
 
 Three independent reasons, each from this report's own measurements:
@@ -619,17 +675,13 @@ verdicts themselves must wait.
 
 Ordered by the evidence, not by the plan's original sequence:
 
-1. **Fix the largest measured contraction — input funding** (`material.py:1103`,
-   mean factor 0.606 over 20.8 M of need, 14 851 groups funded at zero): decide the
-   working-capital / credit stance (the registry already carries
-   `credit_stock_cap_quarters`). This is a calibration/institutional decision and
-   changes every baseline, so it is **not** made here.
-2. **Repair transport cover** (§E5): capacity is 128 000 but the carriers' opening
-   inputs realise ~730 units, so `logistics_pool = 0.7 * transport_realized` caps
-   every delivery in the economy.
-3. **Re-run the frozen acceptance gates** on 116/232 ticks and only then re-test a
-   demand-following target rule (step 6 showed that capping output before funding
-   and freight work starves the delivery chain). F2 stays
+1. **Audit one tick's stock-flow and money-flow** (§E6): the credit and transport
+   axes are measured and neither is the driver, so find where the value and the
+   money leave the circuit each quarter before spending another parameter. This is
+   the only step that can unblock Gate 1's failed closure audit.
+2. Re-run the frozen acceptance gates on 116/232 ticks after that audit, and only
+   then re-test a demand-following target rule (step 6 showed that capping output
+   before the circuit closes starves the delivery chain). F2 stays
    `validation_status = not_validated` until those gates pass.
 4. **Declare the parameter→target linkage** (research decision), then run
    `screen` → `fidelity` → F1/F2 inference. Until then `identifiable_set = []`,
