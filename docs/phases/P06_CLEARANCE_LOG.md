@@ -53,7 +53,7 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   --points 0.5 --output-dir outputs/p06-a0-terminal-floor-smoke --json` → 116 ticks;
   T1 28,074.08 (fail), T2 1,667.96 (fail), T3 pass. `ruff check src tests` clean;
   `.venv/bin/pytest -q -p no:cacheprovider` → 362 passed.
-- Commit: pending.
+- Commit: `c966e90 feat(p05): declare terminal acceptance floors`.
 
 ## 2026-10-10 — A1 Phase 0 Interest/fiscal parameter declaration — PASS
 
@@ -69,7 +69,7 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   `92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d`; all 14 original
   Parquet files are byte-identical to the same-head control, preserving its frozen gate
   table. Focused Ruff clean; Phase 0/input-credit tests → 7 passed.
-- Commit: pending.
+- Commit: `4a4de29 feat(p05): declare the interest-sink and fiscal-remittance parameters`.
 
 ## 2026-10-10 — A1 Phase 1 Interest sink and turnover transfers — PASS
 
@@ -87,7 +87,7 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   digest remained `92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d`,
   with all 14 Parquet files byte-identical to the original control. Full Ruff clean;
   `.venv/bin/pytest -q -p no:cacheprovider` → 383 passed.
-- Commit: pending.
+- Commit: `f8e4ba5 feat(p05): route the interest sink and the turnover remittance as transfers`.
 
 ### Track A2 — source-tier priority (completed)
 
@@ -95,3 +95,53 @@ own exit evidence and implementation commit; open gates remain explicitly open.
 - `production_first` control preserved digest `92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d`.
 - `investment_first` had no residual but failed both terminal floors and worsened household guardrails; H-A2 falsified. No defaults changed.
 - Continue to A3 because no A2 arm met T1 or T2.
+
+### Track A3 — bounded household savings re-entry (completed)
+
+- Plan: `P05_A3_SAVINGS_REENTRY_PLAN.md`; results: `P05_A3_SAVINGS_REENTRY_EXPERIMENT.md`.
+- The 0.0 control preserved the required replay digest, original gate inputs, and all 14
+  original Parquet files byte-for-byte. All three positive arms passed accounting but
+  failed T1/T2 and worsened household unmet availability; H-A3 falsified.
+- No default changed; continue to A4 because no arm met either terminal floor.
+
+- Commit: `450341e feat(p05): add bounded household savings re-entry`.
+
+### A1 Phases 2–4 — interest/fiscal arm run and decision (completed; partial result)
+
+- Evidence: `outputs/p05-interest-fiscal-arms/` (ignored),
+  `docs/phases/P05_INTEREST_FISCAL_EXPERIMENT.md`, and the A1 report in P05_REPORT §E8.
+- Check: seven registered arms attempted for 116 ticks; B0/F1/N1 completed, four
+  interest-remittance arms were rejected on negative bank reserves. F1 prevented Treasury
+  from reaching zero but violated household guardrails. No default adopted; H3 falsified,
+  H4 partial, H2 not validly testable on a complete accepted interest arm.
+- Commit: `42d13e7 docs(p05): record the interest and fiscal circuit experiment`.
+
+### Track B2 — paired fidelity comparison infrastructure (infrastructure PASS; run blocked)
+
+- Evidence: `src/hsm_lab/calibration/fidelity.py` and
+  `tests/test_calibration_fidelity_paired.py`.
+- Check: deterministic 16-vector × 3-pair smoke comparison reports bias, p90, Spearman and
+  direction metrics; missing-pair and constant-statistic inputs are refused. The real
+  fidelity command still returns `NO_IDENTIFIABLE_PARAMETERS`; no model comparison or
+  inference ran because B1 linkage is not supplied.
+- Commit: recorded with B4/D5 infrastructure below.
+
+### Track B4 — hold-out/reserved access protocol (infrastructure PASS)
+
+- Evidence: `src/hsm_lab/calibration/window_protocol.py` and
+  `tests/test_p06_window_protocol.py`.
+- Check: 11 tests pass; protected reads are refused before the reader runs unless the
+  explicit phase/inference/manifest requirements are met. Hold-out projection contains
+  only a hash and identity. The helper is not wired into the target-loading path; the
+  reserved window remains closed.
+- Commit: recorded with B2/D5 infrastructure below.
+
+### Track D5 — reproducibility bundle (smoke PASS; production integration partial)
+
+- Evidence: `src/hsm_lab/calibration/reproducibility_bundle.py` and
+  `tests/test_p06_reproducibility_bundle.py`.
+- Check: 2 tests pass; a one-tick `intermediate8` run is assembled and rerun from a fresh
+  output directory with matching digest and parameter hash; tampered capture is refused.
+  The helper currently is not wired to a CLI and only supports completed material runs
+  ending by 1985Q4.
+- Commit: recorded with B2/B4 infrastructure below.
