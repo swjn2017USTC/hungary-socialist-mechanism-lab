@@ -130,7 +130,7 @@ def test_fidelity_reports_the_unimplemented_paired_study_for_a_candidate_set(
     config = _write_registries(tmp_path, linked=True)
     payload = prior_fidelity(tmp_path, config=config, stage="prior")
     # a candidate exists, so the stage must not pretend the study ran
-    assert payload["status"] == "PAIRED_STUDY_NOT_IMPLEMENTED"
+    assert payload["status"] == "PAIRED_RUNS_REQUIRED"
     assert payload["candidates"] == ["p_target"]
     assert payload["paired_study"] is None
     assert "prior_vectors" in payload["required_inputs"]

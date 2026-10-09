@@ -162,4 +162,12 @@ own exit evidence and implementation commit; open gates remain explicitly open.
 - Decision: no valid arm from A1–A4 meets both terminal floors. Frozen liveness, service,
   treasury-self-financing and expiry gates remain blocked. Interest-remittance arms fail on
   negative bank reserves. No default or calibration claim is adopted.
-- Commit: recorded with the A4/A7 report commit.
+- Commit: `63e1f6d docs(p05): record Track A structural review`.
+
+## Final verification — 2026-10-10
+
+- `.venv/bin/ruff check src tests` → clean.
+- `.venv/bin/pytest -q -p no:cacheprovider -k
+  'not test_abc_smoke_proves_the_api_and_the_empty_registry_path'` → **383 passed, 1
+  deselected**. The deselected test invokes ABC smoke; it was held because the user ordered
+  B3 to wait for the B1 linkage. No inference, hold-out, or reserved-window values were run.
