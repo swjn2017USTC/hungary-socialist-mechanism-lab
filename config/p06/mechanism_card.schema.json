@@ -1,0 +1,95 @@
+{
+  "$defs": {
+    "MechanismResultCategory": {
+      "enum": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "title": "MechanismResultCategory",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One M1\u2013M11 pre-registration, before any results are observed.",
+  "properties": {
+    "calibrated_parameter_dependencies": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Calibrated Parameter Dependencies",
+      "type": "array"
+    },
+    "controlled_variables": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Controlled Variables",
+      "type": "array"
+    },
+    "falsification_criterion": {
+      "minLength": 1,
+      "title": "Falsification Criterion",
+      "type": "string"
+    },
+    "hypothesis": {
+      "minLength": 1,
+      "title": "Hypothesis",
+      "type": "string"
+    },
+    "manipulated_variables": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Manipulated Variables",
+      "type": "array"
+    },
+    "mechanism_id": {
+      "pattern": "^M(?:[1-9]|1[01])$",
+      "title": "Mechanism Id",
+      "type": "string"
+    },
+    "metrics": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Metrics",
+      "type": "array"
+    },
+    "minimum_replicates": {
+      "minimum": 1,
+      "title": "Minimum Replicates",
+      "type": "integer"
+    },
+    "result_categories": {
+      "items": {
+        "$ref": "#/$defs/MechanismResultCategory"
+      },
+      "minItems": 1,
+      "title": "Result Categories",
+      "type": "array"
+    }
+  },
+  "required": [
+    "mechanism_id",
+    "hypothesis",
+    "manipulated_variables",
+    "controlled_variables",
+    "metrics",
+    "falsification_criterion",
+    "minimum_replicates",
+    "result_categories",
+    "calibrated_parameter_dependencies"
+  ],
+  "title": "MechanismCard",
+  "type": "object"
+}
