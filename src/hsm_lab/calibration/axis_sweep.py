@@ -24,6 +24,7 @@ reproduced.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -50,6 +51,13 @@ class AxisPoint:
     liveness: float
     production_first_10: float
     production_last_10: float
+    household_consumption_last_10: float
+    treasury_cash_tick_115: float | None
+    rescue_grants_last_20: float | None
+    terminal_t1_pass: bool
+    terminal_t2_pass: bool
+    terminal_t3_pass: bool
+    terminal_floor_pass: bool
     expired_services_tail: float
     treasury_zero_tick: int | None
     allocated_total: float
@@ -83,7 +91,13 @@ def _transport_capacity_scaled(scale: float) -> Iterator[float]:
         initial.F2_TRANSPORT_CAPACITY_TOTAL = original
 
 
-def _gate_metrics(output_dir: Path) -> dict[str, Any]:
+def _gate_metrics(
+    output_dir: Path, terminal_floor: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    if terminal_floor is None:
+        root = Path(__file__).resolve().parents[3]
+        control = json.loads((root / "config/calibration/p05.json").read_text())
+        terminal_floor = control["gates"]["terminal_floor"]
     national = pl.read_parquet(output_dir / "national_accounts.parquet")
     aggregates = pl.read_parquet(output_dir / "aggregates.parquet")
     diagnostics = pl.read_parquet(output_dir / "tick_diagnostics.parquet").sort("tick")
@@ -94,8 +108,17 @@ def _gate_metrics(output_dir: Path) -> dict[str, Any]:
         .to_numpy()
         .astype(np.float64)
     )
+    household = (
+        national.group_by("tick")
+        .agg(pl.col("household_consumption").sum())
+        .sort("tick")["household_consumption"]
+        .to_numpy()
+        .astype(np.float64)
+    )
     expired = diagnostics["expired_services"].to_numpy().astype(np.float64)
     treasury = np.zeros(0, dtype=np.float64)
+    treasury_tick_115: float | None = None
+    rescue_grants: float | None = None
     financial = output_dir / "financial_accounts.parquet"
     if financial.exists():
         selected = (
@@ -105,14 +128,41 @@ def _gate_metrics(output_dir: Path) -> dict[str, Any]:
         )
         if selected.height:
             treasury = selected["closing"].to_numpy().astype(np.float64)
+            terminal_tick = int(terminal_floor["t3_treasury_solvent_tick"])
+            at_terminal = selected.filter(pl.col("tick") == terminal_tick)
+            if at_terminal.height:
+                treasury_tick_115 = float(at_terminal["closing"][0])
+            max_tick = int(selected["tick"].max())
+            lookback = int(terminal_floor["t3_rescue_grants_lookback_ticks"])
+            rescue_grants = float(
+                selected.filter(pl.col("tick") >= max_tick - lookback + 1)["grant"]
+                .fill_null(0.0)
+                .abs()
+                .sum()
+            )
     broke = treasury.size > 0 and bool((treasury <= 1e-9).any())
     zero_tick = int(np.argmax(treasury <= 1e-9)) if broke else None
     first = float(production[:10].mean()) if production.size >= 10 else float(production.mean())
     last = float(production[-10:].mean()) if production.size >= 10 else float(production.mean())
+    household_last = (
+        float(household[-10:].mean()) if household.size >= 10 else float(household.mean())
+    )
+    t1 = last >= float(terminal_floor["t1_production_last_10_min"])
+    t2 = household_last >= float(terminal_floor["t2_household_consumption_last_10_min"])
+    t3 = (
+        treasury_tick_115 is not None and treasury_tick_115 >= -1e-9
+    ) or (rescue_grants is not None and rescue_grants <= 1e-9)
     return {
         "liveness": float(last / first) if first > 0.0 else 0.0,
         "production_first_10": first,
         "production_last_10": last,
+        "household_consumption_last_10": household_last,
+        "treasury_cash_tick_115": treasury_tick_115,
+        "rescue_grants_last_20": rescue_grants,
+        "terminal_t1_pass": t1,
+        "terminal_t2_pass": t2,
+        "terminal_t3_pass": t3,
+        "terminal_floor_pass": bool(t1 and t2 and t3),
         "expired_services_tail": (
             float(expired[40:].mean()) if expired.size > 40 else float(expired.mean())
         ),
@@ -132,6 +182,7 @@ def run_axis_sweep(
     axis: str,
     points: list[float],
     output_root: Path,
+    terminal_floor: dict[str, Any],
 ) -> list[AxisPoint]:
     """Run the scenario once per value of one declared axis."""
     if axis not in AXES:
@@ -166,7 +217,7 @@ def run_axis_sweep(
                     }
                 )
             run = run_material(scenario, output_dir, contract, registry, checkpoint_every=0)
-        metrics = _gate_metrics(output_dir)
+        metrics = _gate_metrics(output_dir, terminal_floor)
         results.append(
             AxisPoint(
                 value=float(value),

@@ -39,6 +39,13 @@
     }
   ],
   "gates": {
+    "terminal_floor": {
+      "note": "Research declarations, not fitted values; reported for every arm and do not replace or relax frozen acceptance gates.",
+      "t1_production_last_10_min": 35092,
+      "t2_household_consumption_last_10_min": 2085,
+      "t3_treasury_solvent_tick": 115,
+      "t3_rescue_grants_lookback_ticks": 20
+    },
     "gate1_requires": [
       "data_manifest_frozen",
       "ontology_frozen",

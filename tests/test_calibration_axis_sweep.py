@@ -13,7 +13,13 @@ from hsm_lab.calibration.axis_sweep import _gate_metrics, run_axis_sweep
 
 def _write_run(root, *, production: list[float], treasury: list[float]) -> None:
     ticks = list(range(len(production)))
-    pl.DataFrame({"tick": ticks, "production": production}).write_parquet(
+    pl.DataFrame(
+        {
+            "tick": ticks,
+            "production": production,
+            "household_consumption": [20.0] * len(ticks),
+        }
+    ).write_parquet(
         root / "national_accounts.parquet"
     )
     pl.DataFrame(
@@ -32,6 +38,7 @@ def _write_run(root, *, production: list[float], treasury: list[float]) -> None:
             "tick": ticks,
             "account_label": ["treasury_cash"] * len(ticks),
             "closing": treasury,
+            "grant": [0.0] * len(ticks),
         }
     ).write_parquet(root / "financial_accounts.parquet")
 
@@ -41,7 +48,13 @@ def test_gate_metrics_reads_the_frozen_series(tmp_path) -> None:
     treasury = [5.0, 5.0, 0.0] + [5.0] * 17
     _write_run(tmp_path, production=production, treasury=treasury)
 
-    metrics = _gate_metrics(tmp_path)
+    floors = {
+        "t1_production_last_10_min": 50,
+        "t2_household_consumption_last_10_min": 20,
+        "t3_treasury_solvent_tick": 19,
+        "t3_rescue_grants_lookback_ticks": 20,
+    }
+    metrics = _gate_metrics(tmp_path, floors)
 
     assert metrics["liveness"] == pytest.approx(0.5)
     assert metrics["production_first_10"] == pytest.approx(100.0)
@@ -56,7 +69,13 @@ def test_gate_metrics_reads_the_frozen_series(tmp_path) -> None:
 def test_gate_metrics_reports_no_treasury_zero_when_solvent(tmp_path) -> None:
     _write_run(tmp_path, production=[10.0] * 20, treasury=[1.0] * 20)
 
-    metrics = _gate_metrics(tmp_path)
+    floors = {
+        "t1_production_last_10_min": 50,
+        "t2_household_consumption_last_10_min": 20,
+        "t3_treasury_solvent_tick": 19,
+        "t3_rescue_grants_lookback_ticks": 20,
+    }
+    metrics = _gate_metrics(tmp_path, floors)
 
     assert metrics["treasury_zero_tick"] is None
     assert metrics["liveness"] == pytest.approx(1.0)
@@ -64,7 +83,15 @@ def test_gate_metrics_reports_no_treasury_zero_when_solvent(tmp_path) -> None:
 
 def test_unknown_axis_is_rejected(tmp_path) -> None:
     with pytest.raises(ValueError, match="unknown axis"):
-        run_axis_sweep(None, None, None, axis="not_an_axis", points=[1.0], output_root=tmp_path)
+        run_axis_sweep(
+            None,
+            None,
+            None,
+            axis="not_an_axis",
+            points=[1.0],
+            output_root=tmp_path,
+            terminal_floor={},
+        )
 
 
 def test_input_credit_earmark_axis_updates_the_declared_parameter(tmp_path, monkeypatch) -> None:
@@ -85,10 +112,17 @@ def test_input_credit_earmark_axis_updates_the_declared_parameter(tmp_path, monk
     monkeypatch.setattr(
         axis_sweep,
         "_gate_metrics",
-        lambda _: {
+        lambda _output_dir, _terminal_floor: {
             "liveness": 0.1,
             "production_first_10": 1.0,
             "production_last_10": 0.1,
+            "household_consumption_last_10": 0.1,
+            "treasury_cash_tick_115": None,
+            "rescue_grants_last_20": None,
+            "terminal_t1_pass": False,
+            "terminal_t2_pass": False,
+            "terminal_t3_pass": False,
+            "terminal_floor_pass": False,
             "expired_services_tail": 0.0,
             "treasury_zero_tick": 1,
             "allocated_total": 1.0,
@@ -100,7 +134,13 @@ def test_input_credit_earmark_axis_updates_the_declared_parameter(tmp_path, monk
     monkeypatch.setattr("hsm_lab.engine.material.run_material", fake_run)
 
     points = run_axis_sweep(
-        spec, None, None, axis="input_credit_earmark_fraction", points=[0.25], output_root=tmp_path
+        spec, None, None, axis="input_credit_earmark_fraction", points=[0.25], output_root=tmp_path,
+        terminal_floor={
+            "t1_production_last_10_min": 35092,
+            "t2_household_consumption_last_10_min": 2085,
+            "t3_treasury_solvent_tick": 115,
+            "t3_rescue_grants_lookback_ticks": 20,
+        },
     )
 
     assert observed == [0.25]

@@ -513,8 +513,15 @@ def calibration_axis_sweep(
         spec = load_scenario(root, scenario)
         registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
         target = _fresh_output_dir(output_dir, f"p05-axis-{axis}")
+        control = json.loads((root / "config/calibration/p05.json").read_text())
         results = run_axis_sweep(
-            spec, contract, registry, axis=axis, points=values, output_root=target
+            spec,
+            contract,
+            registry,
+            axis=axis,
+            points=values,
+            output_root=target,
+            terminal_floor=control["gates"]["terminal_floor"],
         )
         _emit(
             {

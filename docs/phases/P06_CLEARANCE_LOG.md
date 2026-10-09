@@ -40,3 +40,17 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   `1.3666e-6` against the `1e-6` cutoff. All accounting checks pass.
   `.venv/bin/ruff check src tests` → clean; `.venv/bin/pytest -q` → 361 passed.
 - Commit: `021197b feat(p06): add intermediate H0-H4 forcing ladder`.
+
+## 2026-10-10 — A0 Terminal-floor declaration and arm metrics — PASS
+
+- Evidence: `config/calibration/p05.json` `gates.terminal_floor`; axis-sweep JSON output
+  at `outputs/p06-a0-terminal-floor-smoke/`.
+- Change: declared T1 production ≥35,092, T2 household consumption ≥2,085, and T3
+  treasury solvent at tick 115 or zero treasury rescue grants across the final 20 ticks.
+  Values are marked research declarations, not fitted values. Every sweep arm reports
+  the three measurements and booleans; frozen acceptance gates remain unchanged.
+- Check: `.venv/bin/hsm calibration axis-sweep --axis credit_envelope_fraction
+  --points 0.5 --output-dir outputs/p06-a0-terminal-floor-smoke --json` → 116 ticks;
+  T1 28,074.08 (fail), T2 1,667.96 (fail), T3 pass. `ruff check src tests` clean;
+  `.venv/bin/pytest -q -p no:cacheprovider` → 362 passed.
+- Commit: pending.
