@@ -41,6 +41,7 @@ class AlignmentProblem:
     demand: np.ndarray  # (G, T) declared final demand
     stockable: np.ndarray  # (G,) bool
     commodity_ids: tuple[str, ...]
+    opening_stock: np.ndarray | None = None  # (G,) physical stock carried into quarter 0
     activity_ids: tuple[str, ...] = ()
     scope: str = "national_v1"
     notes: tuple[str, ...] = field(default_factory=tuple)
@@ -76,6 +77,7 @@ def build_alignment_problem(
     parameters: Any,
     equivalent_persons: float,
     demand: np.ndarray | None = None,
+    opening_stock: np.ndarray | None = None,
     quarters: int = QUARTERS,
 ) -> AlignmentProblem:
     """Compile the alignment problem from a built F2 network."""
@@ -109,6 +111,10 @@ def build_alignment_problem(
     labor_cap = np.repeat(
         (capacity * np.asarray(utilization))[:, None], quarters, axis=1
     )
+    if opening_stock is not None:
+        opening_stock = np.asarray(opening_stock, dtype=np.float64)
+        if opening_stock.shape != (commodity_count,):
+            raise ValueError(f"opening_stock must be ({commodity_count},)")
     return AlignmentProblem(
         activity_output=output,
         activity_input=used,
@@ -119,6 +125,7 @@ def build_alignment_problem(
         demand=demand,
         stockable=stockable,
         commodity_ids=tuple(network.commodity_ids),
+        opening_stock=opening_stock,
         notes=(
             "labour ceiling approximated by utilization x capacity: the compiled "
             "network exposes no separate activity-level labour axis yet",
@@ -179,14 +186,18 @@ def _assemble(problem: AlignmentProblem) -> dict[str, Any]:
             eq_c.append(e(g, t))
             eq_v.append(-1.0)
             if problem.stockable[g]:
+                # S_t = S_{t-1} + production - use - demand - expiry
                 eq_r.append(row)
                 eq_c.append(s(g, t))
-                eq_v.append(1.0)
+                eq_v.append(-1.0)
                 if t > 0:
                     eq_r.append(row)
                     eq_c.append(s(g, t - 1))
-                    eq_v.append(-1.0)
-            b_eq.append(float(problem.demand[g, t]))
+                    eq_v.append(1.0)
+            rhs = float(problem.demand[g, t])
+            if t == 0 and problem.stockable[g] and problem.opening_stock is not None:
+                rhs -= float(problem.opening_stock[g])
+            b_eq.append(rhs)
             row += 1
     a_eq = coo_matrix((eq_v, (eq_r, eq_c)), shape=(row, n)).tocsr()
     b_eq_arr = np.asarray(b_eq, dtype=np.float64)
@@ -247,11 +258,29 @@ def _assemble(problem: AlignmentProblem) -> dict[str, Any]:
     }
 
 
-def solve_alignment(problem: AlignmentProblem) -> dict[str, Any]:
-    """Feasibility plus the minimal relative capacity realignment."""
+def solve_alignment(problem: AlignmentProblem, *, objective: str = "capacity") -> dict[str, Any]:
+    """Feasibility plus either the minimal capacity realignment or the lean plan.
+
+    ``objective="capacity"`` minimises the relative capacity deviation (E4's
+    question: is the existing profile enough?); ``objective="min_output"``
+    minimises gross output, i.e. produces only what the declared demand and the
+    technology require — the plan the engine *should* follow, used by the
+    execution-compatibility gate.
+    """
+    if objective not in ("capacity", "min_output"):
+        raise ValueError(f"unknown alignment objective {objective!r}")
     compiled = _assemble(problem)
+    objective_vector = compiled["objective"]
+    if objective == "min_output":
+        activities = problem.activity_input.shape[0]
+        quarters = problem.demand.shape[1]
+        objective_vector = np.zeros(compiled["n"])
+        gross = np.asarray(problem.activity_output).sum(axis=1)
+        for a in range(activities):
+            for t in range(quarters):
+                objective_vector[a * quarters + t] = float(gross[a])
     primal = linprog(
-        compiled["objective"],
+        objective_vector,
         A_ub=compiled["a_ub"],
         b_ub=compiled["b_ub"],
         A_eq=compiled["a_eq"],
@@ -265,6 +294,7 @@ def solve_alignment(problem: AlignmentProblem) -> dict[str, Any]:
         },
     )
     base = {
+        "objective": objective,
         "scope": problem.scope,
         "solver_status": int(primal.status),
         "solver_message": str(primal.message),
@@ -305,6 +335,57 @@ def solve_alignment(problem: AlignmentProblem) -> dict[str, Any]:
         }
     )
     return base
+
+
+def execution_target_compatibility(
+    problem: AlignmentProblem, plan: dict[str, Any]
+) -> dict[str, Any]:
+    """Compare the aligned plan with what the engine's target rule would do.
+
+    The kernel does not optimise: it produces ``min(utilization * capacity *
+    season, labor_cap)`` every quarter, whatever demand says.  If that exceeds
+    the aligned plan, the surplus is produced anyway; for a non-stockable
+    commodity the surplus can only expire, which is a pure revenue loss.  This
+    gate reports the mismatch per commodity rather than assuming the LP plan is
+    what the engine will execute.
+    """
+    if plan.get("status") != "LP_FEASIBLE":
+        return {"status": "NO_PLAN", "note": "no feasible plan to compare against"}
+    lean = solve_alignment(problem, objective="min_output")
+    if lean.get("status") != "LP_FEASIBLE":
+        return {"status": "NO_LEAN_PLAN", "note": "no lean plan to compare against"}
+    cap = np.asarray(problem.capacity, dtype=np.float64)
+    util = np.asarray(problem.utilization, dtype=np.float64)
+    season = np.asarray(problem.season, dtype=np.float64)
+    engine_q = np.minimum(
+        util[:, None] * cap[:, None] * season[None, :], np.asarray(problem.labor_cap)
+    )
+    planned_q = np.asarray(lean["activity"], dtype=np.float64)
+    excess = np.maximum(engine_q - planned_q, 0.0)
+    output = np.asarray(problem.activity_output).T @ excess  # (G, T)
+    per_commodity = {
+        str(cid): float(np.max(output[g])) for g, cid in enumerate(problem.commodity_ids)
+    }
+    non_stockable = {
+        cid: value
+        for cid, value in per_commodity.items()
+        if value > 1e-6 and not problem.stockable[problem.commodity_ids.index(cid)]
+    }
+    mismatch = bool(non_stockable)
+    return {
+        "status": "TARGET_RULE_MISMATCH" if mismatch else "TARGET_RULE_COMPATIBLE",
+        "engine_output_total": float(np.sum(problem.activity_output.T @ engine_q)),
+        "planned_output_total": float(np.sum(problem.activity_output.T @ planned_q)),
+        "lean_output_total": float(np.sum(problem.activity_output.T @ planned_q)),
+        "excess_output_total": float(np.sum(output)),
+        "excess_by_commodity": {k: v for k, v in per_commodity.items() if v > 1e-6},
+        "expiring_surplus_by_commodity": non_stockable,
+        "note": (
+            "the kernel target rule has no demand-following term, so a surplus over "
+            "the aligned plan is produced anyway and, for non-stockable goods, can "
+            "only expire"
+        ),
+    }
 
 
 def _static_gaps(problem: AlignmentProblem) -> list[dict[str, Any]]:

@@ -11,12 +11,14 @@ from hsm_lab.calibration.alignment import (
     AlignmentProblem,
     build_alignment_problem,
     declared_household_demand,
+    execution_target_compatibility,
     solve_alignment,
 )
 from hsm_lab.contract.guards import load_research_contract, load_scenario
 from hsm_lab.engine.initial import build_material_initial_conditions
 from hsm_lab.engine.network import build_material_network
 from hsm_lab.engine.rng import RngRegistry
+from hsm_lab.engine.state import initialize_material
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,10 +28,18 @@ def f2_problem() -> tuple[AlignmentProblem, object]:
     spec = load_scenario(ROOT, "historical_f2_replay")
     initial = build_material_initial_conditions(spec, RngRegistry(spec.seed))
     network = build_material_network(spec, load_research_contract(ROOT), initial)
+    state = initialize_material(spec, initial, network)
+    cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
+    opening = np.bincount(
+        cell_commodity,
+        weights=np.asarray(state.stock_value, dtype=np.float64),
+        minlength=len(network.commodity_ids),
+    )
     problem = build_alignment_problem(
         network,
         parameters=spec.material_parameters,
         equivalent_persons=float(initial.equivalent_persons),
+        opening_stock=opening,
     )
     return problem, network
 
@@ -88,3 +98,28 @@ def test_alignment_is_feasible_when_capacity_covers_demand() -> None:
     result = solve_alignment(problem)
     assert result["status"] == "LP_FEASIBLE"
     assert result["capacity_deviation"] == pytest.approx(0.0, abs=1e-9)
+
+
+def test_execution_target_rule_overproduces_the_lean_plan(f2_problem) -> None:
+    """The kernel target rule has no demand term, so it overproduces and expires."""
+    problem, _network = f2_problem
+    plan = solve_alignment(problem, objective="capacity")
+    gate = execution_target_compatibility(problem, plan)
+    assert gate["status"] == "TARGET_RULE_MISMATCH"
+    assert gate["engine_output_total"] > 10.0 * gate["lean_output_total"]
+    expiring = gate["expiring_surplus_by_commodity"]
+    # the surplus concentrates in the non-stockable goods, where it must expire
+    for commodity in ("g15_market_services", "g03_electricity_heat",
+                      "g16_housing_public_services"):
+        assert expiring.get(commodity, 0.0) > 0.0
+
+
+def test_lean_plan_produces_less_than_the_capacity_objective(f2_problem) -> None:
+    problem, _network = f2_problem
+    output = np.asarray(problem.activity_output).T
+    lean = solve_alignment(problem, objective="min_output")
+    capacity = solve_alignment(problem, objective="capacity")
+    assert lean["status"] == "LP_FEASIBLE" and capacity["status"] == "LP_FEASIBLE"
+    lean_total = float(np.sum(output @ lean["activity"]))
+    capacity_total = float(np.sum(output @ capacity["activity"]))
+    assert lean_total < capacity_total

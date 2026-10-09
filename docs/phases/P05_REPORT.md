@@ -274,7 +274,7 @@ needed; no optimization was required.
 
 ## 9. Verification and regression
 
-- `pytest -q` → **335 passed**; `ruff check src tests` → clean.
+- `pytest -q` → **337 passed**; `ruff check src tests` → clean.
 - intermediate8 H0 certificate is **bit-identical** to its pre-repair values,
   confirming the F2 repairs did not change the legacy catalogue path.
 - F2 kernel: 116 ticks completed; small-run harness smoke passes.
@@ -368,6 +368,12 @@ capacity_deviation 0.0   activities at their original ceiling 386 / 386
 declared household demand: g09 8500, g10 6800, g15 2550, g16 1700, g03 1700, ...
 ```
 
+Before this result the LP had two defects of its own, both fixed: the inventory
+term carried the wrong sign (stock could be conjured from nothing, which made the
+plan look feasible at 24 004 units of gross output) and the quarter-0 balance
+ignored the opening stock. With the sign corrected and the physical opening stock
+seeded the problem is feasible exactly as reported below.
+
 **The existing profile's capacity is sufficient for the declared household
 demand**: the minimal-realignment objective is zero, so E4 finds no capacity
 shortage to fix. The contraction is therefore not a capacity-deficit problem; it
@@ -382,6 +388,44 @@ Neither fix removes the contraction: the 116-tick ratio moves 0.1067 → 0.1160
 (replenishment) → 0.1116 (both). A directed probe of the replenishment defect in
 isolation had already shown the same marginal effect. The scale mismatch is
 therefore the primary object for the E4 activity-level alignment.
+
+### E4-min step 4 — execution-target compatibility
+
+The kernel does not optimise: it produces `min(u·C·season, labor_cap)` every
+quarter, with no demand-following term. Comparing that target rule with the
+*lean* plan (minimum gross output that still meets the declared demand and the
+technology), over four quarters:
+
+```
+status TARGET_RULE_MISMATCH
+engine output 1 124 272   lean plan 69 496   excess 1 054 776  (~15x the lean plan)
+expiring surplus per quarter: g15 62 790 | g03 24 781 | g16 21 160
+```
+
+The surplus concentrates in exactly the three non-stockable commodities, where it
+cannot be carried and must expire — the mechanism behind the observed
+`expired_services` and the treasury drain.
+
+### E4-min step 5 — frozen acceptance gates (116 synthetic ticks)
+
+| gate | measured | threshold | verdict |
+|---|---|---|---|
+| liveness (last-10 / first-10 output) | 0.1116 | ≥ 0.8 | **FAIL** |
+| household delivered / funded, g15 | 0.120 | ≥ 0.9 | **FAIL** |
+| household delivered / funded, g16 | 0.199 | ≥ 0.9 | **FAIL** |
+| household delivered / funded, g03 | 0.489 | ≥ 0.9 | **FAIL** |
+| treasury cash | zero from tick 18 onward | must stay self-financing | **FAIL** |
+| accounting invariants | all enforced gates pass | unchanged tolerance | PASS |
+
+(The expiry gate is not reported per commodity here: the run exposes a single
+aggregate `expired_services` series, so a per-commodity expiry ledger is still
+required to apply the `expired/total ≤ 0.20` rule honestly.)
+
+Conclusion: F2 fails every economic acceptance gate while its accounting is
+clean, and the LP shows the failure is neither a capacity deficit nor a routing
+gap but the **production-target rule** — it produces to capacity, not to demand,
+so non-stockable surpluses expire and the payment chain drains. F2 remains
+`validation_status = not_validated`.
 
 ## 11. Next steps
 
