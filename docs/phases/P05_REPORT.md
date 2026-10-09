@@ -683,8 +683,8 @@ identified 0 / unidentified 6**. Nothing is labelled estimated.
 | F2 validated | **NO** — 4 of the 5 frozen gates fail (liveness, service ratios, treasury, expiry) |
 | structural closure (acceptance gates pass on the replay) | in progress — funding-channel experiment negative, earmark experiment partial/rejected, interest/fiscal plan written |
 | parameter identification for the §10.2 sensitivity funnel | **NO** — `calibrated 0 / fixed 5 / weakly identified 0 / unidentified 6` |
-| mechanism cards M1-M11 | absent (schema not created) |
-| forcing ladder H0-H4 on the F2 catalog | H0 diagnostic exists but fails on the 16-commodity catalog; the ladder is absent |
+| mechanism-card schema M1-M11 | schema and validator present; no cards or verdicts registered |
+| forcing ladder H0-H4 | configured and run on `intermediate8`; H0-H3 pass, H4 misses periodic output tolerance; F2 stays blocked on Track A |
 | Morris / targeted ABC / Sobol | Morris absent, ABC inference unimplemented (`PAIRED_STUDY_NOT_IMPLEMENTED`); only per-axis sweeps exist |
 | reserved-window evaluation (1986Q1-1988Q4) | cannot start — window closed and no validated model |
 | reproducibility bundle | partial (run kinds, manifests, digests, parameter hashes) |
@@ -724,6 +724,10 @@ What is safe to begin **before** P06, and is genuinely P06-precursor work: the
 sensitivity **infrastructure** (Morris/Sobol harness on a working toy catalog) and
 the mechanism-card **schema**, both of which need no validated engine. The
 verdicts themselves must wait.
+
+The precursor work status is tracked in `docs/phases/P06_CLEARANCE_LOG.md`; D1 evidence
+is in `tests/test_p06_mechanism_cards.py`, and D2's intermediate-catalog certificates
+and F2 binding are recorded in `docs/phases/P06_FORCING_LADDER.md`.
 
 ## 12. Next steps
 

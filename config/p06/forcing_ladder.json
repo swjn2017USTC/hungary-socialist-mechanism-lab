@@ -1,0 +1,35 @@
+{
+  "schema_version": "1",
+  "scenario_id": "intermediate8",
+  "diagnostic_ticks": 232,
+  "seed": 1729,
+  "forcing_variable": "credit_envelope_fraction",
+  "f2_binding": "Do not run this ladder on historical_f2_replay until Track A closes Gate 1 H'.",
+  "rungs": [
+    {
+      "rung_id": "H0",
+      "name": "declared diagnostic control",
+      "credit_envelope_fraction": 0.5
+    },
+    {
+      "rung_id": "H1",
+      "name": "working-capital envelope plus 0.1",
+      "credit_envelope_fraction": 0.6
+    },
+    {
+      "rung_id": "H2",
+      "name": "working-capital envelope plus 0.2",
+      "credit_envelope_fraction": 0.7
+    },
+    {
+      "rung_id": "H3",
+      "name": "working-capital envelope plus 0.3",
+      "credit_envelope_fraction": 0.8
+    },
+    {
+      "rung_id": "H4",
+      "name": "upper working-capital envelope forcing",
+      "credit_envelope_fraction": 0.9
+    }
+  ]
+}

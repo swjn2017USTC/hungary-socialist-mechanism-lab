@@ -449,6 +449,36 @@ def calibration_audit_closure(
     _guard(action, json_mode)
 
 
+@calibration_app.command("forcing-ladder")
+def calibration_forcing_ladder(
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    diagnostic_ticks: int | None = typer.Option(
+        None, "--diagnostic-ticks", min=8, help="Defaults to the configured 232 synthetic ticks."
+    ),
+    seed: int | None = typer.Option(None, "--seed", min=0, help="Defaults to the configured seed."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Run the configured H0-H4 diagnostic ladder on intermediate8 only."""
+
+    def action() -> None:
+        from hsm_lab.calibration.forcing_ladder import run_forcing_ladder
+
+        root = _repo_root()
+        target = _fresh_output_dir(output_dir, "p06-forcing-ladder-intermediate8")
+        payload = run_forcing_ladder(root, target, diagnostic_ticks=diagnostic_ticks, seed=seed)
+        payload["output_dir"] = str(target)
+        _emit(
+            payload,
+            json_mode,
+            [
+                f"{rung['rung_id']}: {rung['status']} liveness {rung['output_liveness']:.4f}"
+                for rung in payload["rungs"]
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
 @calibration_app.command("axis-sweep")
 def calibration_axis_sweep(
     axis: str = typer.Option(
@@ -1142,9 +1172,7 @@ def data_ingest(
             if value is not None and (len(value) != 4 or not value.isdigit()):
                 raise ConfigError(f"{flag} must be a four-digit year, got {value!r}")
         if window_start > window_end:
-            raise ConfigError(
-                f"ingestion window start {window_start} is after end {window_end}"
-            )
+            raise ConfigError(f"ingestion window start {window_start} is after end {window_end}")
         root = _repo_root()
         report = ingest_source(
             root,
