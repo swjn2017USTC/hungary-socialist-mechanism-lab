@@ -1,0 +1,11 @@
+[
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "second-economy-counterfactual",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.second_economy_tolerance",
+    "until_quarter": null,
+    "value": 0.7
+  }
+]

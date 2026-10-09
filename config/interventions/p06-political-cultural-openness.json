@@ -1,0 +1,11 @@
+[
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "cultural-openness-counterfactual",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.cultural_openness",
+    "until_quarter": null,
+    "value": 0.7
+  }
+]

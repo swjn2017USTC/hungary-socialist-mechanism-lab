@@ -1,0 +1,16 @@
+[
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "coalition-counterfactual",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "coalition_weights",
+    "until_quarter": null,
+    "value": [
+      0.4,
+      0.2,
+      0.2,
+      0.2
+    ]
+  }
+]

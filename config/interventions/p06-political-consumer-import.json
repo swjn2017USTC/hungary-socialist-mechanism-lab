@@ -1,0 +1,11 @@
+[
+  {
+    "effective_quarter": "1968Q1",
+    "intervention_id": "consumer-import-counterfactual",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.consumer_import_factor",
+    "until_quarter": null,
+    "value": 0.7
+  }
+]
