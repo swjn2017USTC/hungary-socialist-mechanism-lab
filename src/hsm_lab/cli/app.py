@@ -585,6 +585,40 @@ def calibration_axis_sweep(
     _guard(action, json_mode)
 
 
+@calibration_app.command("morris-screen")
+def calibration_morris_screen(
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh evidence directory."),
+    trajectories: int = typer.Option(2, "--trajectories", min=1),
+    levels: int = typer.Option(4, "--levels", min=3),
+    seed: int = typer.Option(1729, "--seed", min=0),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Screen declared structural inputs with Morris elementary effects."""
+
+    def action() -> None:
+        from hsm_lab.calibration.morris import run_structural_morris
+
+        root = _repo_root()
+        target = _fresh_output_dir(output_dir, "p06-morris")
+        payload = run_structural_morris(
+            root,
+            target,
+            trajectories=trajectories,
+            levels=levels,
+            seed=seed,
+        )
+        _emit(
+            payload,
+            json_mode,
+            [
+                f"{effect['name']}: mu*={effect['mu_star']:.6g} sigma={effect['sigma']:.6g}"
+                for effect in payload["effects"]
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
 @calibration_app.command("audit-leak")
 def calibration_audit_leak(
     output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),

@@ -52,6 +52,12 @@ def test_help_both_entrypoints() -> None:
     assert "benchmark" in module.stdout
 
 
+def test_morris_screen_is_registered_as_a_calibration_command() -> None:
+    proc = hsm("calibration", "--help")
+    assert proc.returncode == 0, proc.stderr
+    assert "morris-screen" in proc.stdout
+
+
 def test_baseline_verify_json() -> None:
     proc = hsm("baseline", "verify", "--json")
     assert proc.returncode == 0
