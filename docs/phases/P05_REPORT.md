@@ -274,7 +274,7 @@ needed; no optimization was required.
 
 ## 9. Verification and regression
 
-- `pytest -q` → **337 passed**; `ruff check src tests` → clean.
+- `pytest -q` → **341 passed**; `ruff check src tests` → clean.
 - intermediate8 H0 certificate is **bit-identical** to its pre-repair values,
   confirming the F2 repairs did not change the legacy catalogue path.
 - F2 kernel: 116 ticks completed; small-run harness smoke passes.
@@ -439,6 +439,33 @@ cannot realise it and the delivery chain starves. This is the same "LP feasible,
 kernel dies" gap that the routing and demand fixes exposed earlier, now measured
 for the control rule itself.
 
+### E4-min step 3 — time-expanded (regional) feasibility
+
+The national lean plan is not executable (step 6). The next question is whether
+*any* plan is: `calibration/time_expanded.py` adds regional balances (every
+activity keeps its region, each region covers its own consumption) and the
+same-quarter service rule (a non-stockable commodity must be produced in the
+quarter it is consumed). Two modes are solved, 20 regions x 4 quarters:
+
+| mode | status | detail |
+|---|---|---|
+| strict autarky (no transfers) | **INFEASIBLE** | deficits concentrated in g10 animal food (Csongrad 31, Bekes 24, Bacs-Kiskun 17) and g07 construction (Bekes/Csongrad/Vas ~20 each) |
+| free inter-regional transfers, minimised | **LP_FEASIBLE** | routing requirement **841.6 units** over four quarters: g07 772.0, g10 69.6 |
+
+So the plan **is** executable: it needs ~842 units of inter-regional exchange,
+under 1% of the 117 504 units of four-quarter household demand, and the regions
+that are short (Csongrad, Bekes, Bacs-Kiskun, Vas) are exactly the structural
+grain and construction gaps. The lean regional plan with routing produces
+**69 869** units of gross output over four quarters, against the ~1 124 272 the
+kernel produces — a factor of ~16.
+
+This is the decisive diagnostic: F2's failure is neither capacity, nor
+technology, nor aggregate demand, but **routing (the kernel does not move those
+$\sim$842 units) combined with a target rule that ignores demand**. The scope
+statement is inside every certificate: v1 carries no explicit edge flows, no
+transport/handling capacity and no finance pre-audit, so it can prove a plan is
+*not* executable but never that one is.
+
 Conclusion: F2 fails every economic acceptance gate while its accounting is
 clean, and the LP shows the failure is neither a capacity deficit nor a routing
 gap but the **production-target rule** — it produces to capacity, not to demand,
@@ -451,9 +478,10 @@ so non-stockable surpluses expire and the payment chain drains. F2 remains
    declared demand → activity-level feasibility → org capacities, then the frozen
    acceptance gates on 116/232 synthetic ticks. F2 stays
    `validation_status = not_validated` until then.
-2. Build the time-expanded feasibility problem (regional routing, same-quarter
-   service tier prefixes and the finance pre-audit) before attempting another
-   target rule: the national static plan is provably not executable.
+2. Route the ~842 units the regional certificate identifies (no explicit edge
+   flows, transport capacity or finance pre-audit yet) and re-run the acceptance
+   gates; only then re-test a demand-following target rule, because step 6 showed
+   that capping production before routing exists starves the delivery chain.
 3. Acquire the independent observables in §10b, then declare the parameter→target
    linkage (research decision) and run `screen` → `fidelity` → F1/F2 inference.
    Until then `identifiable_set = []`, `linkage = []`, `inference_status = NOT_RUN`.
