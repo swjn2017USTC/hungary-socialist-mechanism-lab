@@ -774,21 +774,26 @@ def test_transport_reservations_do_not_deliver_or_charge() -> None:
     assert flows.edge_allocated[edge] == pytest.approx(10.0)
     assert flows.edge_delivered[edge] == pytest.approx(10.0)
     assert flows.edge_service_used[edge] == pytest.approx(1.0)
-    assert flows.edge_service_fee[edge] == pytest.approx(1.0)
+    # P05 §0.5: the freight fee is a positive cost-recovery charge; its exact
+    # magnitude follows the carriers' declared wage bill and certified work.
+    fee = float(flows.edge_service_fee[edge])
+    assert fee > 0.0
     assert moving.state.stock_value[seller_cell] == pytest.approx(0.0)
     # the trader buyer keeps the 10 goods it does not consume this quarter
     assert moving.state.stock_value[hub_cell] == pytest.approx(10.0)
-    # seller is paid 10 for the goods, transport is paid the 1 fee
+    # seller is paid 10 for the goods, transport is paid the fee
     assert flows.organization_sales_receipts[1] == pytest.approx(10.0)
-    assert flows.organization_sales_receipts[4] == pytest.approx(1.0)
-    assert flows.organization_purchases[2] == pytest.approx(11.0)
+    assert flows.organization_sales_receipts[4] == pytest.approx(fee)
+    assert flows.organization_purchases[2] == pytest.approx(10.0 + fee)
     assert float(moving.state.organization_cash[1]) - seller_cash_open == pytest.approx(
         10.0 - seller_wage
     )
     assert float(moving.state.organization_cash[4]) - hauler_cash_open == pytest.approx(
-        1.0 - hauler_wage
+        fee - hauler_wage
     )
-    assert float(moving.state.organization_cash[2]) - hub_cash_open == pytest.approx(-11.0)
+    assert float(moving.state.organization_cash[2]) - hub_cash_open == pytest.approx(
+        -(10.0 + fee)
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -921,12 +926,17 @@ def test_overordering_crowds_out_and_accumulates_inventory() -> None:
     ] == pytest.approx(2.0)
     assert flows.activity_realized[2] == pytest.approx(6.0)  # B is crowded out
 
-    # hoarding does not add an order when stock already covers desired+hoard
+    # projected-closing rule: hoarding is a closing-stock target, so a covered
+    # destination still rebuilds toward desired*(1+hoard) once this quarter's
+    # planned use is netted out of the opening stock.
     covered = _shared_source_fixture(overorder=0.0, hoarding=0.5, a_expectation=0.0, a_opening=6.0)
     flows = covered.tick(1)[0]
     a_k = covered.k_of(covered.cell("organization", 2, 0, "input", "energy"))
-    assert flows.ordered[a_k] == pytest.approx(0.0)
-    assert flows.delivered[a_k] == pytest.approx(0.0)
+    assert flows.ordered[a_k] == pytest.approx(4.0)
+    # both destinations hoard (a to 6, b to 12), so 16 is ordered against 12
+    # available and delivery is rationed proportionally to 0.75.
+    assert flows.delivered[a_k] == pytest.approx(3.0)
+    assert flows.delivered[b_k] == pytest.approx(9.0)
 
 
 # ---------------------------------------------------------------------------

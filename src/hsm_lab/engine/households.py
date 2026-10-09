@@ -24,9 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
 from hsm_lab.contract.base import ConfigError
 from hsm_lab.contract.households import (
     EDUCATION_PAY_MULTIPLIER,
-    H_INDEX,
     HOUSEHOLD_EDUCATION_IDS,
-    HOUSEHOLD_GOOD_IDS,
     HOUSEHOLD_OCCUPATION_IDS,
     HOUSEHOLD_TENURE_IDS,
     OCCUPATION_SECTOR,
@@ -343,9 +341,10 @@ def form_household_demand(
 
     # Peer light-goods uplift from the previous quarter's realised basket.
     region_count = int(np.asarray(state.dwelling_stock).shape[0])
+    light_channels = catalog.channels("light")
     last_light = np.asarray(state.household_last_consumption, dtype=np.float64)[
-        :, H_INDEX["light_goods"]
-    ]
+        :, list(light_channels)
+    ].sum(axis=1)
     peer_num = np.bincount(region, weights=weight * last_light, minlength=region_count)
     peer_den = np.bincount(region, weights=weight * equivalent, minlength=region_count)
     peer_uplift = np.zeros(weight.size, dtype=np.float64)
@@ -359,45 +358,34 @@ def form_household_demand(
     energy_multiplier = np.where(
         urban, demand.urban_energy_multiplier, demand.rural_energy_multiplier
     )
-    desired = np.zeros((weight.size, len(HOUSEHOLD_GOOD_IDS)), dtype=np.float64)
-    desired[:, H_INDEX["energy"]] = base[H_INDEX["energy"]] * equivalent * energy_multiplier
-    desired[:, H_INDEX["basic_food"]] = base[H_INDEX["basic_food"]] * equivalent
-    desired[:, H_INDEX["higher_value_food"]] = (
-        base[H_INDEX["higher_value_food"]]
-        * equivalent
-        * (
-            1.0
-            + demand.higher_income_elasticity * z
-            + demand.higher_expectation_weight * expectation_real
-        )
-        * lux_mult
+    desired = np.zeros((weight.size, len(catalog.household_good_ids)), dtype=np.float64)
+    for channel in catalog.channels("energy"):
+        desired[:, channel] = base[channel] * equivalent * energy_multiplier
+    for channel in catalog.channels("basic_food"):
+        desired[:, channel] = base[channel] * equivalent
+    higher_factor = (
+        1.0
+        + demand.higher_income_elasticity * z
+        + demand.higher_expectation_weight * expectation_real
     )
-    desired[:, H_INDEX["light_goods"]] = (
-        base[H_INDEX["light_goods"]]
-        * equivalent
-        * (
-            1.0
-            + demand.light_income_elasticity * z
-            + demand.light_peer_weight * peer_uplift
-            + demand.light_western_weight * western
-        )
-        * lux_mult
+    for channel in catalog.channels("higher_food"):
+        desired[:, channel] = base[channel] * equivalent * higher_factor * lux_mult
+    light_factor = (
+        1.0
+        + demand.light_income_elasticity * z
+        + demand.light_peer_weight * peer_uplift
+        + demand.light_western_weight * western
     )
-    desired[:, H_INDEX["personal_services"]] = (
-        base[H_INDEX["personal_services"]]
-        * equivalent
-        * (1.0 + demand.personal_income_elasticity * z)
-        * lux_mult
-    )
+    for channel in light_channels:
+        desired[:, channel] = base[channel] * equivalent * light_factor * lux_mult
+    personal_factor = 1.0 + demand.personal_income_elasticity * z
+    for channel in catalog.channels("personal"):
+        desired[:, channel] = base[channel] * equivalent * personal_factor * lux_mult
     # durable channels carry a flat declared base (aspiration demand is added by
     # the stock module); protected minima never multiply the luxury channels.
-    for durable_channel in (
-        H_INDEX["refrigerator"],
-        H_INDEX["washing_machine"],
-        H_INDEX["television"],
-        H_INDEX["passenger_car"],
-    ):
-        desired[:, durable_channel] = base[durable_channel] * equivalent
+    for durable_channel in catalog.durable_h_index:
+        if durable_channel >= 0:
+            desired[:, int(durable_channel)] = base[int(durable_channel)] * equivalent
     if not np.all(np.isfinite(desired)):
         raise ValueError("household demand carries non-finite values")
     return np.maximum(desired, 0.0)

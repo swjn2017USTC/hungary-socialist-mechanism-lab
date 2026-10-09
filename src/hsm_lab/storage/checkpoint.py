@@ -1,6 +1,6 @@
 """Material end-of-quarter checkpoints: atomic publish, strict resume gates.
 
-Format ``material-checkpoint-v3``. A checkpoint is only ever written after a
+Format ``material-checkpoint-v4``. A checkpoint is only ever written after a
 tick has fully passed its accounting invariants (``completed_ticks``
 boundary) and is published atomically via a ``.tmp-<uuid>`` staging
 directory + ``os.replace``. Resume verifies payload digests, versions,
@@ -69,9 +69,9 @@ from hsm_lab.storage.political_output import (
     POLITICAL_TABLES,
 )
 
-CHECKPOINT_VERSION = "material-checkpoint-v3"
-STATE_VERSION = MATERIAL_STATE_VERSION  # "material-state-v3"
-ENGINE_VERSION = "material-engine-v3"
+CHECKPOINT_VERSION = "material-checkpoint-v4"
+STATE_VERSION = MATERIAL_STATE_VERSION  # "material-state-v4"
+ENGINE_VERSION = "material-engine-v4"
 
 _TOY4_CHECKPOINT_VERSIONS = ("toy4-checkpoint-v1",)
 
@@ -146,6 +146,7 @@ _STATE_ARRAY_SPEC: tuple[tuple[str, np.dtype, str], ...] = (
     ("organization_interest_arrears", np.dtype("<f8"), "O"),
     ("organization_principal", np.dtype("<f8"), "O"),
     ("organization_shortage_expectation", np.dtype("<f8"), "O"),
+    ("organization_demand_signal", np.dtype("<f8"), "O"),
     ("organization_bailout_expectation", np.dtype("<f8"), "O"),
     ("organization_project_approved", np.dtype("<f8"), "O"),
     ("organization_capital_wip", np.dtype("<f8"), "O"),
@@ -182,6 +183,8 @@ _TRAILING_SIZES: dict[str, int] = {"D": N_D, "E": N_E, "H": N_H, "Q": N_Q}
 
 _STATE_SCALAR_SPEC: tuple[tuple[str, np.dtype], ...] = (
     ("treasury_deposit", np.dtype("<f8")),
+    ("treasury_loan_asset", np.dtype("<f8")),
+    ("credit_fund", np.dtype("<f8")),
     ("usd_reserve", np.dtype("<f8")),
     ("usd_principal", np.dtype("<f8")),
     ("usd_interest_arrears", np.dtype("<f8")),
@@ -266,8 +269,10 @@ _NETWORK_ARRAY_SPEC: tuple[tuple[str, np.dtype], ...] = (
     ("activity_org_index", np.dtype("<i4")),
     ("activity_region", np.dtype("<i4")),
     ("activity_capacity", np.dtype("<f8")),
+    ("activity_early_service", np.dtype("?")),
     ("input_cell", np.dtype("<i4")),
     ("input_activity", np.dtype("<i4")),
+    ("input_timing", np.dtype("i1")),
     ("demand_cell", np.dtype("<i4")),
     ("demand_purpose", np.dtype("i1")),
     ("demand_activity", np.dtype("<i4")),
@@ -283,6 +288,11 @@ _NETWORK_ARRAY_SPEC: tuple[tuple[str, np.dtype], ...] = (
     ("edge_transport_org", np.dtype("<i4")),
     ("edge_transport_per_unit", np.dtype("<f8")),
     ("edge_buyer_org", np.dtype("<i4")),
+    ("edge_self_hauled", np.dtype("?")),
+    ("edge_is_fallback", np.dtype("?")),
+    ("edge_transport_service_cell", np.dtype("<i4")),
+    ("edge_distance", np.dtype("<f8")),
+    ("region_distance", np.dtype("<f8")),
     ("edge_id", np.dtype("<i8")),
     ("org_output_cell", np.dtype("<i4")),
     ("org_wholesale_cell", np.dtype("<i4")),
@@ -579,7 +589,7 @@ def _gate_versions(metadata: dict[str, Any]) -> None:
 
 
 def _state_from_payload(
-    payload: Any, completed: int
+    payload: Any, completed: int, *, catalog: Any = None
 ) -> tuple[MaterialState, dict[str, np.ndarray]]:
     raw_completed = np.asarray(payload["completed_ticks"])
     if raw_completed.dtype != np.dtype("<i8") or raw_completed.shape != ():
@@ -592,6 +602,11 @@ def _state_from_payload(
         name for name, _d in _STATE_SCALAR_SPEC
     }
     _spec_drift(set(present), expected, "state payload")
+    trailing_sizes = dict(_TRAILING_SIZES)
+    if catalog is not None:
+        trailing_sizes["H"] = len(catalog.household_good_ids)
+        trailing_sizes["D"] = len(catalog.durable_ids)
+        trailing_sizes["Q"] = len(catalog.substitution_ids)
     axes: dict[str, int] = {}
     for _name, _dtype, axis in _STATE_ARRAY_SPEC:
         if axis in axes:
@@ -614,7 +629,7 @@ def _state_from_payload(
                     f"checkpoint state array {name} has shape {raw.shape}, expected ({axes[axis]},)"
                 )
         else:
-            expected_trailing = _TRAILING_SIZES.get(trailing)
+            expected_trailing = trailing_sizes.get(trailing)
             if (
                 raw.ndim != 2
                 or raw.shape[0] != axes[axis]
@@ -1187,7 +1202,7 @@ def load_material_checkpoint(
     completed = int(np.asarray(payload["completed_ticks"]).item())
     if completed != boundary_ticks:
         raise ResearchGateError("checkpoint completed_ticks inconsistent")
-    state, arrays = _state_from_payload(payload, completed)
+    state, arrays = _state_from_payload(payload, completed, catalog=network.household_catalog)
     _validate_state(state, arrays, snapshot, network)
 
     # --- parameter/initial-recipe identity (kernel module owns the vectors)

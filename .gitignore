@@ -35,3 +35,6 @@ data/private/
 !data/fixtures/p04_priors/*.json
 !data/fixtures/p04_policy/
 !data/fixtures/p04_policy/*.parquet
+
+# macOS noise
+.DS_Store

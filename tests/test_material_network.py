@@ -459,6 +459,20 @@ def test_a_ninth_commandity_is_a_registry_plus_data_change(monkeypatch) -> None:
     for spec in specs:
         monkeypatch.setitem(material_contract._COMMODITY_SPEC_BY_ID, spec.id, spec)
 
+    # The frozen catalog is the axis source of truth now (P05 §A.3): extend it
+    # with the new commodity instead of relying on the removed module globals.
+    extended_catalog = material_contract.MaterialCatalog(
+        catalog_id="intermediate8_v1",
+        specs=tuple(specs),
+        roles={
+            spec.id: material_contract.INTERMEDIATE8_CATALOG.roles.get(spec.id, ())
+            for spec in specs
+        },
+    )
+    monkeypatch.setitem(
+        material_contract.CATALOGS, extended_catalog.catalog_id, extended_catalog
+    )
+
     technologies = [
         *default_technologies(),
         TechnologySpec(

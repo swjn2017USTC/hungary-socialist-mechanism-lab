@@ -108,6 +108,7 @@ BANK_ACCOUNT_KINDS: tuple[str, ...] = (
 TREASURY_ACCOUNT_KINDS: tuple[str, ...] = (
     AccountKind.CASH_DEPOSIT,
     AccountKind.FISCAL_EXPENSE,
+    AccountKind.LOAN_ASSET,
 )
 
 
@@ -426,6 +427,7 @@ _TYPE_STRATEGIC_IMPORTANCE = np.array(
         DEFAULT_STRATEGIC_IMPORTANCE["freight_transport"],
         DEFAULT_STRATEGIC_IMPORTANCE["wholesale_procurement"],
         DEFAULT_STRATEGIC_IMPORTANCE["retail"],
+        DEFAULT_STRATEGIC_IMPORTANCE["public_service"],
         DEFAULT_STRATEGIC_IMPORTANCE["bank"],
     ],
     dtype=np.float64,
@@ -620,7 +622,6 @@ def run_domestic_finance_step(
     org_wage_payable_ids = organization_account_ids(state, AccountKind.WAGE_PAYABLE)
     org_wage_expense_ids = organization_account_ids(state, AccountKind.WAGE_EXPENSE)
     org_interest_expense_ids = organization_account_ids(state, AccountKind.INTEREST_EXPENSE)
-    bank_loan_asset_ids = bank_account_ids(state, AccountKind.LOAN_ASSET)
     bank_deposit_liability_ids = bank_account_ids(state, AccountKind.DEPOSIT_LIABILITY)
     bank_interest_receivable_ids = bank_account_ids(state, AccountKind.INTEREST_RECEIVABLE)
     bank_equity_ids = bank_account_ids(state, AccountKind.EQUITY)
@@ -659,7 +660,14 @@ def run_domestic_finance_step(
         + np.asarray(state.organization_bailout_expectation, dtype=np.float64)
     )
     approve = np.zeros_like(request)
+    # P05 §0.5/§0.7: the working-capital envelope is sized to the bank's actual
+    # quarterly financing need (wages + input orders + investment), not the wage
+    # bill alone; a wage-bill-only envelope starves the goods circuit.
     bank_wage_bill = _masked_bincount(safe_bank, borrower, wage_bill_open, n_banks)
+    bank_input_cost = _masked_bincount(safe_bank, borrower, input_order_cost, n_banks)
+    bank_project_cost = _masked_bincount(
+        safe_bank, borrower, old_project_cost + new_investment_request_cost, n_banks
+    )
     for bank in range(n_banks):  # only loop over banks (B <= 2)
         contenders = borrower & (safe_bank == bank) & (request > 0.0)
         if not np.any(contenders):
@@ -667,31 +675,67 @@ def run_domestic_finance_step(
         weight_sum = float(weight[contenders].sum())
         if weight_sum <= 0.0:
             continue
-        envelope = float(parameters.credit_envelope_fraction) * float(bank_wage_bill[bank])
+        envelope = float(parameters.credit_envelope_fraction) * float(
+            bank_wage_bill[bank] + bank_input_cost[bank] + bank_project_cost[bank]
+        )
         approve[contenders] = np.minimum(
             request[contenders], envelope * weight[contenders] / weight_sum
         )
+    # P05 §0.6: optional cap on the standing principal keeps the money stock
+    # stationary; once an organization reaches its line it may only borrow as
+    # junior repayments free room.
+    cap_quarters = float(parameters.credit_stock_cap_quarters)
+    if cap_quarters > 0.0:
+        cap = cap_quarters * wage_due
+        room = np.maximum(cap - principal_open, 0.0)
+        approve = np.minimum(approve, room)
     draw = approve
+    if bool(getattr(parameters, "m2_neutral_credit", False)):
+        # a deposit pool cannot go negative: scale the quarter's draws to the fund
+        fund = float(state.credit_fund)
+        total_requested = float(np.sum(draw))
+        if total_requested > fund and total_requested > 0.0:
+            draw = draw * (fund / total_requested)
+    total_draw = float(np.sum(draw))
     cash += draw
     state.organization_principal = principal_open + draw
     draw_by_bank = _masked_bincount(safe_bank, borrower & (draw > 0.0), draw, n_banks)
-    state.bank_loan_asset = (
-        np.asarray(state.bank_loan_asset, dtype=np.float64) + draw_by_bank
-    )
-    state.bank_deposit_liability = (
-        np.asarray(state.bank_deposit_liability, dtype=np.float64) + draw_by_bank
-    )
+    # P05 §0.6: with M2-neutral credit the fixed credit-fund deposit (bank 0) is
+    # redistributed to the borrowers instead of the banks creating new deposits;
+    # otherwise the legacy bank money-creation path is used.
+    if bool(getattr(parameters, "m2_neutral_credit", False)):
+        state.credit_fund = float(state.credit_fund) - total_draw
+        state.treasury_loan_asset = float(state.treasury_loan_asset) + total_draw
+        deposit_delta = draw_by_bank.copy()
+        deposit_delta[0] = deposit_delta[0] - total_draw
+        state.bank_deposit_liability = (
+            np.asarray(state.bank_deposit_liability, dtype=np.float64) + deposit_delta
+        )
+        state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + deposit_delta
+    else:
+        state.bank_loan_asset = (
+            np.asarray(state.bank_loan_asset, dtype=np.float64) + draw_by_bank
+        )
+        state.bank_deposit_liability = (
+            np.asarray(state.bank_deposit_liability, dtype=np.float64) + draw_by_bank
+        )
     flows.organization_credit_requested = request.copy()
     flows.organization_credit_approved = approve.copy()
     flows.organization_credit_drawn = draw.copy()
+    treasury_cash_ids = np.full(
+        draw.shape[0], treasury_account_id(state, AccountKind.CASH_DEPOSIT), dtype=np.int64
+    )
+    treasury_loan_ids = np.full(
+        draw.shape[0], treasury_account_id(state, AccountKind.LOAN_ASSET), dtype=np.int64
+    )
     _append_paired_transactions(
         flows,
         kind="loan_drawdown",
         amounts=draw,
         org_ids=org_ids,
-        first_debit=bank_loan_asset_ids[safe_bank],
-        first_credit=bank_deposit_liability_ids[safe_bank],
-        second_debit=org_cash_ids,
+        first_debit=org_cash_ids,
+        first_credit=treasury_cash_ids,
+        second_debit=treasury_loan_ids,
         second_credit=org_loan_ids,
     )
 
@@ -778,34 +822,140 @@ def run_domestic_finance_step(
     )
 
     # --- scheduled principal repayment (unpaid stays, never capitalized) -
+    # Repayment is junior to this quarter's input funding: it uses only cash
+    # left after the purchases the borrower still has to make, so recycling
+    # credit never starves the goods circuit.
     scheduled = principal_open * float(parameters.principal_repayment_fraction)
-    principal_paid = np.minimum(cash, scheduled)
+    remaining_need = input_order_cost + old_project_cost + new_investment_request_cost
+    principal_paid = np.minimum(np.maximum(cash - remaining_need, 0.0), scheduled)
     cash -= principal_paid
     state.organization_principal = principal_open + draw - principal_paid
-    principal_paid_by_bank = _masked_bincount(
+    total_paid = float(np.sum(principal_paid))
+    paid_by_bank = _masked_bincount(
         safe_bank, borrower & (principal_paid > 0.0), principal_paid, n_banks
     )
-    state.bank_loan_asset = (
-        np.asarray(state.bank_loan_asset, dtype=np.float64) - principal_paid_by_bank
-    )
-    state.bank_deposit_liability = (
-        np.asarray(state.bank_deposit_liability, dtype=np.float64)
-        - principal_paid_by_bank
-    )
+    if bool(getattr(parameters, "m2_neutral_credit", False)):
+        state.credit_fund = float(state.credit_fund) + total_paid
+        state.treasury_loan_asset = float(state.treasury_loan_asset) - total_paid
+        repay_delta = -paid_by_bank
+        repay_delta[0] = repay_delta[0] + total_paid
+        state.bank_deposit_liability = (
+            np.asarray(state.bank_deposit_liability, dtype=np.float64) + repay_delta
+        )
+        state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + repay_delta
+    else:
+        state.bank_loan_asset = (
+            np.asarray(state.bank_loan_asset, dtype=np.float64) - paid_by_bank
+        )
+        state.bank_deposit_liability = (
+            np.asarray(state.bank_deposit_liability, dtype=np.float64) - paid_by_bank
+        )
     flows.organization_principal_paid = principal_paid.copy()
     _append_paired_transactions(
         flows,
         kind="principal_repayment",
         amounts=principal_paid,
         org_ids=org_ids,
-        first_debit=org_loan_ids,
+        first_debit=treasury_cash_ids,
         first_credit=org_cash_ids,
-        second_debit=bank_deposit_liability_ids[safe_bank],
-        second_credit=bank_loan_asset_ids[safe_bank],
+        second_debit=org_loan_ids,
+        second_credit=treasury_loan_ids,
     )
 
     state.organization_cash = cash
     return {"cash_available_for_goods": cash}
+
+
+def run_working_capital_cycle(
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    parameters: MaterialParameters,
+) -> float:
+    """P05 §0.6 joint closure: recycle the M2-neutral working capital, then
+    redistribute the residual soft-budget deficit.
+
+    With ``m2_neutral_credit`` the quarter's drawdowns came out of the credit
+    fund; here the borrowers return whatever cash they hold above a one-quarter
+    wage buffer, restoring the fund (no money created or destroyed).  Then
+    ``run_sbc_redistribution`` tops any still-insolvent organization up from
+    profitable peers' surplus.  Returns the total recycled to the fund.
+    """
+    if not bool(getattr(parameters, "m2_neutral_credit", False)):
+        return run_sbc_redistribution(state, flows, parameters)
+    fraction = float(parameters.principal_repayment_fraction)
+    principal = np.asarray(state.organization_principal, dtype=np.float64)
+    drawn = np.asarray(flows.organization_credit_drawn, dtype=np.float64)
+    already = np.asarray(flows.organization_principal_paid, dtype=np.float64)
+    opening = principal - drawn + already
+    allowance = np.maximum(opening * fraction - already, 0.0)
+    cash = np.asarray(state.organization_cash, dtype=np.float64)
+    buffer = float(parameters.wage_rate) * np.asarray(
+        state.organization_labor_available, dtype=np.float64
+    )
+    repay = np.minimum(np.minimum(principal, allowance), np.maximum(cash - buffer, 0.0))
+    repaid = float(np.sum(repay))
+    if repaid > 0.0:
+        state.organization_cash = cash - repay
+        state.organization_principal = principal - repay
+        state.credit_fund = float(state.credit_fund) + repaid
+        state.treasury_loan_asset = float(state.treasury_loan_asset) - repaid
+        bank = np.asarray(state.organization_bank, dtype=np.int64)
+        n_banks = int(state.bank_reserves.shape[0])
+        safe_bank = np.where(bank >= 0, bank, 0)
+        delta = _masked_bincount(safe_bank, repay > 0.0, -repay, n_banks)
+        delta[0] = delta[0] + repaid
+        state.bank_deposit_liability = (
+            np.asarray(state.bank_deposit_liability, dtype=np.float64) + delta
+        )
+        state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + delta
+        flows.organization_principal_paid = already + repay
+    run_sbc_redistribution(state, flows, parameters)
+    return repaid
+
+
+def run_sbc_redistribution(
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    parameters: MaterialParameters,
+) -> float:
+    """P05 §0.6 explicit soft-budget-constraint transfer (SBC 显性化).
+
+    Loss-making organizations are kept solvent by a *fiscal-style*
+    redistribution of surplus cash from profitable organizations, not by
+    creating new money: every unit transferred leaves a payer's deposit and
+    reaches a receiver's, so the money stock is unchanged (M2-neutral).  This is
+    the historically explicit state-budget subsidy channel, distinct from bank
+    credit.  Returns the total transferred.
+    """
+    if not bool(getattr(parameters, "sbc_redistribution", False)):
+        return 0.0
+    cash = np.asarray(state.organization_cash, dtype=np.float64)
+    org_type = np.asarray(state.organization_type, dtype=np.int64)
+    bank = np.asarray(state.organization_bank, dtype=np.int64)
+    is_bank = org_type == _BANK_TYPE_CODE
+    buffer = float(parameters.wage_rate) * np.asarray(
+        state.organization_labor_available, dtype=np.float64
+    ) + np.asarray(flows.organization_purchases, dtype=np.float64)
+    surplus = np.where(~is_bank, np.maximum(cash - buffer, 0.0), 0.0)
+    deficit = np.where(~is_bank, np.maximum(buffer - cash, 0.0), 0.0)
+    total_surplus = float(np.sum(surplus))
+    total_deficit = float(np.sum(deficit))
+    if total_deficit <= 0.0 or total_surplus <= 0.0:
+        return 0.0
+    scale = min(1.0, total_surplus / total_deficit)
+    give = deficit * scale
+    take = surplus * (float(np.sum(give)) / total_surplus)
+    net = give - take
+    state.organization_cash = cash + net
+    flows.organization_sbc_transfer = net.copy()
+    n_banks = int(state.bank_reserves.shape[0])
+    safe_bank = np.where(bank >= 0, bank, 0)
+    delta = _masked_bincount(safe_bank, ~is_bank, net, n_banks)
+    state.bank_deposit_liability = (
+        np.asarray(state.bank_deposit_liability, dtype=np.float64) + delta
+    )
+    state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + delta
+    return float(np.sum(give))
 
 
 # ---------------------------------------------------------------------------

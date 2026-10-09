@@ -1,518 +1,552 @@
 schema_version: '1'
 sources:
-- source_id: ksh_gdp
-  institution: KSH (Hungarian Central Statistical Office)
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: Long series from 1960. This is a 1960-onward TARGET, not a 1957
+    observation.
   dataset: STADAT GDP / consumption / capital formation (gdp0002)
+  expected_format:
+  - HTML
+  - XLSX
+  - CSV
+  expected_roles:
+  - target
+  institution: KSH (Hungarian Central Statistical Office)
   locator: https://www.ksh.hu/stadat_files/gdp/en/gdp0002.html
-  expected_format:
-  - HTML
-  - XLSX
-  - CSV
-  expected_roles:
-  - target
+  notes: Directly machine-readable per BASELINE §22.1.
   retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: metadata_checked
   rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: 'Source: HCSO/ksh.hu; active link required. Files supplied on specific
+      request fall under CC BY-NC and are not covered by this grant.'
     redistribution_allowed: true
-    notes: 'Source: HCSO/ksh.hu; active link required. Files supplied on specific request fall under CC
-      BY-NC and are not covered by this grant.'
-  coverage_notes: Long series from 1960. This is a 1960-onward TARGET, not a 1957 observation.
-  notes: Directly machine-readable per BASELINE §22.1.
-- source_id: ksh_labour_wages
-  institution: KSH (Hungarian Central Statistical Office)
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_gdp
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: Economically active population, average gross earnings, real wage
+    index from 1960.
   dataset: STADAT long-run labour / wages / real wage index (qli001)
+  expected_format:
+  - HTML
+  - XLSX
+  - CSV
+  expected_roles:
+  - target
+  institution: KSH (Hungarian Central Statistical Office)
   locator: https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_qli001.html
-  expected_format:
-  - HTML
-  - XLSX
-  - CSV
-  expected_roles:
-  - target
-  retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: metadata_checked
-  rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
-    checked_at: '2026-10-07T00:00:00Z'
-    download_allowed: true
-    redistribution_allowed: true
-    notes: 'Source: HCSO/ksh.hu; active link required. Specific-request files (CC BY-NC) not covered.'
-  coverage_notes: Economically active population, average gross earnings, real wage index from 1960.
   notes: Directly machine-readable per BASELINE §22.1.
-- source_id: ksh_cpi_long
-  institution: KSH (Hungarian Central Statistical Office)
-  dataset: STADAT long-run consumer price index (qsf001)
-  locator: https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_qsf001.html
-  expected_format:
-  - HTML
-  - XLSX
-  - CSV
-  expected_roles:
-  - target
   retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: pending
   rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: 'Source: HCSO/ksh.hu; active link required. Specific-request files (CC
+      BY-NC) not covered.'
     redistribution_allowed: true
-    notes: Website terms verified; table-level coverage still unverified.
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_labour_wages
+- access_status: public_metadata
+  audit_status: pending
   coverage_notes: 'unverified — confirm first: table coverage/format from 1960/1961.'
-  notes: Administrative CPI is a price TARGET, never a scarcity measure (BASELINE §21 error 4).
-- source_id: ksh_cpi_groups
+  dataset: STADAT long-run consumer price index (qsf001)
+  expected_format:
+  - HTML
+  - XLSX
+  - CSV
+  expected_roles:
+  - target
   institution: KSH (Hungarian Central Statistical Office)
+  locator: https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_qsf001.html
+  notes: Administrative CPI is a price TARGET, never a scarcity measure (BASELINE
+    §21 error 4).
+  retrieval_method: browser download from public STADAT table page
+  rights:
+    checked_at: '2026-10-07T00:00:00Z'
+    download_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: Website terms verified; table-level coverage still unverified.
+    redistribution_allowed: true
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_cpi_long
+- access_status: public_metadata
+  audit_status: pending
+  coverage_notes: 'unverified — confirm first: commodity-group breakdown (food, clothing,
+    durables, fuel, services) coverage/format.'
   dataset: STADAT CPI by commodity group (ara0002)
+  expected_format:
+  - HTML
+  - XLSX
+  - CSV
+  expected_roles:
+  - target
+  institution: KSH (Hungarian Central Statistical Office)
   locator: https://www.ksh.hu/stadat_files/ara/en/ara0002.html
-  expected_format:
-  - HTML
-  - XLSX
-  - CSV
-  expected_roles:
-  - target
-  retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: pending
-  rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
-    checked_at: '2026-10-07T00:00:00Z'
-    download_allowed: true
-    redistribution_allowed: true
-    notes: Website terms verified; table-level coverage still unverified.
-  coverage_notes: 'unverified — confirm first: commodity-group breakdown (food, clothing, durables, fuel,
-    services) coverage/format.'
   notes: Relative-price anchors for the household commodity basket.
-- source_id: ksh_trade
-  institution: KSH (Hungarian Central Statistical Office)
-  dataset: STADAT long-run external trade (qkt001)
-  locator: https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_qkt001.html
-  expected_format:
-  - HTML
-  - XLSX
-  - CSV
-  expected_roles:
-  - target
   retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: metadata_checked
   rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: Website terms verified; table-level coverage still unverified.
     redistribution_allowed: true
-    notes: 'Source: HCSO/ksh.hu; active link required. Specific-request files not covered.'
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_cpi_groups
+- access_status: public_metadata
+  audit_status: metadata_checked
   coverage_notes: External trade long series from 1960.
-  notes: Historical trade outcome TARGET; must never be forced into simulated state (BASELINE §20C).
-- source_id: ksh_industry
+  dataset: STADAT long-run external trade (qkt001)
+  expected_format:
+  - HTML
+  - XLSX
+  - CSV
+  expected_roles:
+  - target
   institution: KSH (Hungarian Central Statistical Office)
+  locator: https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_qkt001.html
+  notes: Historical trade outcome TARGET; must never be forced into simulated state
+    (BASELINE §20C).
+  retrieval_method: browser download from public STADAT table page
+  rights:
+    checked_at: '2026-10-07T00:00:00Z'
+    download_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: 'Source: HCSO/ksh.hu; active link required. Specific-request files not
+      covered.'
+    redistribution_allowed: true
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_trade
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: Representative products (electricity, coal, gas, bauxite, steel,
+    cement, buses, TV sets, etc.) long series.
   dataset: STADAT industry / representative products (ipa0002)
+  expected_format:
+  - HTML
+  - XLSX
+  - CSV
+  expected_roles:
+  - target
+  institution: KSH (Hungarian Central Statistical Office)
   locator: https://www.ksh.hu/stadat_files/ipa/en/ipa0002.html
-  expected_format:
-  - HTML
-  - XLSX
-  - CSV
-  expected_roles:
-  - target
+  notes: Future G1 commodity ontology / G2 mapping source; not a single aggregated
+    'goods' column (BASELINE §22.1).
   retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: metadata_checked
   rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: 'Source: HCSO/ksh.hu; active link required. Specific-request files not
+      covered.'
     redistribution_allowed: true
-    notes: 'Source: HCSO/ksh.hu; active link required. Specific-request files not covered.'
-  coverage_notes: Representative products (electricity, coal, gas, bauxite, steel, cement, buses, TV sets,
-    etc.) long series.
-  notes: Future G1 commodity ontology / G2 mapping source; not a single aggregated 'goods' column (BASELINE
-    §22.1).
-- source_id: ksh_agriculture_a
-  institution: KSH (Hungarian Central Statistical Office)
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_industry
+- access_status: public_metadata
+  audit_status: pending
+  coverage_notes: 'unverified — confirm first: table coverage/format.'
   dataset: STADAT agriculture long-run tables (omf001a)
+  expected_format:
+  - HTML
+  - XLSX
+  - CSV
+  expected_roles:
+  - target
+  institution: KSH (Hungarian Central Statistical Office)
   locator: https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_omf001a.html
-  expected_format:
-  - HTML
-  - XLSX
-  - CSV
-  expected_roles:
-  - target
+  notes: ''
   retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: pending
   rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
-    redistribution_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
     notes: Website terms verified; table-level coverage still unverified.
-  coverage_notes: 'unverified — confirm first: table coverage/format.'
-  notes: ''
-- source_id: ksh_agriculture_b
-  institution: KSH (Hungarian Central Statistical Office)
+    redistribution_allowed: true
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_agriculture_a
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: Machine-readable div#thead + div#tbody tables; cereals/wheat/maize
+    in thousand tons, 1960 = 6960/1803/3534 (annual rows to 2019).
   dataset: STADAT agriculture long-run tables (omf001b)
+  expected_format:
+  - HTML
+  - XLSX
+  - CSV
+  expected_roles:
+  - target
+  institution: KSH (Hungarian Central Statistical Office)
   locator: https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_omf001b.html
-  expected_format:
-  - HTML
-  - XLSX
-  - CSV
-  expected_roles:
-  - target
-  retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: metadata_checked
-  rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
-    checked_at: '2026-10-07T00:00:00Z'
-    download_allowed: true
-    redistribution_allowed: true
-    notes: Website terms verified; table-level coverage now verified from the machine-readable HTML.
-  coverage_notes: Machine-readable div#thead + div#tbody tables; cereals/wheat/maize in thousand tons,
-    1960 = 6960/1803/3534 (annual rows to 2019).
   notes: Harvest outcome TARGET; never used to schedule actual farm output.
-- source_id: ksh_agriculture_c
-  institution: KSH (Hungarian Central Statistical Office)
-  dataset: STADAT agriculture long-run tables (omf001c)
-  locator: https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_omf001c.html
-  expected_format:
-  - HTML
-  - XLSX
-  - CSV
-  expected_roles:
-  - target
   retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: pending
   rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: Website terms verified; table-level coverage now verified from the machine-readable
+      HTML.
     redistribution_allowed: true
-    notes: Website terms verified; table-level coverage still unverified.
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_agriculture_b
+- access_status: public_metadata
+  audit_status: pending
   coverage_notes: 'unverified — confirm first: table coverage/format.'
-  notes: ''
-- source_id: ksh_retail
-  institution: KSH (Hungarian Central Statistical Office)
-  dataset: STADAT long-run retail trade (okfa001, Hungarian interface)
-  locator: https://www.ksh.hu/docs/hun/xstadat/xstadat_hosszu/h_okfa001.html
+  dataset: STADAT agriculture long-run tables (omf001c)
   expected_format:
   - HTML
   - XLSX
   - CSV
   expected_roles:
   - target
+  institution: KSH (Hungarian Central Statistical Office)
+  locator: https://www.ksh.hu/docs/eng/xstadat/xstadat_long/h_omf001c.html
+  notes: ''
   retrieval_method: browser download from public STADAT table page
-  access_status: public_metadata
-  audit_status: pending
   rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
-    redistribution_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
     notes: Website terms verified; table-level coverage still unverified.
-  coverage_notes: 'unverified — confirm first: table coverage/format; Hungarian-language interface.'
+    redistribution_allowed: true
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_agriculture_c
+- access_status: public_metadata
+  audit_status: pending
+  coverage_notes: 'unverified — confirm first: table coverage/format; Hungarian-language
+    interface.'
+  dataset: STADAT long-run retail trade (okfa001, Hungarian interface)
+  expected_format:
+  - HTML
+  - XLSX
+  - CSV
+  expected_roles:
+  - target
+  institution: KSH (Hungarian Central Statistical Office)
+  locator: https://www.ksh.hu/docs/hun/xstadat/xstadat_hosszu/h_okfa001.html
   notes: ''
-- source_id: ksh_census_regional
-  institution: KSH (Hungarian Central Statistical Office)
+  retrieval_method: browser download from public STADAT table page
+  rights:
+    checked_at: '2026-10-07T00:00:00Z'
+    download_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: Website terms verified; table-level coverage still unverified.
+    redistribution_allowed: true
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_retail
+- access_status: public_metadata
+  audit_status: pending
+  coverage_notes: 'unverified — confirm first: county x variable x census-year coverage
+    matrix.'
   dataset: Census regional tables (nepszamlalas/tables_regional_00)
-  locator: https://www.ksh.hu/nepszamlalas/tables_regional_00
   expected_format:
   - HTML
   - XLSX
   expected_roles:
   - initial_state
   - target
-  retrieval_method: browser access to public census table pages
-  access_status: public_metadata
-  audit_status: pending
-  rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
-    checked_at: '2026-10-07T00:00:00Z'
-    download_allowed: true
-    redistribution_allowed: true
-    notes: Website terms verified; county-level matrix coverage still unverified.
-  coverage_notes: 'unverified — confirm first: county x variable x census-year coverage matrix.'
-  notes: Census stocks are anchors at their true census dates only (BASELINE §24).
-- source_id: ksh_census_detailed
   institution: KSH (Hungarian Central Statistical Office)
+  locator: https://www.ksh.hu/nepszamlalas/tables_regional_00
+  notes: Census stocks are anchors at their true census dates only (BASELINE §24).
+  retrieval_method: browser access to public census table pages
+  rights:
+    checked_at: '2026-10-07T00:00:00Z'
+    download_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: Website terms verified; county-level matrix coverage still unverified.
+    redistribution_allowed: true
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_census_regional
+- access_status: public_metadata
+  audit_status: pending
+  coverage_notes: 'unverified — confirm first: detailed census coverage by year and
+    county.'
   dataset: Census detailed tables (nepszamlalas/detailed_tables)
-  locator: https://www.ksh.hu/nepszamlalas/detailed_tables
   expected_format:
   - HTML
   - XLSX
   expected_roles:
   - initial_state
   - target
+  institution: KSH (Hungarian Central Statistical Office)
+  locator: https://www.ksh.hu/nepszamlalas/detailed_tables
+  notes: Anchors at true census dates only.
   retrieval_method: browser access to public census table pages
-  access_status: public_metadata
-  audit_status: pending
   rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://www.ksh.hu/copyright_eng
-    evidence_quote: all of the content available on the Website – including tables, figures and infographics
-      … can be copied, reproduced and redistributed without limitations
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
-    redistribution_allowed: true
+    evidence_quote: all of the content available on the Website – including tables,
+      figures and infographics … can be copied, reproduced and redistributed without
+      limitations
+    license_name: CC BY 4.0
+    license_status: verified
     notes: Website terms verified; detailed-table coverage still unverified.
-  coverage_notes: 'unverified — confirm first: detailed census coverage by year and county.'
-  notes: Anchors at true census dates only.
-- source_id: worldbank_pink_sheet
-  institution: World Bank
+    redistribution_allowed: true
+    terms_locator: https://www.ksh.hu/copyright_eng
+  source_id: ksh_census_detailed
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: CMO-Historical-Data-Monthly.xlsx 'Monthly Prices' sheet; Crude oil,
+    average ($/bbl) monthly from 1960M01 (1960M01 = 1.63000011444). No 1957-1959 coverage.
   dataset: Pink Sheet commodity price data
-  locator: https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/
   expected_format:
   - XLSX
   expected_roles:
   - exogenous_forcing
+  institution: World Bank
+  locator: https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/
+  notes: Monthly nominal USD prices; observed oil forcing only from 1960-01.
   retrieval_method: browser download of monthly/annual XLSX from public doc page
-  access_status: public_metadata
-  audit_status: metadata_checked
   rights:
-    license_status: verified
-    license_name: CC BY 4.0
-    terms_locator: https://datacatalog.worldbank.org/search/dataset/0038238/commodity-prices-history-and-projections
-    evidence_quote: This dataset is licensed under Creative Commons Attribution 4.0 (World Bank Data Catalog,
-      dataset 0038238 Commodity Prices - History and Projections; the linked commodity-markets pages carry
-      the same dataset terms)
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
+    evidence_quote: This dataset is licensed under Creative Commons Attribution 4.0
+      (World Bank Data Catalog, dataset 0038238 Commodity Prices - History and Projections;
+      the linked commodity-markets pages carry the same dataset terms)
+    license_name: CC BY 4.0
+    license_status: verified
+    notes: Verified for this Pink Sheet dataset only, via the Data Catalog license
+      block; other World Bank datasets are not covered by this grant.
     redistribution_allowed: true
-    notes: Verified for this Pink Sheet dataset only, via the Data Catalog license block; other World
-      Bank datasets are not covered by this grant.
-  coverage_notes: CMO-Historical-Data-Monthly.xlsx 'Monthly Prices' sheet; Crude oil, average ($/bbl)
-    monthly from 1960M01 (1960M01 = 1.63000011444). No 1957-1959 coverage.
-  notes: Monthly nominal USD prices; observed oil forcing only from 1960-01.
-- source_id: fred_fedfunds
-  institution: Federal Reserve Bank of St. Louis
+    terms_locator: https://datacatalog.worldbank.org/search/dataset/0038238/commodity-prices-history-and-projections
+  source_id: worldbank_pink_sheet
+- access_status: public_metadata
+  audit_status: blocked
+  coverage_notes: Monthly percent, 1954-07 onward (catalogue metadata).
   dataset: FEDFUNDS effective federal funds rate
-  locator: https://fred.stlouisfed.org/series/FEDFUNDS
   expected_format:
   - HTML
   - CSV
   expected_roles:
   - exogenous_forcing
+  institution: Federal Reserve Bank of St. Louis
+  locator: https://fred.stlouisfed.org/series/FEDFUNDS
+  notes: Usage clause must be resolved before any future ingestion.
   retrieval_method: 'candidate: FRED API or CSV download (NOT executed)'
-  access_status: public_metadata
-  audit_status: blocked
   rights:
-    license_status: restricted
-    license_name: null
-    terms_locator: https://fred.stlouisfed.org/legal/
-    evidence_quote: 'Series tag: ''Public Domain: Citation Requested''. FRED legal terms prohibit use
-      of FRED Services/Content ''in connection with the development or training of any software program
-      or system or machine learning, including … artificial intelligence''.'
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: null
+    evidence_quote: 'Series tag: ''Public Domain: Citation Requested''. FRED legal
+      terms prohibit use of FRED Services/Content ''in connection with the development
+      or training of any software program or system or machine learning, including
+      … artificial intelligence''.'
+    license_name: null
+    license_status: restricted
+    notes: Project-use applicability unconfirmed; P00 registers metadata only, fetches
+      no CSV, trains/calibrates no AI on it.
     redistribution_allowed: null
-    notes: Project-use applicability unconfirmed; P00 registers metadata only, fetches no CSV, trains/calibrates
-      no AI on it.
-  coverage_notes: Monthly percent, 1954-07 onward (catalogue metadata).
-  notes: Usage clause must be resolved before any future ingestion.
-- source_id: mnb_official_fx
-  institution: Magyar Nemzeti Bank (MNB)
+    terms_locator: https://fred.stlouisfed.org/legal/
+  source_id: fred_fedfunds
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: Official public daily USD quotes; first batch = 1985 (03 Jan 1985
+    = 51.30 HUF/USD, 244 quotes). 1957 queries return no rows - the 1949 catalogue
+    start is not USD coverage.
   dataset: Official USD historical exchange rates (1985 HTML query)
-  locator: https://www.mnb.hu/en/arfolyam-lekerdezes
   expected_format:
   - HTML
   - SOAP/XML
   expected_roles:
   - exogenous_forcing
+  institution: Magyar Nemzeti Bank (MNB)
+  locator: https://www.mnb.hu/en/arfolyam-lekerdezes
+  notes: Official FX channel only; never the sole trade exchange rate (BASELINE §21
+    error 3). The former SOAP web-service PDF (https://www.mnb.hu/letoltes/documentation-on-the-mnb-s-web-service-on-current-and-historic-exchange-rates.pdf)
+    is background reference only; its GetExchangeRates 404s and it is not the download
+    payload locator.
   retrieval_method: single HTTPS GET of the official public exchange-rate query page
-  access_status: public_metadata
-  audit_status: metadata_checked
   rights:
-    license_status: restricted
-    license_name: MNB legal notice §1 (attribution, unchanged content)
-    terms_locator: https://www.mnb.hu/a-jegybank/informaciok-a-jegybankrol/gyakorlati-tudnivalok/jogi-nyilatkozat
-    evidence_quote: '§1: ''változatlan tartalommal, a forrás megjelölésével szabadon terjeszthetők'' (absent
-      other regulation, distributable unchanged with source attribution).'
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
+    evidence_quote: '§1: ''változatlan tartalommal, a forrás megjelölésével szabadon
+      terjeszthetők'' (absent other regulation, distributable unchanged with source
+      attribution).'
+    license_name: MNB legal notice §1 (attribution, unchanged content)
+    license_status: restricted
+    notes: 'Grant covers downloading the official public quotes and local numeric
+      re-arrangement without altering economic content. Redistribution stays conservatively
+      blocked: raw or normalized MNB data and publicly transformed data are not submitted
+      or published from this project. See the legal notice at terms_locator.'
     redistribution_allowed: false
-    notes: 'Grant covers downloading the official public quotes and local numeric re-arrangement without
-      altering economic content. Redistribution stays conservatively blocked: raw or normalized MNB data
-      and publicly transformed data are not submitted or published from this project. See the legal notice
-      at terms_locator.'
-  coverage_notes: Official public daily USD quotes; first batch = 1985 (03 Jan 1985 = 51.30 HUF/USD, 244
-    quotes). 1957 queries return no rows - the 1949 catalogue start is not USD coverage.
-  notes: Official FX channel only; never the sole trade exchange rate (BASELINE §21 error 3). The former
-    SOAP web-service PDF (https://www.mnb.hu/letoltes/documentation-on-the-mnb-s-web-service-on-current-and-historic-exchange-rates.pdf)
-    is background reference only; its GetExchangeRates 404s and it is not the download payload locator.
-- source_id: imf_hungary_external
-  institution: International Monetary Fund
+    terms_locator: https://www.mnb.hu/a-jegybank/informaciok-a-jegybankrol/gyakorlati-tudnivalok/jogi-nyilatkozat
+  source_id: mnb_official_fx
+- access_status: access_restricted
+  audit_status: blocked
+  coverage_notes: Catalogue metadata only.
   dataset: Hungary external-sector historical tables (elibrary book chapter)
-  locator: https://www.elibrary.imf.org/display/book/9781451963830/ch003.xml
   expected_format:
   - HTML
   - XML
   expected_roles:
   - target
+  institution: International Monetary Fund
+  locator: https://www.elibrary.imf.org/display/book/9781451963830/ch003.xml
+  notes: Do not treat a reachable page as obtained data.
   retrieval_method: 'candidate: automated read (NOT executed)'
-  access_status: access_restricted
-  audit_status: blocked
   rights:
-    license_status: unknown
-    license_name: null
-    terms_locator: null
-    evidence_quote: null
     checked_at: null
     download_allowed: null
-    redistribution_allowed: null
+    evidence_quote: null
+    license_name: null
+    license_status: unknown
     notes: Automated access hits anti-bot; rights unknown. No data obtained.
-  coverage_notes: Catalogue metadata only.
-  notes: Do not treat a reachable page as obtained data.
-- source_id: tarki_catalogue
-  institution: TÁRKI Social Research Institute
+    redistribution_allowed: null
+    terms_locator: null
+  source_id: imf_hungary_external
+- access_status: catalogue_only
+  audit_status: pending
+  coverage_notes: Catalogue metadata only; no observed availability claimed.
   dataset: TÁRKI data catalogue (Hungarian interface)
-  locator: https://adatbanktest.tarki.hu/cgi-bin/katalogus/tarkiker_hun.pl
   expected_format:
   - HTML
   expected_roles:
   - initial_state
   - target
+  institution: TÁRKI Social Research Institute
+  locator: https://adatbanktest.tarki.hu/cgi-bin/katalogus/tarkiker_hun.pl
+  notes: User-institution agreement required before any access (P00 does not need
+    it).
   retrieval_method: browser catalogue metadata read only
-  access_status: catalogue_only
-  audit_status: pending
   rights:
-    license_status: unknown
-    license_name: null
-    terms_locator: null
-    evidence_quote: null
     checked_at: null
     download_allowed: null
+    evidence_quote: null
+    license_name: null
+    license_status: unknown
+    notes: Microdata rights unknown; production host to be confirmed. No microdata
+      requested or downloaded.
     redistribution_allowed: null
-    notes: Microdata rights unknown; production host to be confirmed. No microdata requested or downloaded.
-  coverage_notes: Catalogue metadata only; no observed availability claimed.
-  notes: User-institution agreement required before any access (P00 does not need it).
-- source_id: osa_public_opinion
-  institution: Open Society Archives (Archivum)
+    terms_locator: null
+  source_id: tarki_catalogue
+- access_status: catalogue_only
+  audit_status: pending
+  coverage_notes: Catalogue metadata only; machine-readability unassessed.
   dataset: Public-opinion survey records (catalog jD7w7oYw)
-  locator: https://catalog.archivum.org/catalog/jD7w7oYw
   expected_format:
   - HTML
   expected_roles:
   - target
+  institution: Open Society Archives (Archivum)
+  locator: https://catalog.archivum.org/catalog/jD7w7oYw
+  notes: On-site access possibility is not remote download permission.
   retrieval_method: browser catalogue metadata read only
-  access_status: catalogue_only
-  audit_status: pending
   rights:
-    license_status: unknown
-    license_name: null
-    terms_locator: null
-    evidence_quote: null
     checked_at: null
     download_allowed: null
+    evidence_quote: null
+    license_name: null
+    license_status: unknown
+    notes: '''Not Restricted'' refers to on-site access; reading-room SPSS workstation
+      mentioned in catalogue. Remote download/redistribution rights unknown; no remote-access
+      authorisation found. No microdata downloaded.'
     redistribution_allowed: null
-    notes: '''Not Restricted'' refers to on-site access; reading-room SPSS workstation mentioned in catalogue.
-      Remote download/redistribution rights unknown; no remote-access authorisation found. No microdata
-      downloaded.'
-  coverage_notes: Catalogue metadata only; machine-readability unassessed.
-  notes: On-site access possibility is not remote download permission.
-- source_id: cmea_energy_reconstruction
-  institution: internal (reconstruction requirement, BASELINE §22.4)
+    terms_locator: null
+  source_id: osa_public_opinion
+- access_status: unavailable
+  audit_status: blocked
+  coverage_notes: 'No coverage: reconstruction inputs unresolved.'
   dataset: CMEA energy import quantity / contract-price reconstruction (planned)
-  locator: BASELINE.md §22.4 (local requirement definition)
   expected_format:
   - internal_reconstruction
   expected_roles:
   - exogenous_forcing
-  retrieval_method: planned historical reconstruction from rule/price anchors (not yet available)
-  access_status: unavailable
-  audit_status: blocked
+  institution: internal (reconstruction requirement, BASELINE §22.4)
+  locator: BASELINE.md §22.4 (local requirement definition)
+  notes: Registered as requirement + uncertainty only; no reconstruction function
+    implemented in P00.
+  retrieval_method: planned historical reconstruction from rule/price anchors (not
+    yet available)
   rights:
-    license_status: unknown
-    license_name: null
-    terms_locator: null
-    evidence_quote: null
     checked_at: null
     download_allowed: null
+    evidence_quote: null
+    license_name: null
+    license_status: unknown
+    notes: Real rule/price anchor sources not obtained. Fabricating a CSV or claiming
+      observed status is forbidden.
     redistribution_allowed: null
-    notes: Real rule/price anchor sources not obtained. Fabricating a CSV or claiming observed status
-      is forbidden.
-  coverage_notes: 'No coverage: reconstruction inputs unresolved.'
-  notes: Registered as requirement + uncertainty only; no reconstruction function implemented in P00.
-- source_id: federalreserve_h15
-  institution: Board of Governors of the Federal Reserve System
+    terms_locator: null
+  source_id: cmea_energy_reconstruction
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: H15_data.xml member; monthly RIFSPFF_N.M (Federal funds effective
+    rate, Percent per year) complete 1954-07 onward; core window 1957-01..1985-12
+    = 348 months, 1957Q1 mean = 2.933333333333333.
   dataset: H.15 Selected Interest Rates (monthly XML data download)
-  locator: https://www.federalreserve.gov/releases/h15/
   expected_format:
   - ZIP
   - XML
   expected_roles:
   - exogenous_forcing
+  institution: Board of Governors of the Federal Reserve System
+  locator: https://www.federalreserve.gov/releases/h15/
+  notes: User-approved same-origin substitute for rights-blocked FRED FEDFUNDS; not
+    a Hungary borrowing rate itself.
   retrieval_method: single HTTPS GET of the published H.15 XML archive (FRB_h15_xml.zip)
-  access_status: public_metadata
-  audit_status: metadata_checked
   rights:
-    license_status: verified
+    checked_at: '2026-10-07T00:00:00Z'
+    download_allowed: true
+    evidence_quote: Unless otherwise indicated, information on Board's website is
+      in the public domain and may be copied and distributed without permission. Please
+      cite to the Board as the source of the information.
     license_name: Public domain (U.S. Federal Reserve Board default terms)
-    terms_locator: https://www.federalreserve.gov/disclaimer.htm
-    evidence_quote: Unless otherwise indicated, information on Board's website is in the public domain
-      and may be copied and distributed without permission. Please cite to the Board as the source of
-      the information.
-    checked_at: '2026-10-07T00:00:00Z'
-    download_allowed: true
+    license_status: verified
+    notes: Board disclaimer grants copy/distribute for Board website material. Redistribution
+      of the raw archive stays conservatively false because the ZIP may contain series
+      beyond the selected RIFSPFF_N.M Board series; only that selected series is parsed
+      into artifacts.
     redistribution_allowed: false
-    notes: Board disclaimer grants copy/distribute for Board website material. Redistribution of the raw
-      archive stays conservatively false because the ZIP may contain series beyond the selected RIFSPFF_N.M
-      Board series; only that selected series is parsed into artifacts.
-  coverage_notes: H15_data.xml member; monthly RIFSPFF_N.M (Federal funds effective rate, Percent per
-    year) complete 1954-07 onward; core window 1957-01..1985-12 = 348 months, 1957Q1 mean = 2.933333333333333.
-  notes: User-approved same-origin substitute for rights-blocked FRED FEDFUNDS; not a Hungary borrowing
-    rate itself.
-- source_id: p02_material_fixture
-  institution: HSM Lab local fixture
+    terms_locator: https://www.federalreserve.gov/disclaimer.htm
+  source_id: federalreserve_h15
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: Deterministic synthetic monthly/quarterly forcing 1957-01..1985-12
+    and structural latent priors; locally generated, no historical observations.
   dataset: P02 material synthetic forcing fixtures and structural priors
-  locator: fixture:p02-material
   expected_format:
   - PARQUET
   - JSON
@@ -520,26 +554,27 @@ sources:
   - exogenous_forcing
   - latent_parameter
   - initial_state
-  retrieval_method: local deterministic generation inside this repository
-  access_status: public_metadata
-  audit_status: metadata_checked
-  rights:
-    license_status: verified
-    license_name: Locally generated synthetic fixture (no third-party rights)
-    terms_locator: fixture:p02-material
-    evidence_quote: generated locally by this repository; contains no third-party data
-    checked_at: '2026-10-07T00:00:00Z'
-    download_allowed: true
-    redistribution_allowed: true
-    notes: synthetic fixture rights block; no external dataset involved
-  coverage_notes: Deterministic synthetic monthly/quarterly forcing 1957-01..1985-12 and structural latent
-    priors; locally generated, no historical observations.
-  notes: Local synthetic/prior/grade-S recipe source mirroring the P01 fixture rights mode; real sources
-    never inherit these rights.
-- source_id: p04_fixture
   institution: HSM Lab local fixture
+  locator: fixture:p02-material
+  notes: Local synthetic/prior/grade-S recipe source mirroring the P01 fixture rights
+    mode; real sources never inherit these rights.
+  retrieval_method: local deterministic generation inside this repository
+  rights:
+    checked_at: '2026-10-07T00:00:00Z'
+    download_allowed: true
+    evidence_quote: generated locally by this repository; contains no third-party
+      data
+    license_name: Locally generated synthetic fixture (no third-party rights)
+    license_status: verified
+    notes: synthetic fixture rights block; no external dataset involved
+    redistribution_allowed: true
+    terms_locator: fixture:p02-material
+  source_id: p02_material_fixture
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: 'Deterministic synthetic/structural P04 inputs 1957Q1..1985Q4: external
+    recipe, 16-event chronology, policy replay schedule and broadcast program.'
   dataset: P04 political/external/information structural fixtures
-  locator: fixture:p04-politics
   expected_format:
   - JSON
   - PARQUET
@@ -547,19 +582,45 @@ sources:
   - exogenous_forcing
   - latent_parameter
   - initial_state
+  institution: HSM Lab local fixture
+  locator: fixture:p04-politics
+  notes: Local structural fixture source; real historical anchors, if any, must be
+    registered through their own audited source, never here.
   retrieval_method: local deterministic generation inside this repository
-  access_status: public_metadata
-  audit_status: metadata_checked
   rights:
-    license_status: verified
-    license_name: Locally generated synthetic fixture (no third-party rights)
-    terms_locator: fixture:p02-material
-    evidence_quote: generated locally by this repository; contains no third-party data
     checked_at: '2026-10-07T00:00:00Z'
     download_allowed: true
-    redistribution_allowed: true
+    evidence_quote: generated locally by this repository; contains no third-party
+      data
+    license_name: Locally generated synthetic fixture (no third-party rights)
+    license_status: verified
     notes: synthetic fixture rights block; no external dataset involved
-  coverage_notes: 'Deterministic synthetic/structural P04 inputs 1957Q1..1985Q4: external recipe, 16-event
-    chronology, policy replay schedule and broadcast program.'
-  notes: Local structural fixture source; real historical anchors, if any, must be registered through
-    their own audited source, never here.
+    redistribution_allowed: true
+    terms_locator: fixture:p02-material
+  source_id: p04_fixture
+- access_status: public_metadata
+  audit_status: metadata_checked
+  coverage_notes: census years 1870-2011 as republished by KSH on 2011 boundaries/definitions
+  dataset: Nepszamlalas 2011 retrospective tables 1.1.1.1 / 1.2.1.1 / 1.3.1.1 (19
+    megye + Budapest + orszagos)
+  expected_format:
+  - xls
+  expected_roles:
+  - initial_state
+  institution: Kozponti Statisztikai Hivatal (KSH)
+  locator: https://www.ksh.hu/nepszamlalas/tablak_teruleti_00
+  notes: 'grade C fixed-space proxy: values are official but the geography is 2011,
+    not the 1957 historical county boundary'
+  retrieval_method: https direct file download (docs/tablak/teruleti/NN/NN_<table>.xls)
+  rights:
+    checked_at: '2026-10-09T09:13:31Z'
+    download_allowed: true
+    evidence_quote: public statistical tables offered for reading and citation; bulk
+      redistribution not granted here
+    license_name: KSH public statistics (Nepszamlalas 2011 retrospective tables)
+    license_status: restricted
+    notes: free public reading/citation; redistribution rights unverified - do not
+      republish as bulk data
+    redistribution_allowed: false
+    terms_locator: https://www.ksh.hu/nepszamlalas/tablak_teruleti_00
+  source_id: ksh_census_2011_retrospective

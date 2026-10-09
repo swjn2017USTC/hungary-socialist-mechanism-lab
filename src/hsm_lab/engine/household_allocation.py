@@ -18,8 +18,6 @@ from typing import Any
 import numpy as np
 
 from hsm_lab.contract.households import (
-    H_INDEX,
-    HOUSEHOLD_GOOD_IDS,
     HouseholdCatalog,
     HouseholdParameters,
 )
@@ -44,7 +42,7 @@ def allocate_household_baskets(
 ) -> None:
     """Ration the desired basket across every channel and settle all flows."""
     catalog: HouseholdCatalog = network.household_catalog
-    h_count = len(HOUSEHOLD_GOOD_IDS)
+    h_count = len(catalog.household_good_ids)
     region = np.asarray(state.household_region, dtype=np.int64)
     weight = np.asarray(state.household_weight, dtype=np.float64)
     size = np.asarray(state.household_size, dtype=np.float64)
@@ -89,7 +87,7 @@ def allocate_household_baskets(
         # self-use is bound by the tick-opening reserved pool, never by this
         # quarter's production landing in the same cell.
         self_avail = np.maximum(self_pool_source[ready_self], 0.0)
-        basic_h = H_INDEX["basic_food"]
+        basic_h = catalog.channel("basic_food")
         want = desired[:, basic_h]
         # capacity share: each participant may take its represented-person
         # share of the region's reserved self-use pool (never another's share)
@@ -163,11 +161,15 @@ def allocate_household_baskets(
     plot_direct_spend = np.zeros(n, dtype=np.float64)
     plot_market_h = np.zeros((n, h_count), dtype=np.float64)
     market_cells = np.asarray(network.plot_ready_market_cell, dtype=np.int64)
-    if "food" in network.commodity_ids and market_cells.size and bool(np.all(market_cells >= 0)):
+    # The budget already covers formal + second purchases; plot-direct buys must
+    # fit the remainder so total household spending never overruns the budget
+    # (otherwise the close-of-tick cash identity can dip below zero).
+    budget_left = np.maximum(budget - (formal_bought @ price_h + second_bought @ price_h), 0.0)
+    if market_cells.size and bool(np.all(market_cells >= 0)):
         shares = np.asarray(parameters.allocation.plot_food_shares, dtype=np.float64)
         for channel, share in (
-            (H_INDEX["basic_food"], shares[0]),
-            (H_INDEX["higher_value_food"], shares[1]),
+            (catalog.channel("basic_food"), shares[0]),
+            (catalog.channel("higher_food"), shares[1]),
         ):
             if share <= 0.0:
                 continue
@@ -178,6 +180,17 @@ def allocate_household_baskets(
             got_region = np.minimum(demand_region, market_h)
             factor = np.where(demand_region > 0.0, got_region / np.maximum(demand_region, eps), 0.0)
             bought = want * factor[region]
+            pay_region = np.bincount(
+                region, weights=weight * bought * price_h[channel], minlength=region_count
+            )
+            cash_region = np.bincount(region, weights=weight * budget_left, minlength=region_count)
+            pay_factor = np.where(
+                pay_region > 0.0,
+                np.minimum(1.0, cash_region / np.maximum(pay_region, eps)),
+                1.0,
+            )
+            bought = bought * pay_factor[region]
+            budget_left = np.maximum(budget_left - bought * price_h[channel], 0.0)
             realized[:, channel] += bought
             plot_market_h[:, channel] += bought
             plot_direct_spend += bought * price_h[channel]
@@ -291,6 +304,22 @@ def allocate_household_baskets(
             )
     # Retail cells release exactly the parent-equivalent household sales through
     # their own edges (matches the material ledger's edge-based continuity).
+    # Aggregate cap: the per-channel availability is capped above, but summing
+    # across channels by weight x equity can still oversell a cell, so scale the
+    # (region, commodity) total to what the source cell actually holds.
+    retail_by_commodity = np.asarray(network.retail_cell_by_commodity, dtype=np.int64)
+    retail_sales_view = np.asarray(flows.retail_sales, dtype=np.float64)
+    for g in sorted({int(parent[h]) for h in range(h_count) if int(parent[h]) >= 0}):
+        cells = retail_by_commodity[:, g]
+        valid = cells >= 0
+        if not bool(valid.any()):
+            continue
+        shelf = np.where(valid, np.maximum(stock[cells], 0.0), 0.0)
+        demand = retail_sales_view[:, g]
+        scale = np.where(
+            demand > 0.0, np.minimum(1.0, shelf / np.maximum(demand, eps)), 1.0
+        )
+        retail_sales_view[:, g] = demand * scale
     hh_edges_all = np.flatnonzero(
         np.asarray(network.edge_purpose, dtype=np.int64) == _PURPOSE_HOUSEHOLD
     )
@@ -477,7 +506,7 @@ def _settle_ledger(
     ).astype(np.int64)
     outlay = purchased_h * price_h[None, :]
     credit = np.zeros(org_count, dtype=np.float64)
-    for h in range(len(HOUSEHOLD_GOOD_IDS)):
+    for h in range(len(network.household_catalog.household_good_ids)):
         g = int(parent[h])
         if g < 0:
             continue

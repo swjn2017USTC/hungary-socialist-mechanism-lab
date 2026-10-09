@@ -1,0 +1,55 @@
+{
+  "schema_version": "1",
+  "seed": 1729,
+  "regions": 20,
+  "commodities": [
+    "g01_solid_fuels",
+    "g02_oil_gas_fuels",
+    "g03_electricity_heat",
+    "g04_basic_metals_materials",
+    "g05_chemicals_fertilizer",
+    "g06_machinery_capital",
+    "g07_construction",
+    "g08_agricultural_raw",
+    "g09_basic_food",
+    "g10_animal_food",
+    "g11_textiles_footwear",
+    "g12_household_nondurables",
+    "g13_household_durables",
+    "g14_vehicles_transport_equipment",
+    "g15_market_services",
+    "g16_housing_public_services"
+  ],
+  "workers": 1,
+  "warmups": 1,
+  "repeats": 3,
+  "cases": [
+    {
+      "households": 5000,
+      "organizations": 400,
+      "ticks": 116,
+      "retention": "statistics"
+    },
+    {
+      "households": 25000,
+      "organizations": 400,
+      "ticks": 116,
+      "retention": "trajectory"
+    },
+    {
+      "households": 25000,
+      "organizations": 400,
+      "ticks": 116,
+      "checkpoint_every": 44,
+      "retention": "trajectory"
+    }
+  ],
+  "wall_gate_s": 600.0,
+  "checkpoint_wall_gate_s": 900.0,
+  "normal_peak_rss_bytes": 16000000000,
+  "hard_peak_rss_bytes": 22000000000,
+  "notes": [
+    "F2 historical catalog (16 commodities, 15-channel household axis, 400 organizations)",
+    "cases run the real kernel; wall/RSS gates per P05 \u00a7G (median compact <=600s, full <=900s)"
+  ]
+}

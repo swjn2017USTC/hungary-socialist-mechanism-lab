@@ -126,7 +126,6 @@ P02_COMMODITY_IDS: tuple[str, ...] = tuple(spec.id for spec in P02_COMMODITY_SPE
 COMMODITY_INDEX: dict[str, int] = {
     spec_id: index for index, spec_id in enumerate(P02_COMMODITY_IDS)
 }
-_COMMODITY_SPEC_BY_ID = {spec.id: spec for spec in P02_COMMODITY_SPECS}
 
 
 def _declared_pairs(pairs: tuple[tuple[str, str], ...]) -> tuple[tuple[str, str], ...]:
@@ -170,6 +169,262 @@ INVESTMENT_COMMODITY_IDS: tuple[str, ...] = tuple(
 )
 
 
+# ---------------------------------------------------------------------------
+# P05 F2 historical ontology (BASELINE §9.2 G1; P05 §A)
+#
+# Frozen 16-group runtime commodity axis.  Every unit is an explicit
+# "fixed-1960-composition volume unit" for that group; featured-series
+# conversions (tonnes, thousand units) are declared separately in the data
+# manifest and never summed across groups.  All stage/hub/retail/role
+# assignments here are the declared structural freeze, not historical
+# observations.
+# ---------------------------------------------------------------------------
+
+F2_COMMODITY_SPECS: tuple[CommoditySpec, ...] = (
+    CommoditySpec(
+        id="g01_solid_fuels",
+        unit="f2_solid_fuel_1960_unit",
+        household_channel=True,
+        hub_stages=("standard",),
+        retail_stages=("standard",),
+    ),
+    CommoditySpec(
+        id="g02_oil_gas_fuels",
+        unit="f2_liquid_fuel_1960_unit",
+        household_channel=True,
+        hub_stages=("standard",),
+        retail_stages=("standard",),
+    ),
+    CommoditySpec(
+        id="g03_electricity_heat",
+        unit="f2_electricity_heat_1960_unit",
+        stockable=False,
+        household_channel=True,
+        retail_stages=("standard",),
+    ),
+    CommoditySpec(id="g04_basic_metals_materials", unit="f2_basic_material_1960_unit"),
+    CommoditySpec(id="g05_chemicals_fertilizer", unit="f2_chemical_1960_unit"),
+    CommoditySpec(
+        id="g06_machinery_capital",
+        unit="f2_machinery_1960_unit",
+        investment=True,
+    ),
+    CommoditySpec(
+        id="g07_construction",
+        unit="f2_construction_1960_unit",
+        investment=True,
+    ),
+    CommoditySpec(
+        id="g08_agricultural_raw",
+        unit="f2_agri_raw_1960_unit",
+        stages=("raw",),
+        hub_stages=("raw",),
+    ),
+    CommoditySpec(
+        id="g09_basic_food",
+        unit="f2_basic_food_1960_unit",
+        household_channel=True,
+        stages=("ready",),
+        hub_stages=("ready",),
+        retail_stages=("ready",),
+    ),
+    CommoditySpec(
+        id="g10_animal_food",
+        unit="f2_animal_food_1960_unit",
+        household_channel=True,
+        stages=("ready",),
+        hub_stages=("ready",),
+        retail_stages=("ready",),
+    ),
+    CommoditySpec(
+        id="g11_textiles_footwear",
+        unit="f2_textile_1960_unit",
+        household_channel=True,
+        hub_stages=("standard",),
+        retail_stages=("standard",),
+    ),
+    CommoditySpec(
+        id="g12_household_nondurables",
+        unit="f2_nondurable_1960_unit",
+        household_channel=True,
+        hub_stages=("standard",),
+        retail_stages=("standard",),
+    ),
+    CommoditySpec(
+        id="g13_household_durables",
+        unit="f2_durable_1960_unit",
+        household_channel=True,
+        hub_stages=("standard",),
+        retail_stages=("standard",),
+    ),
+    CommoditySpec(
+        id="g14_vehicles_transport_equipment",
+        unit="f2_vehicle_1960_unit",
+        household_channel=True,
+        hub_stages=("standard",),
+        retail_stages=("standard",),
+    ),
+    CommoditySpec(
+        id="g15_market_services",
+        unit="f2_market_service_1960_unit",
+        stockable=False,
+        household_channel=True,
+        retail_stages=("standard",),
+    ),
+    CommoditySpec(
+        id="g16_housing_public_services",
+        unit="f2_public_service_1960_unit",
+        stockable=False,
+        household_channel=True,
+        retail_stages=("standard",),
+    ),
+)
+
+F2_COMMODITY_IDS: tuple[str, ...] = tuple(spec.id for spec in F2_COMMODITY_SPECS)
+
+#: Declared family roles for the F2 catalog (P05 §A.1 role column).  A role
+#: names which distinguished engine behaviour a commodity carries; the mapping
+#: is frozen data, never inferred from id order.
+F2_COMMODITY_ROLES: dict[str, tuple[str, ...]] = {
+    "g01_solid_fuels": ("energy",),
+    "g02_oil_gas_fuels": ("energy",),
+    "g03_electricity_heat": ("energy", "same_quarter_service"),
+    "g04_basic_metals_materials": ("raw",),
+    "g05_chemicals_fertilizer": ("raw",),
+    "g06_machinery_capital": ("capital",),
+    "g07_construction": ("construction",),
+    "g08_agricultural_raw": ("agricultural_raw", "food_raw"),
+    "g09_basic_food": ("food",),
+    "g10_animal_food": ("food",),
+    "g11_textiles_footwear": ("light",),
+    "g12_household_nondurables": ("light",),
+    "g13_household_durables": ("durable",),
+    "g14_vehicles_transport_equipment": ("durable", "vehicle"),
+    "g15_market_services": ("service", "same_quarter_service"),
+    "g16_housing_public_services": ("service", "public", "same_quarter_service"),
+}
+
+
+@dataclass(frozen=True)
+class MaterialCatalog:
+    """One frozen runtime commodity axis plus its declared family roles."""
+
+    catalog_id: str
+    specs: tuple[CommoditySpec, ...]
+    roles: dict[str, tuple[str, ...]] = field(default_factory=dict)
+
+    @property
+    def ids(self) -> tuple[str, ...]:
+        return tuple(spec.id for spec in self.specs)
+
+    @property
+    def index(self) -> dict[str, int]:
+        return {spec.id: position for position, spec in enumerate(self.specs)}
+
+    def spec(self, commodity_id: str) -> CommoditySpec:
+        for spec in self.specs:
+            if spec.id == commodity_id:
+                return spec
+        raise ConfigError(
+            f"commodity {commodity_id!r} is not declared in catalog {self.catalog_id!r}"
+        )
+
+    def has_role(self, commodity_id: str, role: str) -> bool:
+        return role in self.roles.get(commodity_id, ())
+
+    def with_role(self, role: str) -> tuple[str, ...]:
+        return tuple(cid for cid in self.ids if self.has_role(cid, role))
+
+    @property
+    def household_channel_ids(self) -> tuple[str, ...]:
+        return tuple(spec.id for spec in self.specs if spec.household_channel)
+
+    @property
+    def hub_commodity_stages(self) -> tuple[tuple[str, str], ...]:
+        return _declared_pairs_for(self.specs, hub=True)
+
+    @property
+    def retail_commodity_stages(self) -> tuple[tuple[str, str], ...]:
+        return _declared_pairs_for(self.specs, retail=True)
+
+    @property
+    def investment_commodity_ids(self) -> tuple[str, ...]:
+        return tuple(spec.id for spec in self.specs if spec.investment)
+
+
+def _declared_pairs_for(
+    specs: Sequence[CommoditySpec], *, hub: bool = False, retail: bool = False
+) -> tuple[tuple[str, str], ...]:
+    """All ``(commodity, stage)`` hub/retail pairs in declared spec order."""
+    pairs: list[tuple[str, str]] = []
+    for spec in specs:
+        stages = spec.hub_stages if hub else (spec.retail_stages if retail else spec.stages)
+        for stage in stages:
+            pair = (spec.id, stage)
+            if pair not in pairs:
+                pairs.append(pair)
+    return tuple(pairs)
+
+
+INTERMEDIATE8_CATALOG = MaterialCatalog(
+    catalog_id="intermediate8_v1",
+    specs=P02_COMMODITY_SPECS,
+    roles={
+        "energy": ("energy",),
+        "capital_goods": ("capital",),
+        "food": ("food", "food_raw"),
+        "consumer_goods": ("light",),
+        "raw_materials": ("raw",),
+        "construction": ("construction",),
+        "durable_goods": ("durable",),
+        "services_transport": ("service", "same_quarter_service"),
+    },
+)
+F2_CATALOG = MaterialCatalog(
+    catalog_id="f2_v1",
+    specs=F2_COMMODITY_SPECS,
+    roles=F2_COMMODITY_ROLES,
+)
+CATALOGS: dict[str, MaterialCatalog] = {
+    INTERMEDIATE8_CATALOG.catalog_id: INTERMEDIATE8_CATALOG,
+    F2_CATALOG.catalog_id: F2_CATALOG,
+}
+DEFAULT_CATALOG_ID = INTERMEDIATE8_CATALOG.catalog_id
+
+
+def get_catalog(catalog_id: str) -> MaterialCatalog:
+    catalog = CATALOGS.get(catalog_id)
+    if catalog is None:
+        raise ConfigError(f"unknown material catalog {catalog_id!r}")
+    return catalog
+
+
+def catalog_for_commodities(commodity_ids: Sequence[str]) -> MaterialCatalog:
+    """Resolve the frozen catalog that declares every one of ``commodity_ids``.
+
+    A scenario may declare a subset of a frozen catalog (the P02 fixtures omit
+    the capital axis); because the frozen id sets are disjoint, a subset belongs
+    to at most one catalog.  An id owned by no catalog is a ConfigError.
+    """
+    declared = frozenset(commodity_ids)
+    matches = [
+        catalog for catalog in CATALOGS.values() if declared <= frozenset(catalog.ids)
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    if not matches:
+        raise ConfigError(
+            f"commodity axis does not belong to any frozen catalog: {sorted(declared)}"
+        )
+    raise ConfigError(f"commodity axis is ambiguous across catalogs: {sorted(declared)}")
+
+
+# Union registry so ``commodity_spec`` resolves every frozen ontology id.
+_COMMODITY_SPEC_BY_ID = {
+    spec.id: spec for spec in (*P02_COMMODITY_SPECS, *F2_COMMODITY_SPECS)
+}
+
+
 class OrganizationType(StrEnum):
     """The eight P02 organization types (exact vocabulary)."""
 
@@ -180,6 +435,7 @@ class OrganizationType(StrEnum):
     TRANSPORT = "transport"
     WHOLESALE_PROCURMENT = "wholesale_procurement"
     RETAIL = "retail"
+    PUBLIC_SERVICE = "public_service"
     BANK = "bank"
 
 
@@ -191,6 +447,7 @@ ORGANIZATION_TYPE_ORDER: tuple[OrganizationType, ...] = (
     OrganizationType.TRANSPORT,
     OrganizationType.WHOLESALE_PROCURMENT,
     OrganizationType.RETAIL,
+    OrganizationType.PUBLIC_SERVICE,
     OrganizationType.BANK,
 )
 PRODUCTIVE_TYPES = frozenset(
@@ -200,6 +457,7 @@ PRODUCTIVE_TYPES = frozenset(
         OrganizationType.STATE_FARM,
         OrganizationType.CONSTRUCTION,
         OrganizationType.TRANSPORT,
+        OrganizationType.PUBLIC_SERVICE,
     }
 )
 TRADER_TYPES = frozenset({OrganizationType.WHOLESALE_PROCURMENT, OrganizationType.RETAIL})
@@ -248,7 +506,23 @@ DEFAULT_STRATEGIC_IMPORTANCE: dict[str, float] = {
     "retail": 0.7,
     "consumer_goods_production": 0.3,
     "durable_goods_production": 0.3,
+    "public_service": 0.8,
     "bank": 0.0,
+    # P05 F2 technologies
+    "solid_fuels_production": 1.0,
+    "oil_gas_production": 1.0,
+    "utilities_production": 1.0,
+    "basic_materials_production": 0.8,
+    "chemicals_production": 0.8,
+    "machinery_production": 1.0,
+    "food_processing_f2": 0.8,
+    "light_goods_production": 0.3,
+    "durables_vehicles_production": 0.3,
+    "market_services_production": 0.5,
+    "field_farming_f2": 0.8,
+    "building_construction_f2": 0.7,
+    "freight_transport_f2": 1.0,
+    "public_services": 0.8,
 }
 
 ExportRole = Literal["none", "cmea", "convertible", "both"]
@@ -335,11 +609,42 @@ class OrganizationSpec(StrictModel):
 
 
 class InputCoefficient(StrictModel):
-    """One declared technology input row (positive only; zero cells are omitted)."""
+    """One declared technology input row (positive only; zero cells are omitted).
+
+    ``input_timing`` (P05 §0.4) says whether the input must be on hand as
+    opening stock (``opening_stock``) or may be delivered within the same
+    quarter (``same_quarter_service``).  It is derived from the commodity's
+    stockability when unset: stockable -> opening stock, non-stockable ->
+    same-quarter service.  An explicit value that contradicts the ontology is
+    rejected rather than silently accepted.
+    """
 
     commodity_id: str = Field(min_length=1)
     stage: Stage = "standard"
     coefficient: PositiveFloat
+    input_timing: Literal["opening_stock", "same_quarter_service"] | None = None
+
+    @model_validator(mode="after")
+    def _check_timing(self) -> Self:
+        if self.input_timing is not None:
+            spec = commodity_spec(self.commodity_id)
+            expected = "opening_stock" if spec.stockable else "same_quarter_service"
+            if self.input_timing != expected:
+                raise ConfigError(
+                    f"input {self.commodity_id!r} is "
+                    f"{'stockable' if spec.stockable else 'non-stockable'} so input_timing "
+                    f"must be {expected!r}, got {self.input_timing!r}"
+                )
+        return self
+
+    @property
+    def resolved_input_timing(self) -> Literal["opening_stock", "same_quarter_service"]:
+        """Declared timing, defaulting to the ontology's stockability rule."""
+        if self.input_timing is not None:
+            return self.input_timing
+        return "opening_stock" if commodity_spec(self.commodity_id).stockable else (
+            "same_quarter_service"
+        )
 
 
 class OutputCoefficient(StrictModel):
@@ -479,6 +784,225 @@ TYPE_TECHNOLOGY_IDS: dict[OrganizationType, tuple[str, ...]] = {
     OrganizationType.STATE_FARM: ("field_farming",),
     OrganizationType.CONSTRUCTION: ("building_construction",),
     OrganizationType.TRANSPORT: ("freight_transport",),
+    OrganizationType.PUBLIC_SERVICE: ("public_services",),
+}
+
+
+# ----------------------------------------------------------------------
+# P05 F2 (16-commodity) technologies, capacity totals and profiles
+# ----------------------------------------------------------------------
+
+#: Industrial technologies in canonical order for the F2 catalog (10 sectors);
+#: agriculture runs as coop/farm, construction and transport keep their own
+#: organization types, and public services carry ``public_services``.
+F2_INDUSTRIAL_TECHNOLOGY_IDS: tuple[str, ...] = (
+    "solid_fuels_production",
+    "oil_gas_production",
+    "utilities_production",
+    "basic_materials_production",
+    "chemicals_production",
+    "machinery_production",
+    "food_processing_f2",
+    "light_goods_production",
+    "durables_vehicles_production",
+    "market_services_production",
+)
+
+F2_INDUSTRIAL_CAPACITY_TOTALS: tuple[float, ...] = (
+    40000.0,
+    22000.0,
+    30000.0,
+    34000.0,
+    20000.0,
+    12000.0,
+    26000.0,
+    24000.0,
+    14000.0,
+    18000.0,
+)
+F2_FARM_CAPACITY_TOTAL = 60000.0
+F2_CONSTRUCTION_CAPACITY_TOTAL = 10000.0
+F2_TRANSPORT_CAPACITY_TOTAL = 60000.0
+F2_PUBLIC_CAPACITY_TOTAL = 20000.0
+
+
+def f2_default_technologies() -> list[TechnologySpec]:
+    """Declared F2 Leontief technology set (grade-S structural fixture)."""
+    return [
+        _tech(
+            "solid_fuels_production",
+            (("g06_machinery_capital", 0.01), ("g05_chemicals_fertilizer", 0.005)),
+            (("g01_solid_fuels", "standard", 1.0),),
+        ),
+        _tech(
+            "oil_gas_production",
+            (("g01_solid_fuels", 0.02), ("g06_machinery_capital", 0.01)),
+            (("g02_oil_gas_fuels", "standard", 1.0),),
+        ),
+        _tech(
+            "utilities_production",
+            (
+                ("g01_solid_fuels", 0.15),
+                ("g02_oil_gas_fuels", 0.05),
+                ("g06_machinery_capital", 0.01),
+            ),
+            (("g03_electricity_heat", "standard", 1.0),),
+        ),
+        _tech(
+            "basic_materials_production",
+            (
+                ("g01_solid_fuels", 0.20),
+                ("g02_oil_gas_fuels", 0.05),
+                ("g03_electricity_heat", 0.05),
+                ("g05_chemicals_fertilizer", 0.05),
+                ("g06_machinery_capital", 0.02),
+            ),
+            (("g04_basic_metals_materials", "standard", 1.0),),
+        ),
+        _tech(
+            "chemicals_production",
+            (
+                ("g01_solid_fuels", 0.10),
+                ("g02_oil_gas_fuels", 0.15),
+                ("g03_electricity_heat", 0.05),
+                ("g04_basic_metals_materials", 0.05),
+                ("g06_machinery_capital", 0.02),
+            ),
+            (("g05_chemicals_fertilizer", "standard", 1.0),),
+        ),
+        _tech(
+            "machinery_production",
+            (
+                ("g03_electricity_heat", 0.05),
+                ("g04_basic_metals_materials", 0.30),
+                ("g05_chemicals_fertilizer", 0.05),
+                ("g06_machinery_capital", 0.02),
+            ),
+            (("g06_machinery_capital", "standard", 1.0),),
+        ),
+        _tech(
+            "food_processing_f2",
+            (
+                ("g03_electricity_heat", 0.02),
+                ("g06_machinery_capital", 0.005),
+                ("g08_agricultural_raw", "raw", 0.80),
+            ),
+            (
+                ("g09_basic_food", "ready", 0.60),
+                ("g10_animal_food", "ready", 0.40),
+            ),
+        ),
+        _tech(
+            "light_goods_production",
+            (
+                ("g03_electricity_heat", 0.03),
+                ("g04_basic_metals_materials", 0.02),
+                ("g05_chemicals_fertilizer", 0.05),
+                ("g06_machinery_capital", 0.01),
+            ),
+            (
+                ("g11_textiles_footwear", "standard", 0.50),
+                ("g12_household_nondurables", "standard", 0.50),
+            ),
+        ),
+        _tech(
+            "durables_vehicles_production",
+            (
+                ("g03_electricity_heat", 0.03),
+                ("g04_basic_metals_materials", 0.20),
+                ("g05_chemicals_fertilizer", 0.05),
+                ("g06_machinery_capital", 0.05),
+            ),
+            (
+                ("g13_household_durables", "standard", 0.60),
+                ("g14_vehicles_transport_equipment", "standard", 0.40),
+            ),
+        ),
+        _tech(
+            "market_services_production",
+            (("g03_electricity_heat", 0.05), ("g06_machinery_capital", 0.01)),
+            (
+                ("g15_market_services", "standard", 0.70),
+                ("g16_housing_public_services", "standard", 0.30),
+            ),
+        ),
+        _tech(
+            "field_farming_f2",
+            (
+                ("g02_oil_gas_fuels", 0.03),
+                ("g05_chemicals_fertilizer", 0.05),
+                ("g06_machinery_capital", 0.005),
+            ),
+            (("g08_agricultural_raw", "raw", 1.0),),
+        ),
+        _tech(
+            "building_construction_f2",
+            (
+                ("g03_electricity_heat", 0.02),
+                ("g04_basic_metals_materials", 0.30),
+                ("g05_chemicals_fertilizer", 0.05),
+                ("g06_machinery_capital", 0.02),
+                ("g07_construction", 0.10),
+            ),
+            (("g07_construction", "standard", 1.0),),
+        ),
+        _tech(
+            "freight_transport_f2",
+            (("g02_oil_gas_fuels", 0.05), ("g06_machinery_capital", 0.002)),
+            (("g15_market_services", "standard", 1.0),),
+        ),
+        _tech(
+            "public_services",
+            (("g03_electricity_heat", 0.03), ("g06_machinery_capital", 0.01)),
+            (("g16_housing_public_services", "standard", 1.0),),
+        ),
+    ]
+
+
+F2_TYPE_TECHNOLOGY_IDS: dict[OrganizationType, tuple[str, ...]] = {
+    OrganizationType.INDUSTRIAL_SOE: F2_INDUSTRIAL_TECHNOLOGY_IDS,
+    OrganizationType.AGRICULTURAL_COOPERATIVE: ("field_farming_f2",),
+    OrganizationType.STATE_FARM: ("field_farming_f2",),
+    OrganizationType.CONSTRUCTION: ("building_construction_f2",),
+    OrganizationType.TRANSPORT: ("freight_transport_f2",),
+    OrganizationType.PUBLIC_SERVICE: ("public_services",),
+}
+
+
+F2_ORGANIZATION_PROFILES: dict[str, dict[OrganizationType, int]] = {
+    "p05_300": {
+        OrganizationType.INDUSTRIAL_SOE: 200,
+        OrganizationType.AGRICULTURAL_COOPERATIVE: 45,
+        OrganizationType.STATE_FARM: 15,
+        OrganizationType.CONSTRUCTION: 4,
+        OrganizationType.TRANSPORT: 4,
+        OrganizationType.WHOLESALE_PROCURMENT: 2,
+        OrganizationType.RETAIL: 20,
+        OrganizationType.PUBLIC_SERVICE: 5,
+        OrganizationType.BANK: 5,
+    },
+    "p05_400": {
+        OrganizationType.INDUSTRIAL_SOE: 250,
+        OrganizationType.AGRICULTURAL_COOPERATIVE: 60,
+        OrganizationType.STATE_FARM: 20,
+        OrganizationType.CONSTRUCTION: 8,
+        OrganizationType.TRANSPORT: 8,
+        OrganizationType.WHOLESALE_PROCURMENT: 4,
+        OrganizationType.RETAIL: 20,
+        OrganizationType.PUBLIC_SERVICE: 20,
+        OrganizationType.BANK: 10,
+    },
+    "p05_450": {
+        OrganizationType.INDUSTRIAL_SOE: 280,
+        OrganizationType.AGRICULTURAL_COOPERATIVE: 75,
+        OrganizationType.STATE_FARM: 25,
+        OrganizationType.CONSTRUCTION: 8,
+        OrganizationType.TRANSPORT: 8,
+        OrganizationType.WHOLESALE_PROCURMENT: 4,
+        OrganizationType.RETAIL: 20,
+        OrganizationType.PUBLIC_SERVICE: 20,
+        OrganizationType.BANK: 10,
+    },
 }
 
 
@@ -651,10 +1175,13 @@ ORGANIZATION_PROFILES: dict[str, dict[OrganizationType, int]] = {
         OrganizationType.BANK: 2,
     },
 }
+ORGANIZATION_PROFILES.update(F2_ORGANIZATION_PROFILES)
 
 
-OrganizationProfile = Literal["p02_100", "p02_200", "p02_400"]
-"""Frozen P02 organization profile sizes (count switch targets)."""
+OrganizationProfile = Literal[
+    "p02_100", "p02_200", "p02_400", "p05_300", "p05_400", "p05_450"
+]
+"""Frozen organization profile sizes (count switch targets)."""
 
 
 class OrganizationRecipe(StrictModel):
@@ -790,6 +1317,41 @@ class MaterialParameters(StrictModel):
     # Labor and finance.
     wage_rate: PositiveFloat = 6.0
     credit_envelope_fraction: Annotated[FiniteFloat, Field(ge=0.0, le=1.0)] = 0.5
+    # P05 §0.6: cap on standing principal as a multiple of an organization's
+    # quarterly wage bill (0 = unlimited). A positive cap makes the money stock
+    # stationary in the closure control instead of growing with every drawdown.
+    credit_stock_cap_quarters: NonNegativeFloat = 0.0
+    # P05 §0.5: apply the wholesale/retail distribution margin to trader sales
+    # (off by default until the treasury border continuity is margin-aware).
+    distribution_margins_enabled: bool = True
+    # P05 §0.6: fund working capital from a fixed M2-neutral credit fund deposit
+    # instead of the banks creating new deposits (off = legacy creation).
+    m2_neutral_credit: bool = False
+    # P05 §0.6: keep loss-makers solvent by an M2-neutral surplus->deficit transfer.
+    sbc_redistribution: bool = False
+    # P05 §0.6: cap production by output-cell cover so no inventory accumulates.
+    demand_limited_targets: bool = False
+    # P05 §0.6: production cover multiple of realized consumption.
+    demand_cover: float = 1.0
+    # P05 §0.6: share of exogenous household demand kept as a production floor.
+    demand_floor: float = 0.0
+    # P05 §0.6: relative slack on the bank-deposit coverage identity (float64
+    # accumulation only; 0 keeps the legacy absolute-only tolerance).
+    money_tolerance_rel: float = 0.0
+    # P05 §0.6: production target rule. ``leontief_upper_bound`` caps each
+    # commodity's gross output at (I - M)^-1 d, damped by ``leontief_damping``
+    # and floored at ``leontief_floor`` x the capacity target.  Measured
+    # (P05 kernel diagnostic): with d = declared household basket only it still
+    # drains to the zero fixed point because the H0 control declares no
+    # investment/housing/export final demand, so the capital/construction
+    # activities are capped to zero and the wage base collapses with them.
+    production_target_rule: Literal["legacy", "leontief_upper_bound"] = "legacy"
+    leontief_damping: float = 1.0
+    leontief_floor: float = 0.0
+    # P05 §0.6: pure replacement investment — each productive organization
+    # orders ``rate x capacity`` of new capacity per quarter (funded cash-first
+    # through the existing investment pipeline).  0 disables it.
+    capital_depreciation_rate: float = 0.0
     bailout_envelope_fraction: Annotated[FiniteFloat, Field(ge=0.0, le=1.0)] = 0.25
     bailout_alpha: Annotated[FiniteFloat, Field(ge=0.0, le=1.0)] = 0.25
     domestic_credit_rate_annual: Annotated[FiniteFloat, Field(ge=0.0)] = 0.04
@@ -856,6 +1418,22 @@ class MaterialParameters(StrictModel):
             "shortage_alpha": self.shortage_alpha,
             "wage_rate": self.wage_rate,
             "credit_envelope_fraction": self.credit_envelope_fraction,
+            "credit_stock_cap_quarters": self.credit_stock_cap_quarters,
+            "distribution_margins_enabled": (
+                1.0 if self.distribution_margins_enabled else 0.0
+            ),
+            "m2_neutral_credit": 1.0 if self.m2_neutral_credit else 0.0,
+            "sbc_redistribution": 1.0 if self.sbc_redistribution else 0.0,
+            "demand_limited_targets": 1.0 if self.demand_limited_targets else 0.0,
+            "demand_cover": float(self.demand_cover),
+            "demand_floor": float(self.demand_floor),
+            "money_tolerance_rel": float(self.money_tolerance_rel),
+            "production_target_rule.leontief_upper_bound": (
+                1.0 if self.production_target_rule == "leontief_upper_bound" else 0.0
+            ),
+            "leontief_damping": float(self.leontief_damping),
+            "leontief_floor": float(self.leontief_floor),
+            "capital_depreciation_rate": float(self.capital_depreciation_rate),
             "bailout_envelope_fraction": self.bailout_envelope_fraction,
             "bailout_alpha": self.bailout_alpha,
             "domestic_credit_rate_annual": self.domestic_credit_rate_annual,
@@ -909,6 +1487,8 @@ class MaterialInitialRecipe(StrictModel):
     # M2-neutrally by reducing the Treasury's opening deposit. Without it the
     # only bridge between producers and households is structurally insolvent.
     distribution_working_capital_quarters: NonNegativeFloat = 1.0
+    #: Quarters of national wage bill held as the M2-neutral credit fund deposit.
+    credit_fund_quarters: NonNegativeFloat = 0.0
 
     def flatten(self) -> dict[str, float]:
         return {
@@ -922,6 +1502,7 @@ class MaterialInitialRecipe(StrictModel):
             "initial_bailout_prior": self.initial_bailout_prior,
             "bank_initial_bailout_prior": self.bank_initial_bailout_prior,
             "distribution_working_capital_quarters": (self.distribution_working_capital_quarters),
+            "credit_fund_quarters": self.credit_fund_quarters,
         }
 
 
@@ -1001,13 +1582,21 @@ def wholesale_hub_regions(count: int) -> tuple[int, ...]:
 
 
 __all__ = [
+    "CATALOGS",
     "COMMODITY_INDEX",
     "CONSTRUCTION_CAPACITY_TOTAL",
     "CellOwnerKind",
+    "DEFAULT_CATALOG_ID",
+    "F2_CATALOG",
+    "F2_COMMODITY_IDS",
+    "F2_COMMODITY_ROLES",
+    "F2_COMMODITY_SPECS",
     "FARM_CAPACITY_TOTAL",
     "HouseholdInitial",
     "INDUSTRIAL_CAPACITY_TOTALS",
     "INDUSTRIAL_TECHNOLOGY_IDS",
+    "INTERMEDIATE8_CATALOG",
+    "MaterialCatalog",
     "P02_COMMODITY_IDS",
     "InputCoefficient",
     "MaterialInitialConditions",
@@ -1032,7 +1621,9 @@ __all__ = [
     "TYPE_TECHNOLOGY_IDS",
     "TradeParameters",
     "WHOLESALE_HANDLING_TOTAL",
+    "catalog_for_commodities",
     "commodity_spec",
+    "get_catalog",
     "HUB_COMMODITY_STAGES",
     "RETAIL_COMMODITY_STAGES",
     "INVESTMENT_COMMODITY_IDS",

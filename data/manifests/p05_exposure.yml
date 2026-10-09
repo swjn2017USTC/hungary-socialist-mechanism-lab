@@ -1,0 +1,16 @@
+exposures:
+- artifact: wage_and_active_population_series
+  kind: reader_exposure
+  note: wage/active-population numerics were read in this study before the freeze;
+    the series is a non-blind frozen-parameter holdout, not a blind one
+- artifact: industry_terminal_values_1985
+  kind: registry_note_disclosure
+  note: terminal 1985 industrial values are disclosed in the registry notes; physical
+    preservation of raw files is not evidence of non-exposure
+- artifact: legacy_reports_spot_checks
+  kind: prior_report_exposure
+  note: P00-P04 reports contain spot checks of core historical series
+- artifact: unknown_historical_exposure
+  kind: unknown
+  note: unrecorded exposure cannot be undone by deleting or renaming data
+schema_version: '1'

@@ -60,11 +60,9 @@ import numpy as np
 
 from hsm_lab.contract.base import ConfigError
 from hsm_lab.contract.guards import BASELINE_FILENAME, verify_baseline
-from hsm_lab.contract.households import H_INDEX
 from hsm_lab.contract.material import (
     COMMODITY_INDEX,
     ORGANIZATION_TYPE_ORDER,
-    P02_COMMODITY_IDS,
     PURPOSE_CODES,
     RETAIL_HANDLING_TOTAL,
     WHOLESALE_HANDLING_TOTAL,
@@ -73,6 +71,7 @@ from hsm_lab.contract.material import (
     PrivatePlotRecipe,
     RoutePurpose,
     commodity_spec,
+    get_catalog,
 )
 from hsm_lab.contract.schemas import (
     Quarter,
@@ -117,7 +116,6 @@ from hsm_lab.engine.state import (
     MATERIAL_STATE_VERSION,
     N_D,
     N_E,
-    N_H,
     N_Q,
     MaterialForcing,
     MaterialHistory,
@@ -144,6 +142,7 @@ from hsm_lab.provenance.manifest import (
     finalize_manifest,
     hash_output_tree,
     manifest_preamble,
+    p05_manifest_fields,
     write_manifest_atomic,
 )
 from hsm_lab.storage.output import write_summary
@@ -151,10 +150,8 @@ from hsm_lab.storage.output import write_summary
 if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
     from hsm_lab.data.registry import DataRegistry
 
-MATERIAL_ENGINE_VERSION = "material-engine-v3"
-MATERIAL_RUN_KIND: Literal["intermediate8_household_simulation"] = (
-    "intermediate8_household_simulation"
-)
+MATERIAL_ENGINE_VERSION = "material-engine-v4"
+MATERIAL_RUN_KIND: Literal["material_household_simulation"] = "material_household_simulation"
 MATERIAL_RESEARCH_WARNING = "material_synthetic_fixture_not_historical_fit"
 
 _ATOL = 1e-9
@@ -199,10 +196,82 @@ def _finite(name: str, *arrays: np.ndarray) -> None:
         _require(bool(np.all(np.isfinite(array))), f"{name} carries non-finite values")
 
 
+
+def _leontief_activity_cap(network: Any, final_demand: np.ndarray) -> np.ndarray:
+    """Per-activity gross-output ceiling from (I - M) x = d (P05 §0.6).
+
+    ``M[h, g]`` is the aggregate input of commodity ``h`` per unit of gross
+    output of commodity ``g``; ``x_g`` is the gross output that satisfies the
+    declared final demand ``d``.  The ceiling is distributed across the
+    producers of each commodity in proportion to capacity, so the producers of
+    one commodity can never together exceed its requirement.
+    """
+    commodity_count = int(final_demand.shape[0])
+    activity_count = int(np.asarray(network.activity_capacity).shape[0])
+    cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
+    out_g = np.full(activity_count, -1, dtype=np.int64)
+    seen = np.zeros(activity_count, dtype=bool)
+    B = network.B.tocoo()
+    for r, c in zip(B.row.tolist(), B.col.tolist(), strict=True):
+        if not seen[r]:
+            seen[r] = True
+            out_g[r] = int(cell_commodity[c])
+    A = network.A.tocoo()
+    input_cell = np.asarray(network.input_cell, dtype=np.int64)
+    use = np.zeros((activity_count, commodity_count), dtype=np.float64)
+    np.add.at(use, (A.row, cell_commodity[input_cell[A.col]]), A.data)
+    # Producers of one commodity share its gross output, so the aggregate
+    # coefficient per unit of commodity output is the *capacity-weighted
+    # average* of the per-activity coefficients (summing would multiply it by
+    # the number of producers).
+    capacity = np.asarray(network.activity_capacity, dtype=np.float64)
+    valid0 = out_g >= 0
+    total0 = np.zeros(commodity_count, dtype=np.float64)
+    np.add.at(total0, out_g[valid0], capacity[valid0])
+    weight = np.zeros(activity_count, dtype=np.float64)
+    weight[valid0] = capacity[valid0] / np.maximum(total0[out_g[valid0]], 1e-12)
+    matrix = np.zeros((commodity_count, commodity_count), dtype=np.float64)
+    for h in range(commodity_count):
+        np.add.at(matrix[h], out_g[valid0], use[valid0, h] * weight[valid0])
+    try:
+        gross = np.linalg.solve(np.eye(commodity_count) - matrix, np.maximum(final_demand, 0.0))
+    except np.linalg.LinAlgError:
+        return np.full(activity_count, np.inf, dtype=np.float64)
+    gross = np.maximum(gross, 0.0)
+    cap = np.full(activity_count, np.inf, dtype=np.float64)
+    cap[valid0] = gross[out_g[valid0]] * weight[valid0]
+    return cap
+
 def _group_factor(need: np.ndarray, capacity: np.ndarray) -> np.ndarray:
     """``min(1, capacity / need)``; zero-need groups pass untouched."""
     safe = np.where(need > 0.0, need, 1.0)
     return np.where(need > 0.0, np.minimum(1.0, np.maximum(capacity, 0.0) / safe), 1.0)
+
+
+def _projected_closing_order(
+    opening: np.ndarray,
+    scheduled_use: np.ndarray,
+    next_pipeline_use: np.ndarray,
+    *,
+    hoarding_quarters: float,
+    overorder_strength: float,
+    lagged_shortage: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Unified projected-closing net-order rule (P05 §0.1).
+
+    Only the opening stock *not* consumed this quarter offsets next quarter's
+    pipeline cover, so a destination that is short today orders the full
+    replacement need rather than ``max(desired - opening, 0)``.  Returns
+    ``(gross_order, projected_use)`` with the elementwise transaction above.
+    """
+    usable_open = np.maximum(opening, 0.0)
+    planned = np.maximum(scheduled_use, 0.0)
+    projected_use = np.minimum(usable_open, planned)
+    projected_remaining = np.maximum(usable_open - projected_use, 0.0)
+    closing_target = np.maximum(next_pipeline_use, 0.0) * (1.0 + float(hoarding_quarters))
+    baseline_order = np.maximum(closing_target - projected_remaining, 0.0)
+    gross = baseline_order * (1.0 + float(overorder_strength) * np.maximum(lagged_shortage, 0.0))
+    return gross, projected_use
 
 
 def _append_leg_transactions(
@@ -367,12 +436,19 @@ def _build_tick_index(network: MaterialNetwork) -> _TickIndex:
         (_PURPOSE_INTERMEDIATE, _PURPOSE_PROCUREMENT, _PURPOSE_RETAIL),
     ) & (demand_buyer >= 0)
 
+    edge_fallback = np.asarray(network.edge_is_fallback, dtype=bool)
     tier_masks = {
         "production_first": np.stack(
-            [np.isin(edge_purpose, purposes) for purposes in _TIERS_PRODUCTION_FIRST]
+            [
+                np.isin(edge_purpose, purposes) & ~edge_fallback
+                for purposes in _TIERS_PRODUCTION_FIRST
+            ]
         ),
         "investment_first": np.stack(
-            [np.isin(edge_purpose, purposes) for purposes in _TIERS_INVESTMENT_FIRST]
+            [
+                np.isin(edge_purpose, purposes) & ~edge_fallback
+                for purposes in _TIERS_INVESTMENT_FIRST
+            ]
         ),
     }
 
@@ -396,27 +472,37 @@ def _build_tick_index(network: MaterialNetwork) -> _TickIndex:
     )
 
 
+def _ephemeral_commodity_ids(network: MaterialNetwork) -> np.ndarray:
+    """Commodity indices that are non-stockable, so their cells must close at 0."""
+    return np.asarray(
+        [g for g, spec in enumerate(_commodity_specs(network)) if not spec.stockable],
+        dtype=np.int64,
+    )
+
+
 def _commodity_specs(network: MaterialNetwork) -> list[CommoditySpec]:
     """Declared CommoditySpec view aligned with the network commodity axis."""
     return [commodity_spec(cid) for cid in network.commodity_ids]
 
 
 def _fixed_network_vector(values: list[float], network: MaterialNetwork) -> np.ndarray:
-    """Map a declared commodity-indexed vector onto the network commodity axis.
+    """Map a catalog-indexed parameter vector onto the network commodity axis.
 
-    Vectors are indexed by the declared axis (``P02_COMMODITY_IDS``), so the
-    engine carries no assumption about how many commodities exist.
+    Vectors are indexed by the scenario's frozen catalog axis (P05 §A), so the
+    engine carries no hardcoded commodity count and reordering the declared
+    axis never silently mixes parameters.
     """
-    axis = P02_COMMODITY_IDS
-    if len(values) != len(axis):
+    index = get_catalog(network.catalog_id).index
+    if len(values) != len(index):
         raise ConfigError(
-            f"parameter vector has {len(values)} entries but the declared axis has "
-            f"{len(axis)} commodities"
+            f"parameter vector has {len(values)} entries but catalog "
+            f"{network.catalog_id!r} has {len(index)} commodities"
         )
     mapped = np.zeros(len(network.commodity_ids), dtype=np.float64)
     for g, commodity_id in enumerate(network.commodity_ids):
-        if commodity_id in COMMODITY_INDEX:
-            mapped[g] = float(values[COMMODITY_INDEX[commodity_id]])
+        position = index.get(commodity_id)
+        if position is not None:
+            mapped[g] = float(values[position])
     return mapped
 
 
@@ -425,24 +511,29 @@ def _admin_price_vector(
 ) -> tuple[np.ndarray, int]:
     """(G,) standard admin prices and the services commodity index (-1 none)."""
     mapped = _fixed_network_vector(parameters.prices, network)
-    services_g = (
-        network.commodity_ids.index("services_transport")
-        if "services_transport" in network.commodity_ids
-        else -1
-    )
+    catalog = get_catalog(network.catalog_id)
+    service_ids = catalog.with_role("service")
+    services_g = -1
+    for commodity_id in service_ids:
+        if commodity_id in network.commodity_ids:
+            services_g = network.commodity_ids.index(commodity_id)
+            break
     return mapped, services_g
 
 
 def _cell_price_vector(parameters: MaterialParameters, network: MaterialNetwork) -> np.ndarray:
-    """(S,) admin price per stock cell (food raw cells at ``food_raw_price``)."""
+    """(S,) admin price per stock cell (raw-food cells at ``food_raw_price``)."""
     price_view = build_material_prices(parameters)
     cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
     cell_price = price_view.standard[cell_commodity].astype(np.float64, copy=True)
-    food_g = COMMODITY_INDEX.get("food")
-    if food_g is not None and "food" in network.commodity_ids:
-        net_food = network.commodity_ids.index("food")
-        raw_food = (cell_commodity == net_food) & (np.asarray(network.cell_stage) == 1)
-        cell_price[raw_food] = price_view.food_raw
+    cell_stage = np.asarray(network.cell_stage, dtype=np.int64)
+    catalog = get_catalog(network.catalog_id)
+    for commodity_id in catalog.with_role("food_raw"):
+        if commodity_id not in network.commodity_ids:
+            continue
+        net_g = network.commodity_ids.index(commodity_id)
+        raw_cells = (cell_commodity == net_g) & (cell_stage == 1)
+        cell_price[raw_cells] = price_view.food_raw
     return cell_price
 
 
@@ -516,16 +607,44 @@ def tick_material(
     cell_price = _cell_price_vector(parameters, network)
     hw_net = _fixed_network_vector(parameters.handling_work_per_unit, network)
     hw_net = np.where(hw_net > 0.0, hw_net, 1.0)
-    capital_g = (
-        network.commodity_ids.index("capital_goods")
-        if "capital_goods" in network.commodity_ids
-        else -1
+    _catalog = get_catalog(network.catalog_id)
+
+    # P05 §0.5: the distribution layer (wholesale/retail) sells at the producer
+    # price plus a margin that recovers its declared wage bill over its declared
+    # handling work, so traders are not structurally loss-making.
+    handling_capacity = _handling_capacity(state)
+    org_type_arr = np.asarray(state.organization_type, dtype=np.int64)
+    labor_arr = np.asarray(state.organization_labor_available, dtype=np.float64)
+    wholesale_wage = float(parameters.wage_rate) * float(
+        labor_arr[org_type_arr == _CODE_WHOLESALE].sum()
     )
-    construction_g = (
-        network.commodity_ids.index("construction")
-        if "construction" in network.commodity_ids
-        else -1
+    retail_wage = float(parameters.wage_rate) * float(
+        labor_arr[org_type_arr == _CODE_RETAIL].sum()
     )
+    wholesale_work = float(handling_capacity[org_type_arr == _CODE_WHOLESALE].sum())
+    retail_work = float(handling_capacity[org_type_arr == _CODE_RETAIL].sum())
+    margin_w = wholesale_wage / wholesale_work if wholesale_work > 0.0 else 0.0
+    margin_r = retail_wage / retail_work if retail_work > 0.0 else 0.0
+    if not bool(getattr(parameters, "distribution_margins_enabled", False)):
+        margin_w = 0.0
+        margin_r = 0.0
+    owner_org = index.cell_owner_org
+    hub_cells = (owner_org >= 0) & (org_type_arr[np.maximum(owner_org, 0)] == _CODE_WHOLESALE)
+    retail_cells_mask = (owner_org >= 0) & (org_type_arr[np.maximum(owner_org, 0)] == _CODE_RETAIL)
+    cell_release_price = cell_price.copy()
+    cell_release_price = np.where(hub_cells, cell_release_price + margin_w, cell_release_price)
+    cell_release_price = np.where(
+        retail_cells_mask, cell_release_price + margin_w + margin_r, cell_release_price
+    )
+
+    def _role_g(role: str) -> int:
+        for commodity_id in _catalog.with_role(role):
+            if commodity_id in network.commodity_ids:
+                return network.commodity_ids.index(commodity_id)
+        return -1
+
+    capital_g = _role_g("capital")
+    construction_g = _role_g("construction")
 
     flows = _new_flows(
         tick,
@@ -539,6 +658,7 @@ def tick_material(
         d_count,
         m_count,
         cell_count,
+        len(network.household_catalog.household_good_ids),
     )
 
     household_parameters = (
@@ -584,12 +704,12 @@ def tick_material(
     repair_want = (durable_owned_open * hazard).sum(
         axis=1
     ) * household_parameters.durables.repair_effectiveness
-    desired_h[:, H_INDEX["repair_services"]] = repair_want
+    desired_h[:, catalog.channel("repair")] = repair_want
     construction_want = np.minimum(
         housing_gap(state, household_parameters),
         household_parameters.housing.private_construction_intention_per_quarter,
     )
-    desired_h[:, H_INDEX["construction_services"]] = construction_want
+    desired_h[:, catalog.channel("construction")] = construction_want
     flows.household_desired_h = desired_h
     to_material = np.asarray(catalog.to_material, dtype=np.float64)
     parent_demand_region = np.zeros((region_count, g_count), dtype=np.float64)
@@ -625,6 +745,14 @@ def tick_material(
     cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
     cell_owner_kind = np.asarray(network.cell_owner_kind, dtype=np.int64)
     has_dest = demand_cell >= 0
+    # Exports/housing are valued at the producer price (no domestic retail
+    # margin), so the treasury border continuity stays margin-free.
+    border_purpose = np.isin(
+        edge_purpose, (_PURPOSE_HOUSING, _PURPOSE_EXPORT_CMEA, _PURPOSE_EXPORT_CONVERTIBLE)
+    )
+    edge_unit_price = np.where(
+        border_purpose, cell_price[edge_source], cell_release_price[edge_source]
+    )
 
     demand_unit_cost = np.zeros(d_count, dtype=np.float64)
     demand_unit_cost[has_dest] = cell_price[demand_cell[has_dest]]
@@ -667,41 +795,112 @@ def tick_material(
         target = np.minimum(target, ceiling)
     else:
         target = local_target
+    if bool(getattr(parameters, "demand_limited_targets", False)):
+        # Cap each organization by last quarter's order signal for its output
+        # commodity (never silently drop a cell that had demand).
+        signal = np.asarray(state.organization_demand_signal, dtype=np.float64)
+        act_org = np.asarray(network.activity_org_index, dtype=np.int64)
+        has = act_org >= 0
+        sig_act = np.zeros(activity_count, dtype=np.float64)
+        sig_act[has] = signal[act_org[has]]
+        cap = float(getattr(parameters, "demand_cover", 1.0)) * sig_act
+        # A zero signal means the output cell had no takers: produce nothing.
+        target = np.where(has, np.minimum(target, cap), target)
+    if str(getattr(parameters, "production_target_rule", "legacy")) == "leontief_upper_bound":
+        # P05 §0.6: cap each commodity's gross output at the Leontief requirement
+        # for declared final demand, damped toward the capacity rule and floored
+        # above zero so the demand-driven cap cannot collapse the economy.
+        cap_a = _leontief_activity_cap(network, parent_demand_region.sum(axis=0))
+        damping = float(np.clip(float(parameters.leontief_damping), 0.0, 1.0))
+        blended = (1.0 - damping) * target + damping * cap_a
+        floored = np.maximum(blended, float(parameters.leontief_floor) * target)
+        target = np.minimum(target, floored)
     flows.activity_target = target.copy()
     org_activity = np.asarray(state.organization_activity, dtype=np.int64)
     with_activity = org_activity >= 0
     flows.organization_target[with_activity] = target[org_activity[with_activity]]
     _phase("target")
 
-    # ---------------- step 2: transport-first services -------------------
+    # ---------------- step 2: same-quarter services ----------------------
+    # P05 §0.4: every activity the compiler scheduled early (produces a
+    # non-stockable service from opening stock only) runs before the general
+    # material pass.  For the legacy catalog this is exactly the transport
+    # sector, so behaviour is unchanged.
     transport_acts = activity_is_org & transport_org_mask[activity_org]
-    kt_mask = transport_acts[input_activity]
+    early_service_acts = np.asarray(network.activity_early_service, dtype=bool)
+    kt_mask = early_service_acts[input_activity]
     transport_realized = np.zeros(activity_count, dtype=np.float64)
     transport_used_k = np.zeros(k_count, dtype=np.float64)
     logistics_pool = np.zeros(org_count, dtype=np.float64)
     produced_into = np.zeros(cell_count, dtype=np.float64)
     if kt_mask.any():
-        realized, used = produce_leontief(
-            stock_open[input_cell[kt_mask]],
-            index.k_coefficient[kt_mask],
-            input_activity[kt_mask],
-            target,
-        )
-        transport_realized[transport_acts] = realized[transport_acts]
-        transport_used_k[kt_mask] = used
-        state.stock_value[input_cell[kt_mask]] -= used
-        transport_b = transport_acts[index.b_rows]
-        amounts = index.b_coefficient[transport_b] * realized[index.b_rows[transport_b]]
-        produced_into += np.bincount(
-            index.b_cells[transport_b], weights=amounts, minlength=cell_count
-        )
+        # P05 §0.4: produce same-quarter services in dependency tiers, feeding
+        # an earlier tier's non-stockable output to later tiers' inputs.
+        input_timing_net = np.asarray(network.input_timing, dtype=np.int64)
+        produced_service_by_commodity = np.zeros(g_count, dtype=np.float64)
+        # Same-quarter service output that is consumed straight out of the
+        # tick's production pool never reaches a cell: it must be netted out of
+        # the production credit instead of being debited from the consumer's
+        # input cell (which would drive that cell negative, P05 §0.4).
+        same_quarter_consumed = np.zeros(g_count, dtype=np.float64)
+        for tier in network.early_service_tiers:
+            tier_mask = np.zeros(activity_count, dtype=bool)
+            tier_mask[np.asarray(tier, dtype=np.int64)] = True
+            tier_inputs = tier_mask[input_activity]
+            if not tier_inputs.any():
+                continue
+            available = stock_open[input_cell[tier_inputs]].copy()
+            same_quarter = input_timing_net[tier_inputs] == 1
+            if same_quarter.any():
+                g_in = cell_commodity[input_cell[tier_inputs]]
+                available = available + np.where(
+                    same_quarter, produced_service_by_commodity[g_in], 0.0
+                )
+            realized, used = produce_leontief(
+                available,
+                index.k_coefficient[tier_inputs],
+                input_activity[tier_inputs],
+                target,
+            )
+            transport_realized[tier_mask] = realized[tier_mask]
+            transport_used_k[tier_inputs] = used
+            if same_quarter.any():
+                own_stock = np.minimum(used, stock_open[input_cell[tier_inputs]])
+                drawn_from_pool = np.where(same_quarter, used - own_stock, 0.0)
+                np.add.at(same_quarter_consumed, g_in, drawn_from_pool)
+                np.add.at(flows.service_pool_draw_at_cell, input_cell[tier_inputs], drawn_from_pool)
+                debit = np.where(same_quarter, own_stock, used)
+            else:
+                debit = used
+            state.stock_value[input_cell[tier_inputs]] -= debit
+            tier_b = tier_mask[index.b_rows]
+            amounts = index.b_coefficient[tier_b] * realized[index.b_rows[tier_b]]
+            produced_into += np.bincount(
+                index.b_cells[tier_b], weights=amounts, minlength=cell_count
+            )
+            np.add.at(
+                produced_service_by_commodity,
+                cell_commodity[index.b_cells[tier_b]],
+                amounts,
+            )
+        for g_index in np.flatnonzero(same_quarter_consumed):
+            commodity_cells = np.flatnonzero(cell_commodity == g_index)
+            produced_here = produced_into[commodity_cells]
+            total_here = float(produced_here.sum())
+            if total_here <= 0.0:
+                continue
+            take = min(float(same_quarter_consumed[g_index]), total_here)
+            taken = produced_here * (take / total_here)
+            produced_into[commodity_cells] -= taken
+            np.add.at(flows.service_pool_credit_at_cell, commodity_cells, taken)
         state.stock_value += produced_into
+        # Only transport carriers contribute to the logistics pool.
         logistics_pool += np.bincount(
             activity_org[transport_acts],
-            weights=realized[transport_acts],
+            weights=transport_realized[transport_acts],
             minlength=org_count,
         ) * float(parameters.service_split[0])
-    flows.activity_realized[transport_acts] = transport_realized[transport_acts]
+    flows.activity_realized[early_service_acts] = transport_realized[early_service_acts]
     _phase("transport")
 
     # ---------------- step 3: orders and finance -------------------------
@@ -717,16 +916,38 @@ def tick_material(
     org_k = k_buyer >= 0
     exp_k = np.zeros(k_count, dtype=np.float64)
     exp_k[org_k] = shortage_open[k_buyer[org_k]]
-    gross[:k_count] = np.maximum(desired[:k_count] * (1.0 + hoarding) - inv_open[:k_count], 0.0) * (
-        1.0 + strength * exp_k
+    # Agriculture draws down its pipeline at next quarter's declared seasonal
+    # factor; every other activity keeps the current target as the next use.
+    next_season = float(parameters.farm_seasonal_factors[(tick + 1) % 4])
+    activity_season_ratio = np.ones(activity_count, dtype=np.float64)
+    ratio = next_season / float(season_factor) if season_factor > 0.0 else 1.0
+    activity_season_ratio[act_farm] = ratio
+    activity_season_ratio[plot_rows] = ratio
+    next_use_k = desired[:k_count] * activity_season_ratio[input_activity]
+    gross_k, _ = _projected_closing_order(
+        inv_open[:k_count],
+        desired[:k_count],
+        next_use_k,
+        hoarding_quarters=hoarding,
+        overorder_strength=strength,
+        lagged_shortage=exp_k,
     )
+    gross[:k_count] = gross_k
 
     retail_mask = demand_purpose == _PURPOSE_RETAIL
     if retail_mask.any():
         retail_dest = demand_cell[retail_mask]
         basket = parent_demand_region[cell_region[retail_dest], cell_commodity[retail_dest]]
         desired[retail_mask] = basket
-        gross[retail_mask] = np.maximum(basket - inv_open[retail_mask], 0.0)
+        retail_zero = np.zeros(int(np.count_nonzero(retail_mask)), dtype=np.float64)
+        gross[retail_mask] = _projected_closing_order(
+            inv_open[retail_mask],
+            basket,
+            basket,
+            hoarding_quarters=hoarding,
+            overorder_strength=0.0,
+            lagged_shortage=retail_zero,
+        )[0]
 
     procurement_mask = demand_purpose == _PURPOSE_PROCUREMENT
     if procurement_mask.any():
@@ -746,9 +967,21 @@ def tick_material(
                 minlength=cell_count,
             )
         proc_dest = demand_cell[procurement_mask]
-        hub_need = demand_share[procurement_mask] * inflow_need[proc_dest]
-        gross[procurement_mask] = np.maximum(hub_need - stock_open[proc_dest], 0.0)
-        desired[procurement_mask] = gross[procurement_mask]
+        proc_share = demand_share[procurement_mask]
+        # One hub cell may carry several collection intents; aggregate their
+        # capacity shares so the shared opening stock offsets the buffer once.
+        need_by_cell = np.zeros(cell_count, dtype=np.float64)
+        np.add.at(need_by_cell, proc_dest, proc_share * inflow_need[proc_dest])
+        order_by_cell, _ = _projected_closing_order(
+            stock_open,
+            need_by_cell,
+            need_by_cell,
+            hoarding_quarters=hoarding,
+            overorder_strength=0.0,
+            lagged_shortage=np.zeros(cell_count, dtype=np.float64),
+        )
+        desired[procurement_mask] = proc_share * need_by_cell[proc_dest]
+        gross[procurement_mask] = proc_share * order_by_cell[proc_dest]
 
     # Investment hunger (physical producers only) and housing requests.
     has_k_cells = (
@@ -760,6 +993,7 @@ def tick_material(
         + float(parameters.hunger_bailout)
         * np.asarray(state.organization_bailout_expectation, dtype=np.float64)
         + float(parameters.hunger_shortage) * np.where(has_k_cells, shortage_open, 0.0)
+        + float(getattr(parameters, "capital_depreciation_rate", 0.0))
     )
     new_request = np.where(
         with_activity,
@@ -815,6 +1049,21 @@ def tick_material(
     funded_inputs = np.minimum(input_cost_by_org, cash_for_goods)
     scale_inputs = _group_factor(input_cost_by_org, cash_for_goods)
     cash_for_goods = cash_for_goods - funded_inputs
+    # P05 §0.6: replacement investment is funded cash-first, its residual gap
+    # drawn from the credit fund (a transfer between two deposit-type accounts,
+    # so the money-coverage identity is untouched).
+    dep_rate = float(getattr(parameters, "capital_depreciation_rate", 0.0))
+    if dep_rate > 0.0:
+        replacement_cost = new_request * unit_capacity_cost
+        gap = np.maximum(replacement_cost - cash_for_goods, 0.0)
+        if float(gap.sum()) > 0.0:
+            scale = min(1.0, float(state.credit_fund) / float(gap.sum()))
+            extra = gap * scale
+            state.credit_fund = float(state.credit_fund) - float(extra.sum())
+            state.organization_cash = (
+                np.asarray(state.organization_cash, dtype=np.float64) + extra
+            )
+            cash_for_goods = cash_for_goods + extra
     investment = finance.plan_investment(
         state,
         parameters,
@@ -881,6 +1130,20 @@ def tick_material(
         desired[investment_mask] = pre_funding
         gross[investment_mask] = pre_funding
     _phase("orders")
+
+    # P05 §0.5: the freight price is derived from the carriers' declared wage
+    # bill over the certified logistics work this quarter, not the admin
+    # service price.  Without this the transport sector is structurally
+    # insolvent: it pays wages for services the route graph never buys.
+    edge_self_hauled_flag = np.asarray(network.edge_self_hauled, dtype=bool)
+    non_self_haul = (~edge_self_hauled_flag) & (edge_transport >= 0)
+    certified_work = float(np.sum(ordered[edge_demand[non_self_haul]] * edge_weight[non_self_haul]
+                                  * edge_per_unit[non_self_haul]))
+    carrier_wage = float(parameters.wage_rate) * float(
+        np.sum(np.asarray(state.organization_labor_available, dtype=np.float64)[transport_org_mask])
+    )
+    if certified_work > 1e-12:
+        service_price = carrier_wage / certified_work
 
     # ---------------- step 4: trade pre-pass -----------------------------
     oil_price = float(forcing.oil_price[tick])
@@ -999,6 +1262,20 @@ def tick_material(
         alloc2 = claim2 * factor2[src]
         avail -= np.bincount(src, weights=alloc2, minlength=cell_count)
         edge_allocated[tier_edges] = alloc1 + alloc2
+    # P05 §0.3 fallback round: unmet demand may draw from additional
+    # same-commodity sources once the declared sources are exhausted.
+    fallback_edges = np.asarray(network.edge_is_fallback, dtype=bool)
+    if fallback_edges.any():
+        allocated_so_far = np.bincount(edge_demand, weights=edge_allocated, minlength=d_count)
+        unmet = np.maximum(ordered - allocated_so_far, 0.0)
+        fb_src = edge_source[fallback_edges]
+        fb_demand = edge_demand[fallback_edges]
+        claim = unmet[fb_demand] * edge_weight[fallback_edges]
+        need = np.bincount(fb_src, weights=claim, minlength=cell_count)
+        factor = _group_factor(need, avail)
+        alloc = claim * factor[fb_src]
+        avail -= np.bincount(fb_src, weights=alloc, minlength=cell_count)
+        edge_allocated[fallback_edges] = alloc
     allocated = np.bincount(edge_demand, weights=edge_allocated, minlength=d_count)
     _phase("allocation")
 
@@ -1006,8 +1283,12 @@ def tick_material(
     active = edge_allocated > 0.0
     phys_factor = np.ones(m_count, dtype=np.float64)
 
+    # P05 §0.2: self-hauled routes (a carrier's own inputs, non-stockable
+    # service deliveries, and — for the legacy catalog — every unmetered
+    # same-region leg) never claim the shared carrier service pool.
+    edge_self_hauled = np.asarray(network.edge_self_hauled, dtype=bool)
     service_need = edge_allocated * edge_per_unit
-    needs_transport = edge_transport >= 0
+    needs_transport = (~edge_self_hauled) & (edge_transport >= 0)
     if (needs_transport & active).any():
         transport_need = np.bincount(
             edge_transport[needs_transport],
@@ -1062,7 +1343,7 @@ def tick_material(
         )
 
     candidate = edge_allocated * phys_factor
-    pay_goods = candidate * cell_price[edge_source]
+    pay_goods = candidate * edge_unit_price
     pay_fee = candidate * edge_per_unit * service_price
     unit_pay = pay_goods + pay_fee
 
@@ -1133,7 +1414,7 @@ def tick_material(
     # Buyers pay only for what is actually delivered: the cash/clearing factors
     # scale the goods and freight charges together with the delivery, so a
     # cash-limited buyer can never overdraw its deposit.
-    pay_goods = delivered_edges * cell_price[edge_source]
+    pay_goods = delivered_edges * edge_unit_price
     pay_fee = delivered_edges * edge_per_unit * service_price
     unit_pay = pay_goods + pay_fee
     flows.edge_allocated = edge_allocated
@@ -1437,11 +1718,11 @@ def tick_material(
         )
         final_realized = realized
         used_full[non_transport_k] = used
-    final_realized[transport_acts] = transport_realized[transport_acts]
+    final_realized[early_service_acts] = transport_realized[early_service_acts]
     used_full[kt_mask] = transport_used_k[kt_mask]
-    flows.activity_realized = np.where(transport_acts, transport_realized, final_realized)
+    flows.activity_realized = np.where(early_service_acts, transport_realized, final_realized)
     state.stock_value[input_cell[non_transport_k]] -= used_full[non_transport_k]
-    non_transport_b = ~transport_acts[index.b_rows]
+    non_transport_b = ~early_service_acts[index.b_rows]
     production_amounts = (
         index.b_coefficient[non_transport_b] * final_realized[index.b_rows[non_transport_b]]
     )
@@ -1576,8 +1857,8 @@ def tick_material(
         flows.durable_acquired[:, column] = np.asarray(
             flows.household_realized_h, dtype=np.float64
         )[:, int(channel)]
-    update_durable_stocks(state, flows, household_parameters, allocation_opening)
-    private_construction_installation(state, flows, household_parameters)
+    update_durable_stocks(state, flows, household_parameters, allocation_opening, catalog)
+    private_construction_installation(state, flows, household_parameters, catalog)
     allocate_housing(state, flows, household_parameters)
     account_household_welfare(
         state, flows, household_parameters, network, allocation_opening, price_net
@@ -1632,10 +1913,10 @@ def tick_material(
             state.stock_value[cells_t[valid_cells]] -= service_by_org[
                 transport_rows_used[valid_cells]
             ]
-        services_cells = np.flatnonzero(cell_commodity == services_g)
-        leftovers = state.stock_value[services_cells]
+        ephemeral_cells = np.flatnonzero(np.isin(cell_commodity, _ephemeral_commodity_ids(network)))
+        leftovers = state.stock_value[ephemeral_cells]
         flows.expired_services = float(leftovers.sum())
-        state.stock_value[services_cells] = 0.0
+        state.stock_value[ephemeral_cells] = 0.0
 
     second_expiry(state, network)
 
@@ -1712,9 +1993,45 @@ def tick_material(
         "stock cells went negative",
     )
     state.stock_value = np.maximum(state.stock_value, 0.0)
+    # P05 §0.6: M2-neutral working-capital recycling + explicit SBC redistribution.
+    finance.run_working_capital_cycle(state, flows, parameters)
+    if bool(getattr(parameters, "demand_limited_targets", False)):
+        # Next quarter's production cap tracks *realized* consumption of each
+        # commodity (intermediate use + household retail + exports actually
+        # delivered), floored by exogenous household demand so the rule cannot
+        # collapse to the trivial zero fixed point.
+        delivered_by_demand = np.bincount(
+            edge_demand,
+            weights=np.asarray(flows.edge_delivered, dtype=np.float64),
+            minlength=d_count,
+        )
+        consuming = (
+            (demand_purpose == _PURPOSE_INTERMEDIATE)
+            | (demand_purpose == _PURPOSE_RETAIL)
+            | (demand_purpose == _PURPOSE_EXPORT_CMEA)
+            | (demand_purpose == _PURPOSE_EXPORT_CONVERTIBLE)
+            | (demand_purpose == _PURPOSE_INVESTMENT)
+            | (demand_purpose == _PURPOSE_HOUSING)
+        )
+        cons_by_g = np.bincount(
+            cell_commodity[demand_cell[consuming]],
+            weights=delivered_by_demand[consuming],
+            minlength=g_count,
+        )
+        floor_by_g = np.asarray(parent_demand_region, dtype=np.float64).sum(axis=0)
+        floor_mix = float(getattr(parameters, "demand_floor", 1.0))
+        need_by_g = np.maximum(cons_by_g, floor_mix * floor_by_g)
+        org_out_cell_sig = np.asarray(network.org_output_cell, dtype=np.int64)
+        org_out_g = np.where(
+            org_out_cell_sig >= 0, cell_commodity[np.maximum(org_out_cell_sig, 0)], -1
+        )
+        state.organization_demand_signal = np.where(
+            org_out_g >= 0, need_by_g[np.maximum(org_out_g, 0)], 0.0
+        )
     if services_g >= 0:
+        ephemeral_now = np.isin(cell_commodity, _ephemeral_commodity_ids(network))
         _require(
-            bool(np.all(state.stock_value[cell_commodity == services_g] == 0.0)),
+            bool(np.all(state.stock_value[ephemeral_now] == 0.0)),
             "services cells must close at zero",
         )
     _require(
@@ -1740,9 +2057,14 @@ def tick_material(
         float(np.sum(hh_weight * np.asarray(state.household_cash, dtype=np.float64)))
         + float(np.sum(np.asarray(state.organization_cash, dtype=np.float64)))
         + float(state.treasury_deposit)
+        + float(state.credit_fund)
+    )
+    money_gap = abs(float(deposits.sum()) - covered)
+    money_tol = 1e-6 + float(getattr(parameters, "money_tolerance_rel", 0.0)) * max(
+        abs(float(deposits.sum())), abs(covered)
     )
     _require(
-        bool(abs(float(deposits.sum()) - covered) <= 1e-6),
+        bool(money_gap <= money_tol),
         "deposit liability no longer covers household, organization and treasury cash",
     )
     _require(
@@ -1781,6 +2103,7 @@ def _new_flows(
     d_count: int,
     m_count: int,
     cell_count: int,
+    h_count: int,
 ) -> MaterialTickFlows:
     return MaterialTickFlows(
         tick=tick,
@@ -1816,6 +2139,7 @@ def _new_flows(
         organization_investment_completed=np.zeros(org_count, dtype=np.float64),
         organization_bailout_requested=np.zeros(org_count, dtype=np.float64),
         organization_bailout_granted=np.zeros(org_count, dtype=np.float64),
+        organization_sbc_transfer=np.zeros(org_count, dtype=np.float64),
         organization_sales_receipts=np.zeros(org_count, dtype=np.float64),
         organization_purchases=np.zeros(org_count, dtype=np.float64),
         household_wage_income=np.zeros(household_count, dtype=np.float64),
@@ -1835,16 +2159,16 @@ def _new_flows(
         household_voluntary_saving=np.zeros(household_count, dtype=np.float64),
         household_cash_open=np.zeros(household_count, dtype=np.float64),
         household_cash_close=np.zeros(household_count, dtype=np.float64),
-        household_desired_h=np.zeros((household_count, N_H), dtype=np.float64),
-        household_affordable_h=np.zeros((household_count, N_H), dtype=np.float64),
-        household_realized_h=np.zeros((household_count, N_H), dtype=np.float64),
-        household_budget_unmet_h=np.zeros((household_count, N_H), dtype=np.float64),
-        household_availability_unmet_h=np.zeros((household_count, N_H), dtype=np.float64),
-        household_formal_h=np.zeros((household_count, N_H), dtype=np.float64),
-        household_plot_self_h=np.zeros((household_count, N_H), dtype=np.float64),
-        household_plot_market_h=np.zeros((household_count, N_H), dtype=np.float64),
-        household_second_h=np.zeros((household_count, N_H), dtype=np.float64),
-        household_goal_credit_h=np.zeros((household_count, N_H), dtype=np.float64),
+        household_desired_h=np.zeros((household_count, h_count), dtype=np.float64),
+        household_affordable_h=np.zeros((household_count, h_count), dtype=np.float64),
+        household_realized_h=np.zeros((household_count, h_count), dtype=np.float64),
+        household_budget_unmet_h=np.zeros((household_count, h_count), dtype=np.float64),
+        household_availability_unmet_h=np.zeros((household_count, h_count), dtype=np.float64),
+        household_formal_h=np.zeros((household_count, h_count), dtype=np.float64),
+        household_plot_self_h=np.zeros((household_count, h_count), dtype=np.float64),
+        household_plot_market_h=np.zeros((household_count, h_count), dtype=np.float64),
+        household_second_h=np.zeros((household_count, h_count), dtype=np.float64),
+        household_goal_credit_h=np.zeros((household_count, h_count), dtype=np.float64),
         household_substitution=np.zeros((household_count, N_Q), dtype=np.float64),
         household_queue_hours=np.zeros(household_count, dtype=np.float64),
         household_search_hours=np.zeros(household_count, dtype=np.float64),
@@ -1884,6 +2208,8 @@ def _new_flows(
         usd_loan_drawn=0.0,
         official_fx_translation=None,
         expired_services=0.0,
+        service_pool_draw_at_cell=np.zeros(cell_count, dtype=np.float64),
+        service_pool_credit_at_cell=np.zeros(cell_count, dtype=np.float64),
     )
 
 
@@ -2146,7 +2472,7 @@ def _material_residuals(
             minlength=cell_count,
         )
     if services_g >= 0:
-        services_cells = cell_commodity == services_g
+        services_cells = np.isin(cell_commodity, _ephemeral_commodity_ids(network))
         expiry = np.maximum(open_ + inflow - outflow, 0.0)[services_cells]
         outflow[services_cells] += expiry
     residual_cells = np.abs(close - open_ - inflow + outflow)
@@ -2325,6 +2651,8 @@ def run_material(
         )
 
     run_id = uuid4().hex
+    # P05 §195: ontology/fidelity/retention and the sealed target split are
+    # declared explicitly and kept out of the replay behaviour digest.
     running = manifest_preamble(
         run_id=run_id,
         spec=spec,
@@ -2338,6 +2666,7 @@ def run_material(
         engine_version=MATERIAL_ENGINE_VERSION,
         parent_run_id=parent_run_id or None,
         resumed_from_checkpoint=str(resume_from) if resume_from is not None else None,
+        **p05_manifest_fields(root, spec),
     )
     output_dir.mkdir(parents=True)
     write_manifest_atomic(output_dir, running)

@@ -38,13 +38,13 @@ from hsm_lab.contract.households import (
 from hsm_lab.contract.material import (
     MATERIAL_FORCING_VARIABLE_IDS,
     ORGANIZATION_PROFILES,
-    P02_COMMODITY_IDS,
     ForcingBinding,
     MaterialInitialRecipe,
     MaterialParameters,
     MaterialRouteSpec,
     OrganizationRecipe,
     TechnologySpec,
+    catalog_for_commodities,
 )
 
 __all__ = [
@@ -377,19 +377,19 @@ class ScenarioSpec(StrictModel):
                 "material scenarios take forcing only via forcing_pack/forcing_bindings: "
                 "forcing_ids/initial_ids/parameter_ids must be empty"
             )
-        known = set(P02_COMMODITY_IDS)
         for binding in self.forcing_bindings:
             if binding.variable_id not in MATERIAL_FORCING_VARIABLE_IDS:
                 raise ConfigError(
                     f"forcing binding variable {binding.variable_id} is not a material "
                     "external variable"
                 )
-        declared = set(self.commodities)
-        if not declared <= known:
+        try:
+            catalog_for_commodities(self.commodities)
+        except ConfigError as exc:
             raise ConfigError(
-                f"material commodities must be declared CommoditySpec ids; unknown: "
-                f"{sorted(declared - known)}"
-            )
+                "material commodities must belong to one declared catalog: "
+                f"{sorted(set(self.commodities))}"
+            ) from exc
 
     def _material_profile_count(self) -> int:
         assert self.organization_recipe is not None
@@ -418,7 +418,8 @@ class ScenarioSpec(StrictModel):
 
     def _validate_material_for_run(self, contract: ResearchContract) -> None:
         """Formal material run gates (P02 plan step 1/7)."""
-        declared = P02_COMMODITY_IDS
+        catalog = catalog_for_commodities(self.commodities)
+        declared = catalog.ids
         unknown = [cid for cid in self.commodities if cid not in declared]
         if unknown:
             raise ConfigError(f"commodity ids are not declared in the registry: {unknown}")
@@ -427,7 +428,7 @@ class ScenarioSpec(StrictModel):
         missing = [cid for cid in declared if cid not in self.commodities]
         if missing:
             raise ConfigError(
-                f"material scenarios must declare every registry commodity; missing {missing}"
+                f"material scenarios must declare every catalog commodity; missing {missing}"
             )
         # Commodity-indexed parameter vectors must match the declared axis length.
         if self.material_parameters is None:
@@ -445,9 +446,9 @@ class ScenarioSpec(StrictModel):
         if not 1000 <= self.households <= 30000:
             raise ConfigError("material households must lie in [1000, 30000]")
         count = self._material_profile_count()
-        if count not in (100, 200, 400):
+        if count not in (100, 200, 300, 400, 450):
             raise ConfigError(
-                f"material organization profile total must be 100/200/400, got {count}"
+                f"material organization profile total must be 100/200/300/400/450, got {count}"
             )
         if self.output_policy is OutputPolicy.RESEARCH_FULL:
             raise ConfigError(

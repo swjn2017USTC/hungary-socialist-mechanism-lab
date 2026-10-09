@@ -1,0 +1,293 @@
+{
+  "ontology_id": "f2_v1",
+  "source": "P05_HISTORICAL_F2_PLAN.md A.1 (BASELINE 9.2 G1)",
+  "commodity_count": 16,
+  "commodities": [
+    {
+      "id": "g01_solid_fuels",
+      "unit": "f2_solid_fuel_1960_unit",
+      "stockable": true,
+      "household_channel": true,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [
+        "standard"
+      ],
+      "retail_stages": [
+        "standard"
+      ],
+      "investment": false,
+      "roles": [
+        "energy"
+      ]
+    },
+    {
+      "id": "g02_oil_gas_fuels",
+      "unit": "f2_liquid_fuel_1960_unit",
+      "stockable": true,
+      "household_channel": true,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [
+        "standard"
+      ],
+      "retail_stages": [
+        "standard"
+      ],
+      "investment": false,
+      "roles": [
+        "energy"
+      ]
+    },
+    {
+      "id": "g03_electricity_heat",
+      "unit": "f2_electricity_heat_1960_unit",
+      "stockable": false,
+      "household_channel": true,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [],
+      "retail_stages": [
+        "standard"
+      ],
+      "investment": false,
+      "roles": [
+        "energy",
+        "same_quarter_service"
+      ]
+    },
+    {
+      "id": "g04_basic_metals_materials",
+      "unit": "f2_basic_material_1960_unit",
+      "stockable": true,
+      "household_channel": false,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [],
+      "retail_stages": [],
+      "investment": false,
+      "roles": [
+        "raw"
+      ]
+    },
+    {
+      "id": "g05_chemicals_fertilizer",
+      "unit": "f2_chemical_1960_unit",
+      "stockable": true,
+      "household_channel": false,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [],
+      "retail_stages": [],
+      "investment": false,
+      "roles": [
+        "raw"
+      ]
+    },
+    {
+      "id": "g06_machinery_capital",
+      "unit": "f2_machinery_1960_unit",
+      "stockable": true,
+      "household_channel": false,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [],
+      "retail_stages": [],
+      "investment": true,
+      "roles": [
+        "capital"
+      ]
+    },
+    {
+      "id": "g07_construction",
+      "unit": "f2_construction_1960_unit",
+      "stockable": true,
+      "household_channel": false,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [],
+      "retail_stages": [],
+      "investment": true,
+      "roles": [
+        "construction"
+      ]
+    },
+    {
+      "id": "g08_agricultural_raw",
+      "unit": "f2_agri_raw_1960_unit",
+      "stockable": true,
+      "household_channel": false,
+      "stages": [
+        "raw"
+      ],
+      "hub_stages": [
+        "raw"
+      ],
+      "retail_stages": [],
+      "investment": false,
+      "roles": [
+        "agricultural_raw",
+        "food_raw"
+      ]
+    },
+    {
+      "id": "g09_basic_food",
+      "unit": "f2_basic_food_1960_unit",
+      "stockable": true,
+      "household_channel": true,
+      "stages": [
+        "ready"
+      ],
+      "hub_stages": [
+        "ready"
+      ],
+      "retail_stages": [
+        "ready"
+      ],
+      "investment": false,
+      "roles": [
+        "food"
+      ]
+    },
+    {
+      "id": "g10_animal_food",
+      "unit": "f2_animal_food_1960_unit",
+      "stockable": true,
+      "household_channel": true,
+      "stages": [
+        "ready"
+      ],
+      "hub_stages": [
+        "ready"
+      ],
+      "retail_stages": [
+        "ready"
+      ],
+      "investment": false,
+      "roles": [
+        "food"
+      ]
+    },
+    {
+      "id": "g11_textiles_footwear",
+      "unit": "f2_textile_1960_unit",
+      "stockable": true,
+      "household_channel": true,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [
+        "standard"
+      ],
+      "retail_stages": [
+        "standard"
+      ],
+      "investment": false,
+      "roles": [
+        "light"
+      ]
+    },
+    {
+      "id": "g12_household_nondurables",
+      "unit": "f2_nondurable_1960_unit",
+      "stockable": true,
+      "household_channel": true,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [
+        "standard"
+      ],
+      "retail_stages": [
+        "standard"
+      ],
+      "investment": false,
+      "roles": [
+        "light"
+      ]
+    },
+    {
+      "id": "g13_household_durables",
+      "unit": "f2_durable_1960_unit",
+      "stockable": true,
+      "household_channel": true,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [
+        "standard"
+      ],
+      "retail_stages": [
+        "standard"
+      ],
+      "investment": false,
+      "roles": [
+        "durable"
+      ]
+    },
+    {
+      "id": "g14_vehicles_transport_equipment",
+      "unit": "f2_vehicle_1960_unit",
+      "stockable": true,
+      "household_channel": true,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [
+        "standard"
+      ],
+      "retail_stages": [
+        "standard"
+      ],
+      "investment": false,
+      "roles": [
+        "durable",
+        "vehicle"
+      ]
+    },
+    {
+      "id": "g15_market_services",
+      "unit": "f2_market_service_1960_unit",
+      "stockable": false,
+      "household_channel": true,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [],
+      "retail_stages": [
+        "standard"
+      ],
+      "investment": false,
+      "roles": [
+        "service",
+        "same_quarter_service"
+      ]
+    },
+    {
+      "id": "g16_housing_public_services",
+      "unit": "f2_public_service_1960_unit",
+      "stockable": false,
+      "household_channel": true,
+      "stages": [
+        "standard"
+      ],
+      "hub_stages": [],
+      "retail_stages": [
+        "standard"
+      ],
+      "investment": false,
+      "roles": [
+        "service",
+        "public",
+        "same_quarter_service"
+      ]
+    }
+  ]
+}

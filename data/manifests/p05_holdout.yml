@@ -1,0 +1,114 @@
+schema_version: '1'
+targets:
+- artifact_id: ag_cereals__ksh_agriculture_b__1979__1985__2cf17d5bf686__37c9fe80a88a
+  comparison_aggregation: sum
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: 6af62c6215190b7915eabda5656423a6a6e30b6ef00099ef2c923b69d755635a
+  use: holdout
+- artifact_id: ag_maize__ksh_agriculture_b__1979__1985__2cf17d5bf686__37c9fe80a88a
+  comparison_aggregation: sum
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: 14187cf9cb6fd4b156eb49450b837dc7c5a6423c96f6c9e6f86a3d851a873552
+  use: holdout
+- artifact_id: ag_wheat__ksh_agriculture_b__1979__1985__2cf17d5bf686__37c9fe80a88a
+  comparison_aggregation: sum
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: ad4fb6cfb8de54efc26cd95e5e430d4dc5b7553a3905e73f6f946b4c77729e19
+  use: holdout
+- artifact_id: consumption__ksh_gdp__1979__1985__ecd87575fd09__67ac13bbba76
+  comparison_aggregation: mean
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: e4da119c95e41f45503a839e87f3fd906c33f0c102b99b4e4c4fa7485d9ef92d
+  use: holdout
+- artifact_id: gdp__ksh_gdp__1979__1985__ecd87575fd09__67ac13bbba76
+  comparison_aggregation: mean
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: 8dfe1b1f1d22248f81d34ac515accaaad6e32f4dcdba55f898c8359b65787981
+  use: holdout
+- artifact_id: industrial_cement__ksh_industry__1979__1985__a450b2b978f9__f5fa67c28ffb
+  comparison_aggregation: sum
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: 9eaa5e74cb13af9dac5c470fa3a02dd50487521e3ea5f09b7618edb56fe41f66
+  use: holdout
+- artifact_id: industrial_crude_steel__ksh_industry__1979__1985__a450b2b978f9__f5fa67c28ffb
+  comparison_aggregation: sum
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: d532927b92e7ae45c3186d292f777ea55edb29b63070ca58fc8172faaceb63b9
+  use: holdout
+- artifact_id: industrial_electricity__ksh_industry__1979__1985__a450b2b978f9__f5fa67c28ffb
+  comparison_aggregation: sum
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: 9d9a5538fa65e0e6d05e8bf597da566b948bbeb5bf04ab00251bc32eefa6817a
+  use: holdout
+- artifact_id: industrial_fertilizer__ksh_industry__1979__1985__a450b2b978f9__f5fa67c28ffb
+  comparison_aggregation: sum
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: c7c912e6420c33a2aa18578e04b82f0ab87c57d5c9b7597a235cbf2479af20d0
+  use: holdout
+- artifact_id: industrial_output__ksh_industry__1979__1985__a450b2b978f9__f5fa67c28ffb
+  comparison_aggregation: mean
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: b9947d1315f2411e6a4f15cb3d40706c79d32878f411730aeec6485f8f4ce90b
+  use: holdout
+- artifact_id: industrial_television__ksh_industry__1979__1985__a450b2b978f9__f5fa67c28ffb
+  comparison_aggregation: sum
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: 53c751c78b60ad4cdd860a1dfd19468d013327b84e43a1e2aca60b35b4c3b910
+  use: holdout
+- artifact_id: investment__ksh_gdp__1979__1985__ecd87575fd09__67ac13bbba76
+  comparison_aggregation: mean
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: 7b3998ec5db4df6494173377a8bdfd7fa43b9610a43327424b3330e4891190d3
+  use: holdout
+- artifact_id: trade_export_volume_index__ksh_trade__1979__1985__04dd2c600b8e__eb2481a104d1
+  comparison_aggregation: mean
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: 8b131a458a66abbbe4c41e907937b97c25e9c62eb16bd182b3eab2332bd25062
+  use: holdout
+- artifact_id: trade_import_volume_index__ksh_trade__1979__1985__04dd2c600b8e__eb2481a104d1
+  comparison_aggregation: mean
+  observed_period:
+    end: '1985'
+    frequency: annual
+    start: '1979'
+  sha256: 0e973c197c201b7464e18afbf52f5684b514edc65e28a3de512b2275cea14fd8
+  use: holdout

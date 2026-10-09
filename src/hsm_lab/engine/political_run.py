@@ -128,6 +128,7 @@ from hsm_lab.provenance.manifest import (
     finalize_manifest,
     hash_output_tree,
     manifest_preamble,
+    p05_manifest_fields,
     write_manifest_atomic,
 )
 from hsm_lab.storage.fork import ForkOrigin, build_branch_spec
@@ -147,7 +148,7 @@ from hsm_lab.storage.political_output import (
 
 POLITICAL_RUN_KIND: Literal["p04_political_simulation"] = "p04_political_simulation"
 POLITICAL_RESEARCH_WARNING = "p04_structural_politics_not_historical_fit"
-POLITICAL_ENGINE_VERSION_FULL = "material-engine-v3"
+POLITICAL_ENGINE_VERSION_FULL = "material-engine-v4"
 
 _FEATURE = {name: index for index, name in enumerate(POLITICAL_FEATURE_IDS)}
 _COORDINATE = {name: index for index, name in enumerate(POLICY_COORDINATES)}
@@ -568,6 +569,7 @@ class PoliticalSession:
             engine_version=POLITICAL_ENGINE_VERSION_FULL,
             parent_run_id=self.parent_run_id or None,
             resumed_from_checkpoint=str(self.restore_source) if self.restore_source else None,
+            **p05_manifest_fields(root, spec),
         )
         self.manifest = running.model_copy(
             update={"run_kind": POLITICAL_RUN_KIND, "political_mode": self.logical_mode}

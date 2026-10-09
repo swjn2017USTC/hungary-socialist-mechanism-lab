@@ -30,6 +30,7 @@ AVAILABLE_SCENARIOS = (
     "p04_endogenous",
     "p04_replay_external",
     "p04_endogenous_external",
+    "historical_f2_replay",
 )
 
 

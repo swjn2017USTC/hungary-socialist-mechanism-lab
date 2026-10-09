@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from hsm_lab.contract.households import DURABLE_IDS, H_INDEX, HouseholdParameters
+from hsm_lab.contract.households import DURABLE_IDS, HouseholdCatalog, HouseholdParameters
 from hsm_lab.engine.state import MaterialState, MaterialStockSnapshot, MaterialTickFlows
 
 
@@ -61,6 +61,7 @@ def update_durable_stocks(
     flows: MaterialTickFlows,
     parameters: HouseholdParameters,
     opening: MaterialStockSnapshot,
+    catalog: HouseholdCatalog,
 ) -> None:
     """Advance durable ownership/age/backlog/wait from realised purchases (E)."""
     durables = parameters.durables
@@ -82,7 +83,7 @@ def update_durable_stocks(
     state.household_durable_age = age
     flows.durable_retired = effective_retired
 
-    repair_g = H_INDEX["repair_services"]
+    repair_g = catalog.channel("repair")
     maintenance = np.asarray(flows.household_realized_h, dtype=np.float64)[:, repair_g]
     state.household_durable_repair_credit = np.minimum(
         owned, maintenance[:, None] / max(owned.shape[1], 1)
@@ -162,10 +163,13 @@ def allocate_housing(
 
 
 def private_construction_installation(
-    state: MaterialState, flows: MaterialTickFlows, parameters: HouseholdParameters
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    parameters: HouseholdParameters,
+    catalog: HouseholdCatalog,
 ) -> None:
     """Install private second-economy construction as new dwelling stock (F4)."""
-    construction_h = H_INDEX["construction_services"]
+    construction_h = catalog.channel("construction")
     realized = np.asarray(flows.household_realized_h, dtype=np.float64)[:, construction_h]
     if not np.any(realized > 0.0):
         return

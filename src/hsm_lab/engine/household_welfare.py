@@ -18,8 +18,6 @@ from typing import Any
 import numpy as np
 
 from hsm_lab.contract.households import (
-    H_INDEX,
-    HOUSEHOLD_GOOD_IDS,
     HouseholdCatalog,
     HouseholdParameters,
 )
@@ -43,7 +41,7 @@ def account_household_welfare(
     """Compute welfare components, entitlement and the next-grievance input (H)."""
     welfare = parameters.welfare
     catalog: HouseholdCatalog = network.household_catalog
-    h_count = len(HOUSEHOLD_GOOD_IDS)
+    h_count = len(catalog.household_good_ids)
     n = int(np.asarray(state.household_weight).shape[0])
     region = np.asarray(state.household_region, dtype=np.int64)
     weight = np.asarray(state.household_weight, dtype=np.float64)
@@ -81,7 +79,7 @@ def account_household_welfare(
         durable_weight_total += float(welfare.component_weights[h])
 
     # housing capacity component (construction channel position)
-    construction_h = H_INDEX["construction_services"]
+    construction_h = catalog.channel("construction")
     access = np.asarray(state.household_dwelling_access, dtype=np.float64)
     size = np.asarray(state.household_size, dtype=np.float64)
     desired_access = np.maximum(1.0, size / parameters.housing.persons_per_dwelling)
@@ -117,10 +115,11 @@ def account_household_welfare(
     ) + welfare.housing_postponement_cost * housing_gap_units * (1.0 + housing_wait)
 
     minimum = np.asarray(parameters.demand.minimum_per_equivalent_person, dtype=np.float64)
-    basic_min = minimum[H_INDEX["basic_food"]] * household_equivalence(state)
+    basic_food_h = catalog.channel("basic_food")
+    basic_min = minimum[basic_food_h] * household_equivalence(state)
     basic_consumed = (
-        realized[:, H_INDEX["basic_food"]]
-        + np.asarray(flows.household_plot_self_h, dtype=np.float64)[:, H_INDEX["basic_food"]]
+        realized[:, basic_food_h]
+        + np.asarray(flows.household_plot_self_h, dtype=np.float64)[:, basic_food_h]
     )
     basic_deficit = (
         welfare.basic_deficit_weight

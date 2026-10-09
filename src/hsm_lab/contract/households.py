@@ -22,7 +22,7 @@ Axis layout (all multi-axis fields are compiled by *name*, never by position):
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Annotated, Literal, Self
 
@@ -34,6 +34,7 @@ from hsm_lab.contract.material import (
     COMMODITY_INDEX,
     P02_COMMODITY_IDS,
     MaterialParameters,
+    commodity_spec,
 )
 
 # ----------------------------------------------------------------------
@@ -148,6 +149,133 @@ FORMAL_RETAIL_EXCLUDED: frozenset[str] = frozenset({"construction_services"})
 #: The four durable ``H`` channels are exactly ``DURABLE_IDS`` in order.
 DURABLE_GOOD_ORDER: tuple[int, ...] = tuple(H_INDEX[durable] for durable in DURABLE_IDS)
 
+
+@dataclass(frozen=True)
+class HouseholdAxis:
+    """A frozen household consumption axis bound to one material catalog.
+
+    P05 §A.3: the H axis is declared data, not a module global. The
+    ``role_channels`` map lets the engine ask for a *semantic* channel group
+    (e.g. ``energy`` may be 1 or 3 runtime channels) without a name hardcode.
+    """
+
+    axis_id: str
+    good_ids: tuple[str, ...]
+    durable_ids: tuple[str, ...]
+    parent_commodity_ids: tuple[str, ...]
+    material_equivalent: tuple[float, ...]
+    quota_share: tuple[float, ...]
+    role_channels: dict[str, tuple[str, ...]]
+    substitution_ids: tuple[str, ...]
+    formal_retail_excluded: frozenset[str]
+
+    def index(self, channel: str) -> int:
+        return self.good_ids.index(channel)
+
+    def channels_for(self, role: str) -> tuple[int, ...]:
+        return tuple(self.good_ids.index(c) for c in self.role_channels[role])
+
+
+INTERMEDIATE8_AXIS = HouseholdAxis(
+    axis_id="intermediate8_v1",
+    good_ids=HOUSEHOLD_GOOD_IDS,
+    durable_ids=DURABLE_IDS,
+    parent_commodity_ids=DEFAULT_PARENT_COMMODITY_IDS,
+    material_equivalent=DEFAULT_MATERIAL_EQUIVALENT,
+    quota_share=DEFAULT_QUOTA_SHARE,
+    role_channels={
+        "energy": ("energy",),
+        "basic_food": ("basic_food",),
+        "higher_food": ("higher_value_food",),
+        "light": ("light_goods",),
+        "durable": DURABLE_IDS,
+        "repair": ("repair_services",),
+        "construction": ("construction_services",),
+        "personal": ("personal_services",),
+    },
+    substitution_ids=SUBSTITUTION_IDS,
+    formal_retail_excluded=FORMAL_RETAIL_EXCLUDED,
+)
+
+F2_AXIS = HouseholdAxis(
+    axis_id="f2_v1",
+    good_ids=(
+        "solid_energy",
+        "oil_gas_energy",
+        "electric_heat",
+        "basic_food",
+        "higher_food",
+        "textiles",
+        "household_nondurables",
+        "refrigerator",
+        "washing_machine",
+        "television",
+        "car",
+        "repair_services",
+        "construction_services",
+        "personal_services",
+        "public_services",
+    ),
+    durable_ids=("refrigerator", "washing_machine", "television", "car"),
+    parent_commodity_ids=(
+        "g01_solid_fuels",
+        "g02_oil_gas_fuels",
+        "g03_electricity_heat",
+        "g09_basic_food",
+        "g10_animal_food",
+        "g11_textiles_footwear",
+        "g12_household_nondurables",
+        "g13_household_durables",
+        "g13_household_durables",
+        "g13_household_durables",
+        "g14_vehicles_transport_equipment",
+        "g15_market_services",
+        "g07_construction",
+        "g15_market_services",
+        "g16_housing_public_services",
+    ),
+    material_equivalent=(
+        1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0,
+    ),
+    quota_share=(
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+        1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0, 1.0,
+        0.5, 1.0, 0.5, 1.0,
+    ),
+    role_channels={
+        "energy": ("solid_energy", "oil_gas_energy", "electric_heat"),
+        "basic_food": ("basic_food",),
+        "higher_food": ("higher_food",),
+        "light": ("textiles", "household_nondurables"),
+        "durable": ("refrigerator", "washing_machine", "television", "car"),
+        "repair": ("repair_services",),
+        "construction": ("construction_services",),
+        "personal": ("personal_services",),
+        "public": ("public_services",),
+    },
+    substitution_ids=(
+        "higher_food->basic_food",
+        "refrigerator->repair_services",
+        "washing_machine->repair_services",
+        "television->repair_services",
+        "car->repair_services",
+    ),
+    formal_retail_excluded=frozenset({"construction_services"}),
+)
+
+HOUSEHOLD_AXES: dict[str, HouseholdAxis] = {
+    INTERMEDIATE8_AXIS.axis_id: INTERMEDIATE8_AXIS,
+    F2_AXIS.axis_id: F2_AXIS,
+}
+
+
+def household_axis(axis_id: str) -> HouseholdAxis:
+    axis = HOUSEHOLD_AXES.get(axis_id)
+    if axis is None:
+        raise ConfigError(f"unknown household axis {axis_id!r}")
+    return axis
+
+
 NonNegativeFloat = Annotated[FiniteFloat, Field(ge=0.0)]
 FiniteFraction = Annotated[FiniteFloat, Field(ge=0.0, le=1.0)]
 PositiveFloat = Annotated[FiniteFloat, Field(gt=0.0)]
@@ -163,13 +291,11 @@ class DemandParameters(StrictModel):
 
     base_per_equivalent_person: list[FiniteFloat] = Field(
         default=[0.4, 1.5, 0.25, 1.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.0, 0.0],
-        min_length=11,
-        max_length=11,
+        min_length=1,
     )
     minimum_per_equivalent_person: list[FiniteFloat] = Field(
         default=[0.2, 1.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        min_length=11,
-        max_length=11,
+        min_length=1,
     )
     children_equivalence: NonNegativeFloat = 0.7
     elderly_equivalence: NonNegativeFloat = 0.9
@@ -204,13 +330,13 @@ class AllocationParameters(StrictModel):
     """Channel conversion, quota and substitution constants (A2/A3/D)."""
 
     parent_commodity_ids: list[str] = Field(
-        default=list(DEFAULT_PARENT_COMMODITY_IDS), min_length=11, max_length=11
+        default=list(DEFAULT_PARENT_COMMODITY_IDS), min_length=1
     )
     material_equivalent_per_unit: list[PositiveFloat] = Field(
-        default=list(DEFAULT_MATERIAL_EQUIVALENT), min_length=11, max_length=11
+        default=list(DEFAULT_MATERIAL_EQUIVALENT), min_length=1
     )
     quota_share: list[FiniteFraction] = Field(
-        default=list(DEFAULT_QUOTA_SHARE), min_length=11, max_length=11
+        default=list(DEFAULT_QUOTA_SHARE), min_length=1
     )
     formal_food_shares: list[FiniteFraction] = Field(
         default=[0.75, 0.25], min_length=2, max_length=2
@@ -236,14 +362,22 @@ class AllocationParameters(StrictModel):
 
     @model_validator(mode="after")
     def _check(self) -> Self:
-        if len(self.parent_commodity_ids) != len(HOUSEHOLD_GOOD_IDS):
-            raise ConfigError("allocation.parent_commodity_ids must follow the H axis")
+        if not (
+            len(self.parent_commodity_ids)
+            == len(self.material_equivalent_per_unit)
+            == len(self.quota_share)
+        ):
+            raise ConfigError(
+                "allocation parent/equivalence/quota vectors must share the H-axis length"
+            )
         for index, commodity_id in enumerate(self.parent_commodity_ids):
-            if commodity_id not in COMMODITY_INDEX:
+            try:
+                commodity_spec(commodity_id)
+            except ConfigError as exc:
                 raise ConfigError(
                     f"allocation.parent_commodity_ids[{index}]={commodity_id!r} is not a "
-                    "declared P02 commodity"
-                )
+                    "declared commodity"
+                ) from exc
         if not math.isclose(sum(self.formal_food_shares), 1.0, abs_tol=1e-9):
             raise ConfigError("allocation.formal_food_shares must sum to one")
         if not math.isclose(sum(self.formal_durable_shares), 1.0, abs_tol=1e-9):
@@ -326,8 +460,7 @@ class WelfareParameters(StrictModel):
 
     component_weights: list[NonNegativeFloat] = Field(
         default=[0.10, 0.30, 0.15, 0.15, 0.05, 0.04, 0.04, 0.05, 0.05, 0.04, 0.03],
-        min_length=11,
-        max_length=11,
+        min_length=1,
     )
     component_cap: PositiveFloat = 2.0
     queue_cost_per_hour: NonNegativeFloat = 0.002
@@ -571,6 +704,8 @@ class HouseholdCatalog:
     durable_ids: tuple[str, ...]
     entitlement_ids: tuple[str, ...]
     substitution_ids: tuple[str, ...]
+    axis_id: str
+    role_channels: dict[str, tuple[str, ...]]
     to_material: np.ndarray  # float64 (H, G) equivalent units of parent per H unit
     parent_material_index: np.ndarray  # int32 (H,) parent commodity axis index or -1
     material_equivalent: np.ndarray  # float64 (H,) parent units per H unit
@@ -584,11 +719,21 @@ class HouseholdCatalog:
     substitute_ratio: np.ndarray  # float64 (Q,) target units per source unit
     substitute_credit: np.ndarray  # float64 (Q,) goal-credit per substituted source unit
 
+    def channels(self, role: str) -> tuple[int, ...]:
+        """Runtime H indices of a semantic role (may be several channels)."""
+        return tuple(self.household_good_ids.index(c) for c in self.role_channels[role])
+
+    def channel(self, role: str) -> int:
+        """First runtime H index of a semantic role."""
+        return self.channels(role)[0]
+
 
 def compile_household_catalog(
     parameters: HouseholdParameters,
     material_parameters: MaterialParameters,
     commodity_ids: tuple[str, ...],
+    axis: HouseholdAxis = INTERMEDIATE8_AXIS,
+    material_index: Mapping[str, int] | None = None,
 ) -> HouseholdCatalog:
     """Compile the read-only household catalog (A2/A3).
 
@@ -600,11 +745,17 @@ def compile_household_catalog(
     ids = tuple(commodity_ids)
     g_count = len(ids)
     axis_index = {commodity_id: g for g, commodity_id in enumerate(ids)}
-    h_count = len(HOUSEHOLD_GOOD_IDS)
+    h_count = len(axis.good_ids)
 
-    parent_ids = list(parameters.allocation.parent_commodity_ids)
-    equivalent = np.asarray(parameters.allocation.material_equivalent_per_unit, dtype=np.float64)
-    quota = np.asarray(parameters.allocation.quota_share, dtype=np.float64)
+    parent_ids = list(axis.parent_commodity_ids)
+    equivalent = np.asarray(axis.material_equivalent, dtype=np.float64)
+    quota = np.asarray(axis.quota_share, dtype=np.float64)
+    declared_parameters_parent = list(parameters.allocation.parent_commodity_ids)
+    if tuple(declared_parameters_parent) != tuple(axis.parent_commodity_ids):
+        raise ConfigError(
+            f"allocation.parent_commodity_ids must equal the declared A2 mapping for axis "
+            f"{axis.axis_id!r}"
+        )
 
     to_material = np.zeros((h_count, g_count), dtype=np.float64)
     parent_index = np.full(h_count, -1, dtype=np.int32)
@@ -616,10 +767,6 @@ def compile_household_catalog(
         g = axis_index[commodity_id]
         parent_index[h] = g
         to_material[h, g] = equivalent[h]
-
-    declared_parent = tuple(DEFAULT_PARENT_COMMODITY_IDS)
-    if tuple(parent_ids) != declared_parent:
-        raise ConfigError("allocation.parent_commodity_ids must equal the declared A2 mapping")
 
     group_of: dict[str, int] = {}
     quota_group = np.zeros(h_count, dtype=np.int32)
@@ -636,11 +783,11 @@ def compile_household_catalog(
             )
 
     price_axis = np.asarray(material_parameters.prices, dtype=np.float64)
-    # material_parameters.prices is indexed by the declared P02 commodity axis.
+    index_by_id = dict(material_index) if material_index is not None else dict(COMMODITY_INDEX)
     price_by_commodity = {
-        commodity_id: float(price_axis[COMMODITY_INDEX[commodity_id]])
+        commodity_id: float(price_axis[index_by_id[commodity_id]])
         for commodity_id in ids
-        if commodity_id in COMMODITY_INDEX
+        if commodity_id in index_by_id
     }
     price_h = np.zeros(h_count, dtype=np.float64)
     for h, commodity_id in enumerate(parent_ids):
@@ -651,25 +798,29 @@ def compile_household_catalog(
         price_h[h] = equivalent[h] * price_by_commodity[commodity_id]
 
     formal_retail = np.array(
-        [good not in FORMAL_RETAIL_EXCLUDED for good in HOUSEHOLD_GOOD_IDS], dtype=bool
+        [good not in axis.formal_retail_excluded for good in axis.good_ids], dtype=bool
     )
 
-    durable_h_index = np.asarray(DURABLE_GOOD_ORDER, dtype=np.int32)
+    durable_h_index = np.asarray(
+        [axis.index(durable) for durable in axis.durable_ids], dtype=np.int32
+    )
     substitute_source_h = np.asarray(
-        [H_INDEX[name.split("->")[0]] for name in SUBSTITUTION_IDS], dtype=np.int32
+        [axis.index(name.split("->")[0]) for name in axis.substitution_ids], dtype=np.int32
     )
     substitute_target_h = np.asarray(
-        [H_INDEX[name.split("->")[1]] for name in SUBSTITUTION_IDS], dtype=np.int32
+        [axis.index(name.split("->")[1]) for name in axis.substitution_ids], dtype=np.int32
     )
     substitute_ratio = np.asarray(parameters.allocation.substitution_ratios, dtype=np.float64)
     substitute_credit = np.asarray(parameters.allocation.substitution_credits, dtype=np.float64)
 
     return HouseholdCatalog(
         commodity_ids=ids,
-        household_good_ids=HOUSEHOLD_GOOD_IDS,
-        durable_ids=DURABLE_IDS,
+        household_good_ids=axis.good_ids,
+        durable_ids=axis.durable_ids,
         entitlement_ids=ENTITLEMENT_IDS,
-        substitution_ids=SUBSTITUTION_IDS,
+        substitution_ids=axis.substitution_ids,
+        axis_id=axis.axis_id,
+        role_channels=axis.role_channels,
         to_material=to_material,
         parent_material_index=parent_index,
         material_equivalent=equivalent,

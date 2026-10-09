@@ -172,10 +172,19 @@ class RunManifest(StrictModel):
     run_kind: Literal[
         "synthetic_engine_smoke",
         "toy4_f0_simulation",
-        "intermediate8_household_simulation",
+        "material_household_simulation",
         "p04_political_simulation",
     ] = "synthetic_engine_smoke"
     political_mode: PoliticalMode | None = None
+    # P05 §195: ontology/fidelity/retention and the calibration snapshots are
+    # kept separate from the input/provenance hashes and from the replay
+    # behaviour digest; the output policy never enters the behaviour digest.
+    ontology_id: str | None = None
+    fidelity: Literal["f1", "f2"] | None = None
+    retention: str | None = None
+    initial_ensemble_hash: str | None = None
+    inference_snapshot_hash: str | None = None
+    target_split_hash: str | None = None
     parent_version_id: str | None = None
     version_id: str | None = None
     study_id: str | None = None
@@ -232,6 +241,34 @@ def write_manifest_atomic(run_dir: Path, manifest: RunManifest) -> Path:
     return target
 
 
+def p05_manifest_fields(root: Path, spec: Any) -> dict[str, Any]:
+    """P05 §195 ontology/fidelity/retention/target-split decorations.
+
+    Kept out of the replay behaviour digest: the output policy never changes the
+    seed draw, and these fields only label which ontology/fidelity a run belongs
+    to and which sealed target split it was admitted against.
+    """
+    from hsm_lab.contract.guards import sha256_bytes
+    from hsm_lab.contract.material import catalog_for_commodities
+
+    catalog = catalog_for_commodities(list(spec.commodities))
+    ontology_id = catalog.catalog_id
+    split_paths = (
+        root / "data" / "manifests" / "p05_targets.yml",
+        root / "data" / "manifests" / "p05_holdout.yml",
+    )
+    return {
+        "ontology_id": ontology_id,
+        "fidelity": "f2" if ontology_id.startswith("f2") else "f1",
+        "retention": spec.output_policy.value,
+        "target_split_hash": (
+            sha256_bytes(b"".join(path.read_bytes() for path in split_paths))
+            if all(path.is_file() for path in split_paths)
+            else None
+        ),
+    }
+
+
 def manifest_preamble(
     *,
     run_id: str,
@@ -242,7 +279,7 @@ def manifest_preamble(
     run_kind: Literal[
         "synthetic_engine_smoke",
         "toy4_f0_simulation",
-        "intermediate8_household_simulation",
+        "material_household_simulation",
         "p04_political_simulation",
     ] = "synthetic_engine_smoke",
     parameter_vector: dict[str, float] | None = None,
@@ -251,6 +288,12 @@ def manifest_preamble(
     engine_version: str | None = None,
     parent_run_id: str | None = None,
     resumed_from_checkpoint: str | None = None,
+    ontology_id: str | None = None,
+    fidelity: Literal["f1", "f2"] | None = None,
+    retention: str | None = None,
+    initial_ensemble_hash: str | None = None,
+    inference_snapshot_hash: str | None = None,
+    target_split_hash: str | None = None,
 ) -> RunManifest:
     """Assemble the status=running manifest right after the run directory exists."""
     env = capture_environment()
@@ -258,6 +301,12 @@ def manifest_preamble(
     return RunManifest(
         run_id=run_id,
         run_kind=run_kind,
+        ontology_id=ontology_id,
+        fidelity=fidelity,
+        retention=retention,
+        initial_ensemble_hash=initial_ensemble_hash,
+        inference_snapshot_hash=inference_snapshot_hash,
+        target_split_hash=target_split_hash,
         status="running",
         started_at=datetime.now(UTC),
         baseline_version=contract.baseline_version,

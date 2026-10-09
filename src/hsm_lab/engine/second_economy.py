@@ -159,6 +159,19 @@ def settle_second_economy(
             continue
         cohort = cap_person[r]
         input_funding[mask] = funded_region[r] * (weight[mask] * working[mask]) / cohort
+    # A household may never fund more than its own cash: the regional pool is
+    # shared but the debit is individual, so cap and rescale the realised buy.
+    input_funding = np.minimum(input_funding, np.maximum(household_cash, 0.0))
+    region_actual = np.bincount(
+        region[participant], weights=(weight * input_funding)[participant], minlength=region_count
+    )
+    ratio = np.divide(
+        region_actual,
+        funded_region,
+        out=np.zeros(region_count, dtype=np.float64),
+        where=funded_region > 0.0,
+    )
+    realized = realized * np.minimum(ratio, 1.0)
     household_cash = household_cash - input_funding
 
     # Pay the sellers (cell owners); Treasury for import cells.

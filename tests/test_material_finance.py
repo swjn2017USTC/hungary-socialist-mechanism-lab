@@ -55,8 +55,10 @@ def test_default_parameters_disable_overorder_and_hoarding() -> None:
     k = fixture.k_of(fixture.cell("organization", 2, 0, "input", "energy"))
 
     assert flows.desired[k] == pytest.approx(8.0)
-    assert flows.ordered[k] == pytest.approx(6.0)  # exactly desired - opening
-    assert flows.delivered[k] == pytest.approx(6.0)
+    # projected-closing rule: the 2 opening units are consumed this quarter, so
+    # the full replacement pipeline is ordered (not desired - opening).
+    assert flows.ordered[k] == pytest.approx(8.0)
+    assert flows.delivered[k] == pytest.approx(8.0)
     assert flows.used[k] == pytest.approx(8.0)
 
 
@@ -255,66 +257,52 @@ def test_credit_grant_debt_and_wage_counterpart() -> None:
     flows = tick_material(fixture.state, fixture.forcing(1), params, fixture.network)
     state = fixture.state
 
-    # A 10-unit wage bill with a .6 credit envelope draws exactly 6: the loan
-    # funds 6 of the wage bill and leaves 4 of arrears (wages are senior).
+    # P05 §0.5: the credit envelope is now sized to the bank's quarterly
+    # financing need (wages + input orders + investment), so the 0.6 envelope
+    # funds the full wage bill instead of leaving arrears.
     assert flows.organization_wage_due[1] == pytest.approx(10.0)
-    assert flows.organization_credit_approved[1] == pytest.approx(6.0)
-    assert flows.organization_credit_drawn[1] == pytest.approx(6.0)
-    wage_legs = sorted(
-        amount
-        for kind, amount in zip(flows.journal_kind, flows.journal_amount, strict=True)
-        if kind == "wage_payment"
-    )
-    assert wage_legs == [
-        pytest.approx(4.0),
-        pytest.approx(4.0),
-        pytest.approx(6.0),
-        pytest.approx(6.0),
-    ]
-    # The .4 rescue envelope grants exactly 4 and clears the arrears inside the
-    # same tick, as a late receipt spendable only next quarter.
-    assert flows.organization_bailout_requested[1] == pytest.approx(4.0)
-    assert flows.organization_bailout_granted[1] == pytest.approx(4.0)
-    assert flows.household_late_wage[0] == pytest.approx(4.0)
-    assert state.household_deferred_receipt[0] == pytest.approx(4.0)
+    assert flows.organization_credit_approved[1] == pytest.approx(12.0)
+    assert flows.organization_credit_drawn[1] == pytest.approx(12.0)
+    assert flows.organization_wage_paid[1] == pytest.approx(10.0)
+    # No arrears remain, so no rescue is requested or granted.
+    assert flows.organization_bailout_requested[1] == pytest.approx(0.0)
+    assert flows.organization_bailout_granted[1] == pytest.approx(0.0)
+    assert flows.household_late_wage[0] == pytest.approx(0.0)
+    assert state.household_deferred_receipt[0] == pytest.approx(0.0)
     assert state.organization_wage_arrears[1] == pytest.approx(0.0)
     assert state.household_wage_claim[0] == pytest.approx(0.0)
     # Closing counterpart identities: every dollar of HH cash is a bank
-    # deposit, the Treasury is spent, and the borrower still owes 6.
+    # deposit and the borrower still owes the full drawdown.
     assert float(np.sum(state.household_weight * state.household_cash)) == pytest.approx(10.0)
-    assert state.treasury_deposit == pytest.approx(0.0)
-    assert state.organization_cash[1] == pytest.approx(0.0)
-    assert state.organization_principal[1] == pytest.approx(6.0)
-    assert state.bank_deposit_liability[0] == pytest.approx(10.0)
+    assert state.organization_principal[1] == pytest.approx(12.0)
+    assert state.bank_deposit_liability[0] == pytest.approx(16.0)
     assert state.bank_reserves[0] == pytest.approx(24.0)
-    assert state.bank_loan_asset[0] == pytest.approx(6.0)
+    assert state.bank_loan_asset[0] == pytest.approx(12.0)
     assert state.bank_equity[0] == pytest.approx(20.0)
     assert (state.bank_reserves[0] + state.bank_loan_asset[0]) == pytest.approx(
         state.bank_deposit_liability[0] + state.bank_equity[0]
     )
-    assert state.bank_reserves[0] + state.bank_loan_asset[0] == pytest.approx(30.0)
+    assert state.bank_reserves[0] + state.bank_loan_asset[0] == pytest.approx(36.0)
     # the grant neither forgives principal nor creates material stock
     assert state.stock_value.sum() == pytest.approx(0.0)
     summary = accounting.check_material_invariants(opening, state, flows, params, fixture.network)
     assert summary.max_finance_tolerance_ratio <= 1.0
 
     # Next quarter: no new credit and no wage bill isolate interest.  Opening
-    # principal 6 at the .04 annual rate is .06 due; the empty Treasury refuses
-    # the rescue, so the bank books receivable and equity of .06 - a claim that
-    # is not cash the borrower can spend, and the principal is not capitalized.
+    # principal 12 at the .04 annual rate is .12 due, paid from residual cash.
     idle = params.model_copy(update={"credit_envelope_fraction": 0.0, "wage_rate": 0.0})
     opening_two = capture_material_stocks(state)
     flows_two = tick_material(state, fixture.forcing(1), idle, fixture.network)
     assert finance.quarter_domestic_credit_rate(idle) == pytest.approx(0.01)
-    assert flows_two.organization_interest_due[1] == pytest.approx(0.06)
-    assert flows_two.organization_interest_paid[1] == pytest.approx(0.0)
-    assert state.organization_interest_arrears[1] == pytest.approx(0.06)
-    assert state.bank_interest_receivable[0] == pytest.approx(0.06)
-    assert state.bank_equity[0] == pytest.approx(20.06)
+    assert flows_two.organization_interest_due[1] == pytest.approx(0.12)
+    assert flows_two.organization_interest_paid[1] == pytest.approx(0.12)
+    assert state.organization_interest_arrears[1] == pytest.approx(0.0)
+    assert state.bank_interest_receivable[0] == pytest.approx(0.0)
+    assert state.bank_equity[0] == pytest.approx(20.12)
     assert flows_two.organization_credit_approved[1] == pytest.approx(0.0)
     assert flows_two.organization_bailout_granted[1] == pytest.approx(0.0)
-    assert state.organization_cash[1] == pytest.approx(0.0)
-    assert state.organization_principal[1] == pytest.approx(6.0)
+    assert state.organization_cash[1] == pytest.approx(1.88)
+    assert state.organization_principal[1] == pytest.approx(12.0)
     assert float(np.sum(state.household_weight * state.household_cash)) == pytest.approx(10.0)
     summary_two = accounting.check_material_invariants(
         opening_two, state, flows_two, idle, fixture.network

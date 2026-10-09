@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from hsm_lab.contract.material import COMMODITY_INDEX, MaterialParameters
+from hsm_lab.contract.material import MaterialParameters, get_catalog
 from hsm_lab.engine import finance
 from hsm_lab.engine.finance import (
     CMEA_CURRENCY,
@@ -65,10 +65,11 @@ def _finite(name: str, *values: float) -> None:
 
 
 def _fixed_axis_vector(values: list[float], network: MaterialNetwork) -> np.ndarray:
-    """Map a fixed 8-commodity trade vector onto the network commodity axis."""
+    """Map a catalog-indexed trade vector onto the network commodity axis."""
+    index = get_catalog(network.catalog_id).index
     mapped = np.zeros(len(network.commodity_ids), dtype=np.float64)
     for g, commodity_id in enumerate(network.commodity_ids):
-        fixed = COMMODITY_INDEX.get(commodity_id)
+        fixed = index.get(commodity_id)
         if fixed is not None:
             mapped[g] = float(values[fixed])
     return mapped
@@ -92,8 +93,11 @@ def channel_prices(
     trade = parameters.trade
     cmea = _fixed_axis_vector(trade.cmea_prices, network)
     convertible = _fixed_axis_vector(trade.convertible_prices, network)
+    catalog = get_catalog(network.catalog_id)
+    energy_ids = catalog.with_role("energy")
+    energy_index = catalog.index[energy_ids[0]] if energy_ids else None
     for g, commodity_id in enumerate(network.commodity_ids):
-        if commodity_id == "energy":
+        if energy_index is not None and commodity_id in energy_ids:
             cmea[g] = (
                 float(cmea_contract_price)
                 if np.isfinite(cmea_contract_price)
@@ -101,7 +105,7 @@ def channel_prices(
                 * float(parameters.cmea_uncertainty_multiplier)
             )
             convertible[g] = (
-                float(trade.convertible_prices[COMMODITY_INDEX["energy"]])
+                float(trade.convertible_prices[energy_index])
                 * float(oil_price)
                 / float(parameters.world_oil_reference)
             )

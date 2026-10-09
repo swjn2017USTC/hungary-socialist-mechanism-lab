@@ -61,10 +61,15 @@ _ORGANIZATION_PROFILES: dict[int, Literal["p02_100", "p02_200", "p02_400"]] = {
     200: "p02_200",
     400: "p02_400",
 }
+_F2_ORGANIZATION_PROFILES: dict[int, str] = {
+    300: "p05_300",
+    400: "p05_400",
+    450: "p05_450",
+}
 
 
 def _load_config(root: Path, kind: str) -> dict[str, Any]:
-    name = "material" if kind == "material" else "p00"
+    name = {"material": "material", "f2": "f2"}.get(kind, "p00")
     path = root / "config" / "benchmarks" / f"{name}.json"
     if not path.is_file():
         raise RuntimeError(f"benchmark config not found: {path}")
@@ -91,6 +96,20 @@ def _load_config(root: Path, kind: str) -> dict[str, Any]:
             if case["organizations"] not in _ORGANIZATION_PROFILES:
                 raise ValueError(
                     f"material case organizations must be 100/200/400: {case}"
+                )
+    elif kind == "f2":
+        if len(config.get("commodities", [])) != 16:
+            raise ValueError("f2 benchmark config must carry the sixteen F2 commodity ids")
+        cases = config.get("cases")
+        if not isinstance(cases, list) or not cases:
+            raise ValueError("f2 benchmark config must carry a cases list")
+        for case in cases:
+            for key in ("households", "organizations", "ticks"):
+                if not isinstance(case.get(key), int) or case[key] <= 0:
+                    raise ValueError(f"f2 case missing integer {key}: {case}")
+            if case["organizations"] not in _F2_ORGANIZATION_PROFILES:
+                raise ValueError(
+                    f"f2 case organizations must be 300/400/450: {case}"
                 )
     else:
         if len(config.get("commodities", [])) != 4:
@@ -137,6 +156,30 @@ def _case_definitions(kind: str, config: dict[str, Any]) -> list[dict[str, Any]]
                     "checkpoint_every": checkpoint_every,
                 }
             )
+    elif kind == "f2":
+        for case in config["cases"]:
+            households = int(case["households"])
+            organizations = int(case["organizations"])
+            ticks = int(case["ticks"])
+            checkpoint_every = int(case.get("checkpoint_every", 0))
+            retention = str(case.get("retention", "trajectory"))
+            policy = str(case.get("output_policy", "ensemble_compact"))
+            case_id = f"f2_n{households}_o{organizations}_t{ticks}_{retention}"
+            if checkpoint_every:
+                case_id += f"_ckpt{checkpoint_every}"
+            cases.append(
+                {
+                    "case_id": case_id,
+                    "kind": "f2",
+                    "policy": policy,
+                    "retention": retention,
+                    "households": households,
+                    "organizations": organizations,
+                    "ticks": ticks,
+                    "seed": seed,
+                    "checkpoint_every": checkpoint_every,
+                }
+            )
     else:
         for households, enterprises in SCALING_CASES:
             for ticks in SCALING_TICKS:
@@ -170,16 +213,22 @@ def _worker_main(case_path: Path, output_dir: Path) -> int:
     contract = load_research_contract(root)
     started_wall = time.perf_counter()
     started_cpu = time.process_time()
-    if case.get("kind") == "material":
+    if case.get("kind") in ("material", "f2"):
         from hsm_lab.engine.material import run_material
 
-        base = load_scenario(root, "intermediate8")
+        scenario_id = "historical_f2_replay" if case["kind"] == "f2" else "intermediate8"
+        base = load_scenario(root, scenario_id)
         if base.organization_recipe is None or base.organization_recipe.overrides:
             raise RuntimeError(
                 "material benchmark requires the stock organization profile "
                 "(no overrides) so the count switch is exact"
             )
-        profile = _ORGANIZATION_PROFILES[int(case["organizations"])]
+        profiles = (
+            _F2_ORGANIZATION_PROFILES
+            if case["kind"] == "f2"
+            else _ORGANIZATION_PROFILES
+        )
+        profile = profiles[int(case["organizations"])]
         spec = ScenarioSpec.model_validate(
             base.model_copy(
                 update={
@@ -374,7 +423,7 @@ def _case_report(case: dict[str, Any], measurements: list[dict[str, Any]]) -> di
         report["updates_per_second"] = (
             scalar_updates / median_wall if median_wall and median_wall > 0 else None
         )
-    elif case.get("kind") == "material":
+    elif case.get("kind") in ("material", "f2"):
         report["households"] = case["households"]
         report["organizations"] = case["organizations"]
         dimensions = ok[0].get("dimensions") if ok else {}
@@ -431,15 +480,14 @@ def _case_report(case: dict[str, Any], measurements: list[dict[str, Any]]) -> di
             scalar_updates / median_wall if median_wall and median_wall > 0 else None
         )
     required = ["peak_rss_ok", "all_repeats_ok"]
-    if case.get("kind") == "material":
+    if case.get("kind") in ("material", "f2"):
         required.append("digest_stable")
         if ok and ok[0].get("invariants"):
             required.append("invariants_ok")
-        if not case.get("checkpoint_every") and (
-            case["households"],
-            case["organizations"],
-            case["ticks"],
-        ) == F1_CASE:
+        f1_match = (case["households"], case["organizations"], case["ticks"]) == F1_CASE
+        if case.get("kind") == "f2":
+            f1_match = case["households"] == F1_CASE[0] and case["ticks"] == F1_CASE[2]
+        if not case.get("checkpoint_every") and f1_match:
             required.append("wall_s_ok")
         if case.get("checkpoint_every"):
             required.append("checkpoint_wall_s_ok")
@@ -521,7 +569,7 @@ def _material_axis_ratio(
 
 def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
     """Run all cases of ``kind``; write benchmark.json + summary.md; return report."""
-    if kind not in ("smoke", "scaling", "material"):
+    if kind not in ("smoke", "scaling", "material", "f2"):
         raise ValueError(f"unknown benchmark kind {kind!r}")
     config = _load_config(root, kind)
     cases = _case_definitions(kind, config)
@@ -561,11 +609,10 @@ def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
         )
         case_reports[-1]["warmups"] = [m for m in measurements if m["excluded"]]
 
-    workload = (
-        "intermediate8_material_economy_kernel_storage"
-        if kind == "material"
-        else "synthetic_array_rng_aggregation_storage"
-    )
+    workload = {
+        "material": "intermediate8_material_economy_kernel_storage",
+        "f2": "f2_historical_material_economy_kernel_storage",
+    }.get(kind, "synthetic_array_rng_aggregation_storage")
     base_notes = (
         list(_BENCHMARK_NOTES)
         if kind != "material"
@@ -589,7 +636,7 @@ def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
         "cases": case_reports,
         "notes": base_notes,
     }
-    if kind == "material":
+    if kind in ("material", "f2"):
         report["notes"] = report["notes"] + [
             "material workload executes the real Intermediate-8 economic path: "
             "preflight, kernel ticks, gates, digest and compact storage",
@@ -668,7 +715,7 @@ def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
     report["overall_gate"] = (
         "pass" if all(case["status"] == "pass" for case in case_reports) else "fail"
     )
-    if kind == "material":
+    if kind in ("material", "f2"):
         bad = [
             ratio
             for ratio in report["scaling_ratios"]
@@ -686,10 +733,13 @@ def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
     (output_root / "benchmark.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    title = "P02 material benchmark" if kind == "material" else f"P00 benchmark: {kind}"
+    title = {
+        "material": "P02 material benchmark",
+        "f2": "P05 F2 historical benchmark",
+    }.get(kind, f"P00 benchmark: {kind}")
     workload_note = (
-        "real Intermediate-8 economic loop (kernel + gates + compact storage)"
-        if kind == "material"
+        "real economic loop (kernel + gates + compact storage)"
+        if kind in ("material", "f2")
         else "synthetic probe load, not a historical model"
     )
     lines = [
@@ -706,7 +756,7 @@ def run_benchmark(kind: str, root: Path, output_root: Path) -> dict[str, Any]:
         return f"{value:.{digits}f}" if isinstance(value, (int, float)) else "unavailable"
 
     for case in case_reports:
-        if kind == "material":
+        if kind in ("material", "f2"):
             scale = f"{case['households']} | {case['organizations']}"
         else:
             scale = f"{case['households']} | {case.get('enterprises', 0)}"

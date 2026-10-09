@@ -21,17 +21,23 @@ import numpy as np
 
 from hsm_lab.contract.households import (
     compile_household_catalog,
+    household_axis,
 )
 from hsm_lab.contract.material import (
-    COMMODITY_INDEX,
     CONSTRUCTION_CAPACITY_TOTAL,
     DEFAULT_STRATEGIC_IMPORTANCE,
+    F2_CONSTRUCTION_CAPACITY_TOTAL,
+    F2_FARM_CAPACITY_TOTAL,
+    F2_INDUSTRIAL_CAPACITY_TOTALS,
+    F2_INDUSTRIAL_TECHNOLOGY_IDS,
+    F2_PUBLIC_CAPACITY_TOTAL,
+    F2_TRANSPORT_CAPACITY_TOTAL,
+    F2_TYPE_TECHNOLOGY_IDS,
     FARM_CAPACITY_TOTAL,
     INDUSTRIAL_CAPACITY_TOTALS,
     INDUSTRIAL_TECHNOLOGY_IDS,
     ORGANIZATION_PROFILES,
     ORGANIZATION_TYPE_ORDER,
-    P02_COMMODITY_IDS,
     PRODUCTIVE_TYPES,
     RETAIL_HANDLING_TOTAL,
     TRADER_TYPES,
@@ -39,12 +45,14 @@ from hsm_lab.contract.material import (
     TYPE_TECHNOLOGY_IDS,
     WHOLESALE_HANDLING_TOTAL,
     ExportRole,
+    MaterialCatalog,
     MaterialInitialConditions,
     MaterialParameters,
     OrganizationSpec,
     OrganizationType,
     PrivatePlotRecipe,
     TechnologySpec,
+    catalog_for_commodities,
 )
 from hsm_lab.contract.schemas import ConfigError, ScenarioSpec
 from hsm_lab.engine.households import build_synthetic_households
@@ -58,13 +66,23 @@ _LABOR_CAPACITY_HEADROOM = 1.2
 
 def _organization_slots(
     profile: dict[OrganizationType, int],
+    *,
+    industrial_ids: tuple[str, ...] = INDUSTRIAL_TECHNOLOGY_IDS,
+    industrial_caps: tuple[float, ...] = INDUSTRIAL_CAPACITY_TOTALS,
+    farm_capacity: float = FARM_CAPACITY_TOTAL,
+    construction_capacity: float = CONSTRUCTION_CAPACITY_TOTAL,
+    transport_capacity: float = TRANSPORT_CAPACITY_TOTAL,
+    public_capacity: float = 0.0,
+    type_technology_ids: dict[OrganizationType, tuple[str, ...]] | None = None,
 ) -> list[tuple[OrganizationType, str | None, float]]:
     """Canonical ``(type, technology_id, capacity)`` slots in org-id order.
 
     One global sequence in ``ORGANIZATION_TYPE_ORDER``; industrial slots are
-    grouped by the six ``INDUSTRIAL_TECHNOLOGY_IDS`` technologies.
+    grouped by ``industrial_ids``.  The technology/capacity constants are
+    catalog-specific so the F2 axis reuses the same builder.
     """
-    technology_count = len(INDUSTRIAL_TECHNOLOGY_IDS)
+    type_tech = type_technology_ids if type_technology_ids is not None else TYPE_TECHNOLOGY_IDS
+    technology_count = len(industrial_ids)
     farm_count = profile.get(OrganizationType.AGRICULTURAL_COOPERATIVE, 0) + profile.get(
         OrganizationType.STATE_FARM, 0
     )
@@ -78,25 +96,25 @@ def _organization_slots(
                     f"{technology_count} industrial technologies"
                 )
             per_technology = count // technology_count
-            for index, technology_id in enumerate(INDUSTRIAL_TECHNOLOGY_IDS):
-                capacity = (
-                    INDUSTRIAL_CAPACITY_TOTALS[index] / per_technology if per_technology else 0.0
-                )
+            for index, technology_id in enumerate(industrial_ids):
+                capacity = industrial_caps[index] / per_technology if per_technology else 0.0
                 slots.extend([(org_type, technology_id, capacity)] * per_technology)
             continue
         if org_type in (
             OrganizationType.AGRICULTURAL_COOPERATIVE,
             OrganizationType.STATE_FARM,
         ):
-            capacity = FARM_CAPACITY_TOTAL / farm_count if farm_count else 0.0
+            capacity = farm_capacity / farm_count if farm_count else 0.0
         elif org_type is OrganizationType.CONSTRUCTION:
-            capacity = CONSTRUCTION_CAPACITY_TOTAL / count if count else 0.0
+            capacity = construction_capacity / count if count else 0.0
         elif org_type is OrganizationType.TRANSPORT:
-            capacity = TRANSPORT_CAPACITY_TOTAL / count if count else 0.0
+            capacity = transport_capacity / count if count else 0.0
+        elif org_type is OrganizationType.PUBLIC_SERVICE:
+            capacity = public_capacity / count if count else 0.0
         else:
             capacity = 0.0
         slot_technology_id = (
-            TYPE_TECHNOLOGY_IDS[org_type][0] if org_type in PRODUCTIVE_TYPES else None
+            type_tech[org_type][0] if org_type in PRODUCTIVE_TYPES else None
         )
         slots.extend([(org_type, slot_technology_id, capacity)] * count)
     return slots
@@ -105,8 +123,11 @@ def _organization_slots(
 def _validate_references(
     organizations: tuple[OrganizationSpec, ...],
     technologies: list[TechnologySpec],
+    *,
+    type_technology_ids: dict[OrganizationType, tuple[str, ...]] | None = None,
 ) -> None:
     """Technology and bank foreign keys over the final organization list."""
+    type_tech = type_technology_ids if type_technology_ids is not None else TYPE_TECHNOLOGY_IDS
     declared = {technology.technology_id for technology in technologies}
     bank_ids = {org.organization_id for org in organizations if org.type is OrganizationType.BANK}
     for org in organizations:
@@ -120,7 +141,7 @@ def _validate_references(
                     f"organization {org.organization_id} uses undeclared technology "
                     f"{org.technology_id!r}"
                 )
-            if org.technology_id not in TYPE_TECHNOLOGY_IDS[org.type]:
+            if org.technology_id not in type_tech[org.type]:
                 raise ConfigError(
                     f"organization {org.organization_id} of type {org.type.value} "
                     f"cannot carry technology {org.technology_id!r}"
@@ -139,6 +160,7 @@ def _quarterly_flow_value(
     technologies: Sequence[TechnologySpec],
     slots: Sequence[tuple[OrganizationType, str | None, float]],
     equivalent_persons: float,
+    catalog: MaterialCatalog,
 ) -> float:
     """Declared quarterly goods-flow value used to size distribution capital.
 
@@ -147,9 +169,10 @@ def _quarterly_flow_value(
     per-person quantities. This is an engineering conversion over synthetic
     admin prices — not a historical flow.
     """
+    index = catalog.index
     price_by_id = {
-        commodity_id: float(parameters.prices[index])
-        for commodity_id, index in COMMODITY_INDEX.items()
+        commodity_id: float(parameters.prices[position])
+        for commodity_id, position in index.items()
     }
     technology_by_id = {technology.technology_id: technology for technology in technologies}
     input_value = 0.0
@@ -168,14 +191,9 @@ def _quarterly_flow_value(
                     f"technology {technology_id} consumes undeclared commodity {row.commodity_id!r}"
                 )
             input_value += row.coefficient * price * target
-    household_value = (
-        sum(
-            float(parameters.prices[COMMODITY_INDEX[commodity_id]])
-            for commodity_id in P02_COMMODITY_IDS
-            if commodity_id in price_by_id
-        )
-        * equivalent_persons
-    )
+    household_value = sum(
+        float(parameters.prices[index[commodity_id]]) for commodity_id in catalog.ids
+    ) * equivalent_persons
     return input_value + household_value
 
 
@@ -218,12 +236,29 @@ def build_material_initial_conditions(
     household_parameters = spec.household_parameters
     if household_parameters is None:
         raise ConfigError("material scenario must declare household_parameters")
+    material_catalog = catalog_for_commodities(spec.commodities)
     household_catalog = compile_household_catalog(
-        household_parameters, parameters, tuple(spec.commodities)
+        household_parameters,
+        parameters,
+        tuple(spec.commodities),
+        axis=household_axis(material_catalog.catalog_id),
+        material_index=material_catalog.index,
     )
 
     profile = ORGANIZATION_PROFILES[recipe.profile]
-    slots = _organization_slots(profile)
+    if material_catalog.catalog_id == "f2_v1":
+        slots = _organization_slots(
+            profile,
+            industrial_ids=F2_INDUSTRIAL_TECHNOLOGY_IDS,
+            industrial_caps=F2_INDUSTRIAL_CAPACITY_TOTALS,
+            farm_capacity=F2_FARM_CAPACITY_TOTAL,
+            construction_capacity=F2_CONSTRUCTION_CAPACITY_TOTAL,
+            transport_capacity=F2_TRANSPORT_CAPACITY_TOTAL,
+            public_capacity=F2_PUBLIC_CAPACITY_TOTAL,
+            type_technology_ids=F2_TYPE_TECHNOLOGY_IDS,
+        )
+    else:
+        slots = _organization_slots(profile)
     organization_count = len(slots)
 
     physical_capacity_total = sum(
@@ -257,7 +292,11 @@ def build_material_initial_conditions(
         if org_type in TRADER_TYPES
     )
     quarterly_flow_value = _quarterly_flow_value(
-        parameters, technologies, slots, equivalent_persons
+        parameters,
+        technologies,
+        slots,
+        equivalent_persons,
+        catalog_for_commodities(spec.commodities),
     )
     distribution_capital_total = (
         float(initial_recipe.distribution_working_capital_quarters) * quarterly_flow_value
@@ -351,7 +390,13 @@ def build_material_initial_conditions(
     organizations = tuple(
         override_by_id.get(org_id, generated[org_id]) for org_id in range(organization_count)
     )
-    _validate_references(organizations, technologies)
+    _validate_references(
+        organizations,
+        technologies,
+        type_technology_ids=(
+            F2_TYPE_TECHNOLOGY_IDS if material_catalog.catalog_id == "f2_v1" else None
+        ),
+    )
 
     # Only generated (non-overridden) traders carry the working-capital line;
     # the Treasury's opening deposit is reduced by exactly this amount so the

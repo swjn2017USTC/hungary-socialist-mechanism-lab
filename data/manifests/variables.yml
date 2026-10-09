@@ -1,499 +1,540 @@
 schema_version: '1'
 variables:
-- variable_id: world_oil_price
-  semantic_kind: external
+- aggregation: mean
   allowed_roles:
   - exogenous_forcing
+  notes: World Bank Pink Sheet monthly crude oil (average), nominal USD per barrel.
+    Observed forcing from 1960-01; 1957-1959 must be an explicit structural warm-up,
+    never backfilled observations.
+  original_frequency: monthly
+  semantic_kind: external
   unit: USD_per_barrel
-  original_frequency: monthly
-  aggregation: mean
-  notes: World Bank Pink Sheet monthly crude oil (average), nominal USD per barrel. Observed forcing from
-    1960-01; 1957-1959 must be an explicit structural warm-up, never backfilled observations.
-- variable_id: global_usd_rate
-  semantic_kind: external
+  variable_id: world_oil_price
+- aggregation: mean
   allowed_roles:
   - exogenous_forcing
+  notes: 'Global USD interest-rate forcing: Federal Reserve H.15 RIFSPFF_N.M effective
+    federal funds rate (percent per year). Same-origin substitute for the rights-blocked
+    FRED FEDFUNDS candidate.'
+  original_frequency: monthly
+  semantic_kind: external
   unit: percent_per_year
-  original_frequency: monthly
-  aggregation: mean
-  notes: 'Global USD interest-rate forcing: Federal Reserve H.15 RIFSPFF_N.M effective federal funds rate
-    (percent per year). Same-origin substitute for the rights-blocked FRED FEDFUNDS candidate.'
-- variable_id: official_fx
-  semantic_kind: external
+  variable_id: global_usd_rate
+- aggregation: end_of_period
   allowed_roles:
   - exogenous_forcing
-  unit: HUF_per_USD
+  notes: 'Official MNB HUF/USD daily quotes (page already normalized to HUF per 1
+    USD; never divided by 100). First batch is 1985 only; quarter diagnostics take
+    the last actual quote per quarter, missing dates stay missing. NOT the sole trade
+    exchange rate: convertible, transferable rouble, bilateral CMEA settlement and
+    domestic admin prices are distinct (BASELINE §21 error 3).'
   original_frequency: dated
-  aggregation: end_of_period
-  notes: 'Official MNB HUF/USD daily quotes (page already normalized to HUF per 1 USD; never divided by
-    100). First batch is 1985 only; quarter diagnostics take the last actual quote per quarter, missing
-    dates stay missing. NOT the sole trade exchange rate: convertible, transferable rouble, bilateral
-    CMEA settlement and domestic admin prices are distinct (BASELINE §21 error 3).'
-- variable_id: gdp
-  semantic_kind: outcome
+  semantic_kind: external
+  unit: HUF_per_USD
+  variable_id: official_fx
+- aggregation: mean
   allowed_roles:
   - target
+  notes: Annual GDP index (1960=100) from KSH gdp0002; quarterly simulation aggregates
+    to annual by mean for comparison. Never forced into state; gross material output
+    is never passed off as GDP.
+  original_frequency: annual
+  semantic_kind: outcome
   unit: index_1960_100
-  original_frequency: annual
-  aggregation: mean
-  notes: Annual GDP index (1960=100) from KSH gdp0002; quarterly simulation aggregates to annual by mean
-    for comparison. Never forced into state; gross material output is never passed off as GDP.
-- variable_id: consumption
-  semantic_kind: outcome
+  variable_id: gdp
+- aggregation: mean
   allowed_roles:
   - target
+  notes: Household actual final consumption index (1960=100) from KSH gdp0002; comparison
+    only.
+  original_frequency: annual
+  semantic_kind: outcome
   unit: index_1960_100
-  original_frequency: annual
-  aggregation: mean
-  notes: Household actual final consumption index (1960=100) from KSH gdp0002; comparison only.
-- variable_id: investment
-  semantic_kind: outcome
+  variable_id: consumption
+- aggregation: mean
   allowed_roles:
   - target
+  notes: Gross fixed capital formation index (1960=100) from KSH gdp0002; comparison
+    only. Must not double as forcing (BASELINE §21 error 1).
+  original_frequency: annual
+  semantic_kind: outcome
   unit: index_1960_100
-  original_frequency: annual
-  aggregation: mean
-  notes: Gross fixed capital formation index (1960=100) from KSH gdp0002; comparison only. Must not double
-    as forcing (BASELINE §21 error 1).
-- variable_id: wage
-  semantic_kind: outcome
+  variable_id: investment
+- aggregation: null
   allowed_roles:
   - target
-  unit: null
-  original_frequency: annual
-  aggregation: null
   notes: Annual target from 1960.
-- variable_id: cpi
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: null
   original_frequency: annual
-  aggregation: null
-  notes: Administrative price index target; not a scarcity measure (BASELINE §21 error 4).
-- variable_id: industrial_output
   semantic_kind: outcome
+  unit: null
+  variable_id: wage
+- aggregation: null
   allowed_roles:
   - target
+  notes: Administrative price index target; not a scarcity measure (BASELINE §21 error
+    4).
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: null
+  variable_id: cpi
+- aggregation: mean
+  allowed_roles:
+  - target
+  notes: Volume index of industrial production (1960=100, KSH ipa0002; 1985=346).
+    Independent of the five featured physical product variables; not one aggregated
+    'goods'.
+  original_frequency: annual
+  semantic_kind: outcome
   unit: index_1960_100
-  original_frequency: annual
-  aggregation: mean
-  notes: Volume index of industrial production (1960=100, KSH ipa0002; 1985=346). Independent of the five
-    featured physical product variables; not one aggregated 'goods'.
-- variable_id: trade
-  semantic_kind: outcome
+  variable_id: industrial_output
+- aggregation: null
   allowed_roles:
   - target
-  unit: null
-  original_frequency: annual
-  aggregation: null
   notes: Annual external-trade target; comparison only.
-- variable_id: debt
+  original_frequency: annual
   semantic_kind: outcome
+  unit: null
+  variable_id: trade
+- aggregation: null
   allowed_roles:
   - target
-  unit: null
-  original_frequency: annual
-  aggregation: null
   notes: Annual target; hard-currency debt context.
-- variable_id: housing
+  original_frequency: annual
   semantic_kind: outcome
+  unit: null
+  variable_id: debt
+- aggregation: null
   allowed_roles:
   - target
-  unit: null
-  original_frequency: annual
-  aggregation: null
   notes: Annual target.
-- variable_id: retail
+  original_frequency: annual
   semantic_kind: outcome
+  unit: null
+  variable_id: housing
+- aggregation: null
   allowed_roles:
   - target
-  unit: null
+  notes: Annual retail target; commodity-level shortage proxy availability still open
+    (BASELINE §41).
   original_frequency: annual
-  aggregation: null
-  notes: Annual retail target; commodity-level shortage proxy availability still open (BASELINE §41).
-- variable_id: employment
   semantic_kind: outcome
+  unit: null
+  variable_id: retail
+- aggregation: null
   allowed_roles:
   - target
-  unit: null
-  original_frequency: annual
-  aggregation: null
   notes: Annual target.
-- variable_id: population_anchor
-  semantic_kind: initial_anchor
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: null
+  variable_id: employment
+- aggregation: end_of_period
   allowed_roles:
   - initial_state
-  unit: persons
+  notes: Census population stocks; anchors only at true census dates (BASELINE §24).
+    Grade rules per BASELINE §5.3.
   original_frequency: dated
-  aggregation: end_of_period
-  notes: Census population stocks; anchors only at true census dates (BASELINE §24). Grade rules per BASELINE
-    §5.3.
-- variable_id: cmea_energy_price
-  semantic_kind: external
+  semantic_kind: initial_anchor
+  unit: persons
+  variable_id: population_anchor
+- aggregation: piecewise_constant
   allowed_roles:
   - exogenous_forcing
-  unit: cmea_settlement_unit_per_p02_energy_unit
-  original_frequency: monthly
-  aggregation: piecewise_constant
-  notes: 'RECONSTRUCTED ONLY: never an observed series (evidence_status must be ''reconstructed'' at admission).
-    original_frequency is monthly because the reconstruction input is the admitted WB monthly oil workbook;
-    the cmea_five_year_contract transform (monthly->quarterly, piecewise_constant, five complete past
-    years only) produces the 1975Q1-1985Q4 quarterly artifact. 1957-1974 is the separate p02_cmea_contract_prior
+  notes: 'RECONSTRUCTED ONLY: never an observed series (evidence_status must be ''reconstructed''
+    at admission). original_frequency is monthly because the reconstruction input
+    is the admitted WB monthly oil workbook; the cmea_five_year_contract transform
+    (monthly->quarterly, piecewise_constant, five complete past years only) produces
+    the 1975Q1-1985Q4 quarterly artifact. 1957-1974 is the separate p02_cmea_contract_prior
     latent prior, never this variable.'
-- variable_id: industrial_electricity
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: million_kWh
-  original_frequency: annual
-  aggregation: sum
-  notes: KSH ipa0002 gross electricity production (1960 = 7617 million kWh); physical energy-group outcome,
-    annual sum.
-- variable_id: industrial_crude_steel
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: thousand_tonnes
-  original_frequency: annual
-  aggregation: sum
-  notes: KSH ipa0002 crude steel (1960 = 1887 thousand tonnes); raw-materials group outcome, annual sum.
-- variable_id: industrial_fertilizer
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: thousand_tonnes
-  original_frequency: annual
-  aggregation: sum
-  notes: KSH ipa0002 mineral or chemical fertilizers (1960 = 102 thousand tonnes). The CSV does not declare
-    active-substance content, so the unit is kept as published; raw-materials group, annual sum.
-- variable_id: industrial_cement
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: thousand_tonnes
-  original_frequency: annual
-  aggregation: sum
-  notes: KSH ipa0002 cement (1960 = 1571 thousand tonnes); a construction input, not completed housing;
-    raw-materials group, annual sum.
-- variable_id: industrial_television
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: thousand_units
-  original_frequency: annual
-  aggregation: sum
-  notes: KSH ipa0002 television sets (1960 = 139 thousand units); durable-goods group outcome, annual
-    sum.
-- variable_id: ag_cereals
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: thousand_tonnes
-  original_frequency: annual
-  aggregation: sum
-  notes: KSH h_omf001b cereals total (1960 = 6960 thousand tonnes); food (raw) harvest outcome, annual
-    sum. Never used to schedule actual farm output.
-- variable_id: ag_wheat
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: thousand_tonnes
-  original_frequency: annual
-  aggregation: sum
-  notes: KSH h_omf001b wheat (1960 = 1803 thousand tonnes); food (raw) harvest outcome, annual sum.
-- variable_id: ag_maize
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: thousand_tonnes
-  original_frequency: annual
-  aggregation: sum
-  notes: KSH h_omf001b maize (1960 = 3534 thousand tonnes); food (raw) harvest outcome, annual sum.
-- variable_id: trade_import_volume_index
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: index_1960_100
-  original_frequency: annual
-  aggregation: mean
-  notes: KSH h_qkt001 volume index of goods imports (1960 = 100%, 1961 = 108); annual mean. An import
-    outcome, never an imports quota; CMEA composition is never inferred from the total index.
-- variable_id: trade_export_volume_index
-  semantic_kind: outcome
-  allowed_roles:
-  - target
-  unit: index_1960_100
-  original_frequency: annual
-  aggregation: mean
-  notes: KSH h_qkt001 volume index of goods exports (1960 = 100%, 1961 = 118); annual mean.
-- variable_id: sbc_strength
-  semantic_kind: latent
-  allowed_roles:
-  - latent_parameter
-  unit: null
-  original_frequency: static
-  aggregation: null
-  notes: 'Soft budget constraint strength latent parameter: literature prior + calibration + sensitivity
-    + uncertainty required; never observed evidence (BASELINE §22.5).'
-- variable_id: oil_warmup_price
-  semantic_kind: latent
-  allowed_roles:
-  - latent_parameter
-  unit: USD_per_barrel
-  original_frequency: static
-  aggregation: null
-  notes: Structural warm-up oil price for 1957Q1-1959Q4 (no observed World Bank oil before 1960-01; observations
-    are never backfilled). Selected value 1.6 with engineering bounds [1, 3]; not calibrated.
-- variable_id: cmea_base_energy_price
-  semantic_kind: latent
-  allowed_roles:
-  - latent_parameter
+  original_frequency: monthly
+  semantic_kind: external
   unit: cmea_settlement_unit_per_p02_energy_unit
-  original_frequency: static
-  aggregation: null
-  notes: Early CMEA base contract price prior covering 1957-1974, before the five-year reconstruction
-    window starts 1975Q1. Bounds [0.5, 1.5]; not a calibrated estimate.
-- variable_id: cmea_uncertainty_multiplier
-  semantic_kind: latent
+  variable_id: cmea_energy_price
+- aggregation: sum
+  allowed_roles:
+  - target
+  notes: KSH ipa0002 gross electricity production (1960 = 7617 million kWh); physical
+    energy-group outcome, annual sum.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: million_kWh
+  variable_id: industrial_electricity
+- aggregation: sum
+  allowed_roles:
+  - target
+  notes: KSH ipa0002 crude steel (1960 = 1887 thousand tonnes); raw-materials group
+    outcome, annual sum.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: thousand_tonnes
+  variable_id: industrial_crude_steel
+- aggregation: sum
+  allowed_roles:
+  - target
+  notes: KSH ipa0002 mineral or chemical fertilizers (1960 = 102 thousand tonnes).
+    The CSV does not declare active-substance content, so the unit is kept as published;
+    raw-materials group, annual sum.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: thousand_tonnes
+  variable_id: industrial_fertilizer
+- aggregation: sum
+  allowed_roles:
+  - target
+  notes: KSH ipa0002 cement (1960 = 1571 thousand tonnes); a construction input, not
+    completed housing; raw-materials group, annual sum.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: thousand_tonnes
+  variable_id: industrial_cement
+- aggregation: sum
+  allowed_roles:
+  - target
+  notes: KSH ipa0002 television sets (1960 = 139 thousand units); durable-goods group
+    outcome, annual sum.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: thousand_units
+  variable_id: industrial_television
+- aggregation: sum
+  allowed_roles:
+  - target
+  notes: KSH h_omf001b cereals total (1960 = 6960 thousand tonnes); food (raw) harvest
+    outcome, annual sum. Never used to schedule actual farm output.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: thousand_tonnes
+  variable_id: ag_cereals
+- aggregation: sum
+  allowed_roles:
+  - target
+  notes: KSH h_omf001b wheat (1960 = 1803 thousand tonnes); food (raw) harvest outcome,
+    annual sum.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: thousand_tonnes
+  variable_id: ag_wheat
+- aggregation: sum
+  allowed_roles:
+  - target
+  notes: KSH h_omf001b maize (1960 = 3534 thousand tonnes); food (raw) harvest outcome,
+    annual sum.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: thousand_tonnes
+  variable_id: ag_maize
+- aggregation: mean
+  allowed_roles:
+  - target
+  notes: KSH h_qkt001 volume index of goods imports (1960 = 100%, 1961 = 108); annual
+    mean. An import outcome, never an imports quota; CMEA composition is never inferred
+    from the total index.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: index_1960_100
+  variable_id: trade_import_volume_index
+- aggregation: mean
+  allowed_roles:
+  - target
+  notes: KSH h_qkt001 volume index of goods exports (1960 = 100%, 1961 = 118); annual
+    mean.
+  original_frequency: annual
+  semantic_kind: outcome
+  unit: index_1960_100
+  variable_id: trade_export_volume_index
+- aggregation: null
   allowed_roles:
   - latent_parameter
+  notes: 'Soft budget constraint strength latent parameter: literature prior + calibration
+    + sensitivity + uncertainty required; never observed evidence (BASELINE §22.5).'
+  original_frequency: static
+  semantic_kind: latent
+  unit: null
+  variable_id: sbc_strength
+- aggregation: null
+  allowed_roles:
+  - latent_parameter
+  notes: Structural warm-up oil price for 1957Q1-1959Q4 (no observed World Bank oil
+    before 1960-01; observations are never backfilled). Selected value 1.6 with engineering
+    bounds [1, 3]; not calibrated.
+  original_frequency: static
+  semantic_kind: latent
+  unit: USD_per_barrel
+  variable_id: oil_warmup_price
+- aggregation: null
+  allowed_roles:
+  - latent_parameter
+  notes: Early CMEA base contract price prior covering 1957-1974, before the five-year
+    reconstruction window starts 1975Q1. Bounds [0.5, 1.5]; not a calibrated estimate.
+  original_frequency: static
+  semantic_kind: latent
+  unit: cmea_settlement_unit_per_p02_energy_unit
+  variable_id: cmea_base_energy_price
+- aggregation: null
+  allowed_roles:
+  - latent_parameter
+  notes: Multiplier scaling the five-year-rule CMEA contract price reconstruction;
+    selected value 1.0 with engineering bounds [0.5, 1.5]; not calibrated.
+  original_frequency: static
+  semantic_kind: latent
   unit: ratio
-  original_frequency: static
-  aggregation: null
-  notes: Multiplier scaling the five-year-rule CMEA contract price reconstruction; selected value 1.0
-    with engineering bounds [0.5, 1.5]; not calibrated.
-- variable_id: p04_coalition_parameters
-  semantic_kind: latent
+  variable_id: cmea_uncertainty_multiplier
+- aggregation: null
   allowed_roles:
   - latent_parameter
-  unit: dimensionless
+  notes: P04 coalition latent parameter block; selected values and per-scalar engineering
+    bounds recorded in the prior file. Structural assumption, not calibrated, not
+    assessed.
   original_frequency: static
-  aggregation: null
-  notes: P04 coalition latent parameter block; selected values and per-scalar engineering bounds recorded
-    in the prior file. Structural assumption, not calibrated, not assessed.
-- variable_id: p04_broker_parameters
   semantic_kind: latent
+  unit: dimensionless
+  variable_id: p04_coalition_parameters
+- aggregation: null
   allowed_roles:
   - latent_parameter
-  unit: dimensionless
+  notes: P04 broker latent parameter block; selected values and per-scalar engineering
+    bounds recorded in the prior file. Structural assumption, not calibrated, not
+    assessed.
   original_frequency: static
-  aggregation: null
-  notes: P04 broker latent parameter block; selected values and per-scalar engineering bounds recorded
-    in the prior file. Structural assumption, not calibrated, not assessed.
-- variable_id: p04_information_parameters
   semantic_kind: latent
+  unit: dimensionless
+  variable_id: p04_broker_parameters
+- aggregation: null
   allowed_roles:
   - latent_parameter
-  unit: dimensionless
+  notes: P04 information latent parameter block; selected values and per-scalar engineering
+    bounds recorded in the prior file. Structural assumption, not calibrated, not
+    assessed.
   original_frequency: static
-  aggregation: null
-  notes: P04 information latent parameter block; selected values and per-scalar engineering bounds recorded
-    in the prior file. Structural assumption, not calibrated, not assessed.
-- variable_id: p04_observation_parameters
   semantic_kind: latent
+  unit: dimensionless
+  variable_id: p04_information_parameters
+- aggregation: null
   allowed_roles:
   - latent_parameter
-  unit: dimensionless
+  notes: P04 observation latent parameter block; selected values and per-scalar engineering
+    bounds recorded in the prior file. Structural assumption, not calibrated, not
+    assessed.
   original_frequency: static
-  aggregation: null
-  notes: P04 observation latent parameter block; selected values and per-scalar engineering bounds recorded
-    in the prior file. Structural assumption, not calibrated, not assessed.
-- variable_id: p04_culture_parameters
   semantic_kind: latent
+  unit: dimensionless
+  variable_id: p04_observation_parameters
+- aggregation: null
   allowed_roles:
   - latent_parameter
-  unit: dimensionless
+  notes: P04 culture latent parameter block; selected values and per-scalar engineering
+    bounds recorded in the prior file. Structural assumption, not calibrated, not
+    assessed.
   original_frequency: static
-  aggregation: null
-  notes: P04 culture latent parameter block; selected values and per-scalar engineering bounds recorded
-    in the prior file. Structural assumption, not calibrated, not assessed.
-- variable_id: p04_opposition_parameters
   semantic_kind: latent
+  unit: dimensionless
+  variable_id: p04_culture_parameters
+- aggregation: null
   allowed_roles:
   - latent_parameter
-  unit: dimensionless
+  notes: P04 opposition latent parameter block; selected values and per-scalar engineering
+    bounds recorded in the prior file. Structural assumption, not calibrated, not
+    assessed.
   original_frequency: static
-  aggregation: null
-  notes: P04 opposition latent parameter block; selected values and per-scalar engineering bounds recorded
-    in the prior file. Structural assumption, not calibrated, not assessed.
-- variable_id: p04_external_recipe_parameters
   semantic_kind: latent
+  unit: dimensionless
+  variable_id: p04_opposition_parameters
+- aggregation: null
   allowed_roles:
   - latent_parameter
-  unit: dimensionless
+  notes: P04 external_recipe latent parameter block; selected values and per-scalar
+    engineering bounds recorded in the prior file. Structural assumption, not calibrated,
+    not assessed.
   original_frequency: static
-  aggregation: null
-  notes: P04 external_recipe latent parameter block; selected values and per-scalar engineering bounds
-    recorded in the prior file. Structural assumption, not calibrated, not assessed.
-- variable_id: policy_plan_utilization
-  semantic_kind: policy_input
+  semantic_kind: latent
+  unit: dimensionless
+  variable_id: p04_external_recipe_parameters
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool plan_utilization (Mode A replay input); a declared policy
+    instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool plan_utilization (Mode A replay input); a declared policy instrument, never
-    a realized outcome and never observed.
-- variable_id: policy_enterprise_autonomy
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_plan_utilization
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool enterprise_autonomy (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool enterprise_autonomy (Mode A replay input); a declared policy instrument,
-    never a realized outcome and never observed.
-- variable_id: policy_investment_intensity
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_enterprise_autonomy
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool investment_intensity (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool investment_intensity (Mode A replay input); a declared policy instrument,
-    never a realized outcome and never observed.
-- variable_id: policy_industrial_priority
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_investment_intensity
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool industrial_priority (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool industrial_priority (Mode A replay input); a declared policy instrument,
-    never a realized outcome and never observed.
-- variable_id: policy_admin_price_factor
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_industrial_priority
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool admin_price_factor (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool admin_price_factor (Mode A replay input); a declared policy instrument,
-    never a realized outcome and never observed.
-- variable_id: policy_wage_factor
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_admin_price_factor
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool wage_factor (Mode A replay input); a declared policy
+    instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool wage_factor (Mode A replay input); a declared policy instrument, never a
-    realized outcome and never observed.
-- variable_id: policy_credit_fraction
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_wage_factor
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool credit_fraction (Mode A replay input); a declared policy
+    instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool credit_fraction (Mode A replay input); a declared policy instrument, never
-    a realized outcome and never observed.
-- variable_id: policy_budget_hardness
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_credit_fraction
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool budget_hardness (Mode A replay input); a declared policy
+    instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool budget_hardness (Mode A replay input); a declared policy instrument, never
-    a realized outcome and never observed.
-- variable_id: policy_housing_factor
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_budget_hardness
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool housing_factor (Mode A replay input); a declared policy
+    instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool housing_factor (Mode A replay input); a declared policy instrument, never
-    a realized outcome and never observed.
-- variable_id: policy_borrowing_factor
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_housing_factor
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool borrowing_factor (Mode A replay input); a declared policy
+    instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool borrowing_factor (Mode A replay input); a declared policy instrument, never
-    a realized outcome and never observed.
-- variable_id: policy_consumer_import_factor
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_borrowing_factor
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool consumer_import_factor (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool consumer_import_factor (Mode A replay input); a declared policy instrument,
-    never a realized outcome and never observed.
-- variable_id: policy_second_economy_tolerance
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_consumer_import_factor
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool second_economy_tolerance (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool second_economy_tolerance (Mode A replay input); a declared policy instrument,
-    never a realized outcome and never observed.
-- variable_id: policy_welfare_provision
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_second_economy_tolerance
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool welfare_provision (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool welfare_provision (Mode A replay input); a declared policy instrument, never
-    a realized outcome and never observed.
-- variable_id: policy_private_autonomy
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_welfare_provision
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool private_autonomy (Mode A replay input); a declared policy
+    instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool private_autonomy (Mode A replay input); a declared policy instrument, never
-    a realized outcome and never observed.
-- variable_id: policy_cultural_openness
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_private_autonomy
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool cultural_openness (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool cultural_openness (Mode A replay input); a declared policy instrument, never
-    a realized outcome and never observed.
-- variable_id: policy_supported_boundary
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_cultural_openness
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool supported_boundary (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool supported_boundary (Mode A replay input); a declared policy instrument,
-    never a realized outcome and never observed.
-- variable_id: policy_tolerance_boundary
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_supported_boundary
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool tolerance_boundary (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool tolerance_boundary (Mode A replay input); a declared policy instrument,
-    never a realized outcome and never observed.
-- variable_id: policy_repression
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_tolerance_boundary
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool repression (Mode A replay input); a declared policy
+    instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool repression (Mode A replay input); a declared policy instrument, never a
-    realized outcome and never observed.
-- variable_id: policy_information_investment
   semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_repression
+- aggregation: null
   allowed_roles:
   - exogenous_forcing
-  unit: dimensionless
+  notes: Domestic policy tool information_investment (Mode A replay input); a declared
+    policy instrument, never a realized outcome and never observed.
   original_frequency: quarterly
-  aggregation: null
-  notes: Domestic policy tool information_investment (Mode A replay input); a declared policy instrument,
-    never a realized outcome and never observed.
+  semantic_kind: policy_input
+  unit: dimensionless
+  variable_id: policy_information_investment
+- aggregation: end_of_period
+  allowed_roles:
+  - initial_state
+  notes: Census private-household stocks; anchors only at true census dates; 1949
+    official series is a known publication gap (KSH methodology 2006).
+  original_frequency: dated
+  semantic_kind: initial_anchor
+  unit: households
+  variable_id: household_anchor
+- aggregation: end_of_period
+  allowed_roles:
+  - initial_state
+  notes: Census dwelling (lakas) stocks; anchors only at true census dates; lakas
+    is the dwelling unit, distinct from lakoeghseg and lakohaz.
+  original_frequency: dated
+  semantic_kind: initial_anchor
+  unit: dwellings
+  variable_id: dwelling_anchor

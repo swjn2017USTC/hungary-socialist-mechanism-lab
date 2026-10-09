@@ -1,0 +1,120 @@
+{
+  "abc_budget": {
+    "f1_particles_per_population": 128,
+    "populations": 6,
+    "smoke_particles": 16,
+    "smoke_populations": 2
+  },
+  "baseline": "BASELINE.md v1.1 (1957Q1-1985Q4 = 116 ticks; 1986Q1-1988Q4 reserved)",
+  "domains": {
+    "node_ids": "config/research_contract.json",
+    "windows": "1957Q1-1985Q4 quarterly simulation with annual targets compared on annual aggregates only; census stocks compared on their real dates only"
+  },
+  "exposure": [
+    {
+      "artifact": "wage_and_active_population_series",
+      "kind": "reader_exposure",
+      "note": "wage/active-population numerics were read in this study before the freeze; the series is a non-blind frozen-parameter holdout, not a blind one"
+    },
+    {
+      "artifact": "industry_terminal_values_1985",
+      "kind": "registry_note_disclosure",
+      "note": "terminal 1985 industrial values are disclosed in the registry notes; physical preservation of raw files is not evidence of non-exposure"
+    },
+    {
+      "artifact": "legacy_reports_spot_checks",
+      "kind": "prior_report_exposure",
+      "note": "P00-P04 reports contain spot checks of core historical series"
+    },
+    {
+      "artifact": "unknown_historical_exposure",
+      "kind": "unknown",
+      "note": "unrecorded exposure cannot be undone by deleting or renaming data"
+    }
+  ],
+  "gates": {
+    "gate1_requires": [
+      "data_manifest_frozen",
+      "ontology_frozen",
+      "parameter_registry_frozen",
+      "target_registry_frozen",
+      "holdout_registry_frozen",
+      "f2_performance_benchmark"
+    ],
+    "gate2_requires": [
+      "gate1_passed"
+    ]
+  },
+  "identification": {
+    "p02_material_cmea_contract_prior": "fixed",
+    "p02_material_cmea_uncertainty_prior": "fixed",
+    "p02_material_oil_warmup_prior": "fixed",
+    "p04_broker_prior": "fixed",
+    "p04_coalition_prior": "unidentified",
+    "p04_culture_prior": "unidentified",
+    "p04_external_recipe_prior": "unidentified",
+    "p04_information_prior": "unidentified",
+    "p04_observation_prior": "unidentified",
+    "p04_opposition_prior": "unidentified"
+  },
+  "identification_notes": "Declared identification identity (P05 §D audit), separate from run disposition: every parameter keeps a fixed value at runtime, but only the four 'fixed' entries may be called structurally determined. The six P04 behavioural blocks are UNIDENTIFIED: no declared observable constrains them, so they stay prior-constrained and must never be reported as estimated. Basis: all seven P04 prior files declare calibration_status=not_calibrated and 'engineering values'; broker is a pure engineering fixture, while coalition/culture/information/observation/opposition are behavioural objects whose independent observables are not yet obtained. identifiable_set=[], linkage=[], inference_status=NOT_RUN.",
+  "linkage": [],
+  "linkage_notes": "Parameter-to-target linkage (P05 §D): each entry maps a declared latent parameter artifact to the target variable_ids that inform it. Empty means no parameter declares an informing target yet, so the identifiability screen must report NO_IDENTIFIABLE_PARAMETERS rather than invent a candidate set.",
+  "ontology": "config/ontology/f2_v1.json",
+  "regions": "config/ontology/f2_regions_v1.json",
+  "registries": {
+    "exposure": "data/manifests/p05_exposure.yml",
+    "holdout": "data/manifests/p05_holdout.yml",
+    "parameters": "config/calibration/p05_parameters.yml",
+    "targets": "data/manifests/p05_targets.yml"
+  },
+  "scenarios": {
+    "endogenous_politics": "p04_endogenous",
+    "historical_replay": "intermediate8"
+  },
+  "schema_version": "1",
+  "seed_banks": {
+    "f1_latin_hypercube_seed": 1968,
+    "f2_replicates_per_vector": 3,
+    "f2_verification_vectors": 32,
+    "initial_seed_pairs": 3,
+    "prior_vectors": 16
+  },
+  "splits": {
+    "calibration_uses": [
+      "calibration",
+      "validation"
+    ],
+    "holdout_uses": [
+      "holdout",
+      "reserved"
+    ]
+  },
+  "study": "P05",
+  "tolerances": {
+    "mechanism_direction_agreement": 0.9,
+    "paired_median_bias_scale": 0.25,
+    "paired_p90_abs_bias_scale": 0.5,
+    "periodic_residual": 1e-06,
+    "spearman_min": 0.9,
+    "stock_output_ratio": 0.05
+  },
+  "windows": {
+    "holdout": {
+      "end": "1985Q4",
+      "start": "1979Q1"
+    },
+    "internal_validation": {
+      "end": "1978Q4",
+      "start": "1970Q1"
+    },
+    "reserved": {
+      "end": "1988Q4",
+      "start": "1986Q1"
+    },
+    "training": {
+      "end": "1969Q4",
+      "start": "1960Q1"
+    }
+  }
+}

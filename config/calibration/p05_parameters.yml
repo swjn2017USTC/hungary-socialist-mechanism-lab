@@ -1,0 +1,53 @@
+parameters:
+- artifact_id: p02_material_cmea_contract_prior
+  literature_refs:
+  - 'structural assumption: constant early CMEA base contract price before the five-year
+    reconstruction window'
+  present: true
+  variable_id: cmea_base_energy_price
+- artifact_id: p02_material_cmea_uncertainty_prior
+  literature_refs:
+  - 'structural assumption: neutral CMEA reconstruction multiplier'
+  present: true
+  variable_id: cmea_uncertainty_multiplier
+- artifact_id: p02_material_oil_warmup_prior
+  literature_refs:
+  - 'structural assumption: fixed warm-up oil price for pre-1960 window'
+  present: true
+  variable_id: oil_warmup_price
+- artifact_id: p04_broker_prior
+  literature_refs:
+  - 'structural engineering fixture: P04 broker parameters'
+  present: true
+  variable_id: p04_broker_parameters
+- artifact_id: p04_coalition_prior
+  literature_refs:
+  - 'structural engineering fixture: P04 coalition parameters'
+  present: true
+  variable_id: p04_coalition_parameters
+- artifact_id: p04_culture_prior
+  literature_refs:
+  - 'structural engineering fixture: P04 culture parameters'
+  present: true
+  variable_id: p04_culture_parameters
+- artifact_id: p04_external_recipe_prior
+  literature_refs:
+  - 'structural engineering fixture: P04 external_recipe parameters'
+  present: true
+  variable_id: p04_external_recipe_parameters
+- artifact_id: p04_information_prior
+  literature_refs:
+  - 'structural engineering fixture: P04 information parameters'
+  present: true
+  variable_id: p04_information_parameters
+- artifact_id: p04_observation_prior
+  literature_refs:
+  - 'structural engineering fixture: P04 observation parameters'
+  present: true
+  variable_id: p04_observation_parameters
+- artifact_id: p04_opposition_prior
+  literature_refs:
+  - 'structural engineering fixture: P04 opposition parameters'
+  present: true
+  variable_id: p04_opposition_parameters
+schema_version: '1'

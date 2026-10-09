@@ -49,13 +49,9 @@ if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
 
 from hsm_lab.contract.base import ConfigError, ResearchGateError
 from hsm_lab.contract.material import (
-    COMMODITY_INDEX,
-    HUB_COMMODITY_STAGES,
-    INVESTMENT_COMMODITY_IDS,
     P02_COMMODITY_IDS,
     PRODUCTIVE_TYPES,
     PURPOSE_CODES,
-    RETAIL_COMMODITY_STAGES,
     STAGE_CODES,
     CellOwnerKind,
     CommoditySpec,
@@ -69,13 +65,15 @@ from hsm_lab.contract.material import (
     Stage,
     StockCellRef,
     TechnologySpec,
+    catalog_for_commodities,
     commodity_spec,
+    get_catalog,
     wholesale_hub_regions,
 )
 from hsm_lab.contract.schemas import ResearchContract, ScenarioSpec
 from hsm_lab.engine.state import POOL_CODES, owner_kind_code
 
-MATERIAL_NETWORK_VERSION = "material-network-v1"
+MATERIAL_NETWORK_VERSION = "material-network-v4"
 
 _POOL_INPUT = POOL_CODES["input"]
 _POOL_OUTPUT = POOL_CODES["output"]
@@ -92,7 +90,6 @@ _KIND_NAMES = {owner_kind_code(kind): kind.value for kind in CellOwnerKind}
 # commodity registry in ``contract.material`` (see HUB_COMMODITY_STAGES,
 # RETAIL_COMMODITY_STAGES, INVESTMENT_COMMODITY_IDS); a new commodity joins the
 # distribution or investment layer by declaring the flag, not by editing engine code.
-PLOT_INPUT_COMMODITY_IDS: tuple[str, ...] = ("energy", "capital_goods", "raw_materials")
 # Exports ship from the sources nearest the national origin (region 0).
 EXPORT_ORIGIN_REGION = 0
 
@@ -122,8 +119,10 @@ class MaterialNetwork:
     """Pinned compiled network surface (see ``.omp/p02_interfaces.md``)."""
 
     schema_version: str
+    catalog_id: str  # frozen material ontology id (P05 §A)
     region_ids: tuple[str, ...]
     commodity_ids: tuple[str, ...]
+    region_distance: np.ndarray  # float64 (R, R) declared spatial proxy
     household_parameters: HouseholdParameters
     household_catalog: HouseholdCatalog
     second_input_commodities: tuple[int, ...]  # commodity axis indices used as inputs
@@ -145,9 +144,12 @@ class MaterialNetwork:
     activity_org_index: np.ndarray  # int32 (P,)
     activity_region: np.ndarray  # int32 (P,)
     activity_capacity: np.ndarray  # float64 (P,)
+    activity_early_service: np.ndarray  # bool (P,) same-quarter service producer
+    early_service_tiers: list[np.ndarray]  # topological tiers of early producers
     A: csr_matrix  # (P, K) inputs, positive entries only
     input_cell: np.ndarray  # int32 (K,)
     input_activity: np.ndarray  # int32 (K,)
+    input_timing: np.ndarray  # int8 (K,) 0 opening / 1 same-quarter service
     B: csr_matrix  # (P, S) outputs into the owner's stock cells
     # demand cells D = K production inputs + trader/plot/investment/housing/
     # export/household intents
@@ -170,6 +172,10 @@ class MaterialNetwork:
     edge_transport_org: np.ndarray  # int32 (M,)
     edge_transport_per_unit: np.ndarray  # float64 (M,)
     edge_buyer_org: np.ndarray  # int32 (M,)
+    edge_self_hauled: np.ndarray  # bool (M,) transported by the buyer's own fleet
+    edge_is_fallback: np.ndarray  # bool (M,) draws only when declared sources are short
+    edge_transport_service_cell: np.ndarray  # int32 (M,) carrier output service cell or -1
+    edge_distance: np.ndarray  # float64 (M,) declared route distance
     edge_id: np.ndarray  # int64 (M,)
     # convenience maps
     org_input_cells: dict[int, list[int]]
@@ -205,6 +211,7 @@ class _Compiler:
         commodities: Sequence[CommoditySpec],
         region_ids: Sequence[str],
         plot_recipe: PrivatePlotRecipe,
+        region_distance: np.ndarray | None = None,
     ) -> None:
         self.initial = initial
         self.technologies: tuple[TechnologySpec, ...] = tuple(technologies)
@@ -212,6 +219,7 @@ class _Compiler:
         self.commodities: tuple[CommoditySpec, ...] = tuple(commodities)
         self.region_ids: tuple[str, ...] = tuple(region_ids)
         self.plot_recipe = plot_recipe
+        self.region_distance_input = region_distance
 
     # ------------------------------------------------------------------
     # step 1: input coherence and organization tables
@@ -233,7 +241,14 @@ class _Compiler:
             raise ConfigError("declared region ids do not match the initial conditions axis")
         self.commodity_ids = commodity_ids
         self.commodity_index = {cid: index for index, cid in enumerate(commodity_ids)}
+        self.catalog_id = catalog_for_commodities(commodity_ids).catalog_id
+        self.material_catalog = get_catalog(self.catalog_id)
+        self.catalog_index = dict(self.material_catalog.index)
+        self.commodity_stockable = np.asarray(
+            [bool(spec.stockable) for spec in self.commodities], dtype=bool
+        )
         self.region_index = {rid: index for index, rid in enumerate(self.region_ids)}
+        self._init_region_distance()
 
         self.tech_index: dict[str, int] = {}
         for row, technology in enumerate(self.technologies):
@@ -268,7 +283,7 @@ class _Compiler:
         self.import_cap = np.zeros(self.commodity_count, dtype=np.float64)
         self.export_demand = np.zeros((2, self.commodity_count), dtype=np.float64)
         for g, spec in enumerate(self.commodities):
-            axis = COMMODITY_INDEX.get(spec.id)
+            axis = self.catalog_index.get(spec.id)
             if axis is None:
                 continue  # extra declared commodity: never importable/exportable
             self.import_cap[g] = cmea_imports[axis] + convertible_imports[axis]
@@ -296,6 +311,76 @@ class _Compiler:
                 second_outputs.append(net_index)
         self.second_input_commodities = tuple(sorted(second_inputs))
         self.second_output_commodities = tuple(sorted(second_outputs))
+
+    def _role_g(self, role: str) -> int | None:
+        """Network commodity index of the first channel in a catalog role."""
+        for commodity_id in self.material_catalog.with_role(role):
+            if commodity_id in self.commodity_index:
+                return self.commodity_index[commodity_id]
+        return None
+
+    def _init_region_distance(self) -> None:
+        """Explicit spatial proxy (P05 §A.7): never an ordinal ring by default."""
+        count = self.region_count
+        supplied = self.region_distance_input
+        self.explicit_distance = supplied is not None
+        if supplied is None:
+            # Declared S proxy: identity inside a region, unit cost across
+            # regions. The legacy ring ordering is only used to break source
+            # ranking ties deterministically, not as a distance claim.
+            distance = np.ones((count, count), dtype=np.float64)
+            np.fill_diagonal(distance, 0.0)
+        else:
+            distance = np.asarray(supplied, dtype=np.float64)
+            if distance.shape != (count, count):
+                raise ConfigError(
+                    f"region distance matrix must be ({count}, {count}), got {distance.shape}"
+                )
+            if not np.all(np.isfinite(distance)):
+                raise ConfigError("region distance matrix must be finite")
+            if bool(np.any(distance < 0.0)):
+                raise ConfigError("region distance matrix must be non-negative")
+        self.region_distance = distance
+
+    def _init_carrier_capacity(self) -> None:
+        self.transport_capacity = np.asarray(
+            [
+                float(self.initial.organizations[row].capacity)
+                for row in self.transport_rows
+            ],
+            dtype=np.float64,
+        )
+
+    def _region_distance_of(self, a: int, b: int) -> float:
+        if a < 0 or b < 0:
+            return float(np.max(self.region_distance)) if self.region_count else 1.0
+        return float(self.region_distance[a, b])
+
+    def _select_carrier(
+        self, source_region: int, destination_region: int, reference_work: float
+    ) -> int:
+        """Pick a carrier by route distance, then assigned load ratio, then id."""
+        if not self.transport_rows:
+            return -1
+        base = source_region if source_region >= 0 else destination_region
+        if base < 0:
+            base = 0
+        carrier_region = np.asarray(
+            [self.org_region[row] for row in self.transport_rows], dtype=np.int64
+        )
+        route_distance = self.region_distance[base, carrier_region]
+        safe_capacity = np.where(self.transport_capacity > 0.0, self.transport_capacity, 1.0)
+        load_ratio = self.transport_assigned / safe_capacity
+        best = min(
+            range(len(self.transport_rows)),
+            key=lambda index: (
+                float(route_distance[index]),
+                float(load_ratio[index]),
+                int(self.transport_rows[index]),
+            ),
+        )
+        self.transport_assigned[best] += max(float(reference_work), 0.0)
+        return int(self.transport_rows[best])
 
     def _build_org_tables(self) -> None:
         organizations = tuple(
@@ -362,6 +447,9 @@ class _Compiler:
                 self.region_retail_positions[region].append(position)
 
         self.plot_activity_base = len(self.productive_rows)
+        self.transport_assigned = np.zeros(len(self.transport_rows), dtype=np.float64)
+        self.transport_capacity = np.zeros(len(self.transport_rows), dtype=np.float64)
+        self._init_carrier_capacity()
 
     # ------------------------------------------------------------------
     # step 2: stock-cell catalog
@@ -390,6 +478,7 @@ class _Compiler:
         self.k_activity: list[int] = []
         self.k_cell: list[int] = []
         self.k_coefficient: list[float] = []
+        self.k_timing: list[int] = []
         self.b_activity: list[int] = []
         self.b_cell: list[int] = []
         self.b_coefficient: list[float] = []
@@ -414,7 +503,7 @@ class _Compiler:
             if org_kind is OrganizationType.WHOLESALE_PROCURMENT:
                 position = self.wholesale_rows.index(row)
                 hub_region = self.hub_regions[position]
-                for cid, stage in HUB_COMMODITY_STAGES:
+                for cid, stage in self.material_catalog.hub_commodity_stages:
                     g = self.commodity_index.get(cid)
                     if g is None:
                         continue
@@ -432,7 +521,7 @@ class _Compiler:
             if org_kind is OrganizationType.RETAIL:
                 position = self.retail_rows.index(row)
                 for served in self.retail_served[position]:
-                    for cid, stage in RETAIL_COMMODITY_STAGES:
+                    for cid, stage in self.material_catalog.retail_commodity_stages:
                         g = self.commodity_index.get(cid)
                         if g is None:
                             continue
@@ -461,6 +550,9 @@ class _Compiler:
                 self.k_activity.append(activity)
                 self.k_cell.append(prov)
                 self.k_coefficient.append(float(coefficient.coefficient))
+                self.k_timing.append(
+                    1 if coefficient.resolved_input_timing == "same_quarter_service" else 0
+                )
                 self.input_cell_of_org[(row, g, stage_code)] = prov
             for output_coefficient in technology.outputs:
                 g = self.commodity_index[output_coefficient.commodity_id]
@@ -472,7 +564,7 @@ class _Compiler:
                 self.b_cell.append(prov)
                 self.b_coefficient.append(float(output_coefficient.coefficient))
                 self.org_output_records.append((row, g, stage_code, prov))
-            for cid in INVESTMENT_COMMODITY_IDS:
+            for cid in self.material_catalog.investment_commodity_ids:
                 g = self.commodity_index.get(cid)
                 if g is None:
                     continue
@@ -491,10 +583,25 @@ class _Compiler:
         self.plot_raw_map: dict[int, int] = {}
         self.plot_ready_self_map: dict[int, int] = {}
         self.plot_ready_market_map: dict[int, int] = {}
-        food_g = self.commodity_index.get("food")
+        role_coefficients = {
+            "energy": self.plot_recipe.input_energy,
+            "raw": self.plot_recipe.input_raw_materials,
+            "capital": self.plot_recipe.input_capital_goods,
+        }
+        self.plot_coefficient_by_id: dict[str, float] = {}
+        for role, coefficient in role_coefficients.items():
+            role_ids = self.material_catalog.with_role(role)
+            if role_ids and role_ids[0] in self.commodity_index:
+                self.plot_coefficient_by_id[role_ids[0]] = float(coefficient)
+        food_raw_g = self._role_g("food_raw")
+        food_ready_g = self._role_g("food")
+        if food_raw_g is None:
+            food_raw_g = food_ready_g
+        if food_ready_g is None:
+            food_ready_g = food_raw_g
         plot_inputs = sorted(
             self.commodity_index[cid]
-            for cid in PLOT_INPUT_COMMODITY_IDS
+            for cid in self.plot_coefficient_by_id
             if cid in self.commodity_index
         )
         self.plot_input_commodities = plot_inputs
@@ -504,15 +611,16 @@ class _Compiler:
                     kind_plot, -1, region, _POOL_INPUT, g, STAGE_CODES["standard"]
                 )
                 self.plot_input_map[(region, g)] = prov
-            if food_g is not None:
+            if food_raw_g is not None:
                 self.plot_raw_map[region] = self._add_cell(
-                    kind_plot, -1, region, _POOL_OUTPUT, food_g, STAGE_CODES["raw"]
+                    kind_plot, -1, region, _POOL_OUTPUT, food_raw_g, STAGE_CODES["raw"]
                 )
+            if food_ready_g is not None:
                 self.plot_ready_self_map[region] = self._add_cell(
-                    kind_plot, -1, region, _POOL_INPUT, food_g, STAGE_CODES["ready"]
+                    kind_plot, -1, region, _POOL_INPUT, food_ready_g, STAGE_CODES["ready"]
                 )
                 self.plot_ready_market_map[region] = self._add_cell(
-                    kind_plot, -1, region, _POOL_RETAIL, food_g, STAGE_CODES["ready"]
+                    kind_plot, -1, region, _POOL_RETAIL, food_ready_g, STAGE_CODES["ready"]
                 )
 
         # treasury national import pool (region -1: never folded into a region)
@@ -589,14 +697,21 @@ class _Compiler:
             if self.org_type[org_row] is OrganizationType.BANK:
                 raise ResearchGateError(f"bank organization {org_row} must not own material cells")
 
-        # food cells carry raw/ready only; every other commodity is standard
-        food_g = self.commodity_index.get("food")
-        if food_g is not None:
-            food_cells = self.cell_commodity_np == food_g
-            if bool(np.any(~np.isin(self.cell_stage_np[food_cells], (1, 2)))):
-                raise ResearchGateError("food cells must use raw/ready stages only")
-            if bool(np.any(np.isin(self.cell_stage_np[~food_cells], (1, 2)))):
-                raise ResearchGateError("non-food cells must use the standard stage")
+        # stage legality is read from each commodity's declared spec, not a
+        # single food id: a multi-stage commodity (raw/ready food) may carry
+        # non-standard cells, every other commodity must be standard.
+        for g in range(self.commodity_count):
+            spec = commodity_spec(self.commodity_ids[g])
+            allowed = {STAGE_CODES[stage] for stage in spec.stages}
+            cells = self.cell_commodity_np == g
+            if not bool(np.any(cells)):
+                continue
+            used = set(np.unique(self.cell_stage_np[cells]).tolist())
+            if not used <= allowed:
+                raise ResearchGateError(
+                    f"commodity {self.commodity_ids[g]!r} carries stages outside its "
+                    f"declared set: {sorted(used - allowed)}"
+                )
 
         # producer / hub / retail lookups in final rows
         self.producers: dict[tuple[int, int], list[tuple[int, int]]] = {}
@@ -682,17 +797,13 @@ class _Compiler:
         )
 
         # plot inputs append to K in commodity-index order
-        plot_coefficients = {
-            "energy": self.plot_recipe.input_energy,
-            "capital_goods": self.plot_recipe.input_capital_goods,
-            "raw_materials": self.plot_recipe.input_raw_materials,
-        }
         for region in range(self.region_count):
             for g in self.plot_input_commodities:
                 activity = plot_base + region
                 self.k_activity.append(activity)
                 self.k_cell.append(self.plot_input_map[(region, g)])
-                self.k_coefficient.append(plot_coefficients[self.commodity_ids[g]])
+                self.k_coefficient.append(self.plot_coefficient_by_id[self.commodity_ids[g]])
+                self.k_timing.append(0)  # plot inputs are stockable by construction
 
         # plot outputs into raw/self/market cells (zero shares omitted)
         if self.plot_raw_map:
@@ -747,6 +858,64 @@ class _Compiler:
         if not np.all(np.isfinite(self.B_matrix.data)) or bool(np.any(self.B_matrix.data <= 0.0)):
             raise ResearchGateError("B coefficients must be finite and positive")
 
+        # P05 §0.4: same-quarter service dependency DAG.  An activity may only
+        # be scheduled early when it produces a non-stockable service and every
+        # input is opening stock; a non-stockable producer that itself needs a
+        # same-quarter service is an undeclared cycle.
+        self.input_timing_np = np.asarray(self.k_timing, dtype=np.int8)
+        has_same_quarter_input = np.zeros(self.activity_count, dtype=np.float64)
+        if self.k_count:
+            np.add.at(
+                has_same_quarter_input,
+                self.input_activity_np.astype(np.int64),
+                self.input_timing_np.astype(np.float64),
+            )
+        produces_service = np.zeros(self.activity_count, dtype=bool)
+        for activity, cell in zip(self.b_activity, self.b_cell, strict=True):
+            g = int(self.cell_commodity_np[int(self.prov_final[cell])])
+            if not bool(self.commodity_stockable[g]):
+                produces_service[activity] = True
+        early = produces_service  # every non-stockable producer runs early (tiered)
+        self.activity_early_service_np = early
+        self.early_service_tiers_np = self._early_service_tiers(early)
+
+    def _early_service_tiers(self, early: np.ndarray) -> list[np.ndarray]:
+        """Topological tiers of same-quarter service producers (P05 §0.4).
+
+        Activity A depends on B when A consumes same-quarter a non-stockable
+        commodity that B produces.  A true cycle is a ConfigError; otherwise the
+        tiers give the order in which the kernel must produce them.
+        """
+        producers_of: dict[int, set[int]] = {}
+        for activity, cell in zip(self.b_activity, self.b_cell, strict=True):
+            g = int(self.cell_commodity_np[int(self.prov_final[cell])])
+            if not bool(self.commodity_stockable[g]):
+                producers_of.setdefault(g, set()).add(activity)
+        members = [int(a) for a in np.flatnonzero(early)]
+        deps: dict[int, set[int]] = {a: set() for a in members}
+        for index in range(self.k_count):
+            if int(self.input_timing_np[index]) != 1:
+                continue
+            activity = int(self.input_activity_np[index])
+            if activity not in deps:
+                continue
+            g = int(self.cell_commodity_np[int(self.input_cell_np[index])])
+            for producer in producers_of.get(g, ()):
+                if producer != activity:
+                    deps[activity].add(producer)
+        tiers: list[np.ndarray] = []
+        remaining = set(members)
+        while remaining:
+            ready = sorted(a for a in remaining if not (deps[a] & remaining))
+            if not ready:
+                raise ConfigError(
+                    "same-quarter service cycle among activities "
+                    f"{sorted(remaining)}"
+                )
+            tiers.append(np.asarray(ready, dtype=np.int64))
+            remaining -= set(ready)
+        return tiers
+
     # ------------------------------------------------------------------
     # step 4: demand cells and edges
     # ------------------------------------------------------------------
@@ -776,13 +945,63 @@ class _Compiler:
         buyer_org: int,
         transport_region: int,
         transport_override: int | None = None,
+        fallback: bool = False,
     ) -> None:
         source_region = int(self.cell_region_np[source])
-        if transport_override is not None:
+        g = int(self.cell_commodity_np[source])
+        stockable = bool(self.commodity_stockable[g]) if g < self.commodity_stockable.size else True
+        if not self.explicit_distance:
+            # Legacy declared proxy (intermediate8): same-region edges are free
+            # and the ring picks the carrier.  P05 §0.2's self-haul rule still
+            # applies so a carrier's own fuel never depends on its own service
+            # pool (the transport-insolvency trap).
+            buyer_is_transport = buyer_org >= 0 and buyer_org in self.transport_rows
+            if buyer_is_transport and stockable:
+                transport_org, per_unit = -1, 0.0
+            elif source_region >= 0 and source_region == transport_region:
+                transport_org, per_unit = -1, 0.0
+            elif not self.transport_rows:
+                transport_org, per_unit = -1, self.default_transport_per_unit
+            else:
+                base = source_region if source_region >= 0 else transport_region
+                base = base if base >= 0 else 0
+                transport_org = int(self.transport_rows[base % len(self.transport_rows)])
+                per_unit = self.default_transport_per_unit
+            self.edge_source_list.append(source)
+            self.edge_destination_list.append(destination)
+            self.edge_demand_list.append(demand)
+            self.edge_purpose_list.append(PURPOSE_CODES[purpose])
+            self.edge_weight_list.append(float(weight))
+            self.edge_transport_list.append(transport_org)
+            self.edge_per_unit_list.append(per_unit)
+            self.edge_buyer_list.append(buyer_org)
+            self.edge_self_hauled_list.append(transport_org < 0)
+            self.edge_fallback_list.append(bool(fallback))
+            self.edge_distance_list.append(
+                float(_cyclic_distance(source_region if source_region >= 0 else transport_region,
+                                       transport_region, self.region_count))
+            )
+            return
+        buyer_is_transport = buyer_org >= 0 and buyer_org in self.transport_rows
+        # P05 §0.2: a carrier's own stockable production input is self-hauled
+        # (its fleet burns its own fuel, claims no other carrier), and a
+        # non-stockable service delivery never requests a second transport
+        # service. Every other routed edge with logistics work selects a
+        # carrier and pays a fee; no carrier means a diagnosable zero delivery.
+        self_hauled = (buyer_is_transport and stockable) or (not stockable)
+        if self_hauled:
+            transport_org = -1
+            per_unit = 0.0
+        elif transport_override is not None:
             transport_org = transport_override
-            per_unit = 0.0 if source_region == transport_region else self.default_transport_per_unit
+            per_unit = self.default_transport_per_unit
         else:
-            transport_org, per_unit = self._transport_pair(source_region, transport_region)
+            transport_org = self._select_carrier(
+                source_region,
+                transport_region,
+                float(weight) * float(self.default_transport_per_unit),
+            )
+            per_unit = self.default_transport_per_unit if transport_org >= 0 else 0.0
         self.edge_source_list.append(source)
         self.edge_destination_list.append(destination)
         self.edge_demand_list.append(demand)
@@ -791,6 +1010,9 @@ class _Compiler:
         self.edge_transport_list.append(transport_org)
         self.edge_per_unit_list.append(per_unit)
         self.edge_buyer_list.append(buyer_org)
+        self.edge_self_hauled_list.append(bool(self_hauled))
+        self.edge_fallback_list.append(bool(fallback))
+        self.edge_distance_list.append(self._region_distance_of(source_region, transport_region))
 
     def _consumable_stage(self, g: int) -> Stage:
         """The stage a commodity is delivered, imported or exported in.
@@ -800,20 +1022,6 @@ class _Compiler:
         """
         spec = commodity_spec(self.commodity_ids[g])
         return spec.consumable_stage()
-
-    def _transport_pair(self, source_region: int, destination_region: int) -> tuple[int, float]:
-        """Local (same-region) edges are free; cross-owner edges pay transport."""
-        if source_region >= 0 and source_region == destination_region:
-            return -1, 0.0
-        if not self.transport_rows:
-            return -1, self.default_transport_per_unit
-        base = source_region if source_region >= 0 else destination_region
-        if base < 0:
-            return -1, self.default_transport_per_unit
-        return (
-            int(self.transport_rows[base % len(self.transport_rows)]),
-            self.default_transport_per_unit,
-        )
 
     def _ranked_producers(
         self, g: int, stage_code: int, buyer_region: int
@@ -860,6 +1068,35 @@ class _Compiler:
         share = 1.0 / len(ranked)
         return [(item[0], share) for item in ranked]
 
+    def _producer_fallback_sources(
+        self, g: int, stage_code: int, buyer_region: int, declared: set[int]
+    ) -> list[tuple[int, float]]:
+        """P05 §0.3 fallback: every other producer of the same commodity/stage."""
+        ranked = self._ranked_producers(g, stage_code, buyer_region)
+        extra = [cell for cell, _row in ranked if cell not in declared]
+        if not extra:
+            return []
+        share = 1.0 / len(extra)
+        return [(cell, share) for cell in extra]
+
+    def _hub_fallback_sources(
+        self, g: int, stage_code: int, buyer_region: int, declared: set[int]
+    ) -> list[tuple[int, float]]:
+        """Fallback hubs beyond the declared nearest-hub set."""
+        candidates = self.hub_cell_list.get((g, stage_code), [])
+        ranked = sorted(
+            candidates,
+            key=lambda item: (
+                _cyclic_distance(buyer_region, item[2], self.region_count),
+                item[0],
+            ),
+        )
+        extra = [item[0] for item in ranked if item[0] not in declared]
+        if not extra:
+            return []
+        share = 1.0 / len(extra)
+        return [(cell, share) for cell in extra]
+
     def _nearest_hub_position(self, region: int) -> int:
         return min(
             range(len(self.wholesale_rows)),
@@ -870,7 +1107,7 @@ class _Compiler:
         )
 
     def _construction_sources(self, buyer_region: int) -> list[tuple[int, float]]:
-        g = self.commodity_index.get("construction")
+        g = self._role_g("construction")
         if g is None:
             return []
         return self._standard_sources(g, STAGE_CODES["standard"], buyer_region)
@@ -890,6 +1127,9 @@ class _Compiler:
         self.edge_transport_list: list[int] = []
         self.edge_per_unit_list: list[float] = []
         self.edge_buyer_list: list[int] = []
+        self.edge_self_hauled_list: list[bool] = []
+        self.edge_fallback_list: list[bool] = []
+        self.edge_distance_list: list[float] = []
         plot_base = self.plot_activity_base
         self.k_demand = np.arange(self.k_count, dtype=np.int32)
         for k in range(self.k_count):
@@ -901,7 +1141,7 @@ class _Compiler:
         # blocks 4-6 (indices recorded; edges attach in the graph builders)
         self.investment_demand: dict[tuple[int, int], int] = {}
         for row in self.productive_rows:
-            for cid in INVESTMENT_COMMODITY_IDS:
+            for cid in self.material_catalog.investment_commodity_ids:
                 g = self.commodity_index.get(cid)
                 if g is None or (row, g) not in self.project_cells_final:
                     continue
@@ -955,19 +1195,19 @@ class _Compiler:
                 if (
                     self.commodity_ids[g],
                     _STAGE_NAMES[stage_code],
-                ) not in HUB_COMMODITY_STAGES:
+                ) not in self.material_catalog.hub_commodity_stages:
                     continue
                 for cell, org_row in producer_cells:
                     position = self._nearest_hub_position(int(self.cell_region_np[cell]))
                     hub_suppliers.setdefault((position, g, stage_code), []).append(
                         (cell, float(self.organizations[org_row].capacity))
                     )
-            food_g = self.commodity_index.get("food")
-            if food_g is not None:
+            food_raw_g = self._role_g("food_raw")
+            if food_raw_g is not None:
                 raw_code = STAGE_CODES["raw"]
                 for region, cell in sorted(self.plot_raw_final.items()):
                     position = self._nearest_hub_position(region)
-                    hub_suppliers.setdefault((position, food_g, raw_code), []).append(
+                    hub_suppliers.setdefault((position, food_raw_g, raw_code), []).append(
                         (
                             cell,
                             float(self.activity_capacity_np[self.plot_activity_base + region]),
@@ -978,7 +1218,7 @@ class _Compiler:
                 if (
                     self.commodity_ids[g],
                     _STAGE_NAMES[stage_code],
-                ) not in HUB_COMMODITY_STAGES:
+                ) not in self.material_catalog.hub_commodity_stages:
                     continue  # raw/capital imports sell directly, not via hubs
                 position = 0  # national buffer: nearest hub = lowest position
                 hub_suppliers.setdefault((position, g, stage_code), []).append(
@@ -1014,10 +1254,10 @@ class _Compiler:
                     )
 
         # retail replenishment intents (goods from hubs, services from transport)
-        services_g = self.commodity_index.get("services_transport")
+        services_g = self._role_g("service")
         for position, org_row in enumerate(self.retail_rows):
             for served in self.retail_served[position]:
-                for cid, stage in RETAIL_COMMODITY_STAGES:
+                for cid, stage in self.material_catalog.retail_commodity_stages:
                     retail_g = self.commodity_index.get(cid)
                     if retail_g is None:
                         continue
@@ -1124,17 +1364,39 @@ class _Compiler:
                     buyer,
                     buyer_region,
                 )
+            # P05 §0.3 fallback: additional same-commodity sources used only when
+            # the declared sources cannot cover the order.
+            declared_cells = {cell for cell, _w in input_sources}
+            if len(spec.stages) > 1 and spec.stages[0] == _STAGE_NAMES[stage_code]:
+                fallback_sources = self._hub_fallback_sources(
+                    g, stage_code, buyer_region, declared_cells
+                )
+            else:
+                fallback_sources = self._producer_fallback_sources(
+                    g, stage_code, buyer_region, declared_cells
+                )
+            for source, weight in fallback_sources:
+                self._add_edge(
+                    source,
+                    destination,
+                    int(self.k_demand[k]),
+                    purpose,
+                    weight,
+                    buyer,
+                    buyer_region,
+                    fallback=True,
+                )
 
         # --- investment / housing / export / household edges ------------
         for row in self.productive_rows:
             region = self.org_region[row]
-            for cid in INVESTMENT_COMMODITY_IDS:
+            for cid in self.material_catalog.investment_commodity_ids:
                 investment_g = self.commodity_index.get(cid)
                 if investment_g is None or (row, investment_g) not in self.investment_demand:
                     continue
                 destination = self.project_cells_final[(row, investment_g)]
                 demand = self.investment_demand[(row, investment_g)]
-                if cid == "construction":
+                if cid == self.material_catalog.with_role("construction")[0]:
                     invest_sources = self._construction_sources(region)
                 else:
                     invest_sources = self._standard_sources(
@@ -1150,7 +1412,7 @@ class _Compiler:
                         row,
                         region,
                     )
-        construction_g = self.commodity_index.get("construction")
+        construction_g = self._role_g("construction")
         for region in range(self.region_count):
             demand = self.housing_demand[region]
             housing_sources = (
@@ -1416,6 +1678,9 @@ class _Compiler:
         transport = np.asarray(self.edge_transport_list, dtype=np.int32)
         per_unit = np.asarray(self.edge_per_unit_list, dtype=np.float64)
         buyer = np.asarray(self.edge_buyer_list, dtype=np.int32)
+        self_hauled = np.asarray(self.edge_self_hauled_list, dtype=bool)
+        fallback = np.asarray(self.edge_fallback_list, dtype=bool)
+        distance = np.asarray(self.edge_distance_list, dtype=np.float64)
         self.edge_count = source.size
         if self.edge_count:
             order = np.lexsort(
@@ -1435,6 +1700,9 @@ class _Compiler:
             transport = transport[order]
             per_unit = per_unit[order]
             buyer = buyer[order]
+            self_hauled = self_hauled[order]
+            fallback = fallback[order]
+            distance = distance[order]
         self.edge_source_np = source
         self.edge_destination_np = destination
         self.edge_demand_np = demand
@@ -1443,6 +1711,9 @@ class _Compiler:
         self.edge_transport_np = transport
         self.edge_per_unit_np = per_unit
         self.edge_buyer_np = buyer
+        self.edge_self_hauled_np = self_hauled
+        self.edge_is_fallback_np = fallback
+        self.edge_distance_np = distance
         self.edge_id_np = np.arange(self.edge_count, dtype=np.int64)
         self.demand_count = len(self.demand_destination)
         self.demand_cell_np = np.asarray(self.demand_destination, dtype=np.int32)
@@ -1474,20 +1745,39 @@ class _Compiler:
             ):
                 raise ResearchGateError("transport_per_unit must be finite, >= 0")
 
-            counts = np.bincount(edge_demand, minlength=demand_count)
-            if int(counts.max()) > 2:
-                offender = int(np.flatnonzero(counts > 2)[0])
+            fallback = self.edge_is_fallback_np
+            declared_edges = ~fallback
+            declared_counts = np.bincount(edge_demand[declared_edges], minlength=demand_count)
+            if int(declared_counts.max()) > 2:
+                offender = int(np.flatnonzero(declared_counts > 2)[0])
                 raise ConfigError(
-                    f"demand cell {offender} declares {int(counts[offender])} "
+                    f"demand cell {offender} declares {int(declared_counts[offender])} "
                     "suppliers; at most 2 are allowed"
                 )
-            sums = np.bincount(edge_demand, weights=self.edge_weight_np, minlength=demand_count)
-            served = counts > 0
+            sums = np.bincount(
+                edge_demand[declared_edges],
+                weights=self.edge_weight_np[declared_edges],
+                minlength=demand_count,
+            )
+            served = declared_counts > 0
             if bool(np.any(np.abs(sums[served] - 1.0) > _ATOL)):
                 offender = int(np.flatnonzero(served & (np.abs(sums - 1.0) > _ATOL))[0])
                 raise ConfigError(
                     f"route weights of demand cell {offender} sum to {sums[offender]!r}, not 1"
                 )
+            if bool(np.any(fallback)):
+                fb_sums = np.bincount(
+                    edge_demand[fallback],
+                    weights=self.edge_weight_np[fallback],
+                    minlength=demand_count,
+                )
+                fb_served = fb_sums > 0.0
+                if bool(np.any(np.abs(fb_sums[fb_served] - 1.0) > _ATOL)):
+                    offender = int(np.flatnonzero(fb_served & (np.abs(fb_sums - 1.0) > _ATOL))[0])
+                    raise ConfigError(
+                        f"fallback weights of demand cell {offender} sum to "
+                        f"{fb_sums[offender]!r}, not 1"
+                    )
             share = self.demand_share_np
             if not np.all(np.isfinite(share)) or bool(np.any(share <= 0.0)):
                 raise ConfigError("demand shares must be finite and positive")
@@ -1566,7 +1856,7 @@ class _Compiler:
             if bool(np.any(housing_mask)):
                 commodities = self.cell_commodity_np[self.edge_source_np[housing_mask]]
                 pools = self.cell_pool_np[self.edge_source_np[housing_mask]]
-                construction_g = self.commodity_index.get("construction")
+                construction_g = self._role_g("construction")
                 if (
                     construction_g is None
                     or bool(np.any(commodities != construction_g))
@@ -1581,10 +1871,12 @@ class _Compiler:
     def _assemble(self) -> MaterialNetwork:
         org_count = self.org_count
         plot_input_cells = np.full((self.region_count, 3), -1, dtype=np.int32)
-        columns = [
-            self.commodity_index.get(cid, -1)
-            for cid in ("energy", "raw_materials", "capital_goods")
+        plot_role_ids = [
+            ids[0]
+            for role in ("energy", "raw", "capital")
+            if (ids := self.material_catalog.with_role(role))
         ]
+        columns = [self.commodity_index.get(cid, -1) for cid in plot_role_ids]
         for region in range(self.region_count):
             for column, g in enumerate(columns):
                 if g >= 0 and (region, g) in self.plot_input_final:
@@ -1652,8 +1944,8 @@ class _Compiler:
 
         project_capital = np.full(org_count, -1, dtype=np.int32)
         project_construction = np.full(org_count, -1, dtype=np.int32)
-        capital_g = self.commodity_index.get("capital_goods")
-        construction_g = self.commodity_index.get("construction")
+        capital_g = self._role_g("capital")
+        construction_g = self._role_g("construction")
         for (row, g), cell in self.project_cells_final.items():
             if g == capital_g:
                 project_capital[row] = cell
@@ -1665,8 +1957,10 @@ class _Compiler:
         assert household_parameters is not None and household_catalog is not None
         return MaterialNetwork(
             schema_version=MATERIAL_NETWORK_VERSION,
+            catalog_id=self.catalog_id,
             region_ids=self.region_ids,
             commodity_ids=self.commodity_ids,
+            region_distance=self.region_distance,
             household_parameters=household_parameters,
             household_catalog=household_catalog,
             second_input_commodities=self.second_input_commodities,
@@ -1683,9 +1977,12 @@ class _Compiler:
             activity_org_index=self.activity_org_np,
             activity_region=self.activity_region_np,
             activity_capacity=self.activity_capacity_np,
+            activity_early_service=self.activity_early_service_np,
+            early_service_tiers=self.early_service_tiers_np,
             A=self.A_matrix,
             input_cell=self.input_cell_np,
             input_activity=self.input_activity_np,
+            input_timing=self.input_timing_np,
             B=self.B_matrix,
             demand_cell=self.demand_cell_np,
             demand_purpose=self.demand_purpose_np,
@@ -1702,6 +1999,14 @@ class _Compiler:
             edge_transport_org=self.edge_transport_np,
             edge_transport_per_unit=self.edge_per_unit_np,
             edge_buyer_org=self.edge_buyer_np,
+            edge_self_hauled=self.edge_self_hauled_np,
+            edge_is_fallback=self.edge_is_fallback_np,
+            edge_transport_service_cell=np.where(
+                self.edge_transport_np >= 0,
+                org_output_cell[np.maximum(self.edge_transport_np, 0)],
+                -1,
+            ).astype(np.int32),
+            edge_distance=self.edge_distance_np,
             edge_id=self.edge_id_np,
             org_input_cells=org_input_cells,
             org_output_cell=org_output_cell,
@@ -1740,15 +2045,19 @@ def compile_material_network(
     commodities: Sequence[CommoditySpec],
     region_ids: Sequence[str],
     plot_recipe: PrivatePlotRecipe,
+    region_distance: np.ndarray | None = None,
 ) -> MaterialNetwork:
     """Compile the network from one readonly initial draw (pure function)."""
-    return _Compiler(initial, technologies, routes, commodities, region_ids, plot_recipe).compile()
+    return _Compiler(
+        initial, technologies, routes, commodities, region_ids, plot_recipe, region_distance
+    ).compile()
 
 
 def build_material_network(
     spec: ScenarioSpec,
     contract: ResearchContract,
     initial: MaterialInitialConditions,
+    region_distance: np.ndarray | None = None,
 ) -> MaterialNetwork:
     """Validate the scenario/contract axes, then compile from ``initial``."""
     if spec.kind != "material":
@@ -1770,6 +2079,7 @@ def build_material_network(
         specs,
         contract.region_ids,
         initial.plot_recipe,
+        region_distance,
     )
 
 

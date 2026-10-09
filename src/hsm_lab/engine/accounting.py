@@ -104,15 +104,56 @@ _STAGE_NAMES = {code: name for name, code in STAGE_CODES.items()}
 _PURPOSE_NAMES = {code: purpose.value for purpose, code in PURPOSE_CODES.items()}
 
 # Identity (never axis-position) based commodity semantics; declared
-# commodities outside the pinned eight default to non-household stockables.
-_HOUSEHOLD_CHANNEL_IDS = frozenset(
-    {"energy", "food", "consumer_goods", "durable_goods", "services_transport"}
-)
-_SERVICES_ID = "services_transport"
-_FOOD_ID = "food"
-_CONSTRUCTION_ID = "construction"
-_DURABLE_ID = "durable_goods"
 _CAPITAL_ID = "capital_goods"
+
+
+# Relative bound on the ephemeral-service non-negativity clamp.
+_SERVICE_CLAMP_REL = 1e-3
+
+
+def _ephemeral_commodity_ids(network: Any) -> np.ndarray:
+    """Commodity indices that are non-stockable (their cells must close at zero)."""
+    from hsm_lab.contract.material import commodity_spec
+
+    return np.asarray(
+        [g for g, cid in enumerate(network.commodity_ids) if not commodity_spec(cid).stockable],
+        dtype=np.int64,
+    )
+
+
+def _ephemeral_commodity_mask(network: Any, cell_commodity: np.ndarray) -> np.ndarray:
+    """Cells of non-stockable commodities (they must close at zero)."""
+    ephemeral = _ephemeral_commodity_ids(network)
+    if ephemeral.size == 0:
+        return np.zeros(cell_commodity.shape[0], dtype=bool)
+    return np.isin(cell_commodity, ephemeral)
+
+
+def _role_index(network: Any, role: str) -> int:
+    """Commodity-axis index of the first channel in a catalog role (-1 none)."""
+    from hsm_lab.contract.material import get_catalog
+
+    catalog = get_catalog(network.catalog_id)
+    for commodity_id in catalog.with_role(role):
+        if commodity_id in network.commodity_ids:
+            return network.commodity_ids.index(commodity_id)
+    return -1
+
+
+def _role_id(network: Any, role: str) -> str | None:
+    """First commodity id in a catalog role (None if the role is absent)."""
+    from hsm_lab.contract.material import get_catalog
+
+    ids = get_catalog(network.catalog_id).with_role(role)
+    return ids[0] if ids else None
+
+
+def _household_parent_ids(network: Any) -> set[str]:
+    """Commodity ids the network builds household demand cells for."""
+    from hsm_lab.contract.material import get_catalog
+
+    return set(get_catalog(network.catalog_id).household_channel_ids)
+
 
 _FARM_TYPE_CODES = frozenset(
     ORGANIZATION_TYPE_ORDER.index(t)
@@ -142,7 +183,9 @@ _SIGNED_RESIDUAL_FIELDS = frozenset(
 
 #: Signed P03 household flow diagnostics (welfare index and entitlement gap may
 #: be negative; they are state/utility magnitudes, not quantity ledgers).
-_SIGNED_FLOW_FIELDS = frozenset({"household_welfare_net", "entitlement_gap"})
+_SIGNED_FLOW_FIELDS = frozenset(
+    {"household_welfare_net", "entitlement_gap", "organization_sbc_transfer"}
+)
 
 
 class AccountingError(ResearchGateError):
@@ -508,8 +551,7 @@ def _reconstruct(
     # plot self-use (imputed value at the ready-food admin price) and the
     # plot direct market (late cash receipts at the same admin price).
     household_channel = np.zeros(S, dtype=np.float64)
-    commodity_ids = network.commodity_ids
-    food_g = commodity_ids.index(_FOOD_ID) if _FOOD_ID in commodity_ids else -1
+    food_g = _role_index(network, "food")
     if food_g >= 0:
         ready_price = float(prices.standard[food_g])
         _require(
@@ -537,18 +579,19 @@ def _reconstruct(
             household_channel[plot_self[self_ok]] += self_use_value[self_ok] / ready_price
         if bool(np.any(market_ok)):
             household_channel[plot_market[market_ok]] += direct_value[market_ok] / ready_price
-    services_g = commodity_ids.index(_SERVICES_ID) if _SERVICES_ID in commodity_ids else -1
+    services_g = _role_index(network, "service")
     cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
     cell_pool = np.asarray(network.cell_pool, dtype=np.int64)
     cell_kind = np.asarray(network.cell_owner_kind, dtype=np.int64)
     cell_region = np.asarray(network.cell_region, dtype=np.int64)
     cell_stage = np.asarray(network.cell_stage, dtype=np.int64)
-    services_cells = (cell_commodity == services_g) if services_g >= 0 else np.zeros(S, dtype=bool)
+    services_cells = _ephemeral_commodity_mask(network, cell_commodity)
     retail_org_cells = (cell_pool == _POOL_RETAIL) & (cell_kind == _KIND_ORG)
 
     inflow = open_ + production + imports_in + edge_receipts
     outflow = (
         edge_out_internal
+        + household_edges_out
         + exports_out
         + housing_out
         + production_used
@@ -604,7 +647,23 @@ def _reconstruct(
     # same-tick service pool before the residual is expired. Retail cells are
     # pooled by region for this channel; allocate the remaining expiry across
     # that region's service cells without making any cell negative.
-    services_leftover = np.where(services_cells, expected_close, 0.0)
+    # Ephemeral (non-stockable) cells: the modelled leftover is taken raw, so
+    # the reconciliation with ``flows.expired_services`` is exact.  Per-cell
+    # non-negativity is a separate property (cross-cell pool attribution) and is
+    # reported, not silently clipped.
+    pool_draw_at_cell = np.asarray(
+        getattr(flows, "service_pool_draw_at_cell", np.zeros(S, dtype=np.float64)),
+        dtype=np.float64,
+    )
+    pool_credit_at_cell = np.asarray(
+        getattr(flows, "service_pool_credit_at_cell", np.zeros(S, dtype=np.float64)),
+        dtype=np.float64,
+    )
+    # Same-quarter clearing entries (P05 §0.4): the consumer cell was charged
+    # its own stock only (add back the pool-paid part ``S_c``), while the
+    # producer cell's credit was reduced by ``N_c`` (subtract it).
+    expected_services = expected_close + pool_draw_at_cell - pool_credit_at_cell
+    services_leftover = np.where(services_cells, expected_services, 0.0)
     if services_g >= 0:
         regional_services = services_cells & (cell_region >= 0)
         available_by_region = np.bincount(
@@ -612,21 +671,20 @@ def _reconstruct(
             weights=services_leftover[regional_services],
             minlength=R,
         )
-        service_sales = np.asarray(flows.retail_sales, dtype=np.float64)[:, services_g]
+        ephemeral_columns = _ephemeral_commodity_ids(network)
+        service_sales = np.asarray(flows.retail_sales, dtype=np.float64)[
+            :, ephemeral_columns
+        ].sum(axis=1)
+        # ``expected_close`` already nets the household service deliveries out
+        # through ``household_edges_out``; the gross availability those sales
+        # drew on is the remaining stock plus the sales themselves.
         _compare_at_most(
             quarter,
             "services_household_use_le_available",
             service_sales,
-            available_by_region,
+            available_by_region + service_sales,
             labels=[f"region[{region_id}]" for region_id in network.region_ids],
         )
-        remaining_fraction = np.divide(
-            np.maximum(available_by_region - service_sales, 0.0),
-            available_by_region,
-            out=np.ones(available_by_region.shape, dtype=np.float64),
-            where=available_by_region > 0.0,
-        )
-        services_leftover[regional_services] *= remaining_fraction[cell_region[regional_services]]
 
     return _Continuity(
         production=production,
@@ -1233,10 +1291,18 @@ def check_material_invariants(
         source_ceiling,
         labels=cell_labels,
     )
+    # A same-quarter input may also be paid out of the tick's production pool,
+    # so the cell ceiling adds the pool part actually drawn for that cell.
+    pool_draw_ceiling = np.asarray(
+        getattr(flows, "service_pool_draw_at_cell", np.zeros(S, dtype=np.float64)),
+        dtype=np.float64,
+    )
     material_at_most(
         "production_input_availability_ceiling",
         continuity.production_used,
-        np.asarray(opening.stock_value, dtype=np.float64) + continuity.production_row_delivered,
+        np.asarray(opening.stock_value, dtype=np.float64)
+        + continuity.production_row_delivered
+        + pool_draw_ceiling,
         labels=cell_labels,
     )
     material_at_most(
@@ -1309,12 +1375,23 @@ def check_material_invariants(
             )
         else:
             expected_target = expected_local
-        material(
-            "organization_target_rule",
-            flows.activity_target[activities],
-            expected_target,
-            labels=[f"activity[{int(a)}]" for a in activities],
-        )
+        if bool(getattr(parameters, "demand_limited_targets", False)):
+            # The demand cap is an engine-level policy: bound the target by the
+            # uncapped rule here and let the periodicity certificate judge the
+            # capped trajectory (the cap reads live order/consumption state).
+            material_at_most(
+                "organization_target_rule",
+                flows.activity_target[activities],
+                expected_target,
+                labels=[f"activity[{int(a)}]" for a in activities],
+            )
+        else:
+            material(
+                "organization_target_rule",
+                flows.activity_target[activities],
+                expected_target,
+                labels=[f"activity[{int(a)}]" for a in activities],
+            )
         material(
             "organization_realized_view",
             flows.organization_realized[rows],
@@ -1364,7 +1441,7 @@ def check_material_invariants(
         ],
     )
     commodity_ids = network.commodity_ids
-    food_g = commodity_ids.index(_FOOD_ID) if _FOOD_ID in commodity_ids else -1
+    food_g = _role_index(network, "food")
     weight = np.asarray(state.household_weight, dtype=np.float64)
     household_region = np.asarray(state.household_region, dtype=np.int64)
     if food_g >= 0:
@@ -1410,7 +1487,7 @@ def check_material_invariants(
         )
 
     # Household demand cells (region-major pinned D order) mirror retail sales.
-    household_goods = [g for g in range(G) if commodity_ids[g] in _HOUSEHOLD_CHANNEL_IDS]
+    household_goods = [g for g in range(G) if commodity_ids[g] in _household_parent_ids(network)]
     demand_purpose = np.asarray(network.demand_purpose, dtype=np.int64)
     household_demand = np.nonzero(demand_purpose == _P_HOUSEHOLD)[0]
     _require(
@@ -1548,19 +1625,24 @@ def check_material_invariants(
                 weights=np.asarray(state.organization_cash, dtype=np.float64)[borrower],
                 minlength=B,
             )
-        deposit_sources[0] += float(state.treasury_deposit)
+        deposit_sources[0] += float(state.treasury_deposit) + float(state.credit_fund)
     finance(
         "deposit_liability_composition",
         np.asarray(state.bank_deposit_liability, dtype=np.float64),
         deposit_sources,
         labels=bank_labels,
     )
+    m2_neutral = bool(getattr(parameters, "m2_neutral_credit", False))
     finance(
         "bank_loan_asset_continuity",
         np.asarray(state.bank_loan_asset, dtype=np.float64),
         bank_loan_open
-        + _bank_sum(np.asarray(flows.organization_credit_drawn, dtype=np.float64))
-        - _bank_sum(np.asarray(flows.organization_principal_paid, dtype=np.float64)),
+        if m2_neutral
+        else (
+            bank_loan_open
+            + _bank_sum(np.asarray(flows.organization_credit_drawn, dtype=np.float64))
+            - _bank_sum(np.asarray(flows.organization_principal_paid, dtype=np.float64))
+        ),
         labels=bank_labels,
     )
     finance(
@@ -1584,6 +1666,7 @@ def check_material_invariants(
         np.asarray(opening.organization_cash, dtype=np.float64)
         + np.asarray(flows.organization_credit_drawn, dtype=np.float64)
         + np.asarray(flows.organization_bailout_granted, dtype=np.float64)
+        + np.asarray(flows.organization_sbc_transfer, dtype=np.float64)
         + np.asarray(flows.organization_sales_receipts, dtype=np.float64)
         - np.asarray(flows.organization_wage_paid, dtype=np.float64)
         - np.asarray(flows.organization_interest_paid, dtype=np.float64)
@@ -1756,7 +1839,7 @@ def check_material_invariants(
     imports_value = float(import_sales.sum())
     export_stage = np.asarray(
         [
-            STAGE_CODES["ready"] if cid == _FOOD_ID else STAGE_CODES["standard"]
+            STAGE_CODES["ready"] if cid == _role_id(network, "food") else STAGE_CODES["standard"]
             for cid in commodity_ids
         ],
         dtype=np.int64,
@@ -1775,7 +1858,7 @@ def check_material_invariants(
         "housing demand block must carry exactly one cell per region",
     )
     construction_g = (
-        commodity_ids.index(_CONSTRUCTION_ID) if _CONSTRUCTION_ID in commodity_ids else -1
+        _role_index(network, "construction")
     )
     housing_value = 0.0
     if construction_g >= 0:
@@ -1804,6 +1887,21 @@ def check_material_invariants(
         ),
         labels=["treasury"],
     )
+    if m2_neutral:
+        drawn_total = float(np.sum(flows.organization_credit_drawn))
+        paid_total = float(np.sum(flows.organization_principal_paid))
+        finance(
+            "treasury_loan_asset_continuity",
+            np.asarray([float(state.treasury_loan_asset)]),
+            np.asarray([float(opening.treasury_loan_asset) + drawn_total - paid_total]),
+            labels=["treasury"],
+        )
+        finance(
+            "credit_fund_continuity",
+            np.asarray([float(state.credit_fund)]),
+            np.asarray([float(opening.credit_fund) + paid_total - drawn_total]),
+            labels=["credit_fund"],
+        )
 
     # Foreign accounts (USD and CMEA close separately; CMEA may go negative).
     finance(
@@ -2113,11 +2211,11 @@ def derive_departments(
     S = int(np.asarray(network.cell_owner_kind).shape[0])
     K = int(np.asarray(network.input_cell).shape[0])
     R = int(state.dwelling_stock.shape[0])
-    services_g = commodity_ids.index(_SERVICES_ID) if _SERVICES_ID in commodity_ids else -1
+    services_g = _role_index(network, "service")
     construction_g = (
-        commodity_ids.index(_CONSTRUCTION_ID) if _CONSTRUCTION_ID in commodity_ids else -1
+        _role_index(network, "construction")
     )
-    food_g = commodity_ids.index(_FOOD_ID) if _FOOD_ID in commodity_ids else -1
+    food_g = _role_index(network, "food")
     if housing_completed is None:
         if construction_g >= 0:
             raise AccountingError(
@@ -2139,7 +2237,7 @@ def derive_departments(
 
     production = np.asarray(network.B.T @ np.asarray(flows.activity_realized)).ravel()
     production = production.astype(np.float64)
-    services_cells = (cell_commodity == services_g) if services_g >= 0 else np.zeros(S, dtype=bool)
+    services_cells = _ephemeral_commodity_mask(network, cell_commodity)
 
     # Logistics services are consumed out of transport output cells.
     logistics = np.zeros(S, dtype=np.float64)
@@ -2278,7 +2376,9 @@ def derive_departments(
     )
 
     household_goods = [
-        g for g in range(G) if commodity_ids[g] in _HOUSEHOLD_CHANNEL_IDS and g != services_g
+        g
+        for g in range(G)
+        if commodity_ids[g] in _household_parent_ids(network) and g != services_g
     ]
     realized = np.asarray(flows.household_realized, dtype=np.float64)
     weight = np.asarray(state.household_weight, dtype=np.float64)
@@ -2298,7 +2398,7 @@ def derive_departments(
     )
     export_stage = np.asarray(
         [
-            STAGE_CODES["ready"] if cid == _FOOD_ID else STAGE_CODES["standard"]
+            STAGE_CODES["ready"] if cid == _role_id(network, "food") else STAGE_CODES["standard"]
             for cid in commodity_ids
         ],
         dtype=np.int64,

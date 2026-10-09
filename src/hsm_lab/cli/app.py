@@ -22,6 +22,7 @@ from uuid import uuid4
 
 import typer
 
+from hsm_lab.calibration.closure import audit_material_closure
 from hsm_lab.contract.guards import (
     BASELINE_FILENAME,
     load_research_contract,
@@ -40,9 +41,11 @@ app = typer.Typer(add_completion=False, no_args_is_help=True)
 baseline_app = typer.Typer(add_completion=False, no_args_is_help=True)
 data_app = typer.Typer(add_completion=False, no_args_is_help=True)
 benchmark_app = typer.Typer(add_completion=False, no_args_is_help=True)
+calibration_app = typer.Typer(add_completion=False, no_args_is_help=True)
 app.add_typer(baseline_app, name="baseline")
 app.add_typer(data_app, name="data")
 app.add_typer(benchmark_app, name="benchmark")
+app.add_typer(calibration_app, name="calibration")
 
 
 def _emit(payload: dict[str, Any], json_mode: bool, human: list[str]) -> None:
@@ -228,6 +231,171 @@ def baseline_verify(
             json_mode,
             [f"baseline OK: {digest} ({contract.baseline_version})"],
         )
+
+    _guard(action, json_mode)
+
+
+def _region_distance_for(spec: ScenarioSpec, root: Path) -> Any:
+    """Explicit F2 distance matrix when the scenario uses the F2 catalog."""
+    from hsm_lab.contract.material import F2_CATALOG, catalog_for_commodities
+
+    catalog = catalog_for_commodities(spec.commodities)
+    if catalog.catalog_id != F2_CATALOG.catalog_id:
+        return None
+    path = root / "config" / "ontology" / "f2_regions_v1.json"
+    if not path.exists():
+        return None
+    payload = json.loads(path.read_text())
+    if tuple(payload["region_ids"]) != tuple(spec.region_ids):
+        raise ConfigError("f2_regions_v1.json region ids do not match the scenario")
+    import numpy as np
+
+    return np.asarray(payload["distance_matrix"], dtype=np.float64)
+
+
+@calibration_app.command("screen")
+def calibration_screen(
+    config: Path = typer.Option(
+        Path("config/calibration/p05.json"),
+        "--config",
+        help="P05 research control file (windows and registry references).",
+    ),
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Classify the declared latent parameters from admissible target evidence."""
+
+    def action() -> None:
+        import json as _json
+
+        from hsm_lab.calibration.screen import screen_parameters
+
+        root = _repo_root()
+        target = _fresh_output_dir(output_dir, "p05-screen")
+        payload = screen_parameters(root, config=config)
+        target.mkdir(parents=True, exist_ok=False)
+        (target / "screen.json").write_text(
+            _json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        _emit(
+            {**payload, "output_dir": str(target)},
+            json_mode,
+            [
+                f"screen {payload['status']}: {payload['parameters']} parameters, "
+                f"{payload['admissible_targets']} admissible targets "
+                f"{payload['status_counts']}"
+            ],
+        )
+        if payload["status"] == "NO_IDENTIFIABLE_PARAMETERS":
+            raise typer.Exit(0)
+
+    _guard(action, json_mode)
+
+
+@calibration_app.command("fidelity")
+def calibration_fidelity(
+    config: Path = typer.Option(
+        Path("config/calibration/p05.json"),
+        "--config",
+        help="P05 research control file (seed banks, tolerances, registries).",
+    ),
+    stage: str = typer.Option("prior", "--stage", help="prior | posterior."),
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Report the F1 paired-fidelity preconditions for the declared control file."""
+
+    def action() -> None:
+        import json as _json
+
+        from hsm_lab.calibration.fidelity import prior_fidelity
+
+        root = _repo_root()
+        target = _fresh_output_dir(output_dir, "p05-fidelity")
+        payload = prior_fidelity(root, config=config, stage=stage)
+        target.mkdir(parents=True, exist_ok=False)
+        (target / "fidelity.json").write_text(
+            _json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        _emit(
+            {**payload, "output_dir": str(target)},
+            json_mode,
+            [
+                f"fidelity {payload['status']} (stage {payload['stage']}): "
+                f"candidates {len(payload.get('candidates', []))}"
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
+@calibration_app.command("audit-closure")
+def calibration_audit_closure(
+    scenario: str = typer.Option(
+        "intermediate8",
+        "--scenario",
+        help="Material catalog scenario whose kernel must close.",
+    ),
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    diagnostic_ticks: int = typer.Option(
+        232, "--diagnostic-ticks", min=8, help="H0 diagnostic ticks (P05 default 232)."
+    ),
+    seed: int | None = typer.Option(None, "--seed", min=0, help="Initial-state seed override."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Run the offline material/service/money closure certificate (P05 §0.7)."""
+
+    def action() -> None:
+        root = _repo_root()
+        contract = load_research_contract(root)
+        spec = load_scenario(root, scenario)
+        target = _fresh_output_dir(output_dir, f"p05-closure-{scenario}")
+        certificate = audit_material_closure(
+            spec,
+            contract,
+            output_dir=target,
+            diagnostic_ticks=diagnostic_ticks,
+            seed=seed,
+            region_distance=_region_distance_for(spec, root),
+        )
+        _emit(
+            {
+                "status": certificate.status,
+                "command": "calibration audit-closure",
+                "scenario_id": certificate.scenario_id,
+                "catalog_id": certificate.catalog_id,
+                "engine_version": certificate.engine_version,
+                "diagnostic_ticks": certificate.diagnostic_ticks,
+                "passed": certificate.passed,
+                "max_periodic_residual": certificate.max_periodic_residual,
+                "periodic_residuals": certificate.periodic_residuals,
+                "periodic_tolerance": certificate.periodic_tolerance,
+                "stock_output_ratio_residual": certificate.stock_output_ratio_residual,
+                "stock_output_ratio_tolerance": certificate.stock_output_ratio_tolerance,
+                "stock_output_ratio_annual_drift": certificate.stock_output_ratio_annual_drift,
+                "lambda_common": certificate.lambda_common,
+                "output_liveness": certificate.output_liveness,
+                "credit_debt_growth": certificate.credit_debt_growth,
+                "debt_to_output": certificate.debt_to_output,
+                "sbc_transfer_ratio": certificate.sbc_transfer_ratio,
+                "forced_saving_ratio": certificate.forced_saving_ratio,
+                "dead_commodities": certificate.dead_commodities,
+                "max_material_tolerance_ratio": certificate.max_material_tolerance_ratio,
+                "max_finance_tolerance_ratio": certificate.max_finance_tolerance_ratio,
+                "certificate_path": str(target / "certificate.json"),
+            },
+            json_mode,
+            [
+                f"closure {certificate.status}: output/cash residual "
+                f"{max(certificate.periodic_residuals.get('output', 0.0), certificate.periodic_residuals.get('cash', 0.0)):.3e} "  # noqa: E501
+                f"(tol {certificate.periodic_tolerance:g}); stock/output ratio residual "
+                f"{certificate.stock_output_ratio_residual:.3e} "
+                f"(tol {certificate.stock_output_ratio_tolerance:g}, drift "
+                f"{certificate.stock_output_ratio_annual_drift:+.3f}/yr)"
+            ],
+        )
+        if not certificate.passed:
+            raise typer.Exit(1)
 
     _guard(action, json_mode)
 
@@ -539,16 +707,29 @@ def _prepare_material_run(
             raise ConfigError(f"--households must lie in [1000, 30000], got {households}")
         overrides["households"] = households
     if organizations is not None:
-        profiles: dict[int, OrganizationProfile] = {
-            100: "p02_100",
-            200: "p02_200",
-            400: "p02_400",
-        }
+        # The profile family is fixed by the scenario's own recipe (P02 material
+        # catalogs use p02_*, the F2 historical catalog uses p05_*); a count-only
+        # switch must stay inside that family or the organization set silently
+        # stops matching the catalog the run declares.
+        family_sizes: dict[str, tuple[int, ...]] = {"p02": (100, 200, 400), "p05": (300, 400, 450)}
+        recipe_for_family = spec.organization_recipe
+        family = (
+            recipe_for_family.profile.rsplit("_", 1)[0]
+            if recipe_for_family is not None and "_" in recipe_for_family.profile
+            else "p02"
+        )
+        sizes = family_sizes.get(family)
+        if sizes is None:
+            raise ConfigError(
+                f"scenario organization profile {recipe_for_family.profile!r} has no "
+                "count switch family; switch the profile in the config instead"
+            )
+        profiles: dict[int, OrganizationProfile] = {n: f"{family}_{n}" for n in sizes}
         profile = profiles.get(organizations)
         if profile is None:
             raise ConfigError(
-                f"--organizations must be one of 100/200/400 (defined profiles), "
-                f"got {organizations}"
+                f"--organizations must be one of {'/'.join(str(n) for n in sizes)} for the "
+                f"{family} profile family, got {organizations}"
             )
         recipe = spec.organization_recipe
         if recipe is not None and recipe.overrides:
@@ -648,10 +829,10 @@ def summary(
             payload = json.loads(summary_path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise ResearchGateError(f"unreadable run outputs under {run_dir}: {exc}") from exc
-        if manifest.run_kind != "intermediate8_household_simulation":
+        if manifest.run_kind not in ("material_household_simulation", "p04_political_simulation"):
             raise ResearchGateError(
-                "summary only reads intermediate8_household_simulation runs, got "
-                f"{manifest.run_kind!r}"
+                "summary reads material_household_simulation and p04_political_simulation "
+                f"runs, got {manifest.run_kind!r}"
             )
         if manifest.status not in ("completed", "paused"):
             raise ResearchGateError(
@@ -733,10 +914,82 @@ INGEST_DEFAULT_WINDOWS: dict[str, tuple[str, str]] = {
 }
 
 
+@data_app.command("reconstruct-p05")
+def data_reconstruct_p05(
+    config: Path = typer.Option(
+        Path("config/calibration/p05.json"),
+        "--config",
+        help="P05 research control file (windows and registry references).",
+    ),
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Audit the mandatory 1957 initial anchors declared by the frozen manifest."""
+
+    def action() -> None:
+        import json as _json
+
+        from hsm_lab.data.reconstruct import reconstruct_p05
+
+        root = _repo_root()
+        target = _fresh_output_dir(output_dir, "p05-reconstruct")
+        payload = reconstruct_p05(root, config=config)
+        target.mkdir(parents=True, exist_ok=False)
+        (target / "reconstruct.json").write_text(
+            _json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        _emit(
+            {**payload, "output_dir": str(target)},
+            json_mode,
+            [
+                f"reconstruct {payload['status']}: {payload['declared_anchors']} anchors "
+                f"declared, missing {payload['missing_mandatory']}"
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
+@data_app.command("freeze-p05")
+def data_freeze_p05(
+    config: Path = typer.Option(
+        Path("config/calibration/p05.json"),
+        "--config",
+        help="P05 research control file (windows, tolerances, registry references).",
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Seal DATA_MANIFEST_v1 and the P05 target/hold-out/parameter registries."""
+
+    def action() -> None:
+        from hsm_lab.data.history import freeze_data_manifest
+
+        root = _repo_root()
+        payload = freeze_data_manifest(root, config=config)
+        _emit(
+            {"command": "data freeze-p05", **payload},
+            json_mode,
+            [
+                f"frozen {payload['artifact_count']} artifacts "
+                f"({payload['targets']['calibration']} calibration, "
+                f"{payload['targets']['holdout']} hold-out); "
+                f"missing required {len(payload['missing_required'])}"
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
 @data_app.command("ingest")
 def data_ingest(
     source: str = typer.Option(
         ..., "--source", help="One ingestion source id from the fixed allowlist."
+    ),
+    start: str | None = typer.Option(
+        None, "--start", help="Inclusive start year (YYYY) overriding the default window."
+    ),
+    end: str | None = typer.Option(
+        None, "--end", help="Inclusive end year (YYYY) overriding the default window."
     ),
     offline: bool = typer.Option(
         False, "--offline", help="Use the hash-verified cache only; miss exits 1."
@@ -752,12 +1005,25 @@ def data_ingest(
         if source not in INGEST_DEFAULT_WINDOWS:
             known = ", ".join(sorted(INGEST_DEFAULT_WINDOWS))
             raise ConfigError(f"unknown ingestion source {source!r}; allowlist: {known}")
-        start, end = INGEST_DEFAULT_WINDOWS[source]
+        default_start, default_end = INGEST_DEFAULT_WINDOWS[source]
+        window_start = default_start if start is None else start
+        window_end = default_end if end is None else end
+        for flag, value in (("--start", start), ("--end", end)):
+            if value is not None and (len(value) != 4 or not value.isdigit()):
+                raise ConfigError(f"{flag} must be a four-digit year, got {value!r}")
+        if window_start > window_end:
+            raise ConfigError(
+                f"ingestion window start {window_start} is after end {window_end}"
+            )
         root = _repo_root()
         report = ingest_source(
             root,
             IngestionRequest(
-                source_id=source, start=start, end=end, offline=offline, refresh=refresh
+                source_id=source,
+                start=window_start,
+                end=window_end,
+                offline=offline,
+                refresh=refresh,
             ),
         )
         payload = {
@@ -976,6 +1242,23 @@ def benchmark_material(
 ) -> None:
     """Intermediate-8 material-path benchmark (plan section 9 exact cases)."""
     _run_benchmark("material", output_dir, json_mode)
+
+
+@benchmark_app.command("f2")
+def benchmark_f2(
+    config: Path = typer.Option(
+        Path("config/benchmarks/f2.json"),
+        "--config",
+        help="F2 benchmark config (16-commodity historical catalog).",
+    ),
+    output_dir: Path | None = typer.Option(
+        None, "--output-dir", help="Fresh directory for the benchmark report."
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """F2 historical-model benchmark (16-commodity catalog, P05 §G)."""
+    del config  # the harness resolves config/benchmarks/f2.json from the repo root
+    _run_benchmark("f2", output_dir, json_mode)
 
 
 def main() -> None:  # console entry: hsm = hsm_lab.cli.app:main

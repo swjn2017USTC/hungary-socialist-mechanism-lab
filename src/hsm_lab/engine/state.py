@@ -38,7 +38,7 @@ from hsm_lab.contract.schemas import ResearchGateError, ScenarioSpec
 if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
     from hsm_lab.engine.network import MaterialNetwork
 
-MATERIAL_STATE_VERSION = "material-state-v3"
+MATERIAL_STATE_VERSION = "material-state-v4"
 
 POOL_CODES: dict[str, int] = {
     "input": 0,
@@ -167,6 +167,7 @@ class MaterialState:
     organization_technology: np.ndarray  # int32 (O,) technology row or -1
     organization_activity: np.ndarray  # int32 (O,) P-axis index or -1
     organization_bank: np.ndarray  # int32 (O,) dense bank index or -1
+    organization_demand_signal: np.ndarray  # float64 (O,) last-tick order signal
     organization_capacity: np.ndarray  # float64 (O,)
     organization_labor_available: np.ndarray  # float64 (O,) nominal labor
     organization_labor_endowment: np.ndarray  # float64 (O,) static nominal base
@@ -193,6 +194,8 @@ class MaterialState:
     bank_equity: np.ndarray  # float64 (B,)
     bank_interest_receivable: np.ndarray  # float64 (B,)
     treasury_deposit: float  # domestic fiscal account (banks with bank index 0)
+    treasury_loan_asset: float  # M2-neutral credit asset held by the Treasury
+    credit_fund: float  # M2-neutral credit-fund deposit pool (bank 0)
     # --- foreign accounts (scalars; separate currencies) ------------------
     usd_reserve: float
     usd_principal: float
@@ -232,6 +235,8 @@ class MaterialStockSnapshot:
     bank_equity: np.ndarray  # float64 (B,)
     bank_interest_receivable: np.ndarray  # float64 (B,)
     treasury_deposit: float
+    treasury_loan_asset: float
+    credit_fund: float
     usd_reserve: float
     usd_principal: float
     usd_interest_arrears: float
@@ -299,6 +304,7 @@ class MaterialTickFlows:
     organization_investment_completed: np.ndarray  # float64 (O,)
     organization_bailout_requested: np.ndarray  # float64 (O,)
     organization_bailout_granted: np.ndarray  # float64 (O,)
+    organization_sbc_transfer: np.ndarray  # float64 (O,) net SBC transfer (+recv/-pay)
     organization_sales_receipts: np.ndarray  # float64 (O,)
     organization_purchases: np.ndarray  # float64 (O,)
     # --- households (N,) -----------------------------------------------------
@@ -373,6 +379,10 @@ class MaterialTickFlows:
     usd_loan_drawn: float
     official_fx_translation: float | None  # diagnostic only
     expired_services: float  # services that expired unused this tick
+    # Same-quarter service clearing (P05 §0.4): per-cell pool consumption
+    # (``S_c``) and the production-credit reduction (``N_c``) it offsets.
+    service_pool_draw_at_cell: np.ndarray  # float64 (S,)
+    service_pool_credit_at_cell: np.ndarray  # float64 (S,)
     # --- journal (typed columns; represented amounts) ---------------------------
     journal_kind: list[str] = field(default_factory=list)
     journal_tick: list[int] = field(default_factory=list)
@@ -572,6 +582,9 @@ def initialize_material(
         [s.initial_bailout_expectation for s in org_specs], dtype=np.float64
     )
     organization_bank, bank_position = _dense_bank_index(org_specs)
+    organization_demand_signal = (
+        float(parameters.utilization) * np.asarray(organization_capacity, dtype=np.float64)
+    )
     bank_count = len(bank_position)
 
     # --- activity axis: org rows from the network, one activity per org ----
@@ -749,6 +762,7 @@ def initialize_material(
         minlength=bank_count,
     )
     bank_deposit_liability[0] += treasury_deposit  # Treasury banks at index 0
+    bank_deposit_liability[0] += float(recipe.credit_fund_quarters) * national_wage_bill
     bank_equity = np.full(
         bank_count,
         float(recipe.bank_equity_quarters) * national_wage_bill,
@@ -829,6 +843,7 @@ def initialize_material(
         organization_technology=organization_technology,
         organization_activity=organization_activity,
         organization_bank=organization_bank,
+        organization_demand_signal=organization_demand_signal,
         organization_capacity=organization_capacity,
         organization_labor_available=organization_labor_available,
         organization_labor_endowment=organization_labor_available.copy(),
@@ -853,6 +868,8 @@ def initialize_material(
         bank_equity=bank_equity,
         bank_interest_receivable=bank_interest_receivable,
         treasury_deposit=treasury_deposit,
+        treasury_loan_asset=0.0,
+        credit_fund=float(recipe.credit_fund_quarters) * national_wage_bill,
         usd_reserve=float(parameters.trade.convertible_opening_reserve),
         usd_principal=float(parameters.trade.convertible_opening_principal),
         usd_interest_arrears=0.0,
@@ -880,6 +897,8 @@ def capture_material_stocks(state: MaterialState) -> MaterialStockSnapshot:
         bank_equity=state.bank_equity.copy(),
         bank_interest_receivable=state.bank_interest_receivable.copy(),
         treasury_deposit=float(state.treasury_deposit),
+        treasury_loan_asset=float(state.treasury_loan_asset),
+        credit_fund=float(state.credit_fund),
         usd_reserve=float(state.usd_reserve),
         usd_principal=float(state.usd_principal),
         usd_interest_arrears=float(state.usd_interest_arrears),

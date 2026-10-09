@@ -250,7 +250,7 @@ def _fake_material_run_dir(tmp_path: Path, *, tamper: bool = False) -> Path:
     summary = {
         "schema_version": "1",
         "run_id": "run0001",
-        "run_kind": "intermediate8_household_simulation",
+        "run_kind": "material_household_simulation",
         "scenario_id": "intermediate8",
         "planned_ticks": 2,
         "completed_ticks": 2,
@@ -265,7 +265,7 @@ def _fake_material_run_dir(tmp_path: Path, *, tamper: bool = False) -> Path:
     manifest = RunManifest.model_validate(
         {
             "run_id": "run0001",
-            "run_kind": "intermediate8_household_simulation",
+            "run_kind": "material_household_simulation",
             "status": "completed",
             "started_at": "2026-01-01T00:00:00Z",
             "finished_at": "2026-01-01T00:00:01Z",
@@ -315,7 +315,7 @@ def test_summary_refuses_toy4_run_kind(tmp_path) -> None:
     (run_dir / "manifest.json").write_text(json.dumps(manifest))
     proc = hsm("summary", "--run-dir", str(run_dir), "--json")
     assert proc.returncode == 1
-    assert "intermediate8_household_simulation" in json.loads(proc.stdout)["error"]
+    assert "material_household_simulation" in json.loads(proc.stdout)["error"]
 
 
 def test_summary_refuses_tampered_economic_field(tmp_path) -> None:
@@ -330,7 +330,7 @@ def test_summary_reads_authentic_material_run(tmp_path) -> None:
     proc = hsm("summary", "--run-dir", str(run_dir), "--json")
     assert proc.returncode == 0
     payload = json.loads(proc.stdout)
-    assert payload["run_kind"] == "intermediate8_household_simulation"
+    assert payload["run_kind"] == "material_household_simulation"
     assert payload["completed_ticks"] == 2
     human = hsm("summary", "--run-dir", str(run_dir))
     assert human.returncode == 0
