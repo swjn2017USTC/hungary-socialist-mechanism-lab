@@ -1,0 +1,20 @@
+[
+  {
+    "effective_quarter": "1973Q1",
+    "intervention_id": "borrowing",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.borrowing_factor",
+    "until_quarter": null,
+    "value": 1.25
+  },
+  {
+    "effective_quarter": "1973Q1",
+    "intervention_id": "consumer-import-smoothing",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.consumer_import_factor",
+    "until_quarter": null,
+    "value": 1.25
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "effective_quarter": "1973Q1",
+    "intervention_id": "price-adjustment",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.admin_price_factor",
+    "until_quarter": null,
+    "value": 1.15
+  },
+  {
+    "effective_quarter": "1973Q1",
+    "intervention_id": "wage-compensation",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.wage_factor",
+    "until_quarter": null,
+    "value": 1.1
+  }
+]

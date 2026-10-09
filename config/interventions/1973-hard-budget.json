@@ -1,0 +1,20 @@
+[
+  {
+    "effective_quarter": "1973Q1",
+    "intervention_id": "hard-budget",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.budget_hardness",
+    "until_quarter": null,
+    "value": 0.8
+  },
+  {
+    "effective_quarter": "1973Q1",
+    "intervention_id": "credit-cut",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.credit_fraction",
+    "until_quarter": null,
+    "value": 0.4
+  }
+]

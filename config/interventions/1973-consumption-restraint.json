@@ -1,0 +1,20 @@
+[
+  {
+    "effective_quarter": "1973Q1",
+    "intervention_id": "consumer-import-restraint",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.consumer_import_factor",
+    "until_quarter": null,
+    "value": 0.7
+  },
+  {
+    "effective_quarter": "1973Q1",
+    "intervention_id": "welfare-restraint",
+    "operation": "set",
+    "provenance": "declared P06 counterfactual for reproduction-scope mechanism screening; not a historical estimate",
+    "target": "policy.welfare_provision",
+    "until_quarter": null,
+    "value": 0.7
+  }
+]
