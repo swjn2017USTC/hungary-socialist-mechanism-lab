@@ -357,3 +357,10 @@ into the target-loading path (audit finding R4).
 - Finding: H4's existing same-season output residual is `1.3666269856210904e-6` (tick 224 `177892.12491423212` to tick 228 `177892.3680267428`) against the unchanged `1e-6` cutoff. The cause of the certificate miss is low-amplitude year-over-year output drift at H4; the deeper economic/numerical source is not isolated. Accounting gates pass; H4 is recorded CONDITIONAL, H0–H3 retain PASS. No tolerance or rung/default changed.
 - Check: `.venv/bin/hsm calibration forcing-ladder --output-dir outputs/p06-forcing-ladder-intermediate8-envelope-rerun --json` is not repeated; the existing exact certificate artifact above was inspected and independently recomputed with `_periodic_residuals`' same-season formula. The W4 disposition is documentation-only; latest code checks before W4 were Ruff clean and 403 passed.
 - Commit: `33f64c09305630a349255c48bff9cccb7699e9d0`.
+
+## 2026-10-10 — W3 Morris structural screening — PASS (EXPLORATORY)
+
+- Evidence: `src/hsm_lab/calibration/morris.py`, `tests/test_calibration_morris.py`, `tests/test_cli.py`, `docs/phases/P06_MORRIS_SCREENING.md`, `outputs/p06-w3-morris/morris.json` and 18 arm directories.
+- Change: added deterministic Morris elementary-effects screening for the eight declared W2 structural axes, an intermediate8 runner and CLI, and a Sobol guard that refuses an empty or non-identified parameter set. No Sobol calculation was run; no parameter identity or calibration status changed.
+- Check: `.venv/bin/hsm calibration morris-screen --trajectories 2 --levels 4 --seed 1729 --output-dir outputs/p06-w3-morris --json` → 18/18 arms completed 116 ticks with accounting checks; `.venv/bin/ruff check src tests` clean; `.venv/bin/pytest -q -p no:cacheprovider` → 403 passed.
+- Implementation commit: `9fc9963c1d878a3d737808d6ddf39f086a28f779`.
