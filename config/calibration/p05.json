@@ -5,7 +5,13 @@
     "smoke_particles": 16,
     "smoke_populations": 2
   },
+  "anchor_initialization": {
+    "note": "The 63 initial_state anchors are admitted and audited, but no code path consumes them: build_material_initial_conditions(spec, rng) still draws the initial state from the scenario recipe plus RNG. The 1957 reconstruction gate is therefore admission-only until the anchors are wired into initialization; the F2 initial state remains synthetic.",
+    "status": "not_wired"
+  },
   "baseline": "BASELINE.md v1.1 (1957Q1-1985Q4 = 116 ticks; 1986Q1-1988Q4 reserved)",
+  "data_manifest": "DATA_MANIFEST_v2.json",
+  "data_manifest_notes": "Frozen outputs are versioned: v1 stays on disk as the immutable record of the first freeze, v2 supersedes it after the training window was aligned to 1960Q1-1969Q4 and the identification block was declared. A changed control/ontology/registry must produce a new version.",
   "domains": {
     "node_ids": "config/research_contract.json",
     "windows": "1957Q1-1985Q4 quarterly simulation with annual targets compared on annual aggregates only; census stocks compared on their real dates only"

@@ -14,8 +14,9 @@ a frozen registry file; nothing is projected.
 | # | Gate 1 dimension | Verdict | Evidence |
 |---|---|---|---|
 | A | F2 ontology freeze | **PASS** | `config/ontology/f2_v1.json` (16 commodities, roles/units/stages), `f2_regions_v1.json`; `catalog_id="f2_v1"` bound; `tests/test_historical_p05.py` |
-| B | DATA_MANIFEST_v1 freeze | **PASS** | `data/manifests/DATA_MANIFEST_v1.json` — 144 artifacts (`exogenous_forcing 29 / initial_state 63 / latent_parameter 10 / target 42`), `missing_required=0`, `sha256=5d91e014…`; `p05_targets.yml` (28) / `p05_holdout.yml` (14, hash-only) / `p05_exposure.yml` (4) / `p05_parameters.yml` (10); `hsm data freeze-p05` refuses a second freeze (exit 1) |
-| B′ | 1957 reconstruction | **PASS (provisional)** | `hsm data reconstruct-p05` → `ok`; 21 population + 21 household + 21 dwelling anchors, **all grade C / `literature_proxy`** (see §3) |
+| B | DATA_MANIFEST_v1 freeze | **PASS** | `data/manifests/DATA_MANIFEST_v2.json` (v1 retained as the immutable first freeze) — 144 artifacts (`exogenous_forcing 29 / initial_state 63 / latent_parameter 10 / target 42`), `missing_required=0`, `sha256=ec531d2f…`, `control_sha256` matches the control file; `p05_targets.yml` (28) / `p05_holdout.yml` (14, hash-only) / `p05_exposure.yml` (4) / `p05_parameters.yml` (10); `hsm data freeze-p05` refuses a second freeze (exit 1) |
+| B′ | 1957 reconstruction | **ADMISSION-ONLY (provisional)** | `hsm data reconstruct-p05` → `ok`, `initialization_wired: false`; 21 population + 21 household + 21 dwelling anchors, **all grade C / `literature_proxy`** (see §3). No code path consumes the anchors, so the initial state is still synthetic |
+| H′ | **F2 kernel closure audit** | **FAILED** | `hsm calibration audit-closure --scenario historical_f2_replay` → `status collapsed`, `output_liveness = 0.0` at both 116 and 232 diagnostic ticks, while `lambda_common = 1.0` (LP feasible). Probes excluding the obvious causes: H0 trade zeroing, investment hunger, the demand cap (`demand_limited_targets`/`cover`/`floor`), a NaN `cmea_energy_price` in the diagnostic forcing, the H0 household-parameter override, and 116 vs 232 ticks — all still collapse. The F2 *runner* (real parameters) completes 116 ticks, so this is specific to the H0 diagnostic path on the 16-commodity catalog |
 | H | F2 performance benchmark | **PASS** | `outputs/p05-f2-benchmark/benchmark.json` — `overall_gate: pass`, workload `f2_historical_material_economy_kernel_storage` |
 | — | Gate 1 warmup | **PASS** | `outputs/p05-f2-warmup` — `completed_ticks=16`, `last=1960Q4`, checkpoint `tick-0016`, `rng_draws=125000`, 16 commodities |
 | — | run-kind clean cutover | **PASS** | `material_household_simulation` (no legacy alias); CLI summary accepts both real run kinds; end-to-end manifest/summary verified |
@@ -73,9 +74,13 @@ household, 21 dwelling; national + Budapest + 19 megye).
 **2011 boundaries and 2011 definitions**. They are `grade C / literature_proxy`
 (fixed-space proxy), **not** 1957 historical-boundary observations. The plan
 permits a boundary proxy under stated assumptions; the grade is carried per
-artifact so no consumer can mistake it for an A/B observation. 1957 itself must
-be a grade-S derivation (1949/1960 comparable re-coded pair plus the official
-national 1957-01-01 total of 9,829 thousand).
+artifact so no consumer can mistake it for an A/B observation. 1957 itself must be a
+grade-S derivation from an **admitted** artifact pair (the 1949/1960 comparable
+re-coded series) constrained by an official national 1957 total. No national
+1957 series is registered in the frozen manifest yet, so no such number is
+quoted here: the KSH STADAT 22.1.1.2 file that carries it is currently a local
+download only (`data/raw/`, excluded from the repository) and must be registered
+as an artifact before any 1957 constraint may be used.
 
 Historical original volumes (Hungaricana: 1960 vol. 1, 1949 vol. 5, 1970 vols.
 25/26, 1980 vols. 23/24) are the only A/B-grade route and are **not
@@ -96,6 +101,19 @@ automatically retrievable** (HTTP 202, empty body — see §7).
 | `sbc_transfer_ratio` | 0.2313 | ~historical band ✓ |
 | `lambda_common` (aggregate LP) | 1.000 | ≥ 0.5 ✓ |
 | certificate | `status ok`, `passed true` | — |
+
+**The certificate is conditional on a declared control, not a historical
+parameter set.** `_h0_material_parameters` sets: `hunger_base=0`,
+`hunger_bailout=0`, `hunger_shortage=0`, `overorder_strength=0`,
+`hoarding_quarters=0`, `domestic_credit_rate_annual=0`, `hungary_spread_annual=0`,
+`distribution_margins_enabled=True`, `sbc_redistribution=True`,
+`m2_neutral_credit=True`, `principal_repayment_fraction=1.0`,
+`demand_limited_targets=True`, `demand_cover=1.0`, `demand_floor=1.0`, and all
+CMEA/convertible trade demands and convertible reserves set to zero. These values
+were chosen to make the structural closure diagnostic pass; they are **not**
+fitted to any historical target (no target enters a run), and
+`diagnose_kernel_closure` now reports `collapsed` rather than `ok` whenever
+liveness < 0.5, so a dead economy can no longer be certified.
 
 C2 is judged on the **stock/output ratio** (P05 §0.7): the stock level drifts
 (+5.8 %/yr) while the ratio stays inside the ±5 % same-season band. This is a
@@ -155,6 +173,34 @@ refuses to substitute a hold-out-trained F1→F2 compensation model. When a
 candidate set does exist the stage returns `PAIRED_STUDY_NOT_IMPLEMENTED` with
 the declared tolerances/seed banks as `required_inputs` — the algorithm is a
 declared, not silently faked, work item.
+
+### ABC API smoke (plan §271)
+
+`hsm calibration abc-smoke` (also callable as `abc_synthetic_recovery` /
+`abc_registry_path`), executed with the declared 16-particle / 2-population
+budget against a **throwaway synthetic target produced by the same kernel** at
+`utilization = 0.9` over the F2 catalog:
+
+```
+status ok   parameter utilization   prior [0.5, 1.0]   truth 0.9
+particles 16   populations completed 2   checkpoint_used False
+posterior mean 0.8797   observed summary 1 261 764.5
+real registry path: NO_IDENTIFIABLE_PARAMETERS   inference_status NOT_RUN   candidates 0
+```
+
+The posterior moves from the prior mean (0.75) toward the truth and the run
+stops on its budget; this proves the inference API, budget stop and
+checkpoint-free execution work, and that the real registry path yields no
+candidate set. It is **not** historical-calibration evidence and its target never
+enters DATA_MANIFEST.
+
+**Annual aggregation:** `compare_annual` (`data/material.py`) aggregates a
+quarterly simulated series with `quarterly_to_annual` under the target's declared
+`sum`/`mean`/`end_of_period` rule, validates units and year/key alignment, and
+raises when a target year has no simulated annual value; `data/frequency.py`
+deliberately exposes **no** annual→quarterly interpolation API. The rule is
+therefore implemented in code, but no calibration run has exercised it yet
+(there is no admissible candidate set).
 
 **Gate 2 closure:** recorded as `NO_IDENTIFIABLE_PARAMETERS` (declared and
 accepted by the study owner). No calibration, no posterior, no F1→F2
@@ -228,7 +274,7 @@ needed; no optimization was required.
 
 ## 9. Verification and regression
 
-- `pytest -q` → **325 passed**; `ruff check src tests` → clean.
+- `pytest -q` → **326 passed**; `ruff check src tests` → clean.
 - intermediate8 H0 certificate is **bit-identical** to its pre-repair values,
   confirming the F2 repairs did not change the legacy catalogue path.
 - F2 kernel: 116 ticks completed; small-run harness smoke passes.

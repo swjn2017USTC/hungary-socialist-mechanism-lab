@@ -638,8 +638,10 @@ def diagnose_kernel_closure(
     forced_total = sum(row["forced"] for row in tail)
     sbc_transfer_ratio = (sbc_total / tail_output) if tail_output > 0.0 else 0.0
     forced_saving_ratio = (forced_total / tail_output) if tail_output > 0.0 else 0.0
+    # A dead economy is not a passing closure: mirror the collapse verdict that
+    # audit_material_closure applies, so a certificate can never call it 'ok'.
     cert = ClosureCertificate(
-        status="ok",
+        status=("collapsed" if liveness < 0.5 else "ok"),
         scenario_id=spec.scenario_id,
         catalog_id=network.catalog_id,
         engine_version=MATERIAL_ENGINE_VERSION,

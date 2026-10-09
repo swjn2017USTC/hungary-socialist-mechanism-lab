@@ -195,7 +195,9 @@ def test_reconstruction_fails_without_mandatory_anchors(tmp_path) -> None:
     from hsm_lab.data.reconstruct import reconstruct_p05
 
     (tmp_path / "data" / "manifests").mkdir(parents=True)
-    (tmp_path / "data" / "manifests" / "DATA_MANIFEST_v1.json").write_text(
+    control = json.loads((ROOT / "config" / "calibration" / "p05.json").read_text())
+    name = control.get("data_manifest", "DATA_MANIFEST_v1.json")
+    (tmp_path / "data" / "manifests" / name).write_text(
         json.dumps({"artifacts": [], "ontology_id": "f2_v1"}), encoding="utf-8"
     )
     payload = reconstruct_p05(tmp_path, config=ROOT / "config" / "calibration" / "p05.json")

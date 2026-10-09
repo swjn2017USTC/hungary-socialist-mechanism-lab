@@ -329,6 +329,55 @@ def calibration_fidelity(
     _guard(action, json_mode)
 
 
+@calibration_app.command("abc-smoke")
+def calibration_abc_smoke(
+    config: Path = typer.Option(
+        Path("config/calibration/p05.json"), "--config", help="P05 research control file."
+    ),
+    particles: int = typer.Option(16, "--particles", min=1, help="ABC particles per population."),
+    populations: int = typer.Option(2, "--populations", min=1, help="ABC populations."),
+    ticks: int = typer.Option(4, "--ticks", min=1, help="Kernel ticks per evaluation."),
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Prove the ABC API on a synthetic target and that the real registry has no candidates."""
+
+    def action() -> None:
+        import json as _json
+
+        from hsm_lab.calibration.abc_smoke import abc_registry_path, abc_synthetic_recovery
+
+        root = _repo_root()
+        target = _fresh_output_dir(output_dir, "p05-abc-smoke")
+        payload = {
+            "command": "calibration abc-smoke",
+            "synthetic_recovery": abc_synthetic_recovery(
+                root, config=config, particles=particles, populations=populations, ticks=ticks
+            ),
+            "real_registry_path": abc_registry_path(root, config=config),
+        }
+        target.mkdir(parents=True, exist_ok=False)
+        (target / "abc_smoke.json").write_text(
+            _json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        recovery = payload["synthetic_recovery"]
+        registry = payload["real_registry_path"]
+        _emit(
+            {**payload, "output_dir": str(target)},
+            json_mode,
+            [
+                f"abc smoke: {recovery['status']} "
+                f"({recovery['particles']} particles x {recovery['populations_completed']} "
+                f"populations, posterior mean {recovery['posterior_mean']:.4f} "
+                f"vs truth {recovery['truth']})",
+                f"real registry path: {registry['status']} "
+                f"(candidates {len(registry['identifiable_set'])})",
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
 @calibration_app.command("audit-closure")
 def calibration_audit_closure(
     scenario: str = typer.Option(

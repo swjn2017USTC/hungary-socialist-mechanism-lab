@@ -107,10 +107,6 @@ _PURPOSE_NAMES = {code: purpose.value for purpose, code in PURPOSE_CODES.items()
 _CAPITAL_ID = "capital_goods"
 
 
-# Relative bound on the ephemeral-service non-negativity clamp.
-_SERVICE_CLAMP_REL = 1e-3
-
-
 def _ephemeral_commodity_ids(network: Any) -> np.ndarray:
     """Commodity indices that are non-stockable (their cells must close at zero)."""
     from hsm_lab.contract.material import commodity_spec

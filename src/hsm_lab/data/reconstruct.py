@@ -25,10 +25,11 @@ def _is_anchor(artifact: dict[str, Any]) -> bool:
 def reconstruct_p05(root: Path, *, config: Path) -> dict[str, object]:
     """Audit the 1957 initial anchors declared by the frozen data manifest."""
     control = json.loads(config.read_text(encoding="utf-8"))
-    manifest_path = root / "data" / "manifests" / "DATA_MANIFEST_v1.json"
+    manifest_filename = str(control.get("data_manifest") or "DATA_MANIFEST_v1.json")
+    manifest_path = root / "data" / "manifests" / manifest_filename
     if not manifest_path.is_file():
         raise FileNotFoundError(
-            "DATA_MANIFEST_v1.json is not frozen yet; run `hsm data freeze-p05` first"
+            f"{manifest_filename} is not frozen yet; run `hsm data freeze-p05` first"
         )
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     artifacts = [entry for entry in manifest.get("artifacts", []) if isinstance(entry, dict)]
@@ -66,6 +67,8 @@ def reconstruct_p05(root: Path, *, config: Path) -> dict[str, object]:
             if entry.get("evidence_status") is not None
         }
     )
+    wired = control.get("anchor_initialization") or {}
+    wired_status = str(wired.get("status", "unknown"))
     verdict = "ok" if not missing else "MISSING_MANDATORY_ANCHORS"
     return {
         "status": verdict,
@@ -76,6 +79,8 @@ def reconstruct_p05(root: Path, *, config: Path) -> dict[str, object]:
         "windows": control.get("windows", {}),
         "declared_artifacts": len(artifacts),
         "declared_anchors": len(anchors),
+        "initialization_wired": wired_status == "wired",
+        "identification_wiring": {"status": wired_status, "note": wired.get("note")},
         "mandatory": summary,
         "missing_mandatory": missing,
         "evidence_levels_present": periodic,
@@ -90,7 +95,12 @@ def reconstruct_p05(root: Path, *, config: Path) -> dict[str, object]:
         "note": (
             "uniform synthetic population is never admitted as a 1957 reconstruction"
             if missing
-            else "mandatory 1957 initial anchors are present in the frozen manifest"
+            else (
+                "mandatory 1957 initial anchors are admitted, but no code path consumes "
+                "them yet: the gate is admission-only and the initial state is still synthetic"
+                if wired_status != "wired"
+                else "mandatory 1957 initial anchors are present and wired into initialization"
+            )
         ),
     }
 

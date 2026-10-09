@@ -28,7 +28,7 @@ from hsm_lab.data.schemas import (
     TargetArtifact,
 )
 
-MANIFEST_FILENAME = "DATA_MANIFEST_v1.json"
+MANIFEST_FILENAME = "DATA_MANIFEST_v1.json"  # default when the control declares none
 MANIFEST_KEY = "artifacts"
 _REGISTRY_FILES = ("sources.yml", "variables.yml", "artifacts.yml")
 
@@ -104,10 +104,11 @@ def freeze_data_manifest(root: Path, *, config: Path) -> dict[str, object]:
     ontology_id, commodities = _ontology_commodities(root, str(control["ontology"]))
     registry = DataRegistry.load(root, allowed_commodities=commodities)
     manifests_dir = root / "data" / "manifests"
-    target_path = manifests_dir / MANIFEST_FILENAME
+    manifest_filename = str(control.get("data_manifest") or MANIFEST_FILENAME)
+    target_path = manifests_dir / manifest_filename
     if target_path.exists():
         raise FileExistsError(
-            f"{MANIFEST_FILENAME} already exists; a changed freeze must use a new version"
+            f"{manifest_filename} already exists; a changed freeze must use a new version"
         )
 
     entries = [
@@ -121,7 +122,7 @@ def freeze_data_manifest(root: Path, *, config: Path) -> dict[str, object]:
     missing = [e["artifact_id"] for e in entries if not e["present"] and not e["allow_missing"]]
 
     manifest: dict[str, object] = {
-        "manifest_version": "DATA_MANIFEST_v1",
+        "manifest_version": manifest_filename.removesuffix(".json"),
         "study": "P05",
         "ontology_id": ontology_id,
         "ontology_sha256": sha256_file(root / str(control["ontology"])),
@@ -166,7 +167,7 @@ def freeze_data_manifest(root: Path, *, config: Path) -> dict[str, object]:
     ]
 
     manifests_dir.mkdir(parents=True, exist_ok=True)
-    (manifests_dir / MANIFEST_FILENAME).write_text(_canonical_json(manifest), encoding="utf-8")
+    target_path.write_text(_canonical_json(manifest), encoding="utf-8")
     (manifests_dir / "p05_targets.yml").write_text(
         _yaml_doc("targets", calibration), encoding="utf-8"
     )
@@ -182,7 +183,7 @@ def freeze_data_manifest(root: Path, *, config: Path) -> dict[str, object]:
 
     return {
         "status": "frozen",
-        "manifest": str(manifests_dir / MANIFEST_FILENAME),
+        "manifest": str(target_path),
         "manifest_sha256": manifest_hash,
         "artifact_count": len(entries),
         "role_counts": manifest["role_counts"],

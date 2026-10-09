@@ -142,3 +142,28 @@ def test_fidelity_rejects_unknown_stage() -> None:
 
     with pytest.raises(ValueError, match="unknown fidelity stage"):
         prior_fidelity(ROOT, config=ROOT / "config" / "calibration" / "p05.json", stage="nope")
+
+
+def test_abc_smoke_proves_the_api_and_the_empty_registry_path(tmp_path: Path) -> None:
+    pytest = __import__("pytest")
+    pytest.importorskip("pyabc")
+    from hsm_lab.calibration.abc_smoke import abc_registry_path, abc_synthetic_recovery
+
+    registry = abc_registry_path(ROOT, config=ROOT / "config" / "calibration" / "p05.json")
+    assert registry["status"] == "NO_IDENTIFIABLE_PARAMETERS"
+    assert registry["identifiable_set"] == []
+    assert registry["inference_status"] == "NOT_RUN"
+
+    # a tiny declared budget: the smoke proves the API path, not throughput
+    recovery = abc_synthetic_recovery(
+        ROOT,
+        config=ROOT / "config" / "calibration" / "p05.json",
+        particles=3,
+        populations=1,
+        ticks=2,
+    )
+    assert recovery["status"] == "ok"
+    assert recovery["checkpoint_used"] is False
+    assert recovery["populations_completed"] == 1
+    assert recovery["posterior_particles"] == 3
+    assert recovery["observed_summary"] > 0.0
