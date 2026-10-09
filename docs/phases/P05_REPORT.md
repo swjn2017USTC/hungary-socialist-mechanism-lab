@@ -7,7 +7,7 @@ a frozen registry file; nothing is projected.
 - Baseline window: **1957Q1–1985Q4** (116 quarterly ticks). Reserved: 1986Q1–1988Q4 (not opened).
 - Ontology: `f2_v1` (16 commodities) + `f2_regions_v1` (20 historical node ids).
 - Control file: `config/calibration/p05.json` (windows, tolerances, seed banks, ABC budget, gate thresholds, registry references, parameter→target linkage).
-- Commit state: working tree only; nothing in P05 is committed yet.
+- Commit state: committed on `main` through `feat(p05)`/`fix(material)`/`docs(p05)` commits; the data/F2 freeze artifacts are tracked, the reserved window is untouched.
 
 ## 1. Gate results (per dimension)
 
@@ -545,28 +545,99 @@ delivered + physical_delivery_blocked + financial_delivery_blocked == allocated
 
 for every demand cell, which is why that table can be read directly.
 
-## 11. Next steps
+## 11. Status summary — Gate 1 / Gate 2 (2026-10-09)
 
-1. Run the E4 activity-level capacity alignment (`calibration/alignment.py`):
-   declared demand → activity-level feasibility → org capacities, then the frozen
-   acceptance gates on 116/232 synthetic ticks. F2 stays
-   `validation_status = not_validated` until then.
-2. Repair the transport carriers' opening input cover (the P02 fuel blocker): the
-   logistics pool is `0.7 * transport_realized`, and `transport_realized` is
-   computed from the carriers' opening stock, so freight capacity is starved first
-   and caps every delivery in the economy. Until that is fixed the ~842 units the
-   regional certificate identifies cannot be moved.
-3. Route the ~842 units the regional certificate identifies (no explicit edge
-   flows, transport capacity or finance pre-audit yet) and re-run the acceptance
-   gates; only then re-test a demand-following target rule, because step 6 showed
-   that capping production before routing exists starves the delivery chain.
-3. Acquire the independent observables in §10b, then declare the parameter→target
-   linkage (research decision) and run `screen` → `fidelity` → F1/F2 inference.
-   Until then `identifiable_set = []`, `linkage = []`, `inference_status = NOT_RUN`.
-2. Obtain the A2 historical volumes manually (registration plan, target grades
-   and required metadata are recorded in `data/raw/p05_anchor_downloads.json`
-   under `a2_ingestion_plan`); register them as grade A/B anchors and 1957 as a
-   grade-S derivation, then re-freeze as a new manifest version.
-3. Declare `xlrd` (or add a conversion step) before the census tables are parsed
-   by the ingestion pipeline.
-4. Re-freeze DATA_MANIFEST as a **new version** once Gate 1 is finally passed.
+This is the one-page state of P05 as it actually stands after the E4/E5 work.
+
+### Gate 1 — DATA / F2 FREEZE: **NOT PASSED** (one dimension FAILED)
+
+| dimension | verdict |
+|---|---|
+| A F2 ontology freeze | PASS |
+| B DATA_MANIFEST_v1 freeze | PASS |
+| B' 1957 reconstruction | ADMISSION-ONLY (all anchors grade C, no code path consumes them) |
+| H' **F2 kernel closure audit** | **FAILED** — `status collapsed`, `output_liveness = 0.0` at 116 and 232 diagnostic ticks |
+| H F2 performance benchmark | PASS |
+| warmup / run-kind cutover / RunManifest fields | PASS |
+
+Gate 1 is a single AND: the closure audit H' fails, so Gate 1 is **not** passed and
+Gate 2 was entered on the runner path only (as the plan's dependency rule requires).
+
+### Gate 2 — CALIBRATION / VALIDATION: **NOT ACHIEVED**
+
+| requirement | status |
+|---|---|
+| material → enterprise → household → social order | satisfied structurally (P02 → P04 layers), but the material layer does not close |
+| F1 large-scale calibration | **not run** — `no declared parameter is linked to an admissible target variable`; `identifiable_set = []` |
+| F1/F2 statistic convergence | **not measurable** — no inference was run |
+| key posteriors re-verified on F2 | **none** — there are no posteriors |
+| hold-out excluded from calibration | satisfied trivially (hold-out only hashed, 14 entries, no calibration ran) |
+| compact outputs for every run | satisfied (`national_accounts`/`aggregates`/`tick_diagnostics`/checkpoints) |
+| historical replay baseline | **completed** (`outputs/p05-historical-replay`, 116 ticks) and fails every economic acceptance gate |
+| endogenous politics baseline | **completed** (`outputs/p05-endogenous-politics`, political run kind, fidelity f1 / intermediate8_v1) |
+| P05_REPORT classification | done (§6) |
+
+Frozen acceptance gates on the historical replay baseline (116 ticks):
+
+| gate | measured | threshold | verdict |
+|---|---|---|---|
+| liveness (last-10 / first-10) | 0.1116 | >= 0.8 | FAIL |
+| household delivered / funded (g15 / g16 / g03) | 0.120 / 0.199 / 0.489 | >= 0.9 | FAIL |
+| treasury cash | zero from tick 17-18 | self-financing | FAIL |
+| accounting invariants | all enforced gates pass | unchanged | PASS |
+
+Parameter classification (unchanged, §6): **calibrated 0 / fixed 4 / weakly
+identified 0 / unidentified 6**. Nothing is labelled estimated.
+
+### Can P06 start? **No.**
+
+Three independent reasons, each from this report's own measurements:
+
+1. **The plan's own dependency.** OMP_PLAN §9 makes Gate 1 (which includes the
+   closure audit) a precondition for Gate 2, and P06 assumes a frozen engine that
+   is "原则上不再大改" (§10.1). Gate 1 has a FAILED dimension and the engine is not
+   frozen.
+2. **P06's outputs would not be interpretable.** Its deliverables are M1-M11
+   mechanism verdicts, the H0-H4 forcing ladder, the 1968/1973/political
+   counterfactual arms and the final release. On the measured F2 baseline the
+   economy collapses (production ratio 0.11, treasury zero at tick 17, 70% of the
+   allocated plan never delivered, producers funding only 61% of ordered inputs),
+   so every counterfactual difference would be read off a collapse trajectory
+   instead of off the mechanisms.
+3. **The classification is empty.** `calibrated = 0` and `weakly identified = 0`,
+   with six priors declared UNIDENTIFIED. P06's sensitivity funnel
+   (OAT → Morris → 6-10 key parameters → Sobol) needs a model whose parameters are
+   at least identified; running it now would produce Sobol indices for parameters
+   that no observable constrains.
+
+What is safe to begin **before** P06, and is genuinely P06-precursor work: the
+sensitivity **infrastructure** (Morris/Sobol harness on a working toy catalog) and
+the mechanism-card **schema**, both of which need no validated engine. The
+verdicts themselves must wait.
+
+## 12. Next steps
+
+Ordered by the evidence, not by the plan's original sequence:
+
+1. **Fix the largest measured contraction — input funding** (`material.py:1103`,
+   mean factor 0.606 over 20.8 M of need, 14 851 groups funded at zero): decide the
+   working-capital / credit stance (the registry already carries
+   `credit_stock_cap_quarters`). This is a calibration/institutional decision and
+   changes every baseline, so it is **not** made here.
+2. **Repair transport cover** (§E5): capacity is 128 000 but the carriers' opening
+   inputs realise ~730 units, so `logistics_pool = 0.7 * transport_realized` caps
+   every delivery in the economy.
+3. **Re-run the frozen acceptance gates** on 116/232 ticks and only then re-test a
+   demand-following target rule (step 6 showed that capping output before funding
+   and freight work starves the delivery chain). F2 stays
+   `validation_status = not_validated` until those gates pass.
+4. **Declare the parameter→target linkage** (research decision), then run
+   `screen` → `fidelity` → F1/F2 inference. Until then `identifiable_set = []`,
+   `linkage = []`, `inference_status = NOT_RUN`, and P06 must not consume any
+   "calibrated" label.
+5. Acquire the independent observables in §10b to move the six UNIDENTIFIED
+   priors; obtain the A2 historical volumes manually (plan recorded in
+   `data/raw/p05_anchor_downloads.json` → `a2_ingestion_plan`) and register 1957
+   as a grade-S derivation.
+6. Declare `xlrd` (or add a conversion step) before the census tables are parsed,
+   and re-freeze DATA_MANIFEST as a **new version** once Gate 1 finally passes.
