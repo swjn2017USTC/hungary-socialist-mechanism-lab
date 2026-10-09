@@ -421,6 +421,24 @@ cannot be carried and must expire — the mechanism behind the observed
 aggregate `expired_services` series, so a per-commodity expiry ledger is still
 required to apply the `expired/total ≤ 0.20` rule honestly.)
 
+### E4-min step 6 — control-fix experiments (both negative)
+
+Two demand-following target rules were implemented behind the declared
+`production_target_rule` flag and measured over 116 ticks:
+
+| rule | 116-tick ratio | expired tail | treasury zero |
+|---|---|---|---|
+| `legacy` (produce to capacity) | 0.1067 | 10 193 | tick 17 |
+| `lean_plan`, all activities capped | **0.0000** | 8 | tick 14 |
+| `lean_plan`, only non-stockable capped | **0.0008** | 96 | tick 14 |
+
+Capping production to the national lean plan removes the expiry almost entirely
+(tail 10 193 -> 96) and still kills the economy: the plan is a *national static*
+feasibility solution with no routing, timing or finance information, so the kernel
+cannot realise it and the delivery chain starves. This is the same "LP feasible,
+kernel dies" gap that the routing and demand fixes exposed earlier, now measured
+for the control rule itself.
+
 Conclusion: F2 fails every economic acceptance gate while its accounting is
 clean, and the LP shows the failure is neither a capacity deficit nor a routing
 gap but the **production-target rule** — it produces to capacity, not to demand,
@@ -433,7 +451,10 @@ so non-stockable surpluses expire and the payment chain drains. F2 remains
    declared demand → activity-level feasibility → org capacities, then the frozen
    acceptance gates on 116/232 synthetic ticks. F2 stays
    `validation_status = not_validated` until then.
-2. Acquire the independent observables in §10b, then declare the parameter→target
+2. Build the time-expanded feasibility problem (regional routing, same-quarter
+   service tier prefixes and the finance pre-audit) before attempting another
+   target rule: the national static plan is provably not executable.
+3. Acquire the independent observables in §10b, then declare the parameter→target
    linkage (research decision) and run `screen` → `fidelity` → F1/F2 inference.
    Until then `identifiable_set = []`, `linkage = []`, `inference_status = NOT_RUN`.
 2. Obtain the A2 historical volumes manually (registration plan, target grades

@@ -806,7 +806,60 @@ def tick_material(
         cap = float(getattr(parameters, "demand_cover", 1.0)) * sig_act
         # A zero signal means the output cell had no takers: produce nothing.
         target = np.where(has, np.minimum(target, cap), target)
-    if str(getattr(parameters, "production_target_rule", "legacy")) == "leontief_upper_bound":
+    if str(getattr(parameters, "production_target_rule", "legacy")) == "lean_plan":
+        # MEASURED (P05 §10c): both variants of this rule collapse.  Capping every
+        # activity to the national lean plan gives a 116-tick ratio of 0.000, and
+        # capping only the non-stockable outputs gives 0.0008 even though expiry
+        # falls from a 10 193 tail to 96.  The plan is a *national* static
+        # feasibility solution with no routing, timing or finance, so the kernel
+        # cannot realise it; it is kept as a gated, default-off lever alongside
+        # leontief_upper_bound, and the next step is a time-expanded feasibility
+        # problem rather than another target rule.
+        #
+        # Produce to the declared requirement instead of to capacity: an
+        # activity-level feasibility problem (minimum gross output meeting the
+        # declared household demand and the technology, with the physical opening
+        # stock seeded) caps each activity.  Without this the kernel produces
+        # min(u*C*season, labour) whatever demand says, so non-stockable
+        # surpluses can only expire.
+        from hsm_lab.calibration.alignment import build_alignment_problem, solve_alignment
+
+        opening_by_commodity = np.bincount(
+            cell_commodity,
+            weights=np.asarray(stock_open, dtype=np.float64),
+            minlength=g_count,
+        )
+        problem = build_alignment_problem(
+            network,
+            parameters=parameters,
+            equivalent_persons=float(
+                np.sum(np.asarray(state.household_weight) * np.asarray(state.household_size))
+            ),
+            opening_stock=opening_by_commodity,
+        )
+        lean = solve_alignment(problem, objective="min_output")
+        if lean.get("status") == "LP_FEASIBLE":
+            from hsm_lab.contract.material import commodity_spec
+
+            lean_q = np.asarray(lean["activity"], dtype=np.float64)[:, tick % 4]
+            # Only non-stockable output is capped: its surplus cannot be carried
+            # and can only expire (the observed revenue loss).  Stockable goods
+            # keep producing to capacity because the national lean plan carries no
+            # routing or timing information, and capping them starves the delivery
+            # chain (measured: production collapses to zero).
+            act_org = np.asarray(network.activity_org_index, dtype=np.int64)
+            org_out = np.asarray(network.org_output_cell, dtype=np.int64)
+            ephemeral = np.zeros(activity_count, dtype=bool)
+            valid = act_org >= 0
+            cells = org_out[np.maximum(act_org, 0)]
+            ok = valid & (cells >= 0)
+            g_of_act = np.full(activity_count, -1, dtype=np.int64)
+            g_of_act[ok] = cell_commodity[cells[ok]]
+            for g, cid in enumerate(network.commodity_ids):
+                if not commodity_spec(cid).stockable:
+                    ephemeral |= g_of_act == g
+            target = np.where(ephemeral, np.minimum(target, lean_q), target)
+    elif str(getattr(parameters, "production_target_rule", "legacy")) == "leontief_upper_bound":
         # P05 §0.6: cap each commodity's gross output at the Leontief requirement
         # for declared final demand, damped toward the capacity rule and floored
         # above zero so the demand-driven cap cannot collapse the economy.

@@ -1371,7 +1371,16 @@ def check_material_invariants(
             )
         else:
             expected_target = expected_local
-        if bool(getattr(parameters, "demand_limited_targets", False)):
+        if str(getattr(parameters, "production_target_rule", "legacy")) == "lean_plan":
+            # the lean plan only lowers the target; the LP itself is validated by
+            # the alignment certificate, not by this per-tick rule gate
+            material_at_most(
+                "organization_target_rule",
+                flows.activity_target[activities],
+                expected_target,
+                labels=[f"activity[{int(a)}]" for a in activities],
+            )
+        elif bool(getattr(parameters, "demand_limited_targets", False)):
             # The demand cap is an engine-level policy: bound the target by the
             # uncapped rule here and let the periodicity certificate judge the
             # capped trajectory (the cap reads live order/consumption state).

@@ -1350,7 +1350,7 @@ class MaterialParameters(StrictModel):
     # drains to the zero fixed point because the H0 control declares no
     # investment/housing/export final demand, so the capital/construction
     # activities are capped to zero and the wage base collapses with them.
-    production_target_rule: Literal["legacy", "leontief_upper_bound"] = "legacy"
+    production_target_rule: Literal["legacy", "leontief_upper_bound", "lean_plan"] = "legacy"
     leontief_damping: float = 1.0
     leontief_floor: float = 0.0
     # P05 §0.6: pure replacement investment — each productive organization
@@ -1435,6 +1435,9 @@ class MaterialParameters(StrictModel):
             "money_tolerance_rel": float(self.money_tolerance_rel),
             "production_target_rule.leontief_upper_bound": (
                 1.0 if self.production_target_rule == "leontief_upper_bound" else 0.0
+            ),
+            "production_target_rule.lean_plan": (
+                1.0 if self.production_target_rule == "lean_plan" else 0.0
             ),
             "leontief_damping": float(self.leontief_damping),
             "leontief_floor": float(self.leontief_floor),
