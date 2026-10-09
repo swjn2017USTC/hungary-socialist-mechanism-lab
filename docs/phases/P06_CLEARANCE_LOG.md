@@ -313,3 +313,26 @@ clean; recorded pytest evidence 388 passed / 0 failed; control structure (floors
 `missing_required = []`; performance `overall_gate = pass`; the four scaffolding artifacts;
 and **93 recorded runs all ending at or before 1985Q4** (the reserved window has never been
 reached).
+
+## 2026-10-10 — P06 execution plan adopted (reproduction scope)
+
+`docs/phases/P06_EXECUTION_PLAN.md` turns the OMP_PLAN §10.1 deliverables into eight work items
+(W1 eleven mechanism-card pre-registrations, W2 structural audit and OAT perturbation, W3 Morris
+screening, W4 forcing-ladder certificate closure, W5 1968 fork, W6 1973 arms, W7 political
+counterfactual, W8 protocol wiring + bundle + intervals + final report) with exit criteria,
+evidence paths, prohibitions and a paste-ready Codex prompt.
+
+It is grounded in existing infrastructure rather than new machinery: the card schema in
+`config/p06/mechanism_card.schema.json`, the M1–M11 definitions in `BASELINE.md`, the H0–H4
+ladder, `axis_sweep`, the paired comparator, `window_protocol`, the reproducibility bundle, the
+five 1968 intervention files, the `hsm fork` command, the `tick-0044` (1968Q1) checkpoints, and
+the intervention target vocabulary (five allowlist targets plus `policy.<coordinate>` for the 19
+policy coordinates).
+
+Annex A gives all eleven card faces (hypothesis, manipulated, controlled, metrics, falsification,
+replicates, categories, dependencies) and Annex B maps the five 1973 arms onto concrete
+intervention targets. Dependencies name the registry `artifact_id`, not the `variable_id`.
+
+Two open items are carried into P06 explicitly: the H4 ladder rung's periodic output residual
+(1.3666e-6 vs 1e-6) must be fixed or documented, and the window-protocol refusal must be wired
+into the target-loading path (audit finding R4).
