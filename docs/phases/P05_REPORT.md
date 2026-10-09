@@ -274,7 +274,7 @@ needed; no optimization was required.
 
 ## 9. Verification and regression
 
-- `pytest -q` → **326 passed**; `ruff check src tests` → clean.
+- `pytest -q` → **335 passed**; `ruff check src tests` → clean.
 - intermediate8 H0 certificate is **bit-identical** to its pre-repair values,
   confirming the F2 repairs did not change the legacy catalogue path.
 - F2 kernel: 116 ticks completed; small-run harness smoke passes.
@@ -312,9 +312,84 @@ Acquisition priority from the audit: `p04_external_recipe_prior` first (physical
 input–output and energy import flows are the most likely independent constraint),
 then `p04_information_prior` (plan versus reported versus verified values).
 
+## 10c. F2 root-cause diagnosis (Step 1, read-only tracing)
+
+The F2 catalogue's economy **contracts under every path** — there is no liveness
+gate in the runner, so `status: completed` was never evidence of a live economy:
+
+| run | first-10 mean | last-10 mean | ratio (window) | endpoint ratio |
+|---|---|---|---|---|
+| F2 `historical_f2_replay` (116 ticks) | 249,569 | 26,620 | 0.107 | 0.078 |
+| intermediate8 (116 ticks) | 224,268 | 187,867 | 0.666 | 0.838 |
+
+(ratios are last-10-mean / first-10-mean unless marked "endpoint"; the endpoint
+figure is last value / first value.)
+
+Per-commodity first-failure order (first tick below 10 % of its initial value):
+`g15_market_services` t=41, `g10` t=74, `g09` t=75, industrials t=91–93, `g03`
+t=99, `g07` t=100, `g08`/`g01`/`g16` t=107–114, `g02` never.
+
+**Primary cause — initial scale/product-mix mismatch.** Capacity-weighted
+potential output versus declared household demand at t0: `g15` 28×, `g16` 15×,
+`g13` 82×, `g14` 165×, `g09` 1.9×, `g10` 1.5× (intermediate demand is additional
+and not included here). Because the surplus commodities are non-stockable
+services, the excess expires: `expired_services` is 226,230 at t0 ≈ **70 % of
+gross output** (324,167). `treasury_cash` then drains linearly from 83,100 to
+**zero at tick 17** and stays there; delivery is not financially blocked
+(`financial_blocked_total ≈ 0`).
+
+**Two structural defects were found and fixed** (both real, both verified, and
+both secondary to the scale mismatch):
+
+1. **Hubless goods had no retail replenishment route** (`9d474c1`). `g03` and
+   `g16` declare retail stages but no hub stage, and the compiler only routed the
+   first service role (`g15`) to producers, so those retail cells could never be
+   stocked. The fallback to producers is now declared and gated
+   (`MaterialParameters.retail_replenishment_fallback`, off by default, enabled
+   in the F2 scenario). Effect: `g03` household consumption goes 0 → 1,569 at
+   t0; the nine hub-based commodities and `intermediate8` are unchanged.
+2. **The public-services channel carried no demand** (`6122793`).
+   `form_household_demand` filled every channel except `public`, so `g16` demand
+   was zero for every household and every quarter while producers kept producing
+   against capacity. Effect: `g16` desired/allocated/delivered/used are 1,572.5 at
+   t0 instead of zero across the whole run.
+
+### E4-min activity-level alignment (declared diagnostic, v1)
+
+`src/hsm_lab/calibration/alignment.py` compiles the declared household demand
+onto the commodity axis and solves a four-quarter activity-level feasibility LP
+(national balances with inventory for stockable commodities and an explicit
+expiry term for non-stockable ones; capacity, labour and origin-capacity bounds;
+objective = minimal relative capacity realignment). Result on F2:
+
+```
+status LP_FEASIBLE   matrix 2830 vars / 13207 nnz   max balance residual 1.7e-11
+capacity_deviation 0.0   activities at their original ceiling 386 / 386
+declared household demand: g09 8500, g10 6800, g15 2550, g16 1700, g03 1700, ...
+```
+
+**The existing profile's capacity is sufficient for the declared household
+demand**: the minimal-realignment objective is zero, so E4 finds no capacity
+shortage to fix. The contraction is therefore not a capacity-deficit problem; it
+is consistent with the production-target rule (`target = min(u·C·season, labor)`,
+which has no demand-following term) driving persistent over-production of
+non-stockable goods, expiry and the treasury drain documented above. The
+certificate is explicitly `scope="national_v1"`: inter-regional routing,
+same-quarter service tiers and the finance pre-audit are not modelled, so it
+proves static national feasibility only, never execution feasibility.
+
+Neither fix removes the contraction: the 116-tick ratio moves 0.1067 → 0.1160
+(replenishment) → 0.1116 (both). A directed probe of the replenishment defect in
+isolation had already shown the same marginal effect. The scale mismatch is
+therefore the primary object for the E4 activity-level alignment.
+
 ## 11. Next steps
 
-1. Acquire the independent observables in §10b, then declare the parameter→target
+1. Run the E4 activity-level capacity alignment (`calibration/alignment.py`):
+   declared demand → activity-level feasibility → org capacities, then the frozen
+   acceptance gates on 116/232 synthetic ticks. F2 stays
+   `validation_status = not_validated` until then.
+2. Acquire the independent observables in §10b, then declare the parameter→target
    linkage (research decision) and run `screen` → `fidelity` → F1/F2 inference.
    Until then `identifiable_set = []`, `linkage = []`, `inference_status = NOT_RUN`.
 2. Obtain the A2 historical volumes manually (registration plan, target grades
