@@ -62,6 +62,7 @@ from hsm_lab.engine.finance import (
     household_account_ids,
     organization_account_ids,
     quarter_domestic_credit_rate,
+    treasury_account_id,
 )
 from hsm_lab.engine.state import (
     POOL_CODES,
@@ -1616,6 +1617,51 @@ def check_material_invariants(
             out += np.bincount(org_bank[borrower], weights=values[borrower], minlength=B)
         return out
 
+    journal_kind = np.asarray(flows.journal_kind, dtype=object)
+    journal_debit = np.asarray(flows.journal_debit, dtype=np.int64)
+    journal_credit = np.asarray(flows.journal_credit, dtype=np.int64)
+    journal_amount = np.asarray(flows.journal_amount, dtype=np.float64)
+    journal_org = np.asarray(flows.journal_org, dtype=object)
+    turnover_by_org = np.zeros(ORG, dtype=np.float64)
+    org_cash_ids = organization_account_ids(state, AccountKind.CASH_DEPOSIT)
+    org_row_by_id = {int(org_id): row for row, org_id in enumerate(state.organization_id)}
+    turnover_rows = (journal_kind == "fiscal_turnover_remittance") & np.isin(
+        journal_credit, org_cash_ids
+    )
+    for row in np.flatnonzero(turnover_rows):
+        org_row = org_row_by_id.get(int(journal_org[row]))
+        if org_row is not None:
+            turnover_by_org[org_row] += journal_amount[row]
+
+    interest_recipient_by_household = np.zeros(N, dtype=np.float64)
+    household_cash_ids = household_account_ids(state, AccountKind.CASH_DEPOSIT)
+    household_row_by_account = {
+        int(account): row for row, account in enumerate(household_cash_ids)
+    }
+    interest_household_rows = (journal_kind == "interest_recipient_deposit") & np.isin(
+        journal_debit, household_cash_ids
+    )
+    for row in np.flatnonzero(interest_household_rows):
+        household_row = household_row_by_account[int(journal_debit[row])]
+        represented_weight = float(state.household_weight[household_row])
+        if represented_weight > 0.0:
+            interest_recipient_by_household[household_row] += (
+                journal_amount[row] / represented_weight
+            )
+    terminal_remittance_kinds = np.isin(
+        journal_kind, ["interest_recipient_deposit", "fiscal_turnover_remittance"]
+    )
+    treasury_cash = treasury_account_id(state, AccountKind.CASH_DEPOSIT)
+    treasury_remittance = float(
+        journal_amount[
+            terminal_remittance_kinds & (journal_debit == treasury_cash)
+        ].sum()
+    )
+    interest_remit_by_bank = _bank_sum(
+        np.asarray(flows.organization_interest_paid, dtype=np.float64)
+        * float(parameters.interest_sink_remittance_fraction)
+    )
+
     finance(
         "bank_assets_equal_liabilities",
         np.asarray(state.bank_loan_asset, dtype=np.float64)
@@ -1669,7 +1715,9 @@ def check_material_invariants(
     finance(
         "bank_equity_interest_accrual",
         np.asarray(state.bank_equity, dtype=np.float64),
-        bank_equity_open + _bank_sum(np.asarray(flows.organization_interest_due, dtype=np.float64)),
+        bank_equity_open
+        + _bank_sum(np.asarray(flows.organization_interest_due, dtype=np.float64))
+        - interest_remit_by_bank,
         labels=bank_labels,
     )
 
@@ -1684,7 +1732,8 @@ def check_material_invariants(
         - np.asarray(flows.organization_wage_paid, dtype=np.float64)
         - np.asarray(flows.organization_interest_paid, dtype=np.float64)
         - np.asarray(flows.organization_principal_paid, dtype=np.float64)
-        - np.asarray(flows.organization_purchases, dtype=np.float64),
+        - np.asarray(flows.organization_purchases, dtype=np.float64)
+        - turnover_by_org,
         labels=org_labels,
     )
     finance(
@@ -1818,7 +1867,8 @@ def check_material_invariants(
         + np.asarray(flows.household_late_wage, dtype=np.float64)
         - np.asarray(flows.household_plot_input_funding, dtype=np.float64)
         - np.asarray(flows.household_second_input_funding, dtype=np.float64)
-        - np.asarray(flows.household_spending, dtype=np.float64),
+        - np.asarray(flows.household_spending, dtype=np.float64)
+        + interest_recipient_by_household,
         labels=household_labels,
     )
     finance(
@@ -1896,6 +1946,7 @@ def check_material_invariants(
                 - float(np.sum(flows.organization_bailout_granted))
                 - housing_value
                 - border_fees
+                + treasury_remittance
             ]
         ),
         labels=["treasury"],

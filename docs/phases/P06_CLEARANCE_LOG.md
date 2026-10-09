@@ -70,3 +70,21 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   Parquet files are byte-identical to the same-head control, preserving its frozen gate
   table. Focused Ruff clean; Phase 0/input-credit tests → 7 passed.
 - Commit: pending.
+
+## 2026-10-10 — A1 Phase 1 Interest sink and turnover transfers — PASS
+
+- Evidence: `src/hsm_lab/engine/finance.py`, `src/hsm_lab/engine/material.py`,
+  `src/hsm_lab/engine/accounting.py`, `src/hsm_lab/calibration/leak_audit.py`,
+  `tests/test_p05_interest_fiscal_experiment.py`.
+- Change: paid interest can be routed to Treasury or households while only the
+  non-remitted share is destroyed; turnover remittance runs after purchases and is
+  capped by closing organization cash. Updated deposit, equity, cash and treasury
+  identities plus the leak-audit destroyed/remitted split. No `MaterialTickFlows` field
+  was added. Report classification reflects 8 fixed structural declarations, 0 calibrated,
+  6 unidentified; no linkage or inference was added.
+- Check: 100% interest remittance to either recipient passed accounting invariants;
+  junior turnover remittance did not exceed remaining cash. Zero-default full replay
+  digest remained `92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d`,
+  with all 14 Parquet files byte-identical to the original control. Full Ruff clean;
+  `.venv/bin/pytest -q -p no:cacheprovider` → 383 passed.
+- Commit: pending.

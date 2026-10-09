@@ -2030,6 +2030,7 @@ def tick_material(
         trader_dest = demand_cell[trader_mask]
         flows.used[trader_mask] = outgoing[trader_dest]
 
+    finance.run_fiscal_turnover_remittance(state, flows, parameters)
     _finite(
         "flows",
         flows.desired,
@@ -2135,6 +2136,27 @@ def tick_material(
         "bank reserves went negative",
     )
     household_cash_close = np.asarray(state.household_cash, dtype=np.float64)
+    interest_recipient_cash = np.zeros(household_count, dtype=np.float64)
+    if float(parameters.interest_sink_remittance_fraction) > 0.0:
+        household_cash_ids = household_account_ids(state, "cash_deposit")
+        journal_kind = np.asarray(flows.journal_kind, dtype=object)
+        journal_debit = np.asarray(flows.journal_debit, dtype=np.int64)
+        journal_amount = np.asarray(flows.journal_amount, dtype=np.float64)
+        received = (journal_kind == "interest_recipient_deposit") & np.isin(
+            journal_debit, household_cash_ids
+        )
+        if bool(np.any(received)):
+            recipient_rows = np.searchsorted(household_cash_ids, journal_debit[received])
+            recipient_weights = np.asarray(state.household_weight, dtype=np.float64)[recipient_rows]
+            recipient_values = np.divide(
+                journal_amount[received],
+                recipient_weights,
+                out=np.zeros_like(journal_amount[received]),
+                where=recipient_weights > 0.0,
+            )
+            interest_recipient_cash += np.bincount(
+                recipient_rows, weights=recipient_values, minlength=household_count
+            )
     expected_cash = (
         household_cash_open
         + flows.household_wage_income
@@ -2145,6 +2167,7 @@ def tick_material(
         - flows.household_plot_input_funding
         - flows.household_second_input_funding
         - flows.household_spending
+        + interest_recipient_cash
     )
     _require(
         bool(np.all(np.abs(household_cash_close - expected_cash) <= 1e-6)),

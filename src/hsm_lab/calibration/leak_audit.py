@@ -19,7 +19,12 @@ import polars as pl
 from hsm_lab.calibration.axis_sweep import _gate_metrics
 from hsm_lab.contract.material import ORGANIZATION_TYPE_ORDER
 from hsm_lab.engine import accounting, material
-from hsm_lab.engine.finance import DOMESTIC_CURRENCY, AccountKind, treasury_account_id
+from hsm_lab.engine.finance import (
+    DOMESTIC_CURRENCY,
+    AccountKind,
+    household_account_ids,
+    treasury_account_id,
+)
 from hsm_lab.engine.state import build_material_prices, capture_material_stocks
 
 
@@ -55,9 +60,11 @@ def money_flow_residual(
     interest: float,
     *,
     neutral: bool,
+    remitted: float = 0.0,
 ) -> float:
     """Credit creates/destroys deposits only on the non-neutral branch."""
-    return closing - opening - (0.0 if neutral else drawn - repaid) + interest
+    destroyed = float(interest) - float(remitted)
+    return closing - opening - (0.0 if neutral else drawn - repaid) + destroyed
 
 
 class CircuitObserver:
@@ -97,12 +104,33 @@ class CircuitObserver:
         drawn = org("organization_credit_drawn")
         repaid = org("organization_principal_paid")
         interest = org("organization_interest_paid")
+        journal_kind = np.asarray(flows.journal_kind, dtype=object)
+        journal_amount = np.asarray(flows.journal_amount, dtype=np.float64)
+        journal_debit = np.asarray(flows.journal_debit, dtype=np.int64)
+        household_cash_ids = household_account_ids(state, AccountKind.CASH_DEPOSIT)
+        treasury_cash_id = treasury_account_id(state, AccountKind.CASH_DEPOSIT)
+        recipient_accounts = np.append(household_cash_ids, treasury_cash_id)
+        interest_remitted = float(
+            journal_amount[
+                (journal_kind == "interest_recipient_deposit")
+                & np.isin(journal_debit, recipient_accounts)
+            ].sum()
+        )
+        fiscal_remitted = float(
+            journal_amount[
+                (journal_kind == "fiscal_turnover_remittance")
+                & (journal_debit == treasury_cash_id)
+            ].sum()
+        )
         money.update(
             {
                 "credit_drawn": drawn,
                 "principal_repaid": repaid,
                 "interest_accrued": org("organization_interest_due"),
                 "interest_paid": interest,
+                "interest_destroyed": interest - interest_remitted,
+                "interest_remitted": interest_remitted,
+                "fiscal_turnover_remitted": fiscal_remitted,
                 "money_flow_residual": money_flow_residual(
                     before["money_total"],
                     after["money_total"],
@@ -110,6 +138,7 @@ class CircuitObserver:
                     repaid,
                     interest,
                     neutral=bool(parameters.m2_neutral_credit),
+                    remitted=interest_remitted,
                 ),
                 "wages_due": org("organization_wage_due"),
                 "wages_paid": org("organization_wage_paid"),

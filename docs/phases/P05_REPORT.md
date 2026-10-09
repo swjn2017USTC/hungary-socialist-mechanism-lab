@@ -665,8 +665,9 @@ Frozen acceptance gates on the historical replay baseline (116 ticks):
 | treasury cash | zero from tick 17-18 | self-financing | FAIL |
 | accounting invariants | all enforced gates pass | unchanged | PASS |
 
-Parameter classification (unchanged, §6): **calibrated 0 / fixed 4 / weakly
-identified 0 / unidentified 6**. Nothing is labelled estimated.
+Parameter classification (§6): **calibrated 0 / fixed 8 / weakly identified 0 /
+unidentified 6**. The three interest/fiscal design rules and the input-credit rule are
+fixed structural declarations; nothing is labelled estimated.
 
 ### Steps 1-2 of §12's list (the two candidate levers) are measured and negative
 
@@ -682,7 +683,7 @@ identified 0 / unidentified 6**. Nothing is labelled estimated.
 | Gate 2 calibration / validation complete | **NO** — `linkage = []`, `screen` = `NO_IDENTIFIABLE_PARAMETERS`, `inference_status = NOT_RUN` |
 | F2 validated | **NO** — 4 of the 5 frozen gates fail (liveness, service ratios, treasury, expiry) |
 | structural closure (acceptance gates pass on the replay) | in progress — funding-channel experiment negative, earmark experiment partial/rejected, interest/fiscal plan written |
-| parameter identification for the §10.2 sensitivity funnel | **NO** — `calibrated 0 / fixed 5 / weakly identified 0 / unidentified 6` |
+| parameter identification for the §10.2 sensitivity funnel | **NO** — `calibrated 0 / fixed 8 / weakly identified 0 / unidentified 6`; `linkage = []` |
 | mechanism-card schema M1-M11 | schema and validator present; no cards or verdicts registered |
 | forcing ladder H0-H4 | configured and run on `intermediate8`; H0-H3 pass, H4 misses periodic output tolerance; F2 stays blocked on Track A |
 | Morris / targeted ABC / Sobol | Morris absent, ABC inference unimplemented (`PAIRED_STUDY_NOT_IMPLEMENTED`); only per-axis sweeps exist |

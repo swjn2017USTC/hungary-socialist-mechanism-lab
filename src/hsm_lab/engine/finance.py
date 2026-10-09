@@ -574,6 +574,145 @@ def _execute_wage_payment(
 # ---------------------------------------------------------------------------
 
 
+def _settle_interest_payment(
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    parameters: MaterialParameters,
+    *,
+    org_ids: np.ndarray,
+    safe_bank: np.ndarray,
+    borrower: np.ndarray,
+    interest_paid: np.ndarray,
+) -> None:
+    """Destroy the legacy share and route the declared share to deposits."""
+    paid = np.asarray(interest_paid, dtype=np.float64)
+    paid_by_bank = _masked_bincount(safe_bank, borrower, paid, state.bank_reserves.size)
+    fraction = float(parameters.interest_sink_remittance_fraction)
+    if fraction <= 0.0:
+        state.bank_deposit_liability = (
+            np.asarray(state.bank_deposit_liability, dtype=np.float64) - paid_by_bank
+        )
+        state.bank_interest_receivable = (
+            np.asarray(state.bank_interest_receivable, dtype=np.float64) - paid_by_bank
+        )
+        return
+
+    remitted = paid * fraction
+    remitted_by_bank = _masked_bincount(
+        safe_bank, borrower, remitted, state.bank_reserves.size
+    )
+    state.bank_interest_receivable = (
+        np.asarray(state.bank_interest_receivable, dtype=np.float64) - paid_by_bank
+    )
+    state.bank_equity = (
+        np.asarray(state.bank_equity, dtype=np.float64) - remitted_by_bank
+    )
+    state.bank_deposit_liability = (
+        np.asarray(state.bank_deposit_liability, dtype=np.float64) - paid_by_bank
+    )
+
+    recipient_by_bank = np.zeros_like(remitted_by_bank)
+    total_remitted = float(remitted.sum())
+    if total_remitted > 0.0 and parameters.interest_sink_recipient == "treasury":
+        state.treasury_deposit = float(state.treasury_deposit) + total_remitted
+        recipient_by_bank[0] = total_remitted
+        _append_legs(
+            flows,
+            kind="interest_recipient_deposit",
+            currency=DOMESTIC_CURRENCY,
+            debit=np.asarray(
+                [treasury_account_id(state, AccountKind.CASH_DEPOSIT)], dtype=np.int64
+            ),
+            credit=bank_account_ids(state, AccountKind.DEPOSIT_LIABILITY)[:1],
+            amount=np.asarray([total_remitted]),
+        )
+    elif total_remitted > 0.0:
+        shares = _person_shares(state)
+        receipt = shares * total_remitted
+        state.household_cash = np.asarray(state.household_cash, dtype=np.float64) + receipt
+        represented = np.asarray(state.household_weight, dtype=np.float64) * receipt
+        household_bank = np.asarray(state.household_region, dtype=np.int64) % len(recipient_by_bank)
+        recipient_by_bank += np.bincount(
+            household_bank, weights=represented, minlength=recipient_by_bank.size
+        )
+        positive = represented > 0.0
+        _append_legs(
+            flows,
+            kind="interest_recipient_deposit",
+            currency=DOMESTIC_CURRENCY,
+            debit=household_account_ids(state, AccountKind.CASH_DEPOSIT)[positive],
+            credit=bank_account_ids(state, AccountKind.DEPOSIT_LIABILITY)[
+                household_bank[positive]
+            ],
+            amount=represented[positive],
+        )
+
+    # Interest payment shrinks the payer-bank deposit. Re-credit the recipient
+    # bank and migrate reserves for any cross-bank portion; total deposits fall
+    # only by the explicitly destroyed share.
+    state.bank_deposit_liability = (
+        np.asarray(state.bank_deposit_liability, dtype=np.float64) + recipient_by_bank
+    )
+    migration = recipient_by_bank - remitted_by_bank
+    state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + migration
+    _append_interbank_legs(
+        state,
+        flows,
+        kind="interest_recipient_deposit",
+        delta=migration,
+        leg_offset=0,
+    )
+
+
+def run_fiscal_turnover_remittance(
+    state: MaterialState, flows: MaterialTickFlows, parameters: MaterialParameters
+) -> float:
+    """Transfer a junior share of sales receipts to the Treasury after purchases."""
+    fraction = float(parameters.fiscal_turnover_remittance_fraction)
+    if fraction <= 0.0:
+        return 0.0
+    receipts = np.asarray(flows.organization_sales_receipts, dtype=np.float64)
+    cash = np.asarray(state.organization_cash, dtype=np.float64)
+    paid = np.minimum(fraction * receipts, cash)
+    org_bank, safe_bank, borrower, n_banks = _borrower_axes(state)
+    paid[~borrower] = 0.0
+    positive = paid > 0.0
+    total = float(paid.sum())
+    if total <= 0.0:
+        return 0.0
+    cash[positive] -= paid[positive]
+    state.organization_cash = cash
+    state.treasury_deposit = float(state.treasury_deposit) + total
+    by_bank = _masked_bincount(safe_bank, borrower, paid, n_banks)
+    delta = -by_bank
+    delta[0] += total
+    state.bank_deposit_liability = (
+        np.asarray(state.bank_deposit_liability, dtype=np.float64) + delta
+    )
+    state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + delta
+    _append_legs(
+        flows,
+        kind="fiscal_turnover_remittance",
+        currency=DOMESTIC_CURRENCY,
+        debit=np.full(
+            int(np.count_nonzero(positive)),
+            treasury_account_id(state, AccountKind.CASH_DEPOSIT),
+            dtype=np.int64,
+        ),
+        credit=organization_account_ids(state, AccountKind.CASH_DEPOSIT)[positive],
+        amount=paid[positive],
+        organization_ids=np.asarray(state.organization_id, dtype=np.int64)[positive],
+    )
+    _append_interbank_legs(
+        state,
+        flows,
+        kind="fiscal_turnover_remittance",
+        delta=delta,
+        leg_offset=0,
+    )
+    return total
+
+
 def run_domestic_finance_step(
     state: MaterialState,
     flows: MaterialTickFlows,
@@ -802,26 +941,47 @@ def run_domestic_finance_step(
     interest_paid = np.minimum(cash, interest_arrears_open + interest_due)
     cash -= interest_paid
     state.organization_interest_arrears = interest_arrears_open + interest_due - interest_paid
-    interest_paid_by_bank = _masked_bincount(
-        safe_bank, borrower & (interest_paid > 0.0), interest_paid, n_banks
-    )
-    state.bank_deposit_liability = (
-        np.asarray(state.bank_deposit_liability, dtype=np.float64) - interest_paid_by_bank
-    )
-    state.bank_interest_receivable = (
-        np.asarray(state.bank_interest_receivable, dtype=np.float64) - interest_paid_by_bank
-    )
+    interest_paid_mask = borrower & (interest_paid > 0.0)
+    if float(parameters.interest_sink_remittance_fraction) == 0.0:
+        interest_paid_by_bank = _masked_bincount(
+            safe_bank, interest_paid_mask, interest_paid, n_banks
+        )
+        state.bank_deposit_liability = (
+            np.asarray(state.bank_deposit_liability, dtype=np.float64) - interest_paid_by_bank
+        )
+        state.bank_interest_receivable = (
+            np.asarray(state.bank_interest_receivable, dtype=np.float64) - interest_paid_by_bank
+        )
+        _append_paired_transactions(
+            flows,
+            kind="interest_payment",
+            amounts=interest_paid,
+            org_ids=org_ids,
+            first_debit=org_interest_payable_ids,
+            first_credit=org_cash_ids,
+            second_debit=bank_deposit_liability_ids[safe_bank],
+            second_credit=bank_interest_receivable_ids[safe_bank],
+        )
+    else:
+        _append_legs(
+            flows,
+            kind="interest_payment",
+            currency=DOMESTIC_CURRENCY,
+            debit=org_interest_payable_ids[interest_paid_mask],
+            credit=org_cash_ids[interest_paid_mask],
+            amount=interest_paid[interest_paid_mask],
+            organization_ids=org_ids[interest_paid_mask],
+        )
+        _settle_interest_payment(
+            state,
+            flows,
+            parameters,
+            org_ids=org_ids,
+            safe_bank=safe_bank,
+            borrower=borrower,
+            interest_paid=interest_paid,
+        )
     flows.organization_interest_paid = interest_paid.copy()
-    _append_paired_transactions(
-        flows,
-        kind="interest_payment",
-        amounts=interest_paid,
-        org_ids=org_ids,
-        first_debit=org_interest_payable_ids,
-        first_credit=org_cash_ids,
-        second_debit=bank_deposit_liability_ids[safe_bank],
-        second_credit=bank_interest_receivable_ids[safe_bank],
-    )
 
     # --- scheduled principal repayment (unpaid stays, never capitalized) -
     # Repayment is junior to this quarter's input funding: it uses only cash
@@ -1061,25 +1221,46 @@ def run_bailout_step(
     )
     flows.household_cash_close = np.asarray(flows.household_cash_close, dtype=np.float64) + receipt
     _execute_wage_payment(state, flows, org_paid=wage_pay, household_receipt=receipt)
-    interest_paid_by_bank = _masked_bincount(
-        safe_bank, borrower & (interest_pay > 0.0), interest_pay, n_banks
-    )
-    state.bank_deposit_liability = (
-        np.asarray(state.bank_deposit_liability, dtype=np.float64) - interest_paid_by_bank
-    )
-    state.bank_interest_receivable = (
-        np.asarray(state.bank_interest_receivable, dtype=np.float64) - interest_paid_by_bank
-    )
-    _append_paired_transactions(
-        flows,
-        kind="interest_payment",
-        amounts=interest_pay,
-        org_ids=org_ids,
-        first_debit=organization_account_ids(state, AccountKind.INTEREST_PAYABLE),
-        first_credit=org_cash_ids,
-        second_debit=bank_account_ids(state, AccountKind.DEPOSIT_LIABILITY)[safe_bank],
-        second_credit=bank_account_ids(state, AccountKind.INTEREST_RECEIVABLE)[safe_bank],
-    )
+    interest_pay_mask = borrower & (interest_pay > 0.0)
+    if float(parameters.interest_sink_remittance_fraction) == 0.0:
+        interest_paid_by_bank = _masked_bincount(
+            safe_bank, interest_pay_mask, interest_pay, n_banks
+        )
+        state.bank_deposit_liability = (
+            np.asarray(state.bank_deposit_liability, dtype=np.float64) - interest_paid_by_bank
+        )
+        state.bank_interest_receivable = (
+            np.asarray(state.bank_interest_receivable, dtype=np.float64) - interest_paid_by_bank
+        )
+        _append_paired_transactions(
+            flows,
+            kind="interest_payment",
+            amounts=interest_pay,
+            org_ids=org_ids,
+            first_debit=organization_account_ids(state, AccountKind.INTEREST_PAYABLE),
+            first_credit=org_cash_ids,
+            second_debit=bank_account_ids(state, AccountKind.DEPOSIT_LIABILITY)[safe_bank],
+            second_credit=bank_account_ids(state, AccountKind.INTEREST_RECEIVABLE)[safe_bank],
+        )
+    else:
+        _append_legs(
+            flows,
+            kind="interest_payment",
+            currency=DOMESTIC_CURRENCY,
+            debit=organization_account_ids(state, AccountKind.INTEREST_PAYABLE)[interest_pay_mask],
+            credit=org_cash_ids[interest_pay_mask],
+            amount=interest_pay[interest_pay_mask],
+            organization_ids=org_ids[interest_pay_mask],
+        )
+        _settle_interest_payment(
+            state,
+            flows,
+            parameters,
+            org_ids=org_ids,
+            safe_bank=safe_bank,
+            borrower=borrower,
+            interest_paid=interest_pay,
+        )
 
     rescued_fraction = np.divide(grant, request, out=np.zeros_like(grant), where=request > 0.0)
     alpha = float(parameters.bailout_alpha)

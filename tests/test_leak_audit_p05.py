@@ -42,6 +42,7 @@ def test_money_definition_counts_the_fund_only_once() -> None:
 def test_money_identity_distinguishes_neutral_credit_and_interest_sink() -> None:
     assert money_flow_residual(100, 127, 40, 10, 3, neutral=False) == 0.0
     assert money_flow_residual(100, 97, 40, 10, 3, neutral=True) == 0.0
+    assert money_flow_residual(100, 130, 40, 10, 3, neutral=False, remitted=3) == 0.0
 
 
 def test_observer_preserves_eight_tick_replay_and_closes_every_circuit(tmp_path) -> None:
