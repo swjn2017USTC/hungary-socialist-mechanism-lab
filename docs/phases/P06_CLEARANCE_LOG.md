@@ -385,3 +385,10 @@ into the target-loading path (audit finding R4).
 - Change: created the five prescribed one-shot 1968Q1 political counterfactual files (coalition weights, Soviet constraint, consumer imports, cultural openness, second-economy tolerance) with declared-counterfactual provenance. Every item validates. No arm was run because no compatible political checkpoint exists; no policy path, outcomes or replay digest are fabricated. Verdict ceilings remain CONDITIONAL/UNIDENTIFIED.
 - Check: `.venv/bin/python` validation of all five files using `InterventionSpec.model_validate` → valid; all available checkpoint probes refuse the legacy v3 format.
 - Commit: `46978847f4ab982b3409d8db061909a51d351ebf`.
+
+## 2026-10-10 — W8 uncertainty spread, target-window enforcement, bundle CLI, final report — PASS WITH W5–W7 OPEN
+
+- Evidence: `docs/phases/P06_FINAL_REPORT.md`, `docs/phases/P06_RUN_REPORT.md`, `outputs/p06-clearance/pytest.json`, `outputs/p06-w8-seedbank/seedbank.json`, updated checklist `docs/phases/P06_CLEARANCE.md`.
+- Change: enforced hold-out/reserved refusal in DataRegistry target loading (with non-numeric hold-out manifest read-back); added CLI bundle assembly and replay verification; added seed overrides to OAT/Morris; retained prior clearance digest output by using a unique run directory; reported per-point OAT and Morris replication spread across seeds 1729/1730/1731. No defaults, frozen gates, calibration status, or parameter identification changed.
+- Check: `.venv/bin/ruff check src tests` → clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → 404 passed; `.venv/bin/hsm calibration p06-clearance --with-runs --json` → 19 PASS / 4 WAIVED / 3 OPEN, exit 1. Fresh legacy replay digest matches `92f9ea0a…`; 94 recorded runs end by 1985Q4. OPEN items are W5 1968 runs, W6 1973 runs, W7 political runs, blocked by incompatible v3 checkpoints and v4 loader.
+- Main implementation/report commit: `e746afb`.
