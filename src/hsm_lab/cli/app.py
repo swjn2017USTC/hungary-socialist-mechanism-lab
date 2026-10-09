@@ -505,6 +505,29 @@ def calibration_axis_sweep(
     _guard(action, json_mode)
 
 
+@calibration_app.command("audit-leak")
+def calibration_audit_leak(
+    output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
+    until: str | None = typer.Option(None, "--until", help="Inclusive stop quarter YYYYQn."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Observe the unchanged P05 baseline's money and commodity circuits."""
+
+    def action() -> None:
+        from hsm_lab.calibration.leak_audit import run_leak_audit
+        from hsm_lab.data.registry import DataRegistry
+
+        root = _repo_root()
+        contract = load_research_contract(root)
+        spec = load_scenario(root, "historical_f2_replay")
+        registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
+        target = _fresh_output_dir(output_dir, "p05-leak-audit")
+        payload = run_leak_audit(spec, contract, registry, output_dir=target, until=until)
+        _emit(payload, json_mode, [f"Circuit observations: {target}"])
+
+    _guard(action, json_mode)
+
+
 @data_app.command("audit")
 def data_audit(
     online: bool = typer.Option(False, "--online", help="HEAD-check metadata locators."),
