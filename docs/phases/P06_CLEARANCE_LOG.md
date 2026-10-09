@@ -378,3 +378,10 @@ into the target-loading path (audit finding R4).
 - Change: created all five Annex B intervention files with effective quarter 1973Q1, no end quarter and declared-counterfactual provenance. All intervention items validate against the existing `InterventionSpec` schema. No simulation was run because no compatible pre-shock political checkpoint/full-window intervention runner is available; no arm metrics or run hashes are claimed. M6/M10 remain unresolved and capped by the unidentified external-recipe block.
 - Check: `.venv/bin/python` validation of all five `1973-*.json` files with `InterventionSpec.model_validate` → valid. Run prerequisite: W5 checkpoint probes all refuse v3 checkpoints in the current v4 loader.
 - Commit: `964291cc56e345a6961a25c97939825a4e116084`.
+
+## 2026-10-10 — W7 political counterfactuals — OPEN (INTERVENTIONS REGISTERED)
+
+- Evidence: `config/interventions/p06-political-*.json`, `docs/phases/P06_POLITICAL_COUNTERFACTUAL.md`.
+- Change: created the five prescribed one-shot 1968Q1 political counterfactual files (coalition weights, Soviet constraint, consumer imports, cultural openness, second-economy tolerance) with declared-counterfactual provenance. Every item validates. No arm was run because no compatible political checkpoint exists; no policy path, outcomes or replay digest are fabricated. Verdict ceilings remain CONDITIONAL/UNIDENTIFIED.
+- Check: `.venv/bin/python` validation of all five files using `InterventionSpec.model_validate` → valid; all available checkpoint probes refuse the legacy v3 format.
+- Commit: `46978847f4ab982b3409d8db061909a51d351ebf`.
