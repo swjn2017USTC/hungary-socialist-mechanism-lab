@@ -3,8 +3,11 @@
 **Status: measured partial result; do not adopt the parameter.** This is a structural
 experiment, not a calibration or validation claim. Six predeclared arms ran on the
 historical F2 replay for 116 ticks, ending at 1985Q4. The read-only audit sidecars and
-compact outputs are under `outputs/p05-input-credit-arms-r1/`; all arms passed the
-existing per-tick accounting checks without a new residual.
+compact outputs are under `outputs/p05-input-credit-arms-final/` (an earlier round,
+kept only as `outputs/p05-input-credit-arms-SUPERSEDED-r1/`, has different digests and
+must not be cited); every number below reproduces from `-final` and from
+`hsm calibration axis-sweep --axis input_credit_earmark_fraction --points 0,0.25,0.5,1.0`.
+All arms passed the existing per-tick accounting checks without a new residual.
 
 ## Phase gates and reproducibility
 
@@ -59,6 +62,38 @@ household spending (939,400 vs 735,344), and total unmet availability (2,629,884
 A3, arrears and unmet availability also fall and spending rises, but closing household
 cash falls to 9,564,511 and the g15/g16 realized-to-funded service ratios decline relative
 to baseline. These movements do not remove the frozen service and expiry failures.
+
+## Independent re-analysis of the terminal state (reviewer, this session)
+
+The arm table's gate and mechanism numbers were reproduced independently
+(`hsm calibration axis-sweep --axis input_credit_earmark_fraction --points 0,0.25,0.5,1.0`):
+identical liveness (0.1116 / 0.0566 / 0.0289 / 0.0471), identical expiry tails and
+identical treasury-zero ticks. The arm artifacts in `-final` reproduce the table's
+mechanism columns exactly.
+
+One reading deserves to be stated next to the table, because the ratio can mislead:
+
+| arm | production first-10 | production last-10 | liveness | delivered (run) | expiry (run) |
+|---|---:|---:|---:|---:|---:|
+| A0 | 251 656 | 28 074 | .1116 | 2 792 558 | 2 799 244 |
+| A1 | 319 911 | 18 114 | .0566 | 3 494 892 | 2 917 379 |
+| A2 | 330 511 | 9 538 | .0289 | 4 228 947 | 2 989 416 |
+| A3 | 344 287 | 16 209 | .0471 | 5 557 339 | 4 094 202 |
+| N1 | 340 908 | 13 500 | .0396 | 5 136 457 | 3 926 854 |
+
+Earmarking roughly **doubles delivered goods** and raises expiry by up to 46% while
+credit drawn is flat (15.07M → 15.06M) and interest paid moves only 6.6%, yet the
+terminal (last-10) level does not improve and household consumption at the terminal
+window falls (1 668 → 1 115-1 683). So the fall in liveness is **not** a denominator
+artefact alone: the system front-loads activity out of its stocks and still converges
+to a collapsed terminal state. Two consequences for the next experiment:
+
+1. the funding channel is **not** the binding constraint - three different funding
+   rules leave the terminal level in the same low band; and
+2. `liveness = last10 / first10` is a *shape* metric that penalises policies which
+   start higher. The frozen gate set should gain a **terminal-level** criterion
+   (for example absolute last-10 production and terminal household consumption
+   against a declared floor) before another structural arm is judged by it.
 
 ## Hypothesis verdicts and decision
 

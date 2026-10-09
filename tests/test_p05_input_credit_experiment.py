@@ -7,6 +7,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
+from hsm_lab.contract.guards import load_scenario
 from hsm_lab.contract.material import MaterialParameters
 from hsm_lab.engine import finance
 from tests.test_material_finance import _credit_grant_fixture
@@ -27,6 +28,31 @@ def test_earmark_is_an_explicit_bounded_parameter_with_a_legacy_zero() -> None:
     )
     with pytest.raises(ValidationError):
         MaterialParameters(input_credit_earmark_fraction=1.01)
+
+
+def test_legacy_replay_digest_survives_the_default_zero_parameter() -> None:
+    """A zero earmark is omitted from the effective parameter vector.
+
+    The per-tick replay chain seeds from the parameter hash, so declaring a new
+    parameter would otherwise invalidate every recorded legacy digest even though a
+    zero earmark is a no-op.  This contract is what Phase 0 of the experiment plan
+    rests on, so it is pinned here: zero is dropped, any nonzero value is hashed.
+    """
+
+    from hsm_lab.engine.material import material_parameter_vector
+
+    spec = load_scenario(ROOT, "historical_f2_replay")
+    legacy = material_parameter_vector(spec)
+    assert "input_credit_earmark_fraction" not in legacy
+
+    armed = spec.model_copy(
+        update={
+            "material_parameters": spec.material_parameters.model_copy(
+                update={"input_credit_earmark_fraction": 0.25}
+            )
+        }
+    )
+    assert material_parameter_vector(armed)["input_credit_earmark_fraction"] == 0.25
 
 
 def test_earmark_registry_classifies_a_structural_design_rule_as_fixed() -> None:
