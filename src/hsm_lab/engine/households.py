@@ -380,7 +380,15 @@ def form_household_demand(
         desired[:, channel] = base[channel] * equivalent * light_factor * lux_mult
     personal_factor = 1.0 + demand.personal_income_elasticity * z
     for channel in catalog.channels("personal"):
-        desired[:, channel] = base[channel] * equivalent * personal_factor * lux_mult
+        desired[:, channel] = base[channel] * equivalent * personal_factor
+    # Public services get the declared flat per-equivalent-person base, like
+    # basic food: they are an entitlement rather than a luxury channel.  Without
+    # this branch the channel carried zero demand for every household, so the
+    # whole g16 pipeline (desired -> ordered -> allocated -> delivered) stayed at
+    # zero while producers still produced against capacity.
+    if "public" in catalog.role_channels:
+        for channel in catalog.channels("public"):
+            desired[:, channel] = base[channel] * equivalent * lux_mult
     # durable channels carry a flat declared base (aspiration demand is added by
     # the stock module); protected minima never multiply the luxury channels.
     for durable_channel in catalog.durable_h_index:

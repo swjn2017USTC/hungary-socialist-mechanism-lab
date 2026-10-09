@@ -341,3 +341,39 @@ def test_population_scaling_conserves_margins() -> None:
             assert np.allclose(margins["region_persons"], reference["region_persons"])
             assert margins["urban"] == pytest.approx(reference["urban"])
             assert np.allclose(margins["occupation"], reference["occupation"])
+
+
+def test_public_service_channel_carries_declared_base_demand() -> None:
+    """The F2 basket declares public_services, so g16 must not stay at zero demand."""
+    from pathlib import Path
+
+    import numpy as np
+
+    from hsm_lab.contract.guards import load_research_contract, load_scenario
+    from hsm_lab.engine.households import form_household_demand
+    from hsm_lab.engine.initial import build_material_initial_conditions
+    from hsm_lab.engine.network import build_material_network
+    from hsm_lab.engine.rng import RngRegistry
+    from hsm_lab.engine.state import initialize_material
+
+    root = Path(__file__).resolve().parents[1]
+    spec = load_scenario(root, "historical_f2_replay")
+    initial = build_material_initial_conditions(spec, RngRegistry(spec.seed))
+    network = build_material_network(spec, load_research_contract(root), initial)
+    state = initialize_material(spec, initial, network)
+    catalog = network.household_catalog
+    assert "public" in catalog.role_channels
+    public = catalog.channels("public")[0]
+    desired = form_household_demand(state, network.household_parameters, catalog)
+    assert desired.shape[1] == len(catalog.household_good_ids)
+    assert bool(np.all(desired[:, public] > 0.0)), "public services still carry zero demand"
+
+
+def test_axes_without_a_public_role_are_untouched() -> None:
+    import numpy as np
+
+    from hsm_lab.contract.households import INTERMEDIATE8_AXIS
+
+    assert "public" not in INTERMEDIATE8_AXIS.role_channels
+    # the guard is a membership test, so no KeyError is raised for these axes
+    assert np.all(np.isfinite(INTERMEDIATE8_AXIS.quota_share))
