@@ -525,14 +525,23 @@ their allocation. The transport sector itself is not idle (its realized output i
 ~88% of target over the first ticks, 159 849 of 164 423), so the pool is simply
 too small for the freight the economy's flows demand.
 
-Three measurements pin this down:
+Measurements that pin this down:
 
 * scaling `WHOLESALE_HANDLING_TOTAL`/`RETAIL_HANDLING_TOTAL` by x2, x4 and x8
   changes nothing (physical blocked stays 6.65 M, ratio 0.1116) — handling is not
   the ceiling;
-* the ceiling is therefore the transport sector's own realization, which is
-  limited by the **opening input cover** of the carriers — the P02 transport
-  fuel-cover blocker, resurfacing at the delivery step.
+* the ceiling is the transport logistics pool — `_group_factor(transport_need,
+  logistics_pool)` at `material.py:1351`;
+* **correction (this section's own earlier hypothesis was wrong).** An interim
+  reading blamed the carriers' opening input cover, quoting "capacity 128 000 but
+  only ~730 units realised". That number came from summing the early-service input
+  cells of *every* early-service activity — which mixes the 8 transport
+  organisations with 50 industrial-SOE and 20 bank activities. Measured directly on
+  the 8 transport organisations: capacity 60 000, target 54 000, **realised
+  54 000** at tick 0, with several quarters of inputs seeded (their input
+  requirement is 0.052 per unit of output). Transport is not input-starved. What
+  binds is the ratio of the pool to the freight the goods flows demand
+  (pool/need ~0.54 at the declared capacity, §E6).
 
 This also closes a diagnostic hole: before this change nothing in the ledger
 recorded `allocated -> candidate` at all, so `financial_delivery_blocked = 0` was
