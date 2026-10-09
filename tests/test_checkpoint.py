@@ -56,6 +56,7 @@ def _invariant_dict(fixture: Fixture, opening, flows) -> dict[str, Any]:
         "max_finance_tolerance_ratio": float(summary.max_finance_tolerance_ratio),
         "checked_cells": int(summary.checked_cells),
         "per_ledger": dict(summary.per_ledger),
+        "expired_leftover_by_cell": summary.expired_leftover_by_cell,
         "forcing_segment": "synthetic_warmup",
         "treasury_deposit_open": float(opening.treasury_deposit),
         "bank_reserves_open": [float(v) for v in opening.bank_reserves],

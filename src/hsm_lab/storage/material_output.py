@@ -30,7 +30,7 @@ Derivation rules (documented choices beyond the plan/interface text):
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any, cast
 
@@ -40,12 +40,12 @@ import polars as pl
 from hsm_lab.contract.base import ResearchGateError
 from hsm_lab.contract.material import (
     ORGANIZATION_TYPE_ORDER,
-    P02_COMMODITY_SPECS,
     PURPOSE_CODES,
     STAGE_CODES,
     CellOwnerKind,
     MaterialParameters,
     RoutePurpose,
+    commodity_spec,
     legal_stages,
 )
 from hsm_lab.engine.state import (
@@ -277,7 +277,14 @@ DEPARTMENT_ROWS = (
 ORGANIZATION_TYPE_IDS = tuple(t.value for t in ORGANIZATION_TYPE_ORDER)
 
 _STAGE_NAME_OF = {code: name for name, code in STAGE_CODES.items()}
-_STOCKABLE_BY_ID = {spec.id: spec.stockable for spec in P02_COMMODITY_SPECS}
+def stockable_by_commodity(commodity_ids: Sequence[str]) -> np.ndarray:
+    """Stockability per commodity, read from the declared registry.
+
+    Never defaults an unknown commodity to stockable: an undeclared id is a
+    configuration error, and silently treating a service as storable is exactly
+    how F2's published expiry column became a structural zero.
+    """
+    return np.array([commodity_spec(commodity_id).stockable for commodity_id in commodity_ids])
 
 _KIND_ORG = owner_kind_code(CellOwnerKind.ORGANIZATION)
 _KIND_PLOT = owner_kind_code(CellOwnerKind.PLOT)
@@ -463,8 +470,9 @@ class _CellLedger:
 
         # non-stockable commodities never carry persistent stock
         self.non_stockable = np.zeros(cell_count, dtype=bool)
-        for g, commodity in enumerate(commodity_ids):
-            if not _STOCKABLE_BY_ID.get(commodity, True):
+        stockable = stockable_by_commodity(commodity_ids)
+        for g in range(len(commodity_ids)):
+            if not stockable[g]:
                 self.non_stockable |= self.cell_commodity == g
         self.closing_view = np.where(self.non_stockable, 0.0, self.closing)
         self.opening = np.where(self.non_stockable, 0.0, self.opening)
@@ -545,11 +553,27 @@ def append_material_rows(
         opening_stock=opening_stock,
     )
 
+    expired_leftover = invariant_summary.get("expired_leftover_by_cell")
+    if expired_leftover is None:
+        raise ResearchGateError(
+            "invariant_summary lacks the kernel's per-cell expiry sink "
+            "(expired_leftover_by_cell); the publisher never re-derives expiry from a "
+            "lighter ledger, which misses non-stockable opening stock and clips"
+        )
+    expired_leftover = np.asarray(expired_leftover, dtype=np.float64)
+    if expired_leftover.shape != (ledger.cell_count,):
+        raise ResearchGateError(
+            f"kernel expiry sink shape {expired_leftover.shape} != "
+            f"({ledger.cell_count},) closing cells"
+        )
+
     _append_aggregate_rows(
         history, state, flows, network, ledger, tick, quarter, region_ids, commodity_ids
     )
     _append_stage_rows(history, ledger, tick, quarter, region_ids, commodity_ids)
-    _append_national_rows(history, state, flows, ledger, tick, quarter, commodity_ids)
+    _append_national_rows(
+        history, state, flows, ledger, tick, quarter, commodity_ids, expired_leftover
+    )
     _append_budget_rows(history, state, flows, tick, quarter, region_ids)
     _append_organization_rows(history, state, flows, network, ledger, tick, quarter, region_ids)
     _append_financial_rows(history, state, flows, tick, quarter, invariant_summary)
@@ -666,21 +690,7 @@ def _append_stage_rows(
     )
     grid_size = (regions + 1) * commodities * 10
 
-    stockable_commodity = np.array([_STOCKABLE_BY_ID.get(c, True) for c in commodity_ids])
-    is_services_cell = ~stockable_commodity[ledger.cell_commodity]
-    expiry = np.where(
-        is_services_cell,
-        ledger.opening
-        + ledger.production
-        + ledger.delivered_in
-        + ledger.imports
-        - ledger.used
-        - ledger.delivered_out
-        - ledger.retail_out
-        - ledger.plot_out
-        - ledger.closing_view,
-        0.0,
-    )
+    expiry = _ledger_expiry_by_cell(ledger, commodity_ids)
     views = {
         "opening": ledger.opening,
         "closing": ledger.closing_view,
@@ -730,6 +740,32 @@ def _append_stage_rows(
             )
 
 
+def _ledger_expiry_by_cell(ledger: _CellLedger, commodity_ids: Sequence[str]) -> np.ndarray:
+    """Ledger-consistent expiry for the stage/regional grid.
+
+    This is a *reconstruction* from the lighter cell ledger: it cannot see the
+    non-stockable opening boundary or the same-quarter pool terms, so it is
+    within a few percent of (never above) the kernel sink and it keeps the stage
+    residual identity self-consistent.  The exact kernel sink is published in
+    ``national_accounts.expiry``, which is what the frozen expiry gate reads.
+    """
+    stockable = stockable_by_commodity(commodity_ids)
+    is_service_cell = ~stockable[ledger.cell_commodity]
+    return np.where(
+        is_service_cell,
+        ledger.opening
+        + ledger.production
+        + ledger.delivered_in
+        + ledger.imports
+        - ledger.used
+        - ledger.delivered_out
+        - ledger.retail_out
+        - ledger.plot_out
+        - ledger.closing_view,
+        0.0,
+    )
+
+
 def _append_national_rows(
     history: MaterialHistory,
     state: MaterialState,
@@ -738,18 +774,17 @@ def _append_national_rows(
     tick: int,
     quarter: str,
     commodity_ids: list[str],
+    expired_leftover: np.ndarray,
 ) -> None:
     commodities = len(commodity_ids)
     household_consumption = _household_region_sums(
         state, flows.household_realized, ledger.regions
     ).sum(axis=0)
-    stockable_commodity = np.array([_STOCKABLE_BY_ID.get(c, True) for c in commodity_ids])
-    expiry = np.where(
-        stockable_commodity,
-        0.0,
-        np.asarray(flows.expired_services, dtype=np.float64)
-        if np.ndim(flows.expired_services) > 0
-        else float(flows.expired_services),
+    # Expiry per commodity is the kernel's own sink, aggregated.  The scalar
+    # ``flows.expired_services`` is one number for the whole economy and must
+    # never be broadcast across commodities.
+    expiry = np.bincount(
+        ledger.cell_commodity, weights=expired_leftover, minlength=commodities
     )
     residual = (
         np.asarray(flows.material_balance_residual, dtype=np.float64)

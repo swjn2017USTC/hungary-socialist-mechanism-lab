@@ -2846,6 +2846,7 @@ def run_material(
                 "max_finance_tolerance_ratio": float(invariant_summary.max_finance_tolerance_ratio),
                 "checked_cells": int(invariant_summary.checked_cells),
                 "per_ledger": dict(invariant_summary.per_ledger),
+                "expired_leftover_by_cell": invariant_summary.expired_leftover_by_cell,
                 "forcing_segment": str(forcing.segment[expected_tick]),
                 "treasury_deposit_open": float(opening.treasury_deposit),
                 "bank_reserves_open": [float(v) for v in opening.bank_reserves],

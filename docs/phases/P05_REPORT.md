@@ -478,13 +478,17 @@ The regional certificate said only ~842 units need to move between regions, so t
 next question was whether the kernel moves them. It does, but far too little, and
 the loss is systemic rather than regional:
 
-| ledger step, ticks 2-11 (all commodities) | units | share |
-|---|---|---|
-| ordered (retail/admin orders) | 1 107 726 | 100% |
-| allocated | 9 441 356 | — |
-| delivered | 2 792 558 | 30% of allocated |
-| **physical_delivery_blocked** | **6 648 452** | **70% of allocated** |
-| financial_delivery_blocked | 346 | 0.004% |
+| all commodities | ticks 2-11 | whole run (0-115) |
+|---|---:|---:|
+| ordered (retail/admin orders) | 1 217 109 | 12 954 527 |
+| allocated | 1 036 316 | 9 441 356 |
+| delivered | 665 743 | 2 792 558 |
+| **physical_delivery_blocked** | **370 336** (36% of allocated) | **6 648 452** (70%) |
+| financial_delivery_blocked | 236 | 346 |
+
+An earlier version of this table labelled the whole-run totals "ticks 2-11" and
+read `allocated > ordered` as a runtime over-allocation; in the correct window
+allocation is below orders, so that was a window-labelling error, not a leak.
 
 Ordering is not the problem (`desired ~ ordered`, `financial_delivery_blocked`
 is negligible). The kernel already moves goods across regions (g10 `ready`-stage

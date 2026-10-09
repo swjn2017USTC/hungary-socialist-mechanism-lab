@@ -9,6 +9,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
+import polars as pl
+
 from hsm_lab.contract.guards import load_research_contract, load_scenario
 from hsm_lab.contract.material import (
     F2_CATALOG,
@@ -203,3 +206,37 @@ def test_reconstruction_fails_without_mandatory_anchors(tmp_path) -> None:
     payload = reconstruct_p05(tmp_path, config=ROOT / "config" / "calibration" / "p05.json")
     assert payload["status"] == "MISSING_MANDATORY_ANCHORS"
     assert payload["declared_anchors"] == 0
+
+
+def test_f2_published_expiry_is_the_kernel_sink(tmp_path) -> None:
+    """The published per-commodity expiry is the kernel's own expiry sink.
+
+    Regression: the publisher resolved stockability from the P02-only commodity
+    registry and defaulted every unknown id to stockable, so all three F2 service
+    commodities reported zero expiry (2.8 M units hidden) and the frozen expiry
+    gate could not be evaluated from the published artifacts at all.
+    """
+
+    from hsm_lab.data.registry import DataRegistry
+    from hsm_lab.engine.material import run_material
+
+    spec = load_scenario(ROOT, "historical_f2_replay")
+    contract = load_research_contract(ROOT)
+    registry = DataRegistry.load(ROOT, allowed_commodities=spec.commodities)
+    run_material(spec, tmp_path / "run", contract, registry, until="1958Q4")
+
+    national = pl.read_parquet(tmp_path / "run" / "national_accounts.parquet")
+    services = {"g03_electricity_heat", "g15_market_services", "g16_housing_public_services"}
+    assert set(national.filter(pl.col("expiry") > 0)["commodity_id"].unique().to_list()) == services
+
+    diagnostics = pl.read_parquet(tmp_path / "run" / "tick_diagnostics.parquet").sort("tick")
+    per_tick = (
+        national.group_by("tick").agg(pl.col("expiry").sum()).sort("tick")["expiry"].to_numpy()
+    )
+    assert np.allclose(per_tick, diagnostics["expired_services"].to_numpy(), atol=1e-6)
+
+    # The stage grid carries a ledger-consistent reconstruction with its own
+    # residual identity, so it is not asserted equal to the kernel sink; it must
+    # nevertheless report the same three commodities instead of a structural zero.
+    stage = pl.read_parquet(tmp_path / "run" / "stage_balances.parquet")
+    assert set(stage.filter(pl.col("expiry") > 0)["commodity_id"].unique().to_list()) == services

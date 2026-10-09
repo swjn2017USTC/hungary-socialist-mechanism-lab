@@ -803,6 +803,13 @@ class InvariantSummary:
     max_finance_tolerance_ratio: float
     checked_cells: int
     per_ledger: dict[str, tuple[float, float]] = field(default_factory=dict)
+    # Exact expiry sink the kernel applied this tick, per stock cell.  It is the
+    # authoritative per-commodity/per-region split of ``flows.expired_services``
+    # and the only source publishers may use: re-deriving it from a lighter
+    # ledger misses the non-stockable opening stock and clips per cell.
+    expired_leftover_by_cell: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.float64)
+    )
 
 
 def _sweep_flows(flows: MaterialTickFlows, quarter: str) -> None:
@@ -2131,6 +2138,7 @@ def check_material_invariants(
         max_finance_tolerance_ratio=max_finance_ratio,
         checked_cells=S,
         per_ledger=per_ledger,
+        expired_leftover_by_cell=np.asarray(continuity.services_leftover, dtype=np.float64).copy(),
     )
 
 
