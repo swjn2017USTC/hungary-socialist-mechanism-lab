@@ -196,7 +196,6 @@ def _finite(name: str, *arrays: np.ndarray) -> None:
         _require(bool(np.all(np.isfinite(array))), f"{name} carries non-finite values")
 
 
-
 def _leontief_activity_cap(network: Any, final_demand: np.ndarray) -> np.ndarray:
     """Per-activity gross-output ceiling from (I - M) x = d (P05 §0.6).
 
@@ -241,6 +240,7 @@ def _leontief_activity_cap(network: Any, final_demand: np.ndarray) -> np.ndarray
     cap = np.full(activity_count, np.inf, dtype=np.float64)
     cap[valid0] = gross[out_g[valid0]] * weight[valid0]
     return cap
+
 
 def _group_factor(need: np.ndarray, capacity: np.ndarray) -> np.ndarray:
     """``min(1, capacity / need)``; zero-need groups pass untouched."""
@@ -618,9 +618,7 @@ def tick_material(
     wholesale_wage = float(parameters.wage_rate) * float(
         labor_arr[org_type_arr == _CODE_WHOLESALE].sum()
     )
-    retail_wage = float(parameters.wage_rate) * float(
-        labor_arr[org_type_arr == _CODE_RETAIL].sum()
-    )
+    retail_wage = float(parameters.wage_rate) * float(labor_arr[org_type_arr == _CODE_RETAIL].sum())
     wholesale_work = float(handling_capacity[org_type_arr == _CODE_WHOLESALE].sum())
     retail_work = float(handling_capacity[org_type_arr == _CODE_RETAIL].sum())
     margin_w = wholesale_wage / wholesale_work if wholesale_work > 0.0 else 0.0
@@ -1083,7 +1081,7 @@ def tick_material(
     wage_bill_open = float(parameters.wage_rate) * np.asarray(
         state.organization_labor_available, dtype=np.float64
     )
-    finance.run_domestic_finance_step(
+    finance_result = finance.run_domestic_finance_step(
         state,
         flows,
         parameters,
@@ -1093,7 +1091,7 @@ def tick_material(
         new_investment_request_cost=new_investment_request_cost,
         transaction_base=0,
     )
-    cash_for_goods = np.asarray(state.organization_cash, dtype=np.float64).copy()
+    cash_for_goods = np.asarray(finance_result["cash_available_for_goods"], dtype=np.float64).copy()
     _phase("finance")
 
     # Purpose-priority cash scaling: inputs (incl. freight) first, then the
@@ -1113,9 +1111,7 @@ def tick_material(
             scale = min(1.0, float(state.credit_fund) / float(gap.sum()))
             extra = gap * scale
             state.credit_fund = float(state.credit_fund) - float(extra.sum())
-            state.organization_cash = (
-                np.asarray(state.organization_cash, dtype=np.float64) + extra
-            )
+            state.organization_cash = np.asarray(state.organization_cash, dtype=np.float64) + extra
             cash_for_goods = cash_for_goods + extra
     investment = finance.plan_investment(
         state,
@@ -1190,8 +1186,13 @@ def tick_material(
     # insolvent: it pays wages for services the route graph never buys.
     edge_self_hauled_flag = np.asarray(network.edge_self_hauled, dtype=bool)
     non_self_haul = (~edge_self_hauled_flag) & (edge_transport >= 0)
-    certified_work = float(np.sum(ordered[edge_demand[non_self_haul]] * edge_weight[non_self_haul]
-                                  * edge_per_unit[non_self_haul]))
+    certified_work = float(
+        np.sum(
+            ordered[edge_demand[non_self_haul]]
+            * edge_weight[non_self_haul]
+            * edge_per_unit[non_self_haul]
+        )
+    )
     carrier_wage = float(parameters.wage_rate) * float(
         np.sum(np.asarray(state.organization_labor_available, dtype=np.float64)[transport_org_mask])
     )

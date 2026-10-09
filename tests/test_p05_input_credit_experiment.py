@@ -2,11 +2,14 @@
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 import yaml
 from pydantic import ValidationError
 
 from hsm_lab.contract.material import MaterialParameters
+from hsm_lab.engine import finance
+from tests.test_material_finance import _credit_grant_fixture
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,3 +41,31 @@ def test_earmark_registry_classifies_a_structural_design_rule_as_fixed() -> None
     assert any("structural assumption" in ref for ref in entry["literature_refs"])
     assert control["identification"]["p05_input_credit_earmark_prior"] == "fixed"
     assert control["linkage"] == []
+
+
+def test_full_earmark_adds_exact_input_goods_budget_without_flow_schema_change() -> None:
+    fixture = _credit_grant_fixture()
+    flows = fixture.tick(1)[0]
+    fixture.state.organization_cash[:] = 0.0
+    fixture.state.organization_principal[:] = 0.0
+    fixture.state.organization_interest_arrears[:] = 0.0
+    parameters = fixture.parameters.model_copy(
+        update={
+            "wage_rate": 0.0,
+            "credit_envelope_fraction": 0.0,
+            "input_credit_earmark_fraction": 1.0,
+        }
+    )
+    result = finance.run_domestic_finance_step(
+        fixture.state,
+        flows,
+        parameters,
+        wage_bill_open=np.zeros_like(fixture.state.organization_cash),
+        input_order_cost=np.array([0.0, 10.0]),
+        old_project_cost=np.zeros_like(fixture.state.organization_cash),
+        new_investment_request_cost=np.zeros_like(fixture.state.organization_cash),
+        transaction_base=100_000,
+    )
+    assert result["input_credit_earmarked"][1] == pytest.approx(10.0)
+    assert result["cash_available_for_goods"][1] == pytest.approx(10.0)
+    assert "input_credit_earmarked" not in vars(flows)

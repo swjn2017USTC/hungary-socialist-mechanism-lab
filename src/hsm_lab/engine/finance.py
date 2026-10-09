@@ -136,8 +136,7 @@ def household_account_ids(state: MaterialState, account_kind: str) -> np.ndarray
     """Account ids (N,) for one household account kind (row = household row)."""
     position = HOUSEHOLD_ACCOUNT_KINDS.index(account_kind)
     return (
-        np.arange(state.household_id.shape[0], dtype=np.int64)
-        * len(HOUSEHOLD_ACCOUNT_KINDS)
+        np.arange(state.household_id.shape[0], dtype=np.int64) * len(HOUSEHOLD_ACCOUNT_KINDS)
         + position
     )
 
@@ -159,13 +158,11 @@ def bank_account_ids(state: MaterialState, account_kind: str) -> np.ndarray:
     position = BANK_ACCOUNT_KINDS.index(account_kind)
     n_households, n_orgs, _, _ = _axis_sizes(state)
     base_bank = (
-        len(HOUSEHOLD_ACCOUNT_KINDS) * n_households
-        + len(ORGANIZATION_ACCOUNT_KINDS) * n_orgs
+        len(HOUSEHOLD_ACCOUNT_KINDS) * n_households + len(ORGANIZATION_ACCOUNT_KINDS) * n_orgs
     )
     return (
         base_bank
-        + np.arange(state.bank_reserves.shape[0], dtype=np.int64)
-        * len(BANK_ACCOUNT_KINDS)
+        + np.arange(state.bank_reserves.shape[0], dtype=np.int64) * len(BANK_ACCOUNT_KINDS)
         + position
     )
 
@@ -244,11 +241,9 @@ def build_account_directory(state: MaterialState) -> dict[tuple[str, int, str, s
             )
 
     for kind in TREASURY_ACCOUNT_KINDS:
-        directory[("treasury", 0, DOMESTIC_CURRENCY, kind)] = treasury_account_id(
-            state, kind
-        )
-    directory[("foreign_usd", 0, USD_CURRENCY, AccountKind.TRADE_SETTLEMENT)] = (
-        foreign_account_id(state, USD_CURRENCY)
+        directory[("treasury", 0, DOMESTIC_CURRENCY, kind)] = treasury_account_id(state, kind)
+    directory[("foreign_usd", 0, USD_CURRENCY, AccountKind.TRADE_SETTLEMENT)] = foreign_account_id(
+        state, USD_CURRENCY
     )
     directory[("foreign_cmea", 0, CMEA_CURRENCY, AccountKind.TRADE_SETTLEMENT)] = (
         foreign_account_id(state, CMEA_CURRENCY)
@@ -256,8 +251,9 @@ def build_account_directory(state: MaterialState) -> dict[tuple[str, int, str, s
 
     plot_ids = plot_clearing_account_ids(state)
     for region, account_id in enumerate(plot_ids.tolist()):
-        directory[(f"plot_clearing_{region}", region, DOMESTIC_CURRENCY,
-                   AccountKind.PLOT_CLEARING)] = account_id
+        directory[
+            (f"plot_clearing_{region}", region, DOMESTIC_CURRENCY, AccountKind.PLOT_CLEARING)
+        ] = account_id
 
     return directory
 
@@ -295,9 +291,7 @@ def append_transaction(
     debit_total = math.fsum(amounts.tolist())
     credit_total = math.fsum(amounts.tolist())  # legs are self-balancing pairs
     if abs(debit_total - credit_total) > _LEDGER_TOLERANCE:
-        raise JournalError(
-            f"debit/credit sums differ by {abs(debit_total - credit_total):.3e}"
-        )
+        raise JournalError(f"debit/credit sums differ by {abs(debit_total - credit_total):.3e}")
     _append_legs(
         flows,
         kind=kind,
@@ -450,9 +444,7 @@ def _default_strategic_importance(state: MaterialState) -> np.ndarray:
     return strategic
 
 
-def _resolve_strategic_importance(
-    state: MaterialState, override: np.ndarray | None
-) -> np.ndarray:
+def _resolve_strategic_importance(state: MaterialState, override: np.ndarray | None) -> np.ndarray:
     if override is not None:
         return np.asarray(override, dtype=np.float64)
     return _default_strategic_importance(state)
@@ -574,9 +566,7 @@ def _execute_wage_payment(
         organization_ids=None,
         leg_offset=offset,
     )
-    _append_interbank_legs(
-        state, flows, kind="wage_payment", delta=delta, leg_offset=offset
-    )
+    _append_interbank_legs(state, flows, kind="wage_payment", delta=delta, leg_offset=offset)
 
 
 # ---------------------------------------------------------------------------
@@ -634,9 +624,7 @@ def run_domestic_finance_step(
 
     cash = np.asarray(state.organization_cash, dtype=np.float64).copy()
     wage_arrears_open = np.asarray(state.organization_wage_arrears, dtype=np.float64).copy()
-    interest_arrears_open = np.asarray(
-        state.organization_interest_arrears, dtype=np.float64
-    ).copy()
+    interest_arrears_open = np.asarray(state.organization_interest_arrears, dtype=np.float64).copy()
     principal_open = np.asarray(state.organization_principal, dtype=np.float64).copy()
 
     # --- working-capital credit -----------------------------------------
@@ -659,6 +647,12 @@ def run_domestic_finance_step(
         + _resolve_strategic_importance(state, strategic_importance)
         + np.asarray(state.organization_bailout_expectation, dtype=np.float64)
     )
+    earmarked_request = np.minimum(
+        np.maximum(float(parameters.input_credit_earmark_fraction), 0.0) * input_order_cost,
+        request,
+    )
+    general_request = np.maximum(request - earmarked_request, 0.0)
+    earmarked_approve = earmarked_request.copy()
     approve = np.zeros_like(request)
     # P05 §0.5/§0.7: the working-capital envelope is sized to the bank's actual
     # quarterly financing need (wages + input orders + investment), not the wage
@@ -669,7 +663,7 @@ def run_domestic_finance_step(
         safe_bank, borrower, old_project_cost + new_investment_request_cost, n_banks
     )
     for bank in range(n_banks):  # only loop over banks (B <= 2)
-        contenders = borrower & (safe_bank == bank) & (request > 0.0)
+        contenders = borrower & (safe_bank == bank) & (general_request > 0.0)
         if not np.any(contenders):
             continue
         weight_sum = float(weight[contenders].sum())
@@ -679,7 +673,7 @@ def run_domestic_finance_step(
             bank_wage_bill[bank] + bank_input_cost[bank] + bank_project_cost[bank]
         )
         approve[contenders] = np.minimum(
-            request[contenders], envelope * weight[contenders] / weight_sum
+            general_request[contenders], envelope * weight[contenders] / weight_sum
         )
     # P05 §0.6: optional cap on the standing principal keeps the money stock
     # stationary; once an organization reaches its line it may only borrow as
@@ -688,14 +682,23 @@ def run_domestic_finance_step(
     if cap_quarters > 0.0:
         cap = cap_quarters * wage_due
         room = np.maximum(cap - principal_open, 0.0)
-        approve = np.minimum(approve, room)
-    draw = approve
+        earmarked_approve = np.minimum(earmarked_approve, room)
+        approve = np.minimum(approve, np.maximum(room - earmarked_approve, 0.0))
+        approve += earmarked_approve
+    else:
+        # Purpose-tied input credit is an additional line above the general
+        # working-capital envelope; it can only cover the declared input order.
+        approve += earmarked_approve
+    draw = approve.copy()
+    earmarked_draw = earmarked_approve.copy()
     if bool(getattr(parameters, "m2_neutral_credit", False)):
         # a deposit pool cannot go negative: scale the quarter's draws to the fund
         fund = float(state.credit_fund)
         total_requested = float(np.sum(draw))
         if total_requested > fund and total_requested > 0.0:
-            draw = draw * (fund / total_requested)
+            scale = fund / total_requested
+            draw = draw * scale
+            earmarked_draw = earmarked_draw * scale
     total_draw = float(np.sum(draw))
     cash += draw
     state.organization_principal = principal_open + draw
@@ -713,9 +716,7 @@ def run_domestic_finance_step(
         )
         state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + deposit_delta
     else:
-        state.bank_loan_asset = (
-            np.asarray(state.bank_loan_asset, dtype=np.float64) + draw_by_bank
-        )
+        state.bank_loan_asset = np.asarray(state.bank_loan_asset, dtype=np.float64) + draw_by_bank
         state.bank_deposit_liability = (
             np.asarray(state.bank_deposit_liability, dtype=np.float64) + draw_by_bank
         )
@@ -768,9 +769,7 @@ def run_domestic_finance_step(
     state.organization_wage_arrears = wage_arrears_open + wage_due - wage_paid
     flows.organization_wage_paid = wage_paid.copy()
     flows.household_wage_income = receipt.copy()
-    _execute_wage_payment(
-        state, flows, org_paid=wage_paid, household_receipt=receipt
-    )
+    _execute_wage_payment(state, flows, org_paid=wage_paid, household_receipt=receipt)
 
     # --- interest on opening principal (accrual, then cash payment) ------
     interest_due = principal_open * quarter_domestic_credit_rate(parameters)
@@ -795,19 +794,15 @@ def run_domestic_finance_step(
     )
     interest_paid = np.minimum(cash, interest_arrears_open + interest_due)
     cash -= interest_paid
-    state.organization_interest_arrears = (
-        interest_arrears_open + interest_due - interest_paid
-    )
+    state.organization_interest_arrears = interest_arrears_open + interest_due - interest_paid
     interest_paid_by_bank = _masked_bincount(
         safe_bank, borrower & (interest_paid > 0.0), interest_paid, n_banks
     )
     state.bank_deposit_liability = (
-        np.asarray(state.bank_deposit_liability, dtype=np.float64)
-        - interest_paid_by_bank
+        np.asarray(state.bank_deposit_liability, dtype=np.float64) - interest_paid_by_bank
     )
     state.bank_interest_receivable = (
-        np.asarray(state.bank_interest_receivable, dtype=np.float64)
-        - interest_paid_by_bank
+        np.asarray(state.bank_interest_receivable, dtype=np.float64) - interest_paid_by_bank
     )
     flows.organization_interest_paid = interest_paid.copy()
     _append_paired_transactions(
@@ -844,9 +839,7 @@ def run_domestic_finance_step(
         )
         state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + repay_delta
     else:
-        state.bank_loan_asset = (
-            np.asarray(state.bank_loan_asset, dtype=np.float64) - paid_by_bank
-        )
+        state.bank_loan_asset = np.asarray(state.bank_loan_asset, dtype=np.float64) - paid_by_bank
         state.bank_deposit_liability = (
             np.asarray(state.bank_deposit_liability, dtype=np.float64) - paid_by_bank
         )
@@ -863,7 +856,10 @@ def run_domestic_finance_step(
     )
 
     state.organization_cash = cash
-    return {"cash_available_for_goods": cash}
+    return {
+        "cash_available_for_goods": cash,
+        "input_credit_earmarked": earmarked_draw,
+    }
 
 
 def run_working_capital_cycle(
@@ -992,9 +988,7 @@ def run_bailout_step(
     org_ids = np.asarray(state.organization_id, dtype=np.int64)
 
     wage_arrears = np.asarray(state.organization_wage_arrears, dtype=np.float64).copy()
-    interest_arrears = np.asarray(
-        state.organization_interest_arrears, dtype=np.float64
-    ).copy()
+    interest_arrears = np.asarray(state.organization_interest_arrears, dtype=np.float64).copy()
     request = np.where(borrower, wage_arrears + interest_arrears, 0.0)
 
     labor = np.asarray(state.organization_labor_available, dtype=np.float64)
@@ -1015,9 +1009,7 @@ def run_bailout_step(
 
     cash = np.asarray(state.organization_cash, dtype=np.float64) + grant
     state.treasury_deposit = float(state.treasury_deposit) - total_grant
-    grant_by_bank = _masked_bincount(
-        safe_bank, borrower & (grant > 0.0), grant, n_banks
-    )
+    grant_by_bank = _masked_bincount(safe_bank, borrower & (grant > 0.0), grant, n_banks)
     settlement = grant_by_bank.copy()
     settlement[0] -= total_grant  # treasury deposits at bank 0
     state.bank_deposit_liability = (
@@ -1037,9 +1029,7 @@ def run_bailout_step(
         amount=grant[granted],
         organization_ids=org_ids[granted],
     )
-    _append_interbank_legs(
-        state, flows, kind="bailout_grant", delta=settlement, leg_offset=offset
-    )
+    _append_interbank_legs(state, flows, kind="bailout_grant", delta=settlement, leg_offset=offset)
 
     # Same-tick arrears clearance: wages senior (late receipts), then interest.
     wage_pay = np.minimum(cash, wage_arrears)
@@ -1052,36 +1042,26 @@ def run_bailout_step(
     state.household_deferred_receipt = (
         np.asarray(state.household_deferred_receipt, dtype=np.float64) + receipt
     )
-    state.household_wage_claim = (
-        np.asarray(state.household_wage_claim, dtype=np.float64) - receipt
-    )
+    state.household_wage_claim = np.asarray(state.household_wage_claim, dtype=np.float64) - receipt
     state.organization_wage_arrears = wage_arrears - wage_pay
     state.organization_interest_arrears = interest_arrears - interest_pay
-    flows.household_late_wage = (
-        np.asarray(flows.household_late_wage, dtype=np.float64) + receipt
-    )
+    flows.household_late_wage = np.asarray(flows.household_late_wage, dtype=np.float64) + receipt
     flows.organization_wage_paid = (
         np.asarray(flows.organization_wage_paid, dtype=np.float64) + wage_pay
     )
     flows.organization_interest_paid = (
         np.asarray(flows.organization_interest_paid, dtype=np.float64) + interest_pay
     )
-    flows.household_cash_close = (
-        np.asarray(flows.household_cash_close, dtype=np.float64) + receipt
-    )
-    _execute_wage_payment(
-        state, flows, org_paid=wage_pay, household_receipt=receipt
-    )
+    flows.household_cash_close = np.asarray(flows.household_cash_close, dtype=np.float64) + receipt
+    _execute_wage_payment(state, flows, org_paid=wage_pay, household_receipt=receipt)
     interest_paid_by_bank = _masked_bincount(
         safe_bank, borrower & (interest_pay > 0.0), interest_pay, n_banks
     )
     state.bank_deposit_liability = (
-        np.asarray(state.bank_deposit_liability, dtype=np.float64)
-        - interest_paid_by_bank
+        np.asarray(state.bank_deposit_liability, dtype=np.float64) - interest_paid_by_bank
     )
     state.bank_interest_receivable = (
-        np.asarray(state.bank_interest_receivable, dtype=np.float64)
-        - interest_paid_by_bank
+        np.asarray(state.bank_interest_receivable, dtype=np.float64) - interest_paid_by_bank
     )
     _append_paired_transactions(
         flows,
@@ -1094,9 +1074,7 @@ def run_bailout_step(
         second_credit=bank_account_ids(state, AccountKind.INTEREST_RECEIVABLE)[safe_bank],
     )
 
-    rescued_fraction = np.divide(
-        grant, request, out=np.zeros_like(grant), where=request > 0.0
-    )
+    rescued_fraction = np.divide(grant, request, out=np.zeros_like(grant), where=request > 0.0)
     alpha = float(parameters.bailout_alpha)
     state.organization_bailout_expectation = (1.0 - alpha) * np.asarray(
         state.organization_bailout_expectation, dtype=np.float64
@@ -1148,12 +1126,9 @@ def plan_investment(
         else np.asarray(new_request, dtype=np.float64)
     )
 
-    capital_wip = (
-        np.asarray(state.organization_capital_wip, dtype=np.float64) + delivered_capital
-    )
+    capital_wip = np.asarray(state.organization_capital_wip, dtype=np.float64) + delivered_capital
     construction_wip = (
-        np.asarray(state.organization_construction_wip, dtype=np.float64)
-        + delivered_construction
+        np.asarray(state.organization_construction_wip, dtype=np.float64) + delivered_construction
     )
     approved_open = np.asarray(state.organization_project_approved, dtype=np.float64).copy()
 
@@ -1276,9 +1251,7 @@ def initialize_finance(
     state.organization_cash = (
         float(initial_recipe.organization_deposit_quarters) * wage_rate * labor
     )
-    state.treasury_deposit = (
-        float(initial_recipe.treasury_deposit_quarters) * national_wage_bill
-    )
+    state.treasury_deposit = float(initial_recipe.treasury_deposit_quarters) * national_wage_bill
 
     state.bank_equity = np.full(
         n_banks, float(initial_recipe.bank_equity_quarters) * national_wage_bill
@@ -1296,9 +1269,7 @@ def initialize_finance(
     deposits = org_deposits + household_deposits
     deposits[0] += state.treasury_deposit
     state.bank_deposit_liability = deposits
-    state.bank_reserves = (
-        deposits + state.bank_equity - state.bank_loan_asset
-    )
+    state.bank_reserves = deposits + state.bank_equity - state.bank_loan_asset
 
     state.usd_reserve = float(parameters.trade.convertible_opening_reserve)
     state.usd_principal = float(parameters.trade.convertible_opening_principal)
