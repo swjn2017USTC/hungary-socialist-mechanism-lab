@@ -232,3 +232,58 @@ untouched, as instructed. B1 is a two-part decision: a `linkage` entry alone doe
 make a parameter identifiable — `calibration/screen.py` lets a declared identity of `fixed`
 or `unidentified` win, so the identity label must be changed in the same decision. Only
 targets observed inside the **training** window (1960-1969) are admissible.
+
+## 2026-10-10 — B1 linkage decision reviewed (external reasoning pass + code audit)
+
+The external reasoning pass concluded: **0 of 6 behavioural blocks demonstrably identified**, keep
+all six `UNIDENTIFIED`, approve `linkage = []` for production, and keep one *conditional*
+diagnostic candidate (`p04_external_recipe_parameters` → `trade_export_volume_index`,
+`trade_import_volume_index`) pending a discriminating test.
+
+Code audit of that pass — two claims checked and one candidate rejected:
+
+1. **Its §5.1 confounding claim is directionally right but mechanically wrong here.** The model
+   does not form `observed = s·truth + b`. `engine/observation.py` returns
+   `published = clip(truth + noise + bias, lower, upper)` where
+   `noise ∝ information.measurement_error × observation.noise_scale × observation.declared_scale`
+   and `bias = feature_bias_loading @ (discrepancy / reference)` with `need/inventory/capacity`
+   references. So the real collisions are: (i) the three-way product `declared_scale ×
+   noise_scale × information.measurement_error` — a collision **across two blocks**; (ii) each
+   `feature_bias_loading_j / reference_j` ratio, identified only as a ratio; (iii) clipping
+   nonlinearity whenever a feature sits at its [0,1] or [-1,1] bound. The conclusion stands
+   (coalition betas and the observation layer are not separable from aggregate outcomes), but
+   the algebra in the answer does not describe this code.
+2. **Its §5.4 recommendation is already implemented.** The NEM is an explicit institutional
+   intervention: `data/manifests/policy_replay.yml` carries `record_id: nem_1968q1`,
+   `effective_quarter: 1968Q1`, `patch: {enterprise_autonomy: 0.7}`, `date_precision:
+   reconstructed_quarter`. Only its remaining suggestion (separate 1960–1967 and 1968–1969
+   sensitivity analyses) is new work.
+3. **The one conditional candidate is rejected by its own test #1.** The executable path does not
+   exist: `engine/trade.py::build_export_demands` builds desired exports from the **declared
+   parameter vectors** `trade.cmea_export_demands` / `trade.convertible_export_demands`, scaled
+   by the Treasury's payable cash, and `engine/material.py` consumes **no external world slice at
+   all** (`ExternalWorldSlice` appears only in `politics.py`, `opposition.py`, `policy.py`,
+   `technology.py`, `political_run.py`). `base_western_demand` / `base_cmea_demand` /
+   `base_credit_availability` therefore have **zero sensitivity** to the admitted export/import
+   volume indices. The import side is the same: imports are declared parameter vectors plus a
+   credit envelope, not a function of the external recipe.
+
+Consequence: the correct production linkage is `[]` **without** a diagnostic candidate — the
+`p04_external_recipe` block has no route to the admitted observations, and the observed trade
+indices are driven by declared trade inputs (which the study's own "input ≠ target" rule forbids
+using as calibration targets).
+
+Track B therefore stops at B1 as a **declared blocker owned by the user**. Two paths remain, and
+they change what P06 may claim:
+
+- **Data path**: admit the seven target-role variables that never entered the frozen registry
+  (`wage`, `cpi`, `trade`, `debt`, `housing`, `retail`, `employment`) plus the independent
+  observables listed in P05_REPORT §10b (plan vs reported vs verified output, physical
+  input-output and energy import flows, party composition and resolutions, audience research,
+  event-dated mobilisation). Requires rights/coverage work; user-owned.
+- **Scope path**: re-declare the study's claim as *historical reproduction under declared
+  behavioural assumptions* with `calibrated = 0`, and let P06 proceed on that basis (mechanism
+  cards as CONDITIONAL/WEAK/UNIDENTIFIED, no Sobol on unidentified parameters, no calibration-
+  dependent items).
+
+Not acceptable under either path: promoting a block to `identified` to unblock the pipeline.
