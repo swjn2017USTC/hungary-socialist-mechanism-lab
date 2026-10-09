@@ -1,0 +1,31 @@
+{
+  "mechanism_id": "M4",
+  "hypothesis": "the second economy is net stabilising or net eroding for the formal system.",
+  "manipulated_variables": [
+    "policy.second_economy_tolerance",
+    "policy.private_autonomy"
+  ],
+  "controlled_variables": [
+    "formal-sector parameters",
+    "external history",
+    "seed"
+  ],
+  "metrics": [
+    "aggregates.plot_self_use/plot_market_sales",
+    "household_budgets.plot_income_formal/plot_income_direct",
+    "formal household_availability_unmet",
+    "departments.service_use_household"
+  ],
+  "falsification_criterion": "tolerance changes move neither the household availability gap nor the formal sector's delivery metrics.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": [
+    "p04_culture_prior"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "mechanism_id": "M1",
+  "hypothesis": "consecutive consumption improvement raises the political cost of a later welfare/real-income cut nonlinearly, so an equal cut provokes a larger response after a long improvement run than early in the window.",
+  "manipulated_variables": [
+    "policy.welfare_provision one-shot cut of equal size applied at 1961Q1 vs 1967Q1",
+    "policy.consumer_import_factor as a second real-income lever"
+  ],
+  "controlled_variables": [
+    "external history and the intervention files",
+    "seed",
+    "the remaining policy vector"
+  ],
+  "metrics": [
+    "household_consumption",
+    "household_budgets.spending",
+    "opposition_regions.weighted_grievance",
+    "political_quarters.policy_welfare_provision",
+    "forced_saving"
+  ],
+  "falsification_criterion": "the late cut's response in the grievance/consumption metrics is not larger than the early cut's by the declared margin.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": [
+    "p04_coalition_prior",
+    "p04_observation_prior"
+  ]
+}

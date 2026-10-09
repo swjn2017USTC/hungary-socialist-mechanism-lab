@@ -1,0 +1,32 @@
+{
+  "mechanism_id": "M6",
+  "hypothesis": "external debt lengthens the social contract and shifts its cost forward.",
+  "manipulated_variables": [
+    "policy.borrowing_factor",
+    "convertible_loan_limit",
+    "convertible_credit_envelope"
+  ],
+  "controlled_variables": [
+    "external demand",
+    "seed",
+    "domestic policy"
+  ],
+  "metrics": [
+    "national_accounts.imports by channel",
+    "money_stock (credit/principal)",
+    "household_consumption",
+    "treasury_cash"
+  ],
+  "falsification_criterion": "additional borrowing does not defer the consumption/treasury deterioration.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": [
+    "p04_external_recipe_prior"
+  ]
+}

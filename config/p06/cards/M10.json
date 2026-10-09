@@ -1,0 +1,29 @@
+{
+  "mechanism_id": "M10",
+  "hypothesis": "subsidies, borrowing and CMEA terms postpone an external shock, and the postponement raises later fragility.",
+  "manipulated_variables": [
+    "the 1973 arms in Annex B"
+  ],
+  "controlled_variables": [
+    "seed",
+    "the pre-1973 path"
+  ],
+  "metrics": [
+    "national_accounts.imports/exports by channel",
+    "money_stock.money_total_close",
+    "treasury_cash",
+    "later-window aggregates.household_availability_unmet"
+  ],
+  "falsification_criterion": "the absorption arms do not differ in the size or timing of the postponement.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": [
+    "p04_external_recipe_prior"
+  ]
+}

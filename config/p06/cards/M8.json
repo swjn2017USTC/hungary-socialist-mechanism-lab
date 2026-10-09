@@ -1,0 +1,29 @@
+{
+  "mechanism_id": "M8",
+  "hypothesis": "economic deterioration strengthens administrative conservatism under some conditions and the reform coalition under others.",
+  "manipulated_variables": [
+    "the fork's coalition_weights and the reported feature path (via the 1968 arms)"
+  ],
+  "controlled_variables": [
+    "external history",
+    "seed"
+  ],
+  "metrics": [
+    "political_quarters mode weights and selected_candidate",
+    "policy_decisions.utility"
+  ],
+  "falsification_criterion": "coalition weights do not switch modes under the declared deterioration path.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": [
+    "p04_coalition_prior",
+    "p04_observation_prior",
+    "p04_information_prior"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "mechanism_id": "M9",
+  "hypothesis": "stronger statistical/computational/feedback capacity removes a measurable share of shortage and planning error.",
+  "manipulated_variables": [
+    "technology.capability (one-shot)",
+    "policy.information_investment (the digital-nem arm)"
+  ],
+  "controlled_variables": [
+    "the replayed policy path",
+    "external history",
+    "seed"
+  ],
+  "metrics": [
+    "information_quarters.data_latency/measurement_error/forecast_accuracy/optimization_capacity",
+    "policy_decisions.binding_constraints",
+    "tick_diagnostics.bottleneck_demand_count"
+  ],
+  "falsification_criterion": "capability/investment raises do not reduce latency/error or the shortage metrics.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": [
+    "p04_information_prior"
+  ]
+}

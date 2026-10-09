@@ -1,0 +1,31 @@
+{
+  "mechanism_id": "M2",
+  "hypothesis": "soft budget plus investment hunger is sufficient to sustain systemic shortage independently of the demand regime.",
+  "manipulated_variables": [
+    "policy.budget_hardness",
+    "policy.credit_fraction",
+    "bailout_envelope_fraction",
+    "credit_envelope_fraction"
+  ],
+  "controlled_variables": [
+    "demand shocks",
+    "external history",
+    "seed"
+  ],
+  "metrics": [
+    "tick_diagnostics.bottleneck_demand_count",
+    "aggregates.undelivered share",
+    "organization_diagnostics.credit_drawn/shortage_expectation_mean",
+    "commodity_circuit.stock_close"
+  ],
+  "falsification_criterion": "with hardness raised and credit cut, the shortage metrics do not fall.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": []
+}

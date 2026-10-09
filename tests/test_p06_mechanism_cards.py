@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from hsm_lab.calibration.mechanism_cards import (
     MechanismCard,
     MechanismResultCategory,
+    load_mechanism_cards,
     mechanism_card_json_schema,
     validate_mechanism_card,
 )
@@ -63,3 +64,47 @@ def test_card_validator_accepts_a_pre_registration_without_a_verdict() -> None:
     )
     assert card.mechanism_id == "M1"
     assert "verdict" not in MechanismCard.model_fields
+
+
+def test_repository_cards_are_complete_and_resolve_registry_dependencies() -> None:
+    cards = load_mechanism_cards(ROOT)
+    assert len(cards) == 11
+    assert {card.mechanism_id for card in cards} == {f"M{i}" for i in range(1, 12)}
+    all_categories = {category.value for category in MechanismResultCategory}
+    for card in cards:
+        assert {category.value for category in card.result_categories} == all_categories
+        assert card.minimum_replicates == 3
+    m1 = next(card for card in cards if card.mechanism_id == "M1")
+    assert "p04_coalition_prior" in m1.calibrated_parameter_dependencies
+
+
+def test_unknown_registry_dependency_is_rejected(tmp_path: Path) -> None:
+    import shutil
+
+    shutil.copytree(ROOT / "config", tmp_path / "config")
+    cards_dir = tmp_path / "config/p06/cards"
+    cards_dir.mkdir(parents=True, exist_ok=True)
+    for path in (ROOT / "config/p06/cards").glob("*.json"):
+        shutil.copy2(path, cards_dir / path.name)
+    card_path = cards_dir / "M1.json"
+    payload = json.loads(card_path.read_text())
+    payload["calibrated_parameter_dependencies"].append("unknown_parameter")
+    card_path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="unknown dependency artifact_id"):
+        load_mechanism_cards(tmp_path)
+
+
+def test_unidentified_dependency_cannot_be_supported_only(tmp_path: Path) -> None:
+    import shutil
+
+    shutil.copytree(ROOT / "config", tmp_path / "config")
+    cards_dir = tmp_path / "config/p06/cards"
+    cards_dir.mkdir(parents=True, exist_ok=True)
+    for path in (ROOT / "config/p06/cards").glob("*.json"):
+        shutil.copy2(path, cards_dir / path.name)
+    card_path = cards_dir / "M1.json"
+    payload = json.loads(card_path.read_text())
+    payload["result_categories"] = ["SUPPORTED"]
+    card_path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="cannot be SUPPORTED-only"):
+        load_mechanism_cards(tmp_path)

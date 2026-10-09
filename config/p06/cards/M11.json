@@ -1,0 +1,31 @@
+{
+  "mechanism_id": "M11",
+  "hypothesis": "continued investment and input priority for Department I crowds out Department II through raw-material, capital-good and labour competition, raising assortment shortage, durable waiting, forced substitution and the social-contract gap even when aggregate output grows.",
+  "manipulated_variables": [
+    "policy.investment_intensity",
+    "policy.industrial_priority"
+  ],
+  "controlled_variables": [
+    "aggregate output path",
+    "external history",
+    "seed"
+  ],
+  "metrics": [
+    "aggregate consumer-goods volume (national_accounts.household_consumption)",
+    "assortment/availability (aggregates.household_availability_unmet, tick_diagnostics.bottleneck_demand_count)",
+    "regional distribution (by region_id)",
+    "durable waiting (aggregates.household_desired vs delivered for g13_household_durables)",
+    "household welfare loss (household_budgets saving/substitution columns)",
+    "departments.actual_use_value split by department"
+  ],
+  "falsification_criterion": "raising I-priority does not shift the department split or worsen the four consumer-side dimensions while output is held up.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": []
+}

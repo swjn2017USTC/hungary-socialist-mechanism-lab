@@ -1,0 +1,30 @@
+{
+  "mechanism_id": "M7",
+  "hypothesis": "uneven distribution of social-contract gains across Budapest, the industrial belt and the agricultural counties creates different stability paths.",
+  "manipulated_variables": [
+    "regional allocation via policy.investment_intensity plus policy.housing_factor",
+    "the 20 historical regions are the observation axis"
+  ],
+  "controlled_variables": [
+    "national aggregates",
+    "external history",
+    "seed"
+  ],
+  "metrics": [
+    "aggregates and household_budgets by region_id",
+    "opposition_regions by region"
+  ],
+  "falsification_criterion": "regional dispersion of the delivery/consumption metrics does not respond to the regional allocation levers.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": [
+    "p04_opposition_prior",
+    "p04_coalition_prior"
+  ]
+}

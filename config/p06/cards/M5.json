@@ -1,0 +1,32 @@
+{
+  "mechanism_id": "M5",
+  "hypothesis": "enterprise autonomy rising while soft-budget constraints persist produces efficiency gains and macro imbalance simultaneously.",
+  "manipulated_variables": [
+    "policy.enterprise_autonomy (the replayed 1968 patch is 0.7)",
+    "separately policy.budget_hardness"
+  ],
+  "controlled_variables": [
+    "external history",
+    "seed",
+    "the other coordinates"
+  ],
+  "metrics": [
+    "organization_diagnostics.investment_approved/credit_drawn",
+    "national_accounts.production/used",
+    "tick_diagnostics.bottleneck_demand_count",
+    "money_stock.money_total_close"
+  ],
+  "falsification_criterion": "autonomy raises do not change the efficiency proxy without also changing the imbalance proxy (or vice versa).",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": [
+    "p04_coalition_prior",
+    "p04_information_prior"
+  ]
+}

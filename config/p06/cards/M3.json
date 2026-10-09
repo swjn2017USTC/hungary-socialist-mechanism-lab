@@ -1,0 +1,28 @@
+{
+  "mechanism_id": "M3",
+  "hypothesis": "full employment weakens enterprise discipline and feeds wage/hoarding feedback.",
+  "manipulated_variables": [
+    "policy.wage_factor",
+    "policy.plan_utilization"
+  ],
+  "controlled_variables": [
+    "output targets",
+    "external history",
+    "seed"
+  ],
+  "metrics": [
+    "organization_diagnostics.labor_mean/wage_arrears_sum",
+    "national_accounts.production per worker proxy",
+    "aggregates.household_desired vs delivered"
+  ],
+  "falsification_criterion": "a wage-factor raise does not increase labour hoarding/arrears or reduce discipline metrics.",
+  "minimum_replicates": 3,
+  "result_categories": [
+    "SUPPORTED",
+    "CONDITIONAL",
+    "WEAK",
+    "REJECTED",
+    "UNIDENTIFIED"
+  ],
+  "calibrated_parameter_dependencies": []
+}
