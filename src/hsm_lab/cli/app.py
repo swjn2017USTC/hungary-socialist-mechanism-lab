@@ -454,7 +454,9 @@ def calibration_axis_sweep(
     axis: str = typer.Option(
         ...,
         "--axis",
-        help="credit_envelope_fraction or transport_capacity_scale.",
+        help=(
+            "credit_envelope_fraction, input_credit_earmark_fraction, or transport_capacity_scale."
+        ),
     ),
     points: str = typer.Option(
         ..., "--points", help="Comma-separated axis values, e.g. 0.5,0.75,1.0."

@@ -608,6 +608,22 @@ contraction is reached. The next work is a stock-flow / money-flow audit of one
 tick (where each unit of money and each unit of produced value goes), not another
 parameter search.
 
+### E7 — input-credit earmark experiment (116-tick structural arms)
+
+The zero-default parameter passed the legacy replay gate: digest
+`92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d`, unchanged frozen
+gate series, and all 14 original Parquet files byte-identical to the same-HEAD control.
+The six-arm experiment found a partial physical response: the best nonzero-earmark arm (A1)
+raised the pool / freight-need ratio from 0.5397 to 0.7163 and lowered physical blocking
+from 70.42% to 64.83%, while liveness fell from the A0 baseline 0.1116 to 0.0566. A1
+transport output returned to zero at tick 19; this misses the registered “after tick 20”
+falsification cutoff, though it contradicts the literal never-zero phrasing. It still
+failed the liveness, household-service, treasury, and expiry gates. The response is
+non-monotone and A3's higher earmark produced liveness 0.0471. H1's registered cutoff was
+not triggered, H2 is supported in A1, H3 is falsified, and H4 did not hold. **No parameter
+default is adopted; the result is partial, not validated.** See the
+[full arm table, guardrails, residuals, and hypothesis verdicts](P05_INPUT_CREDIT_EXPERIMENT.md).
+
 ## 11. Status summary — Gate 1 / Gate 2 (2026-10-09)
 
 This is the one-page state of P05 as it actually stands after the E4/E5 work.

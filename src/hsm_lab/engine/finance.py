@@ -700,7 +700,10 @@ def run_domestic_finance_step(
             draw = draw * scale
             earmarked_draw = earmarked_draw * scale
     total_draw = float(np.sum(draw))
-    cash += draw
+    # Keep the purpose-tied tranche out of the wage-payment pool. It becomes
+    # available to the goods circuit only after senior wages have been paid.
+    general_draw = np.maximum(draw - earmarked_draw, 0.0)
+    cash += general_draw
     state.organization_principal = principal_open + draw
     draw_by_bank = _masked_bincount(safe_bank, borrower & (draw > 0.0), draw, n_banks)
     # P05 §0.6: with M2-neutral credit the fixed credit-fund deposit (bank 0) is
@@ -770,6 +773,10 @@ def run_domestic_finance_step(
     flows.organization_wage_paid = wage_paid.copy()
     flows.household_wage_income = receipt.copy()
     _execute_wage_payment(state, flows, org_paid=wage_paid, household_receipt=receipt)
+
+    # The earmarked line can finance goods after wages; it cannot substitute
+    # for the general line in the household wage transfer.
+    cash += earmarked_draw
 
     # --- interest on opening principal (accrual, then cash payment) ------
     interest_due = principal_open * quarter_domestic_credit_rate(parameters)

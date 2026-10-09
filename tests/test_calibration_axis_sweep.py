@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import polars as pl
 import pytest
 
+from hsm_lab.calibration import axis_sweep
 from hsm_lab.calibration.axis_sweep import _gate_metrics, run_axis_sweep
 
 
@@ -61,6 +64,44 @@ def test_gate_metrics_reports_no_treasury_zero_when_solvent(tmp_path) -> None:
 
 def test_unknown_axis_is_rejected(tmp_path) -> None:
     with pytest.raises(ValueError, match="unknown axis"):
-        run_axis_sweep(
-            None, None, None, axis="not_an_axis", points=[1.0], output_root=tmp_path
-        )
+        run_axis_sweep(None, None, None, axis="not_an_axis", points=[1.0], output_root=tmp_path)
+
+
+def test_input_credit_earmark_axis_updates_the_declared_parameter(tmp_path, monkeypatch) -> None:
+    parameters = SimpleNamespace(input_credit_earmark_fraction=0.0)
+    spec = SimpleNamespace(
+        material_parameters=parameters,
+        model_copy=lambda *, update: SimpleNamespace(
+            material_parameters=update["material_parameters"]
+        ),
+    )
+    parameters.model_copy = lambda *, update: SimpleNamespace(**update)
+    observed = []
+
+    def fake_run(scenario, output_dir, contract, registry, *, checkpoint_every):
+        observed.append(scenario.material_parameters.input_credit_earmark_fraction)
+        return SimpleNamespace(status="completed", completed_ticks=116)
+
+    monkeypatch.setattr(
+        axis_sweep,
+        "_gate_metrics",
+        lambda _: {
+            "liveness": 0.1,
+            "production_first_10": 1.0,
+            "production_last_10": 0.1,
+            "expired_services_tail": 0.0,
+            "treasury_zero_tick": 1,
+            "allocated_total": 1.0,
+            "delivered_total": 0.5,
+            "physical_blocked_total": 0.5,
+            "financial_blocked_total": 0.0,
+        },
+    )
+    monkeypatch.setattr("hsm_lab.engine.material.run_material", fake_run)
+
+    points = run_axis_sweep(
+        spec, None, None, axis="input_credit_earmark_fraction", points=[0.25], output_root=tmp_path
+    )
+
+    assert observed == [0.25]
+    assert points[0].ticks == 116

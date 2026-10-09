@@ -33,7 +33,11 @@ from typing import Any
 import numpy as np
 import polars as pl
 
-AXES = ("credit_envelope_fraction", "transport_capacity_scale")
+AXES = (
+    "credit_envelope_fraction",
+    "input_credit_earmark_fraction",
+    "transport_capacity_scale",
+)
 
 
 @dataclass
@@ -150,6 +154,14 @@ def run_axis_sweep(
                     update={
                         "material_parameters": spec.material_parameters.model_copy(
                             update={"credit_envelope_fraction": float(value)}
+                        )
+                    }
+                )
+            elif axis == "input_credit_earmark_fraction":
+                scenario = spec.model_copy(
+                    update={
+                        "material_parameters": spec.material_parameters.model_copy(
+                            update={"input_credit_earmark_fraction": float(value)}
                         )
                     }
                 )
