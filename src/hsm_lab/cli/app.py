@@ -479,13 +479,54 @@ def calibration_forcing_ladder(
     _guard(action, json_mode)
 
 
+@calibration_app.command("interest-fiscal-arms")
+def calibration_interest_fiscal_arms(
+    output_dir: Path | None = typer.Option(
+        None, "--output-dir", help="Fresh experiment directory."
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Run the registered P05 B0/I1-I3/F1/C1/N1 transfer arms through 1985Q4."""
+
+    def action() -> None:
+        from hsm_lab.calibration.interest_fiscal_experiment import run_interest_fiscal_arms
+
+        root = _repo_root()
+        target = (
+            output_dir
+            if output_dir is not None and output_dir.exists()
+            else _fresh_output_dir(output_dir, "p05-interest-fiscal-arms")
+        )
+        payload = run_interest_fiscal_arms(root, target)
+        _emit(
+            payload,
+            json_mode,
+            [
+                (
+                    f"{arm['arm']}: REJECTED at tick {arm['completed_ticks']} "
+                    f"({arm['failure_message']})"
+                    if arm.get("status") == "rejected_accounting_residual"
+                    else (
+                        f"{arm['arm']}: gates={'PASS' if arm['frozen_gates_pass'] else 'BLOCKED'} "
+                        f"T1={arm['terminal_T1_pass']} T2={arm['terminal_T2_pass']} "
+                        f"T3={arm['terminal_T3_pass']} liveness={arm['liveness']:.4f}"
+                    )
+                )
+                for arm in payload["arms"]
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
 @calibration_app.command("axis-sweep")
 def calibration_axis_sweep(
     axis: str = typer.Option(
         ...,
         "--axis",
         help=(
-            "credit_envelope_fraction, input_credit_earmark_fraction, or transport_capacity_scale."
+            "credit_envelope_fraction, input_credit_earmark_fraction, transport_capacity_scale, "
+            "interest_sink_remittance_fraction, or fiscal_turnover_remittance_fraction."
         ),
     ),
     points: str = typer.Option(

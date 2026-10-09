@@ -98,6 +98,35 @@ class CircuitObserver:
 
         after = money_snapshot(state)
         money: dict[str, Any] = dict(keys)
+        transport_code = next(
+            i for i, organization_type in enumerate(ORGANIZATION_TYPE_ORDER)
+            if organization_type.value == "transport"
+        )
+        transport_mask = np.asarray(state.organization_type) == transport_code
+        transport_realized = float(
+            np.asarray(flows.organization_realized, dtype=np.float64)[transport_mask].sum()
+        )
+        freight_need = float(
+            np.sum(
+                np.asarray(flows.edge_allocated, dtype=np.float64)
+                * np.asarray(network.edge_transport_per_unit, dtype=np.float64)
+            )
+        )
+        money.update(
+            {
+                "transport_target": float(
+                    np.asarray(flows.organization_target, dtype=np.float64)[transport_mask].sum()
+                ),
+                "transport_realized": transport_realized,
+                "transport_logistics_pool": transport_realized
+                * float(parameters.service_split[0]),
+                "freight_service_need": freight_need,
+                "delivered_total": float(np.asarray(flows.delivered, dtype=np.float64).sum()),
+                "physical_blocked_total": float(
+                    np.asarray(flows.physical_delivery_blocked, dtype=np.float64).sum()
+                ),
+            }
+        )
         for name in before:
             money[f"{name}_open"] = before[name]
             money[f"{name}_close"] = after[name]

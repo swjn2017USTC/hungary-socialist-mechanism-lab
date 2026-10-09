@@ -38,6 +38,8 @@ AXES = (
     "credit_envelope_fraction",
     "input_credit_earmark_fraction",
     "transport_capacity_scale",
+    "interest_sink_remittance_fraction",
+    "fiscal_turnover_remittance_fraction",
 )
 
 
@@ -208,11 +210,15 @@ def run_axis_sweep(
                         )
                     }
                 )
-            elif axis == "input_credit_earmark_fraction":
+            elif axis in (
+                "input_credit_earmark_fraction",
+                "interest_sink_remittance_fraction",
+                "fiscal_turnover_remittance_fraction",
+            ):
                 scenario = spec.model_copy(
                     update={
                         "material_parameters": spec.material_parameters.model_copy(
-                            update={"input_credit_earmark_fraction": float(value)}
+                            update={axis: float(value)}
                         )
                     }
                 )
