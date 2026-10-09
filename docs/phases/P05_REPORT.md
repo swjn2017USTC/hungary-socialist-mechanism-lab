@@ -674,6 +674,31 @@ identified 0 / unidentified 6**. Nothing is labelled estimated.
 (§E6): neither restores liveness, so neither is adopted and F2 remains
 `not_validated`. The blocking work is now the stock-flow / money-flow audit.
 
+### P06 readiness (updated 2026-10-10, after the two structural experiments)
+
+| P06 prerequisite | status |
+|---|---|
+| OMP_PLAN §9 dependency: Gate 1 passed (includes the closure audit) | **NO** — H' `audit-closure` still reports `status collapsed`, `output_liveness = 0.0` |
+| Gate 2 calibration / validation complete | **NO** — `linkage = []`, `screen` = `NO_IDENTIFIABLE_PARAMETERS`, `inference_status = NOT_RUN` |
+| F2 validated | **NO** — 4 of the 5 frozen gates fail (liveness, service ratios, treasury, expiry) |
+| structural closure (acceptance gates pass on the replay) | in progress — funding-channel experiment negative, earmark experiment partial/rejected, interest/fiscal plan written |
+| parameter identification for the §10.2 sensitivity funnel | **NO** — `calibrated 0 / fixed 5 / weakly identified 0 / unidentified 6` |
+| mechanism cards M1-M11 | absent (schema not created) |
+| forcing ladder H0-H4 on the F2 catalog | H0 diagnostic exists but fails on the 16-commodity catalog; the ladder is absent |
+| Morris / targeted ABC / Sobol | Morris absent, ABC inference unimplemented (`PAIRED_STUDY_NOT_IMPLEMENTED`); only per-axis sweeps exist |
+| reserved-window evaluation (1986Q1-1988Q4) | cannot start — window closed and no validated model |
+| reproducibility bundle | partial (run kinds, manifests, digests, parameter hashes) |
+
+Two dependency chains, both incomplete: **(i) model closure** — the frozen gates must pass,
+which no tested structural rule has achieved (two experiments, both rejected on evidence);
+**(ii) identification** — a parameter→target linkage must be declared before any ABC/F1-F2
+inference exists, and that chain has not started. P06's mechanism verdicts, forcing ladder
+and sensitivity funnel all consume a validated, identified model, so their results would not
+be interpretable today.
+
+What can start now without a validated model: the mechanism-card schema, the Morris/Sobol
+harness (on the toy catalog), and the H-ladder *infrastructure*. Their verdicts cannot.
+
 ### Can P06 start? **No.**
 
 Three independent reasons, each from this report's own measurements:
