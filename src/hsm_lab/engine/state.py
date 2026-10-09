@@ -283,6 +283,7 @@ class MaterialTickFlows:
     inventory_open: np.ndarray  # float64 (D,) destination cell opening view
     inventory_close: np.ndarray  # float64 (D,) destination cell closing view
     financial_delivery_blocked: np.ndarray  # float64 (D,)
+    physical_delivery_blocked: np.ndarray  # float64 (D,) trader handling capacity
     # --- sparse route edges (M,) ------------------------------------------
     edge_delivered: np.ndarray  # float64 (M,)
     edge_allocated: np.ndarray  # float64 (M,)

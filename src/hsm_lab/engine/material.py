@@ -1478,6 +1478,15 @@ def tick_material(
     flows.financial_delivery_blocked = np.bincount(
         edge_demand, weights=blocked_edges, minlength=d_count
     )
+    # Physical shortfall: allocated on an edge but not moved because the sourcing
+    # wholesaler or the destination retailer is at its handling ceiling.  Without
+    # this ledger the allocation-to-delivery gap is invisible (financial blocked is
+    # zero while half the plan never moves).
+    flows.physical_delivery_blocked = np.bincount(
+        edge_demand,
+        weights=np.maximum(edge_allocated - candidate, 0.0),
+        minlength=d_count,
+    )
 
     state.stock_value -= np.bincount(edge_source, weights=delivered_edges, minlength=cell_count)
     state.stock_value += np.bincount(
@@ -2173,6 +2182,7 @@ def _new_flows(
         inventory_open=np.zeros(d_count, dtype=np.float64),
         inventory_close=np.zeros(d_count, dtype=np.float64),
         financial_delivery_blocked=np.zeros(d_count, dtype=np.float64),
+        physical_delivery_blocked=np.zeros(d_count, dtype=np.float64),
         edge_delivered=np.zeros(m_count, dtype=np.float64),
         edge_allocated=np.zeros(m_count, dtype=np.float64),
         edge_service_used=np.zeros(m_count, dtype=np.float64),

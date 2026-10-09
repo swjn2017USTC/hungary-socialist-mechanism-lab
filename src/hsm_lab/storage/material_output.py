@@ -101,6 +101,7 @@ AGGREGATE_COLUMNS = [
     "delivered",
     "used",
     "financial_delivery_blocked",
+    "physical_delivery_blocked",
     "production",
     "production_raw",
     "production_ready",
@@ -600,6 +601,7 @@ def _append_aggregate_rows(
         "delivered": demand_sums(flows.delivered),
         "used": demand_sums(flows.used),
         "financial_delivery_blocked": demand_sums(flows.financial_delivery_blocked),
+        "physical_delivery_blocked": demand_sums(flows.physical_delivery_blocked),
         "production": ledger.grid(ledger.mask_all, ledger.production),
         "production_raw": ledger.grid(
             ledger.mask_all,

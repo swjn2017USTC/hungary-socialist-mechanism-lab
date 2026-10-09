@@ -1040,6 +1040,7 @@ def check_material_invariants(
         "inventory_open": (D,),
         "inventory_close": (D,),
         "financial_delivery_blocked": (D,),
+        "physical_delivery_blocked": (D,),
         "edge_delivered": (M,),
         "edge_allocated": (M,),
         "edge_service_used": (M,),
@@ -1243,10 +1244,10 @@ def check_material_invariants(
         flows.ordered_gross,
         labels=demand_labels,
     )
-    material_at_most(
-        "blocked_le_allocated_minus_delivered",
-        flows.financial_delivery_blocked,
-        flows.allocated - flows.delivered,
+    material(
+        "delivered_plus_blocked_is_allocated",
+        flows.delivered + flows.financial_delivery_blocked + flows.physical_delivery_blocked,
+        flows.allocated,
         labels=demand_labels,
     )
     material_at_most(

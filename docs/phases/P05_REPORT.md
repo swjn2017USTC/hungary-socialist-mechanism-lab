@@ -472,13 +472,66 @@ gap but the **production-target rule** — it produces to capacity, not to deman
 so non-stockable surpluses expire and the payment chain drains. F2 remains
 `validation_status = not_validated`.
 
+### E5 — where the delivery fails (measured on the 116-tick F2 run)
+
+The regional certificate said only ~842 units need to move between regions, so the
+next question was whether the kernel moves them. It does, but far too little, and
+the loss is systemic rather than regional:
+
+| ledger step, ticks 2-11 (all commodities) | units | share |
+|---|---|---|
+| ordered (retail/admin orders) | 1 107 726 | 100% |
+| allocated | 9 441 356 | — |
+| delivered | 2 792 558 | 30% of allocated |
+| **physical_delivery_blocked** | **6 648 452** | **70% of allocated** |
+| financial_delivery_blocked | 346 | 0.004% |
+
+Ordering is not the problem (`desired ~ ordered`, `financial_delivery_blocked`
+is negligible). The kernel already moves goods across regions (g10 `ready`-stage
+receipts of 400-800 per four ticks in deficit and surplus counties alike), but
+delivery is capped by the **logistics pool**: `material.py` scales every edge by
+`_group_factor(transport_need, logistics_pool)` where
+
+```
+logistics_pool[org] = transport_realized[transport activities of org]
+                      * service_split[0]        (0.7)
+```
+
+and the transport activities are the early-service tier, whose realized output is
+`produce_leontief(opening stock of their inputs, ...)`.
+
+Two measurements pin this down:
+
+* scaling `WHOLESALE_HANDLING_TOTAL`/`RETAIL_HANDLING_TOTAL` by x2, x4 and x8
+  changes nothing (physical blocked stays 6.65 M, ratio 0.1116) — handling is not
+  the ceiling;
+* the ceiling is therefore the transport sector's own realization, which is
+  limited by the **opening input cover** of the carriers — the P02 transport
+  fuel-cover blocker, resurfacing at the delivery step.
+
+This also closes a diagnostic hole: before this change nothing in the ledger
+recorded `allocated -> candidate` at all, so `financial_delivery_blocked = 0` was
+being read as "delivery is fine" while 70% of the plan never moved. The engine now
+records `physical_delivery_blocked` and enforces the identity
+
+```
+delivered + physical_delivery_blocked + financial_delivery_blocked == allocated
+```
+
+for every demand cell, which is why that table can be read directly.
+
 ## 11. Next steps
 
 1. Run the E4 activity-level capacity alignment (`calibration/alignment.py`):
    declared demand → activity-level feasibility → org capacities, then the frozen
    acceptance gates on 116/232 synthetic ticks. F2 stays
    `validation_status = not_validated` until then.
-2. Route the ~842 units the regional certificate identifies (no explicit edge
+2. Repair the transport carriers' opening input cover (the P02 fuel blocker): the
+   logistics pool is `0.7 * transport_realized`, and `transport_realized` is
+   computed from the carriers' opening stock, so freight capacity is starved first
+   and caps every delivery in the economy. Until that is fixed the ~842 units the
+   regional certificate identifies cannot be moved.
+3. Route the ~842 units the regional certificate identifies (no explicit edge
    flows, transport capacity or finance pre-audit yet) and re-run the acceptance
    gates; only then re-test a demand-following target rule, because step 6 showed
    that capping production before routing exists starves the delivery chain.
