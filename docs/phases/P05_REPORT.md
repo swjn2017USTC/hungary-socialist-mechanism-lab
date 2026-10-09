@@ -500,7 +500,15 @@ logistics_pool[org] = transport_realized[transport activities of org]
 and the transport activities are the early-service tier, whose realized output is
 `produce_leontief(opening stock of their inputs, ...)`.
 
-Two measurements pin this down:
+Instrumenting `_group_factor` over a full run (1 739 calls) shows most groups at
+their capacity (mean factor 0.87-1.00) but a subset with **zero** capacity while
+still carrying need (e.g. a group with need 30 233 against capacity 304 013
+receiving factor 0.0) — those zero-pool groups supply the edges that lose 70% of
+their allocation. The transport sector itself is not idle (its realized output is
+~88% of target over the first ticks, 159 849 of 164 423), so the pool is simply
+too small for the freight the economy's flows demand.
+
+Three measurements pin this down:
 
 * scaling `WHOLESALE_HANDLING_TOTAL`/`RETAIL_HANDLING_TOTAL` by x2, x4 and x8
   changes nothing (physical blocked stays 6.65 M, ratio 0.1116) — handling is not
