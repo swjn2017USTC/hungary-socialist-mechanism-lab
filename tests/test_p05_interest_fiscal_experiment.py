@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pytest
 import yaml
 from pydantic import ValidationError
 
 from hsm_lab.contract.guards import load_scenario
 from hsm_lab.contract.material import MaterialParameters
+from hsm_lab.engine.household_allocation import _household_budget_with_savings
 from hsm_lab.engine.material import material_parameter_vector
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,13 +23,17 @@ def test_interest_and_fiscal_parameters_are_declared_and_bounded() -> None:
     assert parameters.interest_sink_remittance_fraction == 0.0
     assert parameters.interest_sink_recipient == "treasury"
     assert parameters.fiscal_turnover_remittance_fraction == 0.0
+    assert parameters.household_savings_reentry_fraction == 0.0
     assert parameters.flatten()["interest_sink_remittance_fraction"] == 0.0
     assert parameters.flatten()["interest_sink_recipient.households"] == 0.0
     assert parameters.flatten()["fiscal_turnover_remittance_fraction"] == 0.0
+    assert parameters.flatten()["household_savings_reentry_fraction"] == 0.0
     with pytest.raises(ValidationError):
         MaterialParameters(interest_sink_remittance_fraction=1.01)
     with pytest.raises(ValidationError):
         MaterialParameters(fiscal_turnover_remittance_fraction=1.01)
+    with pytest.raises(ValidationError):
+        MaterialParameters(household_savings_reentry_fraction=1.01)
     with pytest.raises(ValidationError):
         MaterialParameters(interest_sink_recipient="banks")
 
@@ -38,6 +44,7 @@ def test_default_zero_parameters_are_omitted_but_nonzero_values_are_hash_bound()
     assert "interest_sink_remittance_fraction" not in base
     assert "interest_sink_recipient.households" not in base
     assert "fiscal_turnover_remittance_fraction" not in base
+    assert "household_savings_reentry_fraction" not in base
     armed = spec.model_copy(
         update={
             "material_parameters": spec.material_parameters.model_copy(
@@ -55,6 +62,19 @@ def test_default_zero_parameters_are_omitted_but_nonzero_values_are_hash_bound()
     assert vector["fiscal_turnover_remittance_fraction"] == 0.02
 
 
+def test_savings_reentry_budget_is_bounded_by_opening_cash_and_default_is_noop() -> None:
+    cash = np.asarray([100.0, 20.0, 50.0])
+    receipts = np.asarray([10.0, 30.0, -5.0])
+    income_budget, legacy_budget, no_draw = _household_budget_with_savings(cash, receipts, 0.0)
+    np.testing.assert_array_equal(legacy_budget, [10.0, 20.0, 0.0])
+    np.testing.assert_array_equal(legacy_budget, income_budget)
+    np.testing.assert_array_equal(no_draw, [0.0, 0.0, 0.0])
+    _, half_budget, half_draw = _household_budget_with_savings(cash, receipts, 0.5)
+    np.testing.assert_array_equal(half_budget, [55.0, 20.0, 25.0])
+    np.testing.assert_array_equal(half_draw, [45.0, 0.0, 25.0])
+    assert np.all(half_budget <= cash)
+
+
 def test_interest_fiscal_registry_marks_design_rules_fixed_not_calibrated() -> None:
     control = json.loads((ROOT / "config/calibration/p05.json").read_text())
     registry = yaml.safe_load((ROOT / "config/calibration/p05_parameters.yml").read_text())
@@ -62,6 +82,7 @@ def test_interest_fiscal_registry_marks_design_rules_fixed_not_calibrated() -> N
         "p05_interest_sink_remittance_prior": "interest_sink_remittance_fraction",
         "p05_interest_sink_recipient_prior": "interest_sink_recipient.households",
         "p05_fiscal_turnover_remittance_prior": "fiscal_turnover_remittance_fraction",
+        "p05_household_savings_reentry_prior": "household_savings_reentry_fraction",
     }
     entries = {row["artifact_id"]: row for row in registry["parameters"]}
     for artifact_id, variable_id in expected.items():

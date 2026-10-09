@@ -28,6 +28,9 @@ ARMS: dict[str, dict[str, float | str]] = {
         "fiscal_turnover_remittance_fraction": 0.02,
     },
     "N1": {"credit_envelope_fraction": 1.0},
+    "S1": {"household_savings_reentry_fraction": 1.0},
+    "S025": {"household_savings_reentry_fraction": 0.25},
+    "S05": {"household_savings_reentry_fraction": 0.5},
 }
 SERVICE_IDS = {
     "g03": "g03_electricity_heat",
@@ -167,6 +170,7 @@ def summarize_arm(
         "wage_arrears_final": float(wage_final["wage_arrears_sum"].sum()),
         "interest_arrears_final": float(wage_final["interest_arrears_sum"].sum()),
         "household_spending": float(money["household_spending"].sum()),
+        "household_savings_draw": float(money["household_savings_draw"].sum()),
         "household_availability_unmet": availability_unmet,
         "transport_target": transport_target,
         "transport_realized": transport_realized,

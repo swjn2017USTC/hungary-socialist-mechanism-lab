@@ -70,4 +70,9 @@ parameters:
   - 'structural design rule: turnover-based remittance between existing deposits under Hungarian budget institutions, not a fitted coefficient'
   present: true
   variable_id: fiscal_turnover_remittance_fraction
+- artifact_id: p05_household_savings_reentry_prior
+  literature_refs:
+  - 'structural design rule: bounded re-entry of existing household deposits into the purchase budget; not a fitted coefficient'
+  present: true
+  variable_id: household_savings_reentry_fraction
 schema_version: '1'

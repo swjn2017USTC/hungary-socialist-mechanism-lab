@@ -179,6 +179,7 @@ class CircuitObserver:
                 "plot_input_funding": hh("household_plot_input_funding"),
                 "second_input_funding": hh("household_second_input_funding"),
                 "household_spending": hh("household_spending"),
+                "household_savings_draw": hh("household_savings_draw"),
                 "household_budget": hh("household_budget_available"),
                 "voluntary_saving": hh("household_voluntary_saving"),
                 "forced_saving": hh("household_forced_saving"),

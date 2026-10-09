@@ -7,8 +7,9 @@ One fixed execution order per tick (D1):
 
 Every channel has its own availability; a shortage in one channel is never
 reported as a shortage of its parent commodity or of a sibling channel.  Money
-is only moved from *income* shares; the budget is never overrun, and a forced
-substitution is only allowed when the target goal was already affordable.
+is moved from current receipts plus an explicitly declared bounded opening-cash
+share; the budget is never overrun, and a forced substitution is only allowed
+when the target goal was already affordable.
 """
 
 from __future__ import annotations
@@ -29,6 +30,19 @@ from hsm_lab.engine.state import MaterialState, MaterialStockSnapshot, MaterialT
 _PURPOSE_HOUSEHOLD = PURPOSE_CODES[RoutePurpose.HOUSEHOLD]
 
 
+def _household_budget_with_savings(
+    opening_cash: np.ndarray, current_receipts: np.ndarray, reentry_fraction: float
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return income budget, total purchase cap and maximum opening-cash draw."""
+    opening_cash = np.maximum(np.asarray(opening_cash, dtype=np.float64), 0.0)
+    current_receipts = np.asarray(current_receipts, dtype=np.float64)
+    income_budget = np.maximum(np.minimum(opening_cash, current_receipts), 0.0)
+    eligible_cash = np.maximum(opening_cash - income_budget, 0.0)
+    draw_cap = eligible_cash * float(reentry_fraction)
+    total_budget = np.minimum(opening_cash, income_budget + draw_cap)
+    return income_budget, total_budget, draw_cap
+
+
 def allocate_household_baskets(
     state: MaterialState,
     flows: MaterialTickFlows,
@@ -39,6 +53,7 @@ def allocate_household_baskets(
     household_cash_open: np.ndarray,
     household_deferred_open: np.ndarray,
     stock_tick_open: np.ndarray | None = None,
+    savings_reentry_fraction: float = 0.0,
 ) -> None:
     """Ration the desired basket across every channel and settle all flows."""
     catalog: HouseholdCatalog = network.household_catalog
@@ -66,7 +81,9 @@ def allocate_household_baskets(
         - np.asarray(flows.household_plot_input_funding, dtype=np.float64)
         - np.asarray(flows.household_second_input_funding, dtype=np.float64)
     )
-    budget = np.maximum(np.minimum(pre_purchase_cash, income), 0.0)
+    base_income_budget, budget, savings_reentry_cap = _household_budget_with_savings(
+        pre_purchase_cash, income, savings_reentry_fraction
+    )
 
     # --- plot self-use food (opening reserved stock, capacity share) --------
     plot_self = np.zeros((n, h_count), dtype=np.float64)
@@ -395,7 +412,9 @@ def allocate_household_baskets(
     flows.household_second_h = second_bought
     flows.household_goal_credit_h = goal_credit
     flows.household_substitution = substitution
-    flows.household_savings_draw = np.zeros(n, dtype=np.float64)
+    flows.household_savings_draw = np.minimum(
+        np.maximum(spending - base_income_budget, 0.0), savings_reentry_cap
+    )
     flows.household_queue_hours = queue_hours
     flows.household_search_hours = search_hours
     flows.household_plot_hours = np.asarray(
@@ -406,7 +425,7 @@ def allocate_household_baskets(
     flows.household_spending = spending
     flows.household_budget_available = budget
     flows.household_forced_saving = np.maximum(planned_spending - spending, 0.0)
-    flows.household_voluntary_saving = np.maximum(budget - planned_spending, 0.0)
+    flows.household_voluntary_saving = np.maximum(base_income_budget - planned_spending, 0.0)
     flows.household_second_income_direct = receipt.copy()
     flows.household_plot_income_direct = plot_direct_receipt.copy()
     # Material-ledger acquisition view (N, G): every realised source projected

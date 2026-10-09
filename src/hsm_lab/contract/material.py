@@ -1321,6 +1321,9 @@ class MaterialParameters(StrictModel):
     interest_sink_recipient: Literal["treasury", "households"] = "treasury"
     # Transfer this share of organization sales receipts to treasury after goods payments.
     fiscal_turnover_remittance_fraction: FiniteFraction = 0.0
+    # A3: allow a declared share of opening household cash above current receipts
+    # to fund purchases; zero keeps the legacy income-only budget.
+    household_savings_reentry_fraction: FiniteFraction = 0.0
     # P05 §0.6: cap on standing principal as a multiple of an organization's
     # quarterly wage bill (0 = unlimited). A positive cap makes the money stock
     # stationary in the closure control instead of growing with every drawdown.
@@ -1433,6 +1436,7 @@ class MaterialParameters(StrictModel):
                 1.0 if self.interest_sink_recipient == "households" else 0.0
             ),
             "fiscal_turnover_remittance_fraction": self.fiscal_turnover_remittance_fraction,
+            "household_savings_reentry_fraction": self.household_savings_reentry_fraction,
             "credit_stock_cap_quarters": self.credit_stock_cap_quarters,
             "distribution_margins_enabled": (1.0 if self.distribution_margins_enabled else 0.0),
             "m2_neutral_credit": 1.0 if self.m2_neutral_credit else 0.0,

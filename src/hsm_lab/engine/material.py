@@ -1915,6 +1915,7 @@ def tick_material(
         household_cash_open,
         household_deferred_open,
         stock_open,
+        savings_reentry_fraction=float(parameters.household_savings_reentry_fraction),
     )
     for column, channel in enumerate(catalog.durable_h_index):
         flows.durable_acquired[:, column] = np.asarray(
@@ -2448,6 +2449,7 @@ def material_parameter_vector(spec: ScenarioSpec) -> dict[str, float]:
         "interest_sink_remittance_fraction",
         "interest_sink_recipient.households",
         "fiscal_turnover_remittance_fraction",
+        "household_savings_reentry_fraction",
     ):
         if flattened.get(name) == 0.0:
             flattened.pop(name)
