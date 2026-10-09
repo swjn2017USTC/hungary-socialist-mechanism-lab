@@ -98,6 +98,7 @@ def test_input_credit_earmark_axis_updates_the_declared_parameter(tmp_path, monk
     parameters = SimpleNamespace(input_credit_earmark_fraction=0.0)
     spec = SimpleNamespace(
         material_parameters=parameters,
+        seed=0,
         model_copy=lambda *, update: SimpleNamespace(
             material_parameters=update["material_parameters"]
         ),
@@ -107,7 +108,12 @@ def test_input_credit_earmark_axis_updates_the_declared_parameter(tmp_path, monk
 
     def fake_run(scenario, output_dir, contract, registry, *, checkpoint_every):
         observed.append(scenario.material_parameters.input_credit_earmark_fraction)
-        return SimpleNamespace(status="completed", completed_ticks=116)
+        return SimpleNamespace(
+            status="completed",
+            completed_ticks=116,
+            parameter_hash="parameter-hash",
+            deterministic_replay_digest="replay-digest",
+        )
 
     monkeypatch.setattr(
         axis_sweep,
@@ -145,3 +151,24 @@ def test_input_credit_earmark_axis_updates_the_declared_parameter(tmp_path, monk
 
     assert observed == [0.25]
     assert points[0].ticks == 116
+    assert points[0].parameter_hash == "parameter-hash"
+    assert points[0].seed == 0
+    assert points[0].intervention_hash
+    assert points[0].deterministic_replay_digest == "replay-digest"
+
+
+@pytest.mark.parametrize(
+    "axis",
+    [
+        "bailout_envelope_fraction",
+        "wage_rate",
+        "service_split.0",
+        "service_split.1",
+        "service_split.2",
+        "handling_work_per_unit.scale",
+        "trade.cmea_export_demands.scale",
+        "trade.convertible_export_demands.scale",
+    ],
+)
+def test_declared_structural_axes_are_registered(axis) -> None:
+    assert axis in axis_sweep.AXES

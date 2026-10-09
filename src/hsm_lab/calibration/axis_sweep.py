@@ -34,12 +34,22 @@ from typing import Any
 import numpy as np
 import polars as pl
 
+from hsm_lab.provenance.manifest import canonical_digest
+
 AXES = (
     "credit_envelope_fraction",
     "input_credit_earmark_fraction",
     "transport_capacity_scale",
     "interest_sink_remittance_fraction",
     "fiscal_turnover_remittance_fraction",
+    "bailout_envelope_fraction",
+    "wage_rate",
+    "service_split.0",
+    "service_split.1",
+    "service_split.2",
+    "handling_work_per_unit.scale",
+    "trade.cmea_export_demands.scale",
+    "trade.convertible_export_demands.scale",
 )
 
 
@@ -67,6 +77,10 @@ class AxisPoint:
     physical_blocked_total: float
     financial_blocked_total: float
     output_dir: str
+    parameter_hash: str = ""
+    seed: int = 0
+    intervention_hash: str = ""
+    deterministic_replay_digest: str = ""
     extras: dict[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
@@ -214,6 +228,8 @@ def run_axis_sweep(
                 "input_credit_earmark_fraction",
                 "interest_sink_remittance_fraction",
                 "fiscal_turnover_remittance_fraction",
+                "bailout_envelope_fraction",
+                "wage_rate",
             ):
                 scenario = spec.model_copy(
                     update={
@@ -222,7 +238,57 @@ def run_axis_sweep(
                         )
                     }
                 )
-            run = run_material(scenario, output_dir, contract, registry, checkpoint_every=0)
+            elif axis.startswith("service_split."):
+                index = int(axis.rsplit(".", 1)[1])
+                split = list(spec.material_parameters.service_split)
+                old_value = split[index]
+                delta = float(value) - old_value
+                other_indices = [i for i in range(3) if i != index]
+                other_total = sum(split[i] for i in other_indices)
+                if float(value) < 0.0 or delta > other_total:
+                    raise ValueError(f"{axis}={value:g} cannot preserve service_split shares")
+                split[index] = float(value)
+                if other_total:
+                    for i in other_indices:
+                        split[i] -= delta * split[i] / other_total
+                scenario = spec.model_copy(
+                    update={
+                        "material_parameters": spec.material_parameters.model_copy(
+                            update={"service_split": split}
+                        )
+                    }
+                )
+            elif axis == "handling_work_per_unit.scale":
+                baseline = list(spec.material_parameters.handling_work_per_unit)
+                scenario = spec.model_copy(
+                    update={
+                        "material_parameters": spec.material_parameters.model_copy(
+                            update={"handling_work_per_unit": [x * float(value) for x in baseline]}
+                        )
+                    }
+                )
+            elif axis in (
+                "trade.cmea_export_demands.scale",
+                "trade.convertible_export_demands.scale",
+            ):
+                key = axis.rsplit(".", 2)[1]
+                trade = spec.material_parameters.trade.model_copy(
+                    update={
+                        key: [
+                            x * float(value)
+                            for x in getattr(spec.material_parameters.trade, key)
+                        ]
+                    }
+                )
+                scenario = spec.model_copy(
+                    update={
+                        "material_parameters": spec.material_parameters.model_copy(
+                            update={"trade": trade}
+                        )
+                    }
+                )
+        intervention_hash = canonical_digest({"axis": axis, "value": float(value)})
+        run = run_material(scenario, output_dir, contract, registry, checkpoint_every=0)
         metrics = _gate_metrics(output_dir, terminal_floor)
         results.append(
             AxisPoint(
@@ -230,6 +296,10 @@ def run_axis_sweep(
                 status=str(run.status),
                 ticks=int(run.completed_ticks),
                 output_dir=str(output_dir),
+                parameter_hash=str(run.parameter_hash),
+                seed=int(spec.seed),
+                intervention_hash=intervention_hash,
+                deterministic_replay_digest=str(run.deterministic_replay_digest),
                 **metrics,
             )
         )
