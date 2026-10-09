@@ -171,3 +171,64 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   'not test_abc_smoke_proves_the_api_and_the_empty_registry_path'` → **383 passed, 1
   deselected**. The deselected test invokes ABC smoke; it was held because the user ordered
   B3 to wait for the B1 linkage. No inference, hold-out, or reserved-window values were run.
+
+## 2026-10-10 — Reviewer audit (independent) — one finding changes the Track A verdict
+
+Independently reproduced: `pytest -q` → **384 passed** (the deselected ABC smoke test passes
+when run); `ruff check src tests` clean; the default scenario still yields digest
+`92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d`; every mechanism commit
+preserved the legacy digest and the 14 original Parquet files. The A4 table's units are
+consistent (the lean arms really do collapse to ~60 units of terminal production). Track A7
+was reached by the plan's own rule and the log is honest about partial items.
+
+### R1 — the interest-remittance arms were infeasible by construction, so H2 is OPEN, not negative
+
+Every interest arm was rejected on negative bank reserves (reproduced here:
+`hsm calibration axis-sweep --axis interest_sink_remittance_fraction --points 0.5` →
+`ValueError: bank reserves went negative`). The cause is measurable and arithmetic, not
+economic:
+
+| quantity | value |
+|---|---:|
+| national bank reserves, tick 0 and tick 115 (constant) | **2 244 000** |
+| total interest paid over the run (the amount to be remitted) | **5 314 921** |
+| smallest single-bank reserve in the baseline | 70 881 |
+
+`engine/finance.py` creates deposits by lending **without** creating reserves (the
+`m2_neutral_credit = False` branch adds `bank_loan_asset` and `bank_deposit_liability` only,
+lines 860-864), while the treasury is a **commercial-bank depositor** at bank 0
+(initialisation credits `deposits[0] += treasury_deposit`). Routing the sink therefore forces
+a cross-bank reserve migration that must come out of a fixed pool which is **2.4× smaller
+than the flow**: even a 0.5 fraction (2.66 M) exceeds total reserves. The rejection tests the
+settlement-layer convention, not the interest hypothesis.
+
+Consequence: the clearance log's wording "H2 untestable with valid full-horizon evidence" is
+correct and now explained. The next structural item is therefore **the settlement layer**
+(hold the treasury account outside commercial-bank reserves, or create reserves consistently
+with deposit creation) before any interest-disposition arm can inform anything.
+
+### R2 — plan §10 deliverable missing
+
+The machine-checkable P06 clearance checklist (`scripts/p06_clearance.py` or
+`hsm calibration p06-clearance`, writing `docs/phases/P06_CLEARANCE.md`) does not exist.
+The 13-item checklist is therefore unverified as a whole; the individual log entries are the
+only record.
+
+### R3 — open certificate failure
+
+D2's own log entry records the H4 rung failing the periodic output residual
+(`1.3666e-6` against the `1e-6` cutoff). It is disclosed, not resolved.
+
+### R4 — B4 guard is not enforced where it matters
+
+The window protocol exists and its tests pass, but the log states it "is not wired into the
+target-loading path". Until it is, the hold-out/reserved refusal is a library function rather
+than a property of the pipeline.
+
+### R5 — Track B state
+
+B2/B4/D5 are infrastructure with honest limitations; B1 (linkage) and B3 (inference) are
+untouched, as instructed. B1 is a two-part decision: a `linkage` entry alone does **not**
+make a parameter identifiable — `calibration/screen.py` lets a declared identity of `fixed`
+or `unidentified` win, so the identity label must be changed in the same decision. Only
+targets observed inside the **training** window (1960-1969) are admissible.
