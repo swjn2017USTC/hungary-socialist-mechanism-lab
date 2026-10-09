@@ -22,3 +22,17 @@ The F2 catalog remains explicitly out of scope for this ladder until Track A clo
 Gate 1 H'. The H0 certificate distinction is recorded: intermediate8 passes at 232
 diagnostic ticks, while the historical F2 H' closure audit remains failed. The ladder
 does not imply P06 model readiness or assign any mechanism verdict.
+
+## W4 disposition — H4 conditional
+
+The H4 failure is a measured residual in the certificate's existing same-season,
+four-tick comparison between the last two complete years, not an accounting residual.
+The maximum output pair is tick 224 = `177892.12491423212` and tick 228 =
+`177892.3680267428`; its normalized difference is `1.3666269856210904e-6`, above
+the unchanged `1e-6` cutoff. Finance and material accounting tolerance ratios remain
+within their gates. The immediate cause of the certificate failure is therefore
+continued low-amplitude year-over-year output drift at the H4 forcing level; the code
+audit does not isolate a deeper economic or numerical mechanism, so none is claimed.
+H4 is **CONDITIONAL** (certificate failed its periodic-output criterion). H0–H3
+retain their recorded PASS dispositions. No tolerance, rung value, or scenario default
+was changed, and this synthetic intermediate8 diagnostic is not evidence about F2.
