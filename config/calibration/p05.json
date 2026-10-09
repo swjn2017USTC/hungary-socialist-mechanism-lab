@@ -77,7 +77,7 @@
   },
   "scenarios": {
     "endogenous_politics": "p04_endogenous",
-    "historical_replay": "intermediate8"
+    "historical_replay": "historical_f2_replay"
   },
   "schema_version": "1",
   "seed_banks": {
