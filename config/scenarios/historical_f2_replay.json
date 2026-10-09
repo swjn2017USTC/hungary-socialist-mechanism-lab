@@ -1,37 +1,4 @@
 {
-  "schema_version": "1",
-  "scenario_id": "historical_f2_replay",
-  "kind": "material",
-  "start": {
-    "year": 1957,
-    "quarter": 1
-  },
-  "ticks": 116,
-  "households": 5000,
-  "enterprises": null,
-  "organizations": 400,
-  "region_ids": [
-    "budapest",
-    "pest",
-    "borsod_abauj_zemplen",
-    "heves",
-    "nograd",
-    "fejer",
-    "komarom",
-    "veszprem",
-    "gyor_sopron",
-    "vas",
-    "zala",
-    "baranya",
-    "somogy",
-    "tolna",
-    "hajdu_bihar",
-    "szabolcs_szatmar",
-    "szolnok",
-    "bacs_kiskun",
-    "bekes",
-    "csongrad"
-  ],
   "commodities": [
     "g01_solid_fuels",
     "g02_oil_gas_fuels",
@@ -50,57 +17,1177 @@
     "g15_market_services",
     "g16_housing_public_services"
   ],
-  "seed": 1729,
-  "stochastic": true,
-  "output_policy": "ensemble_compact",
+  "enterprises": null,
+  "forcing_bindings": [],
   "forcing_ids": [],
-  "initial_ids": [],
-  "parameter_ids": [],
-  "material_parameters": {
-    "role": "latent_parameter",
+  "forcing_pack": "data/fixtures/p02_material_synthetic_pack.json",
+  "household_initial": {
+    "counties": [
+      {
+        "child_share": 0.2,
+        "county_id": "budapest",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 202.02020202020202,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 686.8686868686868,
+        "plot_share": 0.195,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.35,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "pest",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 207.07070707070707,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 704.040404040404,
+        "plot_share": 0.19026315789473686,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.3657894736842105,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "borsod_abauj_zemplen",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 212.12121212121212,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 721.2121212121212,
+        "plot_share": 0.18552631578947368,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.381578947368421,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "heves",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 217.17171717171718,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 738.3838383838383,
+        "plot_share": 0.18078947368421053,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.39736842105263154,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "nograd",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 222.22222222222223,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 755.5555555555555,
+        "plot_share": 0.17605263157894738,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.41315789473684206,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "fejer",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 227.27272727272728,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 772.7272727272727,
+        "plot_share": 0.1713157894736842,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.42894736842105263,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "komarom",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 232.32323232323233,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 789.89898989899,
+        "plot_share": 0.16657894736842108,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.4447368421052631,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "veszprem",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 237.37373737373738,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 807.070707070707,
+        "plot_share": 0.1618421052631579,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.4605263157894737,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "gyor_sopron",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 242.42424242424244,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 824.2424242424242,
+        "plot_share": 0.15710526315789475,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.47631578947368414,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "vas",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 247.4747474747475,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 841.4141414141415,
+        "plot_share": 0.15236842105263157,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.4921052631578947,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "zala",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 252.5252525252525,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 858.5858585858585,
+        "plot_share": 0.14763157894736845,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.5078947368421052,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "baranya",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 257.57575757575756,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 875.7575757575756,
+        "plot_share": 0.14289473684210527,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.5236842105263158,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "somogy",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 262.62626262626264,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 892.929292929293,
+        "plot_share": 0.1381578947368421,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.5394736842105263,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "tolna",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 267.67676767676767,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 910.10101010101,
+        "plot_share": 0.13342105263157897,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.5552631578947368,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "hajdu_bihar",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 272.72727272727275,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 927.2727272727274,
+        "plot_share": 0.1286842105263158,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.5710526315789474,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "szabolcs_szatmar",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 277.77777777777777,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 944.4444444444443,
+        "plot_share": 0.12394736842105264,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.5868421052631578,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "szolnok",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 282.82828282828285,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 961.6161616161617,
+        "plot_share": 0.11921052631578948,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.6026315789473684,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "bacs_kiskun",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 287.8787878787879,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 978.7878787878788,
+        "plot_share": 0.1144736842105263,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.618421052631579,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "bekes",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 292.92929292929296,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 995.9595959595961,
+        "plot_share": 0.10973684210526316,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.6342105263157894,
+        "western_exposure": 0.0
+      },
+      {
+        "child_share": 0.2,
+        "county_id": "csongrad",
+        "durable_ownership": [
+          0.05,
+          0.03,
+          0.1,
+          0.005
+        ],
+        "education_shares": [
+          0.6,
+          0.3,
+          0.1
+        ],
+        "elderly_share": 0.15,
+        "household_total": 297.979797979798,
+        "informal_access": 0.5,
+        "occupation_shares": [
+          0.35,
+          0.25,
+          0.25,
+          0.15
+        ],
+        "persons_total": 1013.131313131313,
+        "plot_share": 0.10500000000000002,
+        "second_share": 0.2,
+        "size_probabilities": [
+          0.1,
+          0.2,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "tenure_shares": [
+          0.4,
+          0.2,
+          0.4
+        ],
+        "urban_share": 0.6499999999999999,
+        "western_exposure": 0.0
+      }
+    ],
     "evidence_status": "structural_assumption",
+    "grade": "S",
+    "observation_at": null,
+    "population_kind": "synthetic",
+    "role": "initial_state"
+  },
+  "household_parameters": {
+    "allocation": {
+      "access_learning_hours": 10.0,
+      "access_learning_rate": 0.05,
+      "formal_durable_shares": [
+        0.3,
+        0.3,
+        0.3,
+        0.1
+      ],
+      "formal_food_shares": [
+        0.75,
+        0.25
+      ],
+      "formal_service_shares": [
+        0.8,
+        0.2
+      ],
+      "material_equivalent_per_unit": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        2.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        4.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent_commodity_ids": [
+        "g01_solid_fuels",
+        "g02_oil_gas_fuels",
+        "g03_electricity_heat",
+        "g09_basic_food",
+        "g10_animal_food",
+        "g11_textiles_footwear",
+        "g12_household_nondurables",
+        "g13_household_durables",
+        "g13_household_durables",
+        "g13_household_durables",
+        "g14_vehicles_transport_equipment",
+        "g15_market_services",
+        "g07_construction",
+        "g15_market_services",
+        "g16_housing_public_services"
+      ],
+      "plot_food_shares": [
+        1.0,
+        0.0
+      ],
+      "queue_hours_per_equivalent_unmet": 0.5,
+      "quota_share": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.0,
+        0.5,
+        1.0,
+        0.5,
+        1.0
+      ],
+      "savings_draw_fraction": 0.25,
+      "search_hours_per_channel_shortage": 2.0,
+      "substitution_credits": [
+        0.6,
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "substitution_ratios": [
+        2.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
     "calibration_status": "not_calibrated",
+    "demand": {
+      "base_per_equivalent_person": [
+        0.2,
+        0.05,
+        0.1,
+        0.5,
+        0.2,
+        0.1,
+        0.1,
+        0.002,
+        0.002,
+        0.002,
+        0.0005,
+        0.05,
+        0.02,
+        0.1,
+        0.1
+      ],
+      "children_equivalence": 0.7,
+      "education_multipliers": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "elderly_equivalence": 0.9,
+      "higher_expectation_weight": 0.25,
+      "higher_income_elasticity": 0.5,
+      "light_income_elasticity": 0.25,
+      "light_peer_weight": 0.1,
+      "light_western_weight": 0.05,
+      "minimum_per_equivalent_person": [
+        0.06,
+        0.015,
+        0.03,
+        0.15,
+        0.06,
+        0.03,
+        0.03,
+        0.0006,
+        0.0006,
+        0.0006,
+        0.00015,
+        0.015,
+        0.006,
+        0.03,
+        0.03
+      ],
+      "occupation_multipliers": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "personal_income_elasticity": 0.25,
+      "rural_energy_multiplier": 1.1,
+      "urban_energy_multiplier": 0.9
+    },
+    "durables": {
+      "aspiration_base": [
+        0.25,
+        0.2,
+        0.5,
+        0.1
+      ],
+      "aspiration_expectation_weight": 0.1,
+      "aspiration_income_weight": 0.1,
+      "aspiration_peer_weight": 0.2,
+      "new_intention_per_quarter": 0.02,
+      "repair_effectiveness": 0.5,
+      "retirement_hazard": [
+        0.005,
+        0.005,
+        0.004,
+        0.003
+      ],
+      "waiting_priority_weight": 0.1
+    },
+    "eps": 1e-12,
+    "evidence_status": "structural_assumption",
+    "expectations": {
+      "alpha_down": 0.02,
+      "alpha_up": 0.25,
+      "consumption_reference_alpha": 0.25,
+      "initial_entitlement": [
+        1.0,
+        0.5,
+        1.0,
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "ratchet_quarters": 4,
+      "ratchet_strength": 0.1
+    },
+    "housing": {
+      "housing_construction_cap_per_person": 0.002,
+      "persons_per_dwelling": 3.0,
+      "private_construction_intention_per_quarter": 0.02,
+      "severe_overcrowding_threshold": 1.0,
+      "waiting_priority_weight": 0.1
+    },
+    "role": "latent_parameter",
+    "second_economy": {
+      "calibration_status": "not_calibrated",
+      "capacity_per_participating_worker": 10.0,
+      "evidence_status": "structural_assumption",
+      "hours_per_activity": 4.0,
+      "input_coefficients": [
+        0.02,
+        0.0,
+        0.0,
+        0.0,
+        0.03,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "output_coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        0.1,
+        0.0,
+        0.05,
+        0.0,
+        0.25
+      ],
+      "role": "latent_parameter",
+      "sensitivity_status": "not_assessed",
+      "service_shares": [
+        0.6,
+        0.4
+      ]
+    },
     "sensitivity_status": "not_assessed",
-    "notes": "Synthetic Intermediate-8 engineering constants; not historical Hungarian magnitudes and not calibrated against any observed series.",
-    "prices": [
-      1.0,
-      1.0,
-      1.2,
-      2.0,
-      1.5,
-      4.0,
-      2.0,
+    "time": {
+      "effort_floor": 0.25,
+      "effort_grievance_weight": 0.4,
+      "effort_informal_hours_weight": 0.3,
+      "effort_queue_search_weight": 0.2,
+      "formal_hours_per_worker": 520.0,
+      "plot_hours_cap_per_worker": 52.0,
+      "plot_hours_per_activity": 4.0,
+      "second_grievance_weight": 0.25,
+      "second_hours_base": 0.25,
+      "second_hours_cap_per_worker": 130.0,
+      "second_shortage_weight": 0.5,
+      "time_endowment_hours": 1040.0
+    },
+    "welfare": {
+      "basic_deficit_weight": 0.5,
+      "compliance_alpha": 0.1,
+      "compliance_autonomy_weight": 0.1,
+      "compliance_baseline": 0.7,
+      "compliance_gap_weight": 0.3,
+      "component_cap": 2.0,
+      "component_weights": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "cultural_openness": 0.5,
+      "durable_postponement_cost": 0.02,
+      "grievance_alpha": 0.2,
+      "grievance_gap_weight": 0.7,
+      "grievance_unfairness_weight": 0.3,
+      "housing_postponement_cost": 0.02,
+      "private_autonomy": 0.5,
+      "queue_cost_per_hour": 0.002,
+      "satisfaction_midpoint": 0.5,
+      "satisfaction_slope": 4.0,
+      "search_cost_per_hour": 0.002,
+      "welfare_provision": 0.5
+    }
+  },
+  "households": 5000,
+  "initial_ids": [],
+  "kind": "material",
+  "material_initial": {
+    "bank_equity_quarters": 1.0,
+    "bank_initial_bailout_prior": 0.0,
+    "distribution_working_capital_quarters": 1.0,
+    "dwelling_per_person": 0.4,
+    "evidence_status": "structural_assumption",
+    "grade": "S",
+    "household_cash": 0.0,
+    "initial_bailout_prior": 0.5,
+    "input_stock_quarters": 1.0,
+    "observation_at": null,
+    "organization_deposit_quarters": 2.0,
+    "output_stock_quarters": 1.0,
+    "role": "initial_state",
+    "treasury_deposit_quarters": 10.0
+  },
+  "material_parameters": {
+    "allocation_order": "production_first",
+    "bailout_alpha": 0.25,
+    "bailout_envelope_fraction": 0.25,
+    "calibration_status": "not_calibrated",
+    "capacity_capital_goods_per_unit": 0.25,
+    "capacity_construction_per_unit": 0.25,
+    "cmea_base_energy_price": 1.0,
+    "cmea_uncertainty_multiplier": 1.0,
+    "credit_envelope_fraction": 0.5,
+    "domestic_credit_rate_annual": 0.04,
+    "evidence_status": "structural_assumption",
+    "farm_seasonal_factors": [
+      0.5,
       0.8,
-      1.0,
-      2.5,
-      1.5,
-      1.2,
-      8.0,
-      20.0,
-      1.0,
-      1.0
+      1.8,
+      0.9
     ],
     "food_raw_price": 0.8,
-    "utilization": 0.9,
-    "service_split": [
-      0.7,
-      0.2,
-      0.1
-    ],
-    "overorder_strength": 0.0,
-    "hoarding_quarters": 0.0,
-    "shortage_alpha": 0.25,
-    "wage_rate": 6.0,
-    "credit_envelope_fraction": 0.5,
-    "bailout_envelope_fraction": 0.25,
-    "bailout_alpha": 0.25,
-    "domestic_credit_rate_annual": 0.04,
-    "hungary_spread_annual": 0.02,
-    "principal_repayment_fraction": 0.05,
-    "hunger_base": 0.02,
-    "hunger_bailout": 0.05,
-    "hunger_shortage": 0.05,
-    "transport_per_unit": 0.05,
     "handling_work_per_unit": [
       1.0,
       1.0,
@@ -119,75 +1206,45 @@
       1.0,
       1.0
     ],
-    "world_oil_reference": 1.63,
+    "hoarding_quarters": 0.0,
+    "hungary_spread_annual": 0.02,
+    "hunger_bailout": 0.05,
+    "hunger_base": 0.02,
+    "hunger_shortage": 0.05,
+    "notes": "Synthetic Intermediate-8 engineering constants; not historical Hungarian magnitudes and not calibrated against any observed series.",
     "oil_warmup_price": 1.6,
-    "cmea_base_energy_price": 1.0,
-    "cmea_uncertainty_multiplier": 1.0,
-    "allocation_order": "production_first",
-    "farm_seasonal_factors": [
-      0.5,
+    "overorder_strength": 0.0,
+    "prices": [
+      1.0,
+      1.0,
+      1.2,
+      2.0,
+      1.5,
+      4.0,
+      2.0,
       0.8,
-      1.8,
-      0.9
+      1.0,
+      2.5,
+      1.5,
+      1.2,
+      8.0,
+      20.0,
+      1.0,
+      1.0
     ],
-    "capacity_capital_goods_per_unit": 0.25,
-    "capacity_construction_per_unit": 0.25,
+    "principal_repayment_fraction": 0.05,
+    "retail_replenishment_fallback": true,
+    "role": "latent_parameter",
+    "sensitivity_status": "not_assessed",
+    "service_split": [
+      0.7,
+      0.2,
+      0.1
+    ],
+    "shortage_alpha": 0.25,
     "trade": {
-      "cmea_prices": [
-        1.0,
-        1.0,
-        1.2,
-        2.0,
-        1.5,
-        4.0,
-        2.0,
-        0.8,
-        1.0,
-        2.5,
-        1.5,
-        1.2,
-        8.0,
-        20.0,
-        1.0,
-        1.0
-      ],
-      "convertible_prices": [
-        1.0,
-        1.0,
-        1.2,
-        2.0,
-        1.5,
-        4.0,
-        2.0,
-        0.8,
-        1.0,
-        2.5,
-        1.5,
-        1.2,
-        8.0,
-        20.0,
-        1.0,
-        1.0
-      ],
+      "cmea_credit_envelope": 10000.0,
       "cmea_desired_imports": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "convertible_desired_imports": [
         0.0,
         0.0,
         0.0,
@@ -223,6 +1280,42 @@
         0.0,
         0.0
       ],
+      "cmea_prices": [
+        1.0,
+        1.0,
+        1.2,
+        2.0,
+        1.5,
+        4.0,
+        2.0,
+        0.8,
+        1.0,
+        2.5,
+        1.5,
+        1.2,
+        8.0,
+        20.0,
+        1.0,
+        1.0
+      ],
+      "convertible_desired_imports": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
       "convertible_export_demands": [
         0.0,
         0.0,
@@ -241,1629 +1334,537 @@
         0.0,
         0.0
       ],
-      "cmea_credit_envelope": 10000.0,
-      "convertible_opening_reserve": 0.0,
       "convertible_loan_limit": 0.0,
-      "convertible_opening_principal": 0.0
-    }
-  },
-  "material_initial": {
-    "role": "initial_state",
-    "grade": "S",
-    "evidence_status": "structural_assumption",
-    "observation_at": null,
-    "input_stock_quarters": 1.0,
-    "output_stock_quarters": 1.0,
-    "dwelling_per_person": 0.4,
-    "household_cash": 0.0,
-    "organization_deposit_quarters": 2.0,
-    "treasury_deposit_quarters": 10.0,
-    "bank_equity_quarters": 1.0,
-    "initial_bailout_prior": 0.5,
-    "bank_initial_bailout_prior": 0.0,
-    "distribution_working_capital_quarters": 1.0
-  },
-  "household_parameters": {
-    "role": "latent_parameter",
-    "evidence_status": "structural_assumption",
-    "calibration_status": "not_calibrated",
-    "sensitivity_status": "not_assessed",
-    "eps": 1e-12,
-    "demand": {
-      "base_per_equivalent_person": [
-        0.2,
-        0.05,
-        0.1,
-        0.5,
-        0.2,
-        0.1,
-        0.1,
-        0.002,
-        0.002,
-        0.002,
-        0.0005,
-        0.05,
-        0.02,
-        0.1,
-        0.1
-      ],
-      "minimum_per_equivalent_person": [
-        0.06,
-        0.015,
-        0.03,
-        0.15,
-        0.06,
-        0.03,
-        0.03,
-        0.0006,
-        0.0006,
-        0.0006,
-        0.00015,
-        0.015,
-        0.006,
-        0.03,
-        0.03
-      ],
-      "children_equivalence": 0.7,
-      "elderly_equivalence": 0.9,
-      "higher_income_elasticity": 0.5,
-      "higher_expectation_weight": 0.25,
-      "light_income_elasticity": 0.25,
-      "light_peer_weight": 0.1,
-      "light_western_weight": 0.05,
-      "personal_income_elasticity": 0.25,
-      "urban_energy_multiplier": 0.9,
-      "rural_energy_multiplier": 1.1,
-      "occupation_multipliers": [
+      "convertible_opening_principal": 0.0,
+      "convertible_opening_reserve": 0.0,
+      "convertible_prices": [
         1.0,
         1.0,
-        1.0,
-        1.0
-      ],
-      "education_multipliers": [
-        1.0,
-        1.0,
-        1.0
-      ]
-    },
-    "allocation": {
-      "parent_commodity_ids": [
-        "g01_solid_fuels",
-        "g02_oil_gas_fuels",
-        "g03_electricity_heat",
-        "g09_basic_food",
-        "g10_animal_food",
-        "g11_textiles_footwear",
-        "g12_household_nondurables",
-        "g13_household_durables",
-        "g13_household_durables",
-        "g13_household_durables",
-        "g14_vehicles_transport_equipment",
-        "g15_market_services",
-        "g07_construction",
-        "g15_market_services",
-        "g16_housing_public_services"
-      ],
-      "material_equivalent_per_unit": [
-        1.0,
-        1.0,
-        1.0,
-        1.0,
+        1.2,
         2.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
+        1.5,
         4.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "quota_share": [
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        0.3333333333333333,
-        0.3333333333333333,
-        0.3333333333333333,
-        1.0,
-        0.5,
-        1.0,
-        0.5,
-        1.0
-      ],
-      "formal_food_shares": [
-        0.75,
-        0.25
-      ],
-      "formal_durable_shares": [
-        0.3,
-        0.3,
-        0.3,
-        0.1
-      ],
-      "formal_service_shares": [
-        0.8,
-        0.2
-      ],
-      "plot_food_shares": [
-        1.0,
-        0.0
-      ],
-      "substitution_ratios": [
         2.0,
+        0.8,
         1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "substitution_credits": [
-        0.6,
-        0.25,
-        0.25,
-        0.25,
-        0.25
-      ],
-      "queue_hours_per_equivalent_unmet": 0.5,
-      "search_hours_per_channel_shortage": 2.0,
-      "access_learning_rate": 0.05,
-      "access_learning_hours": 10.0,
-      "savings_draw_fraction": 0.25
-    },
-    "durables": {
-      "retirement_hazard": [
-        0.005,
-        0.005,
-        0.004,
-        0.003
-      ],
-      "aspiration_base": [
-        0.25,
-        0.2,
-        0.5,
-        0.1
-      ],
-      "aspiration_income_weight": 0.1,
-      "aspiration_peer_weight": 0.2,
-      "aspiration_expectation_weight": 0.1,
-      "new_intention_per_quarter": 0.02,
-      "repair_effectiveness": 0.5,
-      "waiting_priority_weight": 0.1
-    },
-    "housing": {
-      "persons_per_dwelling": 3.0,
-      "housing_construction_cap_per_person": 0.002,
-      "private_construction_intention_per_quarter": 0.02,
-      "severe_overcrowding_threshold": 1.0,
-      "waiting_priority_weight": 0.1
-    },
-    "time": {
-      "time_endowment_hours": 1040.0,
-      "formal_hours_per_worker": 520.0,
-      "plot_hours_cap_per_worker": 52.0,
-      "second_hours_cap_per_worker": 130.0,
-      "plot_hours_per_activity": 4.0,
-      "second_hours_base": 0.25,
-      "second_shortage_weight": 0.5,
-      "second_grievance_weight": 0.25,
-      "effort_grievance_weight": 0.4,
-      "effort_informal_hours_weight": 0.3,
-      "effort_queue_search_weight": 0.2,
-      "effort_floor": 0.25
-    },
-    "welfare": {
-      "component_weights": [
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
+        2.5,
+        1.5,
+        1.2,
+        8.0,
+        20.0,
         1.0,
         1.0
-      ],
-      "component_cap": 2.0,
-      "queue_cost_per_hour": 0.002,
-      "search_cost_per_hour": 0.002,
-      "durable_postponement_cost": 0.02,
-      "housing_postponement_cost": 0.02,
-      "basic_deficit_weight": 0.5,
-      "satisfaction_slope": 4.0,
-      "satisfaction_midpoint": 0.5,
-      "welfare_provision": 0.5,
-      "private_autonomy": 0.5,
-      "cultural_openness": 0.5,
-      "grievance_alpha": 0.2,
-      "grievance_gap_weight": 0.7,
-      "grievance_unfairness_weight": 0.3,
-      "compliance_baseline": 0.7,
-      "compliance_gap_weight": 0.3,
-      "compliance_autonomy_weight": 0.1,
-      "compliance_alpha": 0.1
-    },
-    "expectations": {
-      "alpha_up": 0.25,
-      "alpha_down": 0.02,
-      "ratchet_strength": 0.1,
-      "ratchet_quarters": 4,
-      "consumption_reference_alpha": 0.25,
-      "initial_entitlement": [
-        1.0,
-        0.5,
-        1.0,
-        0.5,
-        0.5,
-        0.5,
-        0.5
       ]
     },
-    "second_economy": {
-      "role": "latent_parameter",
-      "evidence_status": "structural_assumption",
-      "calibration_status": "not_calibrated",
-      "sensitivity_status": "not_assessed",
-      "input_coefficients": [
-        0.02,
-        0.0,
-        0.0,
-        0.0,
-        0.03,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "output_coefficients": [
-        0.0,
-        0.0,
-        0.0,
-        0.1,
-        0.0,
-        0.05,
-        0.0,
-        0.25
-      ],
-      "hours_per_activity": 4.0,
-      "capacity_per_participating_worker": 10.0,
-      "service_shares": [
-        0.6,
-        0.4
-      ]
-    }
-  },
-  "household_initial": {
-    "role": "initial_state",
-    "grade": "S",
-    "evidence_status": "structural_assumption",
-    "observation_at": null,
-    "population_kind": "synthetic",
-    "counties": [
-      {
-        "county_id": "budapest",
-        "household_total": 202.02020202020202,
-        "persons_total": 686.8686868686868,
-        "urban_share": 0.35,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.195,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "pest",
-        "household_total": 207.07070707070707,
-        "persons_total": 704.040404040404,
-        "urban_share": 0.3657894736842105,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.19026315789473686,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "borsod_abauj_zemplen",
-        "household_total": 212.12121212121212,
-        "persons_total": 721.2121212121212,
-        "urban_share": 0.381578947368421,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.18552631578947368,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "heves",
-        "household_total": 217.17171717171718,
-        "persons_total": 738.3838383838383,
-        "urban_share": 0.39736842105263154,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.18078947368421053,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "nograd",
-        "household_total": 222.22222222222223,
-        "persons_total": 755.5555555555555,
-        "urban_share": 0.41315789473684206,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.17605263157894738,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "fejer",
-        "household_total": 227.27272727272728,
-        "persons_total": 772.7272727272727,
-        "urban_share": 0.42894736842105263,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.1713157894736842,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "komarom",
-        "household_total": 232.32323232323233,
-        "persons_total": 789.89898989899,
-        "urban_share": 0.4447368421052631,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.16657894736842108,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "veszprem",
-        "household_total": 237.37373737373738,
-        "persons_total": 807.070707070707,
-        "urban_share": 0.4605263157894737,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.1618421052631579,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "gyor_sopron",
-        "household_total": 242.42424242424244,
-        "persons_total": 824.2424242424242,
-        "urban_share": 0.47631578947368414,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.15710526315789475,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "vas",
-        "household_total": 247.4747474747475,
-        "persons_total": 841.4141414141415,
-        "urban_share": 0.4921052631578947,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.15236842105263157,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "zala",
-        "household_total": 252.5252525252525,
-        "persons_total": 858.5858585858585,
-        "urban_share": 0.5078947368421052,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.14763157894736845,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "baranya",
-        "household_total": 257.57575757575756,
-        "persons_total": 875.7575757575756,
-        "urban_share": 0.5236842105263158,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.14289473684210527,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "somogy",
-        "household_total": 262.62626262626264,
-        "persons_total": 892.929292929293,
-        "urban_share": 0.5394736842105263,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.1381578947368421,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "tolna",
-        "household_total": 267.67676767676767,
-        "persons_total": 910.10101010101,
-        "urban_share": 0.5552631578947368,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.13342105263157897,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "hajdu_bihar",
-        "household_total": 272.72727272727275,
-        "persons_total": 927.2727272727274,
-        "urban_share": 0.5710526315789474,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.1286842105263158,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "szabolcs_szatmar",
-        "household_total": 277.77777777777777,
-        "persons_total": 944.4444444444443,
-        "urban_share": 0.5868421052631578,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.12394736842105264,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "szolnok",
-        "household_total": 282.82828282828285,
-        "persons_total": 961.6161616161617,
-        "urban_share": 0.6026315789473684,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.11921052631578948,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "bacs_kiskun",
-        "household_total": 287.8787878787879,
-        "persons_total": 978.7878787878788,
-        "urban_share": 0.618421052631579,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.1144736842105263,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "bekes",
-        "household_total": 292.92929292929296,
-        "persons_total": 995.9595959595961,
-        "urban_share": 0.6342105263157894,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.10973684210526316,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      },
-      {
-        "county_id": "csongrad",
-        "household_total": 297.979797979798,
-        "persons_total": 1013.131313131313,
-        "urban_share": 0.6499999999999999,
-        "size_probabilities": [
-          0.1,
-          0.2,
-          0.25,
-          0.2,
-          0.15,
-          0.1
-        ],
-        "occupation_shares": [
-          0.35,
-          0.25,
-          0.25,
-          0.15
-        ],
-        "education_shares": [
-          0.6,
-          0.3,
-          0.1
-        ],
-        "child_share": 0.2,
-        "elderly_share": 0.15,
-        "plot_share": 0.10500000000000002,
-        "second_share": 0.2,
-        "informal_access": 0.5,
-        "western_exposure": 0.0,
-        "tenure_shares": [
-          0.4,
-          0.2,
-          0.4
-        ],
-        "durable_ownership": [
-          0.05,
-          0.03,
-          0.1,
-          0.005
-        ]
-      }
-    ]
+    "transport_per_unit": 0.05,
+    "utilization": 0.9,
+    "wage_rate": 6.0,
+    "world_oil_reference": 1.63
   },
   "organization_recipe": {
-    "profile": "p05_400",
-    "overrides": []
+    "overrides": [],
+    "profile": "p05_400"
   },
-  "technologies": [
-    {
-      "technology_id": "solid_fuels_production",
-      "inputs": [
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.01,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g05_chemicals_fertilizer",
-          "stage": "standard",
-          "coefficient": 0.005,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g01_solid_fuels",
-          "stage": "standard",
-          "coefficient": 1.0
-        }
-      ]
-    },
-    {
-      "technology_id": "oil_gas_production",
-      "inputs": [
-        {
-          "commodity_id": "g01_solid_fuels",
-          "stage": "standard",
-          "coefficient": 0.02,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.01,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g02_oil_gas_fuels",
-          "stage": "standard",
-          "coefficient": 1.0
-        }
-      ]
-    },
-    {
-      "technology_id": "utilities_production",
-      "inputs": [
-        {
-          "commodity_id": "g01_solid_fuels",
-          "stage": "standard",
-          "coefficient": 0.15,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g02_oil_gas_fuels",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.01,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 1.0
-        }
-      ]
-    },
-    {
-      "technology_id": "basic_materials_production",
-      "inputs": [
-        {
-          "commodity_id": "g01_solid_fuels",
-          "stage": "standard",
-          "coefficient": 0.2,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g02_oil_gas_fuels",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g05_chemicals_fertilizer",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.02,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g04_basic_metals_materials",
-          "stage": "standard",
-          "coefficient": 1.0
-        }
-      ]
-    },
-    {
-      "technology_id": "chemicals_production",
-      "inputs": [
-        {
-          "commodity_id": "g01_solid_fuels",
-          "stage": "standard",
-          "coefficient": 0.1,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g02_oil_gas_fuels",
-          "stage": "standard",
-          "coefficient": 0.15,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g04_basic_metals_materials",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.02,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g05_chemicals_fertilizer",
-          "stage": "standard",
-          "coefficient": 1.0
-        }
-      ]
-    },
-    {
-      "technology_id": "machinery_production",
-      "inputs": [
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g04_basic_metals_materials",
-          "stage": "standard",
-          "coefficient": 0.3,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g05_chemicals_fertilizer",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.02,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 1.0
-        }
-      ]
-    },
-    {
-      "technology_id": "food_processing_f2",
-      "inputs": [
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 0.02,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.005,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g08_agricultural_raw",
-          "stage": "raw",
-          "coefficient": 0.8,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g09_basic_food",
-          "stage": "ready",
-          "coefficient": 0.6
-        },
-        {
-          "commodity_id": "g10_animal_food",
-          "stage": "ready",
-          "coefficient": 0.4
-        }
-      ]
-    },
-    {
-      "technology_id": "light_goods_production",
-      "inputs": [
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 0.03,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g04_basic_metals_materials",
-          "stage": "standard",
-          "coefficient": 0.02,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g05_chemicals_fertilizer",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.01,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g11_textiles_footwear",
-          "stage": "standard",
-          "coefficient": 0.5
-        },
-        {
-          "commodity_id": "g12_household_nondurables",
-          "stage": "standard",
-          "coefficient": 0.5
-        }
-      ]
-    },
-    {
-      "technology_id": "durables_vehicles_production",
-      "inputs": [
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 0.03,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g04_basic_metals_materials",
-          "stage": "standard",
-          "coefficient": 0.2,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g05_chemicals_fertilizer",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g13_household_durables",
-          "stage": "standard",
-          "coefficient": 0.6
-        },
-        {
-          "commodity_id": "g14_vehicles_transport_equipment",
-          "stage": "standard",
-          "coefficient": 0.4
-        }
-      ]
-    },
-    {
-      "technology_id": "market_services_production",
-      "inputs": [
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.01,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g15_market_services",
-          "stage": "standard",
-          "coefficient": 0.7
-        },
-        {
-          "commodity_id": "g16_housing_public_services",
-          "stage": "standard",
-          "coefficient": 0.3
-        }
-      ]
-    },
-    {
-      "technology_id": "field_farming_f2",
-      "inputs": [
-        {
-          "commodity_id": "g02_oil_gas_fuels",
-          "stage": "standard",
-          "coefficient": 0.03,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g05_chemicals_fertilizer",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.005,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g08_agricultural_raw",
-          "stage": "raw",
-          "coefficient": 1.0
-        }
-      ]
-    },
-    {
-      "technology_id": "building_construction_f2",
-      "inputs": [
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 0.02,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g04_basic_metals_materials",
-          "stage": "standard",
-          "coefficient": 0.3,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g05_chemicals_fertilizer",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.02,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g07_construction",
-          "stage": "standard",
-          "coefficient": 0.1,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g07_construction",
-          "stage": "standard",
-          "coefficient": 1.0
-        }
-      ]
-    },
-    {
-      "technology_id": "freight_transport_f2",
-      "inputs": [
-        {
-          "commodity_id": "g02_oil_gas_fuels",
-          "stage": "standard",
-          "coefficient": 0.05,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.002,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g15_market_services",
-          "stage": "standard",
-          "coefficient": 1.0
-        }
-      ]
-    },
-    {
-      "technology_id": "public_services",
-      "inputs": [
-        {
-          "commodity_id": "g03_electricity_heat",
-          "stage": "standard",
-          "coefficient": 0.03,
-          "input_timing": null
-        },
-        {
-          "commodity_id": "g06_machinery_capital",
-          "stage": "standard",
-          "coefficient": 0.01,
-          "input_timing": null
-        }
-      ],
-      "outputs": [
-        {
-          "commodity_id": "g16_housing_public_services",
-          "stage": "standard",
-          "coefficient": 1.0
-        }
-      ]
-    }
+  "organizations": 400,
+  "output_policy": "ensemble_compact",
+  "parameter_ids": [],
+  "politics": null,
+  "region_ids": [
+    "budapest",
+    "pest",
+    "borsod_abauj_zemplen",
+    "heves",
+    "nograd",
+    "fejer",
+    "komarom",
+    "veszprem",
+    "gyor_sopron",
+    "vas",
+    "zala",
+    "baranya",
+    "somogy",
+    "tolna",
+    "hajdu_bihar",
+    "szabolcs_szatmar",
+    "szolnok",
+    "bacs_kiskun",
+    "bekes",
+    "csongrad"
   ],
   "routes": null,
-  "forcing_pack": "data/fixtures/p02_material_synthetic_pack.json",
-  "forcing_bindings": [],
-  "politics": null
+  "scenario_id": "historical_f2_replay",
+  "schema_version": "1",
+  "seed": 1729,
+  "start": {
+    "quarter": 1,
+    "year": 1957
+  },
+  "stochastic": true,
+  "technologies": [
+    {
+      "inputs": [
+        {
+          "coefficient": 0.01,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.005,
+          "commodity_id": "g05_chemicals_fertilizer",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g01_solid_fuels",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "solid_fuels_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.02,
+          "commodity_id": "g01_solid_fuels",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.01,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g02_oil_gas_fuels",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "oil_gas_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.15,
+          "commodity_id": "g01_solid_fuels",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g02_oil_gas_fuels",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.01,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g03_electricity_heat",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "utilities_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.2,
+          "commodity_id": "g01_solid_fuels",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g02_oil_gas_fuels",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g03_electricity_heat",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g05_chemicals_fertilizer",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.02,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g04_basic_metals_materials",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "basic_materials_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.1,
+          "commodity_id": "g01_solid_fuels",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.15,
+          "commodity_id": "g02_oil_gas_fuels",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g03_electricity_heat",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g04_basic_metals_materials",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.02,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g05_chemicals_fertilizer",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "chemicals_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g03_electricity_heat",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.3,
+          "commodity_id": "g04_basic_metals_materials",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g05_chemicals_fertilizer",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.02,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g06_machinery_capital",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "machinery_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.02,
+          "commodity_id": "g03_electricity_heat",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.005,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.8,
+          "commodity_id": "g08_agricultural_raw",
+          "input_timing": null,
+          "stage": "raw"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 0.6,
+          "commodity_id": "g09_basic_food",
+          "stage": "ready"
+        },
+        {
+          "coefficient": 0.4,
+          "commodity_id": "g10_animal_food",
+          "stage": "ready"
+        }
+      ],
+      "technology_id": "food_processing_f2"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.03,
+          "commodity_id": "g03_electricity_heat",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.02,
+          "commodity_id": "g04_basic_metals_materials",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g05_chemicals_fertilizer",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.01,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 0.5,
+          "commodity_id": "g11_textiles_footwear",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.5,
+          "commodity_id": "g12_household_nondurables",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "light_goods_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.03,
+          "commodity_id": "g03_electricity_heat",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.2,
+          "commodity_id": "g04_basic_metals_materials",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g05_chemicals_fertilizer",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 0.6,
+          "commodity_id": "g13_household_durables",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.4,
+          "commodity_id": "g14_vehicles_transport_equipment",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "durables_vehicles_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g03_electricity_heat",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.01,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 0.7,
+          "commodity_id": "g15_market_services",
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.3,
+          "commodity_id": "g16_housing_public_services",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "market_services_production"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.03,
+          "commodity_id": "g02_oil_gas_fuels",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g05_chemicals_fertilizer",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.005,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g08_agricultural_raw",
+          "stage": "raw"
+        }
+      ],
+      "technology_id": "field_farming_f2"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.02,
+          "commodity_id": "g03_electricity_heat",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.3,
+          "commodity_id": "g04_basic_metals_materials",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g05_chemicals_fertilizer",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.02,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.1,
+          "commodity_id": "g07_construction",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g07_construction",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "building_construction_f2"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.05,
+          "commodity_id": "g02_oil_gas_fuels",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.002,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g15_market_services",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "freight_transport_f2"
+    },
+    {
+      "inputs": [
+        {
+          "coefficient": 0.03,
+          "commodity_id": "g03_electricity_heat",
+          "input_timing": null,
+          "stage": "standard"
+        },
+        {
+          "coefficient": 0.01,
+          "commodity_id": "g06_machinery_capital",
+          "input_timing": null,
+          "stage": "standard"
+        }
+      ],
+      "outputs": [
+        {
+          "coefficient": 1.0,
+          "commodity_id": "g16_housing_public_services",
+          "stage": "standard"
+        }
+      ],
+      "technology_id": "public_services"
+    }
+  ],
+  "ticks": 116
 }

@@ -1275,6 +1275,24 @@ class _Compiler:
                         retail_sources = [(item[0], share) for item in ranked]
                     else:
                         retail_sources = self._nearest_hubs(retail_g, stage_code, served)
+                        if not retail_sources and bool(
+                            getattr(
+                                self.initial.parameters,
+                                "retail_replenishment_fallback",
+                                False,
+                            )
+                        ):
+                            # A commodity that declares retail stages but no hub
+                            # stage (F2's g03 electricity and g16 public services)
+                            # has no hub to collect from, so its retail cells could
+                            # never be replenished and its household demand never
+                            # materialised.  Fall back to the commodity's producers,
+                            # the path the first service role already uses.  The
+                            # nine commodities that do have hubs are untouched
+                            # because the hub branch above already returned.
+                            ranked = self._ranked_producers(retail_g, stage_code, served)[:2]
+                            share = 1.0 / len(ranked) if ranked else 0.0
+                            retail_sources = [(item[0], share) for item in ranked]
                     for source, weight in retail_sources:
                         self._add_edge(
                             source,

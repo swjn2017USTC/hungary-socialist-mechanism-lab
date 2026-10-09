@@ -1321,6 +1321,11 @@ class MaterialParameters(StrictModel):
     # quarterly wage bill (0 = unlimited). A positive cap makes the money stock
     # stationary in the closure control instead of growing with every drawdown.
     credit_stock_cap_quarters: NonNegativeFloat = 0.0
+    #: A commodity that declares retail stages but no hub stage (F2's g03
+    #: electricity and g16 public services) otherwise has no replenishment route
+    #: at all, so its household demand can never materialise.  Off by default:
+    #: only catalogs that declare such commodities may opt in.
+    retail_replenishment_fallback: bool = False
     # P05 §0.5: apply the wholesale/retail distribution margin to trader sales
     # (off by default until the treasury border continuity is margin-aware).
     distribution_margins_enabled: bool = True
