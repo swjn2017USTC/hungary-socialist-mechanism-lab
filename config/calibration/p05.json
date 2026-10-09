@@ -56,6 +56,7 @@
     "p02_material_cmea_uncertainty_prior": "fixed",
     "p02_material_oil_warmup_prior": "fixed",
     "p04_broker_prior": "fixed",
+    "p05_input_credit_earmark_prior": "fixed",
     "p04_coalition_prior": "unidentified",
     "p04_culture_prior": "unidentified",
     "p04_external_recipe_prior": "unidentified",
@@ -63,7 +64,7 @@
     "p04_observation_prior": "unidentified",
     "p04_opposition_prior": "unidentified"
   },
-  "identification_notes": "Declared identification identity (P05 §D audit), separate from run disposition: every parameter keeps a fixed value at runtime, but only the four 'fixed' entries may be called structurally determined. The six P04 behavioural blocks are UNIDENTIFIED: no declared observable constrains them, so they stay prior-constrained and must never be reported as estimated. Basis: all seven P04 prior files declare calibration_status=not_calibrated and 'engineering values'; broker is a pure engineering fixture, while coalition/culture/information/observation/opposition are behavioural objects whose independent observables are not yet obtained. identifiable_set=[], linkage=[], inference_status=NOT_RUN.",
+  "identification_notes": "Declared identification identity (P05 §D audit), separate from run disposition: every parameter keeps a fixed value at runtime, but only the five 'fixed' entries may be called structurally determined. The new P05 input-credit earmark is a declared mechanism-design rule, not a coefficient estimated from targets. The six P04 behavioural blocks are UNIDENTIFIED: no declared observable constrains them, so they stay prior-constrained and must never be reported as estimated. Basis: P04 prior files declare calibration_status=not_calibrated and engineering values; broker is a pure engineering fixture, while coalition/culture/information/observation/opposition are behavioural objects whose independent observables are not yet obtained. identifiable_set=[], linkage=[], inference_status=NOT_RUN.",
   "linkage": [],
   "linkage_notes": "Parameter-to-target linkage (P05 §D): each entry maps a declared latent parameter artifact to the target variable_ids that inform it. Empty means no parameter declares an informing target yet, so the identifiability screen must report NO_IDENTIFIABLE_PARAMETERS rather than invent a candidate set.",
   "ontology": "config/ontology/f2_v1.json",

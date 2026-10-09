@@ -407,9 +407,7 @@ def catalog_for_commodities(commodity_ids: Sequence[str]) -> MaterialCatalog:
     to at most one catalog.  An id owned by no catalog is a ConfigError.
     """
     declared = frozenset(commodity_ids)
-    matches = [
-        catalog for catalog in CATALOGS.values() if declared <= frozenset(catalog.ids)
-    ]
+    matches = [catalog for catalog in CATALOGS.values() if declared <= frozenset(catalog.ids)]
     if len(matches) == 1:
         return matches[0]
     if not matches:
@@ -420,9 +418,7 @@ def catalog_for_commodities(commodity_ids: Sequence[str]) -> MaterialCatalog:
 
 
 # Union registry so ``commodity_spec`` resolves every frozen ontology id.
-_COMMODITY_SPEC_BY_ID = {
-    spec.id: spec for spec in (*P02_COMMODITY_SPECS, *F2_COMMODITY_SPECS)
-}
+_COMMODITY_SPEC_BY_ID = {spec.id: spec for spec in (*P02_COMMODITY_SPECS, *F2_COMMODITY_SPECS)}
 
 
 class OrganizationType(StrEnum):
@@ -642,8 +638,10 @@ class InputCoefficient(StrictModel):
         """Declared timing, defaulting to the ontology's stockability rule."""
         if self.input_timing is not None:
             return self.input_timing
-        return "opening_stock" if commodity_spec(self.commodity_id).stockable else (
-            "same_quarter_service"
+        return (
+            "opening_stock"
+            if commodity_spec(self.commodity_id).stockable
+            else ("same_quarter_service")
         )
 
 
@@ -1178,9 +1176,7 @@ ORGANIZATION_PROFILES: dict[str, dict[OrganizationType, int]] = {
 ORGANIZATION_PROFILES.update(F2_ORGANIZATION_PROFILES)
 
 
-OrganizationProfile = Literal[
-    "p02_100", "p02_200", "p02_400", "p05_300", "p05_400", "p05_450"
-]
+OrganizationProfile = Literal["p02_100", "p02_200", "p02_400", "p05_300", "p05_400", "p05_450"]
 """Frozen organization profile sizes (count switch targets)."""
 
 
@@ -1317,6 +1313,9 @@ class MaterialParameters(StrictModel):
     # Labor and finance.
     wage_rate: PositiveFloat = 6.0
     credit_envelope_fraction: Annotated[FiniteFloat, Field(ge=0.0, le=1.0)] = 0.5
+    # P05 input-credit experiment: fraction of input-order cost backed by a
+    # purpose-tied credit line. Zero preserves the legacy funding path.
+    input_credit_earmark_fraction: FiniteFraction = 0.0
     # P05 §0.6: cap on standing principal as a multiple of an organization's
     # quarterly wage bill (0 = unlimited). A positive cap makes the money stock
     # stationary in the closure control instead of growing with every drawdown.
@@ -1423,10 +1422,9 @@ class MaterialParameters(StrictModel):
             "shortage_alpha": self.shortage_alpha,
             "wage_rate": self.wage_rate,
             "credit_envelope_fraction": self.credit_envelope_fraction,
+            "input_credit_earmark_fraction": self.input_credit_earmark_fraction,
             "credit_stock_cap_quarters": self.credit_stock_cap_quarters,
-            "distribution_margins_enabled": (
-                1.0 if self.distribution_margins_enabled else 0.0
-            ),
+            "distribution_margins_enabled": (1.0 if self.distribution_margins_enabled else 0.0),
             "m2_neutral_credit": 1.0 if self.m2_neutral_credit else 0.0,
             "sbc_redistribution": 1.0 if self.sbc_redistribution else 0.0,
             "demand_limited_targets": 1.0 if self.demand_limited_targets else 0.0,

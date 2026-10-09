@@ -28,8 +28,8 @@ def test_real_registry_reports_no_identifiable_parameters() -> None:
     assert payload["declared_linkage"] == []
     assert payload["identifiable_set"] == []
     assert payload["inference_status"] == "NOT_RUN"
-    # the declared identity split (audit): four structurally fixed, six unidentified
-    assert payload["status_counts"] == {"fixed": 4, "unidentified": 6}
+    # the declared identity split now includes the structural input-credit rule
+    assert payload["status_counts"] == {"fixed": 5, "unidentified": 6}
     assert any("linkage" in reason for reason in payload["blocking_reasons"])
     assert any("UNIDENTIFIED" in reason for reason in payload["blocking_reasons"])
 

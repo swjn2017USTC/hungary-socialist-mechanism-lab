@@ -2414,7 +2414,14 @@ def material_parameter_vector(spec: ScenarioSpec) -> dict[str, float]:
     recipe = spec.material_initial
     if parameters is None or recipe is None:
         raise ConfigError("material scenario lacks parameters/initial recipe")
-    return {**parameters.flatten(), **recipe.flatten()}
+    flattened = parameters.flatten()
+    # Preserve the pre-earmark parameter identity for the default arm.  The
+    # field remains declared and flattened, but a zero earmark is a no-op and
+    # must not invalidate legacy replay digests or output rows that carry the
+    # parameter hash. Non-zero experimental arms are fully hash-bound.
+    if flattened.get("input_credit_earmark_fraction") == 0.0:
+        flattened.pop("input_credit_earmark_fraction")
+    return {**flattened, **recipe.flatten()}
 
 
 def material_recipe_hash(spec: ScenarioSpec) -> str:

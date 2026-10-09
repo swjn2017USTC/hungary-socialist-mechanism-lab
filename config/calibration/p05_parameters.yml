@@ -50,4 +50,9 @@ parameters:
   - 'structural engineering fixture: P04 opposition parameters'
   present: true
   variable_id: p04_opposition_parameters
+- artifact_id: p05_input_credit_earmark_prior
+  literature_refs:
+  - 'structural assumption: purpose-tied working-capital credit for material-technical supply; mechanism design, not a fitted coefficient'
+  present: true
+  variable_id: input_credit_earmark_fraction
 schema_version: '1'
