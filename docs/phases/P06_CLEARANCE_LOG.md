@@ -88,3 +88,10 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   with all 14 Parquet files byte-identical to the original control. Full Ruff clean;
   `.venv/bin/pytest -q -p no:cacheprovider` → 383 passed.
 - Commit: pending.
+
+### Track A2 — source-tier priority (completed)
+
+- Plan: `P05_A2_SOURCE_PRIORITY_PLAN.md`; results: `P05_A2_SOURCE_PRIORITY_EXPERIMENT.md`.
+- `production_first` control preserved digest `92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d`.
+- `investment_first` had no residual but failed both terminal floors and worsened household guardrails; H-A2 falsified. No defaults changed.
+- Continue to A3 because no A2 arm met T1 or T2.
