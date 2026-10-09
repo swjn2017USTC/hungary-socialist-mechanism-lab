@@ -371,3 +371,10 @@ into the target-loading path (audit finding R4).
 - Finding: all candidate checkpoints exist but are `material-checkpoint-v3`; current code requires v4. The pilot and all four alternate checkpoint probes refuse before simulation. The 0.633 s pilot and 0.573–0.657 s alternatives are CLI refusal times, not political-run cost; the degradation ladder cannot be applied. No arms or mechanism verdicts are fabricated.
 - Check: `.venv/bin/hsm fork --checkpoint outputs/p04-replay/checkpoints/tick-0044 --intervention config/interventions/no-reform.json --until 1985Q4 --output-dir outputs/p06-w5-cost-no-reform --json` → unsupported checkpoint version; `.venv/bin/python /tmp/probe_p06_checkpoints.py` → all alternatives same refusal.
 - Report commit: `4ed536be0c99d9658d85cdb0c55365e9cb748e42`.
+
+## 2026-10-10 — W6 1973 external-shock arms — OPEN (INTERVENTIONS REGISTERED)
+
+- Evidence: `config/interventions/1973-*.json`, `docs/phases/P06_1973_SHOCK.md`.
+- Change: created all five Annex B intervention files with effective quarter 1973Q1, no end quarter and declared-counterfactual provenance. All intervention items validate against the existing `InterventionSpec` schema. No simulation was run because no compatible pre-shock political checkpoint/full-window intervention runner is available; no arm metrics or run hashes are claimed. M6/M10 remain unresolved and capped by the unidentified external-recipe block.
+- Check: `.venv/bin/python` validation of all five `1973-*.json` files with `InterventionSpec.model_validate` → valid. Run prerequisite: W5 checkpoint probes all refuse v3 checkpoints in the current v4 loader.
+- Commit: `964291cc56e345a6961a25c97939825a4e116084`.
