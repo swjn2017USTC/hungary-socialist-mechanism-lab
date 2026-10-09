@@ -55,4 +55,19 @@ parameters:
   - 'structural assumption: purpose-tied working-capital credit for material-technical supply; mechanism design, not a fitted coefficient'
   present: true
   variable_id: input_credit_earmark_fraction
+- artifact_id: p05_interest_sink_remittance_prior
+  literature_refs:
+  - 'structural design rule: Hungarian credit and budget institutions; transfer paid interest to an existing deposit account, not a fitted coefficient'
+  present: true
+  variable_id: interest_sink_remittance_fraction
+- artifact_id: p05_interest_sink_recipient_prior
+  literature_refs:
+  - 'structural design rule: recipient contrast within the declared Hungarian monetary circuit, not a fitted coefficient'
+  present: true
+  variable_id: interest_sink_recipient.households
+- artifact_id: p05_fiscal_turnover_remittance_prior
+  literature_refs:
+  - 'structural design rule: turnover-based remittance between existing deposits under Hungarian budget institutions, not a fitted coefficient'
+  present: true
+  variable_id: fiscal_turnover_remittance_fraction
 schema_version: '1'

@@ -2420,8 +2420,14 @@ def material_parameter_vector(spec: ScenarioSpec) -> dict[str, float]:
     # field remains declared and flattened, but a zero earmark is a no-op and
     # must not invalidate legacy replay digests or output rows that carry the
     # parameter hash. Non-zero experimental arms are fully hash-bound.
-    if flattened.get("input_credit_earmark_fraction") == 0.0:
-        flattened.pop("input_credit_earmark_fraction")
+    for name in (
+        "input_credit_earmark_fraction",
+        "interest_sink_remittance_fraction",
+        "interest_sink_recipient.households",
+        "fiscal_turnover_remittance_fraction",
+    ):
+        if flattened.get(name) == 0.0:
+            flattened.pop(name)
     return {**flattened, **recipe.flatten()}
 
 

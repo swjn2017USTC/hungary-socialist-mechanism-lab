@@ -54,3 +54,19 @@ own exit evidence and implementation commit; open gates remain explicitly open.
   T1 28,074.08 (fail), T2 1,667.96 (fail), T3 pass. `ruff check src tests` clean;
   `.venv/bin/pytest -q -p no:cacheprovider` → 362 passed.
 - Commit: pending.
+
+## 2026-10-10 — A1 Phase 0 Interest/fiscal parameter declaration — PASS
+
+- Evidence: `src/hsm_lab/contract/material.py`, `src/hsm_lab/engine/material.py`,
+  `config/calibration/p05_parameters.yml`, `config/calibration/p05.json`,
+  `tests/test_p05_interest_fiscal_experiment.py`,
+  `outputs/p05-interest-fiscal-phase0/` compared with
+  `outputs/p05-input-credit-phase0-control/`.
+- Change: declared three default-off mechanism values; all flatten into the parameter
+  vector while zero-valued no-op fields are omitted from the effective hash. Registry
+  records the rules as structural and `fixed`, never calibrated.
+- Check: fresh 116-tick run stopped at 1985Q4 with digest
+  `92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d`; all 14 original
+  Parquet files are byte-identical to the same-head control, preserving its frozen gate
+  table. Focused Ruff clean; Phase 0/input-credit tests → 7 passed.
+- Commit: pending.
