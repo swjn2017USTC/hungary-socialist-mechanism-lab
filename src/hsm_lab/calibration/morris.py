@@ -127,6 +127,7 @@ def run_structural_morris(
     trajectories: int = 2,
     levels: int = 4,
     seed: int = 1729,
+    model_seed: int | None = None,
 ) -> dict[str, object]:
     """Run the declared eight-input Morris screen on the intermediate8 catalog."""
     from hsm_lab.calibration.axis_sweep import _gate_metrics
@@ -141,6 +142,8 @@ def run_structural_morris(
         raise FileExistsError(f"Morris output directory already exists: {output_dir}")
     output_dir.mkdir(parents=True)
     spec = load_scenario(root, "intermediate8")
+    if model_seed is not None:
+        spec = spec.model_copy(update={"seed": int(model_seed)})
     contract = load_research_contract(root)
     registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
     if spec.material_parameters is None:
@@ -229,6 +232,7 @@ def run_structural_morris(
         "trajectories": trajectories,
         "levels": levels,
         "seed": seed,
+        "model_seed": spec.seed,
         "response": "production_last_10",
         "effects": [
             {

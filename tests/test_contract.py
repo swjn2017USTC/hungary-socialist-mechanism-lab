@@ -143,6 +143,21 @@ def test_reserved_target_metadata_ok_numeric_load_rejected(tmp_path) -> None:
     assert "art_target_reserved" in registry.artifacts  # metadata registration is legal
     with pytest.raises(ResearchGateError, match="reserved"):
         registry.load_targets(registry.artifacts["art_target_reserved"], TargetUse.RESERVED)
+    from hsm_lab.calibration.window_protocol import Phase, Window, WindowManifestEntry
+
+    open_entry = WindowManifestEntry(
+        manifest_id="reserved-metadata-only",
+        window=Window.RESERVED,
+        phase=Phase.P06_RESERVED_EVALUATION,
+        declared_open=True,
+    )
+    with pytest.raises(ResearchGateError, match="reserved outcomes are never numerically loaded"):
+        registry.load_targets(
+            registry.artifacts["art_target_reserved"],
+            TargetUse.RESERVED,
+            phase=Phase.P06_RESERVED_EVALUATION,
+            manifest_entry=open_entry,
+        )
 
 
 def test_core_window_target_touching_reserved_rejected(tmp_path) -> None:
@@ -512,7 +527,23 @@ def test_target_numeric_access_requires_explicit_valid_purpose(tmp_path, monkeyp
     with pytest.raises(ResearchGateError, match="calibration may not consume"):
         registry.load_targets(target, TargetUse.CALIBRATION)
     monkeypatch.undo()
-    assert registry.load_targets(target, TargetUse.HOLDOUT).height == 1
+    with pytest.raises(ResearchGateError, match="hash-only until inference completes"):
+        registry.load_targets(target, TargetUse.HOLDOUT)
+    from hsm_lab.calibration.window_protocol import Phase, Window, WindowManifestEntry
+
+    audit = WindowManifestEntry(
+        manifest_id="fixture-audit",
+        window=Window.HOLDOUT,
+        phase=Phase.POST_INFERENCE_HOLDOUT_AUDIT,
+        declared_open=True,
+    )
+    assert registry.load_targets(
+        target,
+        TargetUse.HOLDOUT,
+        phase=Phase.POST_INFERENCE_HOLDOUT_AUDIT,
+        inference_complete=True,
+        manifest_entry=audit,
+    ).height == 1
 
 
 @pytest.mark.parametrize(

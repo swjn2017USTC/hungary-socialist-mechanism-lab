@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import json
 import shutil
 import uuid
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
 
 from hsm_lab.calibration.reproducibility_bundle import (
     assemble_reproducibility_bundle,
     verify_reproducibility_bundle,
 )
+from hsm_lab.cli.app import app
 from hsm_lab.contract.guards import load_research_contract, load_scenario
 from hsm_lab.contract.schemas import ResearchGateError, ScenarioSpec
 from hsm_lab.data.registry import DataRegistry
@@ -36,12 +39,39 @@ def test_bundle_replays_a_recorded_run_digest_from_scratch(tmp_path: Path) -> No
     try:
         _one_tick_run(run_dir)
         bundle = tmp_path / "bundle"
-        record = assemble_reproducibility_bundle(ROOT, run_dir, bundle)
+        runner = CliRunner()
+        assembled = runner.invoke(
+            app,
+            [
+                "calibration",
+                "bundle",
+                "--run-dir",
+                str(run_dir),
+                "--bundle-dir",
+                str(bundle),
+                "--json",
+            ],
+        )
+        assert assembled.exit_code == 0, assembled.output
+        record = json.loads(assembled.stdout)
         assert record["no_manual_steps"]["passed"] is True
         assert record["holdout_values_read"] is False
         assert record["reserved_values_read"] is False
 
-        verification = verify_reproducibility_bundle(ROOT, bundle, replay_dir)
+        verified = runner.invoke(
+            app,
+            [
+                "calibration",
+                "bundle-verify",
+                "--bundle-dir",
+                str(bundle),
+                "--replay-dir",
+                str(replay_dir),
+                "--json",
+            ],
+        )
+        assert verified.exit_code == 0, verified.output
+        verification = json.loads(verified.stdout)
         assert verification["status"] == "verified"
         assert verification["digest_matches"] is True
         assert verification["parameter_hash_matches"] is True

@@ -199,6 +199,7 @@ def run_axis_sweep(
     points: list[float],
     output_root: Path,
     terminal_floor: dict[str, Any],
+    seed: int | None = None,
 ) -> list[AxisPoint]:
     """Run the scenario once per value of one declared axis."""
     if axis not in AXES:
@@ -215,11 +216,13 @@ def run_axis_sweep(
             else _noop_context()
         )
         with context:
-            scenario = spec
+            scenario = (
+                spec.model_copy(update={"seed": int(seed)}) if seed is not None else spec
+            )
             if axis == "credit_envelope_fraction":
-                scenario = spec.model_copy(
+                scenario = scenario.model_copy(
                     update={
-                        "material_parameters": spec.material_parameters.model_copy(
+                        "material_parameters": scenario.material_parameters.model_copy(
                             update={"credit_envelope_fraction": float(value)}
                         )
                     }
@@ -231,16 +234,16 @@ def run_axis_sweep(
                 "bailout_envelope_fraction",
                 "wage_rate",
             ):
-                scenario = spec.model_copy(
+                scenario = scenario.model_copy(
                     update={
-                        "material_parameters": spec.material_parameters.model_copy(
+                        "material_parameters": scenario.material_parameters.model_copy(
                             update={axis: float(value)}
                         )
                     }
                 )
             elif axis.startswith("service_split."):
                 index = int(axis.rsplit(".", 1)[1])
-                split = list(spec.material_parameters.service_split)
+                split = list(scenario.material_parameters.service_split)
                 old_value = split[index]
                 delta = float(value) - old_value
                 other_indices = [i for i in range(3) if i != index]
@@ -251,18 +254,18 @@ def run_axis_sweep(
                 if other_total:
                     for i in other_indices:
                         split[i] -= delta * split[i] / other_total
-                scenario = spec.model_copy(
+                scenario = scenario.model_copy(
                     update={
-                        "material_parameters": spec.material_parameters.model_copy(
+                        "material_parameters": scenario.material_parameters.model_copy(
                             update={"service_split": split}
                         )
                     }
                 )
             elif axis == "handling_work_per_unit.scale":
-                baseline = list(spec.material_parameters.handling_work_per_unit)
-                scenario = spec.model_copy(
+                baseline = list(scenario.material_parameters.handling_work_per_unit)
+                scenario = scenario.model_copy(
                     update={
-                        "material_parameters": spec.material_parameters.model_copy(
+                        "material_parameters": scenario.material_parameters.model_copy(
                             update={"handling_work_per_unit": [x * float(value) for x in baseline]}
                         )
                     }
@@ -272,17 +275,17 @@ def run_axis_sweep(
                 "trade.convertible_export_demands.scale",
             ):
                 key = axis.rsplit(".", 2)[1]
-                trade = spec.material_parameters.trade.model_copy(
+                trade = scenario.material_parameters.trade.model_copy(
                     update={
                         key: [
                             x * float(value)
-                            for x in getattr(spec.material_parameters.trade, key)
+                            for x in getattr(scenario.material_parameters.trade, key)
                         ]
                     }
                 )
-                scenario = spec.model_copy(
+                scenario = scenario.model_copy(
                     update={
-                        "material_parameters": spec.material_parameters.model_copy(
+                        "material_parameters": scenario.material_parameters.model_copy(
                             update={"trade": trade}
                         )
                     }
@@ -297,7 +300,7 @@ def run_axis_sweep(
                 ticks=int(run.completed_ticks),
                 output_dir=str(output_dir),
                 parameter_hash=str(run.parameter_hash),
-                seed=int(spec.seed),
+                seed=int(scenario.seed),
                 intervention_hash=intervention_hash,
                 deterministic_replay_digest=str(run.deterministic_replay_digest),
                 **metrics,

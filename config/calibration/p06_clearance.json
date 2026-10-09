@@ -37,12 +37,6 @@
       "date": "2026-10-10"
     },
     {
-      "item": "morris_screening",
-      "reason": "Deferred into P06 itself: the sensitivity funnel of OMP_PLAN 10.2 is a P06 work item, not a P06 precondition, and under the reproduction scope it screens declared structural parameters rather than estimating them.",
-      "decided_by": "user",
-      "date": "2026-10-10"
-    },
-    {
       "item": "data_path_acquisition",
       "reason": "Admitting the seven unadmitted target-role variables and the P05_REPORT 10b observables is a rights/coverage workstream owned by the user and is not required for the reproduction scope.",
       "decided_by": "user",
@@ -73,10 +67,16 @@
     },
     {
       "id": "morris_screening",
-      "kind": "unsatisfied",
+      "kind": "file_exists",
       "note": "no Morris module exists; the OMP_PLAN 10.2 funnel is a P06 work item and is deferred into P06",
-      "description": "the Morris screening harness exists and runs",
-      "required": true
+      "description": "P06 declared-structural Morris screen, smoke output and Sobol refusal guard",
+      "required": true,
+      "paths": [
+        "src/hsm_lab/calibration/morris.py",
+        "tests/test_calibration_morris.py",
+        "docs/phases/P06_MORRIS_SCREENING.md",
+        "outputs/p06-w3-morris/morris.json"
+      ]
     },
     {
       "id": "data_path_acquisition",
@@ -151,7 +151,19 @@
       "paths": [
         "config/p06/mechanism_card.schema.json",
         "src/hsm_lab/calibration/mechanism_cards.py",
-        "tests/test_p06_mechanism_cards.py"
+        "tests/test_p06_mechanism_cards.py",
+        "config/p06/cards/M1.json",
+        "config/p06/cards/M2.json",
+        "config/p06/cards/M3.json",
+        "config/p06/cards/M4.json",
+        "config/p06/cards/M5.json",
+        "config/p06/cards/M6.json",
+        "config/p06/cards/M7.json",
+        "config/p06/cards/M8.json",
+        "config/p06/cards/M9.json",
+        "config/p06/cards/M10.json",
+        "config/p06/cards/M11.json",
+        "docs/phases/P06_MECHANISM_CARDS.md"
       ],
       "description": "M1-M11 card schema and validator",
       "required": true
@@ -186,6 +198,86 @@
       ],
       "description": "bundle assembler that reruns a recorded digest",
       "required": true
+    },
+    {
+      "id": "p06_oat_sensitivity",
+      "kind": "file_exists",
+      "description": "W2 structural OAT table with per-arm metrics and replay identities",
+      "paths": [
+        "src/hsm_lab/calibration/axis_sweep.py",
+        "tests/test_calibration_axis_sweep.py",
+        "docs/phases/P06_SENSITIVITY.md",
+        "outputs/p06-w2-oat/sensitivity.json"
+      ]
+    },
+    {
+      "id": "p06_h4_disposition",
+      "kind": "file_exists",
+      "description": "W4 exact H4 residual and conditional disposition documented without tolerance change",
+      "paths": [
+        "docs/phases/P06_FORCING_LADDER.md",
+        "outputs/p06-forcing-ladder-intermediate8-envelope/H4.json"
+      ]
+    },
+    {
+      "id": "p06_1968_runs",
+      "kind": "unsatisfied",
+      "note": "OPEN: all listed tick-0044 parents are material-checkpoint-v3; current fork loader requires v4; no political arm executed",
+      "description": "W5 1968 control and institutional forks ran with complete per-arm evidence",
+      "required": true
+    },
+    {
+      "id": "p06_1973_runs",
+      "kind": "unsatisfied",
+      "note": "OPEN: no compatible political parent checkpoint or full-window intervention runner; intervention specs are registered only",
+      "description": "W6 five 1973 shock arms ran with complete per-arm evidence",
+      "required": true
+    },
+    {
+      "id": "p06_political_runs",
+      "kind": "unsatisfied",
+      "note": "OPEN: no compatible political checkpoint; intervention specs are registered only",
+      "description": "W7 five political counterfactual arms ran with complete per-arm evidence",
+      "required": true
+    },
+    {
+      "id": "p06_window_protocol_wired",
+      "kind": "file_exists",
+      "description": "B4 window protocol is enforced by DataRegistry target loading and tested end-to-end",
+      "paths": [
+        "src/hsm_lab/data/registry.py",
+        "src/hsm_lab/data/material.py",
+        "src/hsm_lab/data/ingestion.py",
+        "tests/test_p06_window_protocol.py",
+        "tests/test_contract.py"
+      ]
+    },
+    {
+      "id": "p06_bundle_cli",
+      "kind": "file_exists",
+      "description": "D5 reproducibility bundle has CLI assembly/replay commands and an end-to-end test",
+      "paths": [
+        "src/hsm_lab/cli/app.py",
+        "src/hsm_lab/calibration/reproducibility_bundle.py",
+        "tests/test_p06_reproducibility_bundle.py"
+      ]
+    },
+    {
+      "id": "p06_seedbank_spread",
+      "kind": "file_exists",
+      "description": "Three-seed deterministic replication spread for completed OAT and Morris arms",
+      "paths": [
+        "outputs/p06-w8-seedbank/seedbank.json"
+      ]
+    },
+    {
+      "id": "p06_final_report",
+      "kind": "file_exists",
+      "description": "P06 final report and operator run report record findings, assumptions and open blockers",
+      "paths": [
+        "docs/phases/P06_FINAL_REPORT.md",
+        "docs/phases/P06_RUN_REPORT.md"
+      ]
     }
   ]
 }

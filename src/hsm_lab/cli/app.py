@@ -535,6 +535,7 @@ def calibration_axis_sweep(
     scenario: str = typer.Option(
         "historical_f2_replay", "--scenario", help="Material scenario to sweep."
     ),
+    seed: int | None = typer.Option(None, "--seed", min=0, help="Override the model seed."),
     output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),
     json_mode: bool = JsonOption,
 ) -> None:
@@ -563,6 +564,7 @@ def calibration_axis_sweep(
             points=values,
             output_root=target,
             terminal_floor=control["gates"]["terminal_floor"],
+            seed=seed,
         )
         _emit(
             {
@@ -591,6 +593,7 @@ def calibration_morris_screen(
     trajectories: int = typer.Option(2, "--trajectories", min=1),
     levels: int = typer.Option(4, "--levels", min=3),
     seed: int = typer.Option(1729, "--seed", min=0),
+    model_seed: int | None = typer.Option(None, "--model-seed", min=0),
     json_mode: bool = JsonOption,
 ) -> None:
     """Screen declared structural inputs with Morris elementary effects."""
@@ -606,6 +609,7 @@ def calibration_morris_screen(
             trajectories=trajectories,
             levels=levels,
             seed=seed,
+            model_seed=model_seed,
         )
         _emit(
             payload,
@@ -615,6 +619,50 @@ def calibration_morris_screen(
                 for effect in payload["effects"]
             ],
         )
+
+    _guard(action, json_mode)
+
+
+@calibration_app.command("bundle")
+def calibration_bundle(
+    run_dir: Path = typer.Option(..., "--run-dir", help="Completed material run directory."),
+    bundle_dir: Path = typer.Option(..., "--bundle-dir", help="New bundle destination."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Assemble the reproducibility bundle for a recorded material run."""
+
+    def action() -> None:
+        from hsm_lab.calibration.reproducibility_bundle import assemble_reproducibility_bundle
+
+        root = _repo_root()
+        source = run_dir if run_dir.is_absolute() else root / run_dir
+        target = bundle_dir if bundle_dir.is_absolute() else root / bundle_dir
+        target = _fresh_output_dir(target, "p06-bundle")
+        payload = assemble_reproducibility_bundle(root, source, target)
+        payload["status"] = "assembled"
+        payload["bundle_dir"] = str(target)
+        _emit(payload, json_mode, [f"bundle: {target}"])
+
+    _guard(action, json_mode)
+
+
+@calibration_app.command("bundle-verify")
+def calibration_bundle_verify(
+    bundle_dir: Path = typer.Option(..., "--bundle-dir", help="Captured bundle directory."),
+    replay_dir: Path = typer.Option(..., "--replay-dir", help="New replay output directory."),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Rebuild a recorded digest from a captured reproducibility bundle."""
+
+    def action() -> None:
+        from hsm_lab.calibration.reproducibility_bundle import verify_reproducibility_bundle
+
+        root = _repo_root()
+        bundle = bundle_dir if bundle_dir.is_absolute() else root / bundle_dir
+        replay = replay_dir if replay_dir.is_absolute() else root / replay_dir
+        replay = _fresh_output_dir(replay, "p06-bundle-replay")
+        payload = verify_reproducibility_bundle(root, bundle, replay)
+        _emit(payload, json_mode, [f"bundle replay: {payload['status']}"])
 
     _guard(action, json_mode)
 

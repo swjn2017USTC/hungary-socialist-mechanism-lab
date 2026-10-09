@@ -818,9 +818,14 @@ def ingest_source(root: Path, request: IngestionRequest) -> IngestionReport:
         if admitted is None:
             raise ResearchGateError(
                 f"artifact {spec.artifact_id} missing from reloaded registry"
-            )
+        )
         if isinstance(spec, TargetArtifact):
-            reloaded.load_targets(cast(TargetArtifact, admitted), spec.use)
+            if spec.use is TargetUse.HOLDOUT:
+                # Ingestion may verify the admitted bytes and metadata, but
+                # read-back validation must not materialize protected values.
+                reloaded.admit_artifact(cast(TargetArtifact, admitted), numeric=False)
+            else:
+                reloaded.load_targets(cast(TargetArtifact, admitted), spec.use)
         else:
             reloaded.load_forcing(cast(ForcingArtifact, admitted))
 

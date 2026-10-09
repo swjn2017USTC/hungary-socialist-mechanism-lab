@@ -12,11 +12,11 @@ Statuses: ``PASS`` (checked and true), ``WAIVED`` (explicitly not required, with
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 
 @dataclass
@@ -105,9 +105,7 @@ def _check_digest(root: Path, item: dict[str, Any], *, with_runs: bool) -> tuple
     spec = load_scenario(root, scenario)
     contract = load_research_contract(root)
     registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
-    output = root / "outputs" / "p06-clearance-digest"
-    if output.exists():
-        shutil.rmtree(output)
+    output = root / "outputs" / f"p06-clearance-digest-{uuid4().hex}"
     run = run_material(spec, output, contract, registry, checkpoint_every=0)
     expected = str(item["expected"])
     digest = str(run.deterministic_replay_digest)

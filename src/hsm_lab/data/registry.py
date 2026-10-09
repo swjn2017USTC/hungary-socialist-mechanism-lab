@@ -662,13 +662,45 @@ class DataRegistry:
             artifact, path, self._expected_table_frequency(artifact.provenance)
         )
 
-    def load_targets(self, artifact: TargetArtifact, purpose: TargetUse) -> pl.DataFrame:
+    def load_targets(
+        self,
+        artifact: TargetArtifact,
+        purpose: TargetUse,
+        *,
+        phase: Any = None,
+        inference_complete: bool = False,
+        manifest_entry: Any = None,
+    ) -> pl.DataFrame:
         self._require_role(artifact, TargetArtifact, "load_targets")
         if not isinstance(purpose, TargetUse):
             raise ResearchGateError(
                 f"load_targets requires an explicit TargetUse purpose; got {purpose!r}. "
                 "Numeric target access without a declared purpose is refused."
             )
+        from hsm_lab.calibration.window_protocol import (
+            Phase,
+            Window,
+            WindowAccessRefused,
+            authorize_value_read,
+        )
+
+        if phase is None:
+            phase = Phase.CALIBRATION
+        window = {
+            TargetUse.CALIBRATION: Window.TRAINING,
+            TargetUse.VALIDATION: Window.INTERNAL_VALIDATION,
+            TargetUse.HOLDOUT: Window.HOLDOUT,
+            TargetUse.RESERVED: Window.RESERVED,
+        }[purpose]
+        try:
+            authorize_value_read(
+                window,
+                phase,
+                inference_complete=inference_complete,
+                manifest_entry=manifest_entry,
+            )
+        except WindowAccessRefused as exc:
+            raise ResearchGateError(str(exc)) from exc
         path = self.admit_artifact(artifact, numeric=True, purpose=purpose)
         return self._read_long_table(artifact, path, artifact.provenance.original_frequency)
 

@@ -1516,7 +1516,13 @@ class TargetDataset:
 
 
 def load_material_targets(
-    registry: DataRegistry, artifact_id: str, use: TargetUse
+    registry: DataRegistry,
+    artifact_id: str,
+    use: TargetUse,
+    *,
+    phase: Any = None,
+    inference_complete: bool = False,
+    manifest_entry: Any = None,
 ) -> TargetDataset:
     """Load one TARGET artifact for an explicitly declared purpose.
 
@@ -1543,7 +1549,13 @@ def load_material_targets(
             f"target {artifact_id}: reserved outcomes are never numerically "
             "loaded (hold-out gate, BASELINE §37)"
         )
-    frame = registry.load_targets(artifact, use)
+    frame = registry.load_targets(
+        artifact,
+        use,
+        phase=phase,
+        inference_complete=inference_complete,
+        manifest_entry=manifest_entry,
+    )
     return TargetDataset(artifact_id=artifact_id, use=use, frame=frame)
 
 

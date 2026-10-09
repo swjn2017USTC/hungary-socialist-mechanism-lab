@@ -96,13 +96,13 @@ def test_unknown_axis_is_rejected(tmp_path) -> None:
 
 def test_input_credit_earmark_axis_updates_the_declared_parameter(tmp_path, monkeypatch) -> None:
     parameters = SimpleNamespace(input_credit_earmark_fraction=0.0)
-    spec = SimpleNamespace(
-        material_parameters=parameters,
-        seed=0,
-        model_copy=lambda *, update: SimpleNamespace(
-            material_parameters=update["material_parameters"]
-        ),
-    )
+    def copy_spec(*, update):
+        return SimpleNamespace(
+            material_parameters=update.get("material_parameters", parameters),
+            seed=update.get("seed", 0),
+        )
+
+    spec = SimpleNamespace(material_parameters=parameters, seed=0, model_copy=copy_spec)
     parameters.model_copy = lambda *, update: SimpleNamespace(**update)
     observed = []
 
@@ -172,3 +172,61 @@ def test_input_credit_earmark_axis_updates_the_declared_parameter(tmp_path, monk
 )
 def test_declared_structural_axes_are_registered(axis) -> None:
     assert axis in axis_sweep.AXES
+
+
+def test_axis_sweep_records_an_explicit_replication_seed(tmp_path, monkeypatch) -> None:
+    class Spec:
+        def __init__(self, material_parameters, seed=1729):
+            self.material_parameters = material_parameters
+            self.seed = seed
+
+        def model_copy(self, *, update):
+            return Spec(
+                update.get("material_parameters", self.material_parameters),
+                update.get("seed", self.seed),
+            )
+
+    parameters = SimpleNamespace(wage_rate=6.0)
+    parameters.model_copy = lambda *, update: SimpleNamespace(**update)
+    observed = []
+
+    def fake_run(scenario, *_args, **_kwargs):
+        observed.append((scenario.seed, scenario.material_parameters.wage_rate))
+        return SimpleNamespace(
+            status="completed",
+            completed_ticks=116,
+            parameter_hash="parameter-hash",
+            deterministic_replay_digest="replay-digest",
+        )
+
+    monkeypatch.setattr("hsm_lab.engine.material.run_material", fake_run)
+    monkeypatch.setattr(axis_sweep, "_gate_metrics", lambda *_: {
+        "liveness": 0.1,
+        "production_first_10": 1.0,
+        "production_last_10": 0.1,
+        "household_consumption_last_10": 0.1,
+        "treasury_cash_tick_115": None,
+        "rescue_grants_last_20": None,
+        "terminal_t1_pass": False,
+        "terminal_t2_pass": False,
+        "terminal_t3_pass": False,
+        "terminal_floor_pass": False,
+        "expired_services_tail": 0.0,
+        "treasury_zero_tick": 1,
+        "allocated_total": 1.0,
+        "delivered_total": 0.5,
+        "physical_blocked_total": 0.5,
+        "financial_blocked_total": 0.0,
+    })
+    point = run_axis_sweep(
+        Spec(parameters),
+        None,
+        None,
+        axis="wage_rate",
+        points=[7.0],
+        output_root=tmp_path,
+        terminal_floor={},
+        seed=1730,
+    )[0]
+    assert observed == [(1730, 7.0)]
+    assert point.seed == 1730
