@@ -645,6 +645,7 @@ def test_download_cache_and_register_then_offline_reuse(tmp_path, monkeypatch):
 def test_refresh_with_changed_hash_creates_new_content_dir(tmp_path, monkeypatch):
     root = _make_repo(tmp_path)
     calls: list[str] = []
+    _install_net(monkeypatch, {KSH_GDP_URL: GDP_CSV.encode("utf-8")}, calls)
     _preexisting = _manifest_artifact_ids(root)
     first = ingest_source(root, IngestionRequest("ksh_gdp", "1960", "1985"))
 
