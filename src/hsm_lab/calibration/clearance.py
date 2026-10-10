@@ -199,6 +199,71 @@ def _check_files_exist(root: Path, item: dict[str, Any]) -> tuple[bool, str]:
     return True, f"{len(item.get('paths', []))} artifacts present"
 
 
+def _check_p06_arms_summary(root: Path) -> tuple[bool, str]:
+    """Require complete, successful W5-W7 fork evidence in the local run summary."""
+    path = root / "outputs" / "p06-arms" / "summary.json"
+    if not path.exists():
+        return False, (
+            "outputs/p06-arms/summary.json missing; regenerate the v4 parent and W5-W7 "
+            "forks using docs/phases/P06_UNBLOCK_AND_CROSSWALK_PROMPT.md"
+        )
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        return False, f"invalid outputs/p06-arms/summary.json: {exc}"
+
+    required = {
+        "1968": {"control", "no-reform", "nem-plus", "nos-hu", "digital-nem"},
+        "1973": {
+            "control",
+            "borrowing-smoothing",
+            "consumption-restraint",
+            "investment-restraint",
+            "price-wage-compensation",
+            "hard-budget",
+        },
+        "political": {
+            "control",
+            "coalition-weights",
+            "soviet-constraint",
+            "consumer-import",
+            "cultural-openness",
+            "second-economy",
+        },
+    }
+    arms = payload.get("arms")
+    if not isinstance(arms, list):
+        return False, "outputs/p06-arms/summary.json has no arms list"
+    index: dict[str, dict[str, dict[str, Any]]] = {family: {} for family in required}
+    for arm in arms:
+        if not isinstance(arm, dict) or arm.get("family") not in index:
+            continue
+        arm_id = str(arm.get("arm_id", ""))
+        if arm_id in index[arm["family"]]:
+            return False, f"duplicate {arm['family']} arm {arm_id!r}"
+        index[arm["family"]][arm_id] = arm
+
+    for family, expected_ids in required.items():
+        missing = expected_ids - set(index[family])
+        if missing:
+            return False, f"{family} arms missing: {sorted(missing)}"
+        for arm_id in sorted(expected_ids):
+            arm = index[family][arm_id]
+            if arm.get("status") != "completed":
+                return False, f"{family}/{arm_id} status is {arm.get('status')!r}"
+            if arm.get("completed_ticks") != 116 or arm.get("last_completed_quarter") != "1985Q4":
+                return False, f"{family}/{arm_id} did not complete through 1985Q4"
+            for key in ("parameter_hash", "intervention_hash", "replay_digest"):
+                value = arm.get(key)
+                if not isinstance(value, str) or len(value) != 64:
+                    return False, f"{family}/{arm_id} lacks a SHA-256 {key}"
+            if not isinstance(arm.get("metrics"), dict):
+                return False, f"{family}/{arm_id} metrics are missing"
+    return True, (
+        "all 17 required W5-W7 arms completed 116 ticks through 1985Q4 with hashes and metrics"
+    )
+
+
 def run_clearance(
     root: Path,
     *,
@@ -237,6 +302,8 @@ def run_clearance(
                 passed, evidence = _check_scope_statement(root, scope_marker)
             elif check == "reserved_window":
                 passed, evidence = _check_reserved_window(root)
+            elif check == "p06_arms_summary":
+                passed, evidence = _check_p06_arms_summary(root)
             else:
                 passed, evidence = False, f"unknown internal check {check!r}"
         else:

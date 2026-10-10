@@ -125,3 +125,59 @@ def test_waived_unsatisfied_item_clears_and_renders_the_reason(tmp_path) -> None
     assert report.items[0].status == "WAIVED"
     markdown = render_markdown(report)
     assert "decided to proceed on the reproduction scope" in markdown
+
+
+def test_p06_arm_summary_check_requires_all_completed_hash_identified_arms(tmp_path) -> None:
+    from hsm_lab.calibration.clearance import _check_p06_arms_summary
+
+    ok, evidence = _check_p06_arms_summary(tmp_path)
+    assert not ok
+    assert "regenerate the v4 parent" in evidence
+
+    required = {
+        "1968": ["control", "no-reform", "nem-plus", "nos-hu", "digital-nem"],
+        "1973": [
+            "control",
+            "borrowing-smoothing",
+            "consumption-restraint",
+            "investment-restraint",
+            "price-wage-compensation",
+            "hard-budget",
+        ],
+        "political": [
+            "control",
+            "coalition-weights",
+            "soviet-constraint",
+            "consumer-import",
+            "cultural-openness",
+            "second-economy",
+        ],
+    }
+    digest = "a" * 64
+    arms = []
+    for family, arm_ids in required.items():
+        for arm_id in arm_ids:
+            arms.append(
+                {
+                    "family": family,
+                    "arm_id": arm_id,
+                    "status": "completed",
+                    "completed_ticks": 116,
+                    "last_completed_quarter": "1985Q4",
+                    "parameter_hash": digest,
+                    "intervention_hash": digest,
+                    "replay_digest": digest,
+                    "metrics": {"accounting": "pass"},
+                }
+            )
+    summary_dir = tmp_path / "outputs" / "p06-arms"
+    summary_dir.mkdir(parents=True)
+    (summary_dir / "summary.json").write_text(json.dumps({"arms": arms}))
+    ok, evidence = _check_p06_arms_summary(tmp_path)
+    assert ok, evidence
+
+    arms.pop()
+    (summary_dir / "summary.json").write_text(json.dumps({"arms": arms}))
+    ok, evidence = _check_p06_arms_summary(tmp_path)
+    assert not ok
+    assert "political arms missing" in evidence

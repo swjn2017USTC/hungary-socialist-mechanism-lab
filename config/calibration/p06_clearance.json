@@ -221,24 +221,21 @@
     },
     {
       "id": "p06_1968_runs",
-      "kind": "unsatisfied",
-      "note": "OPEN: all listed tick-0044 parents are material-checkpoint-v3; current fork loader requires v4; no political arm executed",
-      "description": "W5 1968 control and institutional forks ran with complete per-arm evidence",
-      "required": true
+      "kind": "internal",
+      "description": "W5 1968 control and institutional forks ran with complete per-arm evidence; missing local outputs/p06-arms/summary.json remains OPEN on a fresh clone (see P06_RUN_REPORT.md for regeneration)",
+      "check": "p06_arms_summary"
     },
     {
       "id": "p06_1973_runs",
-      "kind": "unsatisfied",
-      "note": "OPEN: no compatible political parent checkpoint or full-window intervention runner; intervention specs are registered only",
-      "description": "W6 five 1973 shock arms ran with complete per-arm evidence",
-      "required": true
+      "kind": "internal",
+      "description": "W6 five 1973 shock arms ran with complete per-arm evidence; missing local outputs/p06-arms/summary.json remains OPEN on a fresh clone (see P06_RUN_REPORT.md for regeneration)",
+      "check": "p06_arms_summary"
     },
     {
       "id": "p06_political_runs",
-      "kind": "unsatisfied",
-      "note": "OPEN: no compatible political checkpoint; intervention specs are registered only",
-      "description": "W7 five political counterfactual arms ran with complete per-arm evidence",
-      "required": true
+      "kind": "internal",
+      "description": "W7 five political counterfactual arms ran with complete per-arm evidence; missing local outputs/p06-arms/summary.json remains OPEN on a fresh clone (see P06_RUN_REPORT.md for regeneration)",
+      "check": "p06_arms_summary"
     },
     {
       "id": "p06_window_protocol_wired",

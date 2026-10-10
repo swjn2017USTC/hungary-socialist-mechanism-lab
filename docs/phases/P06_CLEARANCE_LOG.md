@@ -443,3 +443,12 @@ series cannot be computed because **no commodity/unit crosswalk, annual aggregat
 error tolerance are declared**, and records that comparison as OPEN rather than inventing
 residuals. Correct behaviour — and it is the single item that would give the reproduction claim
 its numeric content.
+
+## 2026-10-10 — W0.5 fresh v4 parent and W5–W7 forks — PASS (COUNTERFACTUAL SIMULATIONS)
+
+- Evidence: local `outputs/p06-fork-parent/manifest.json`, v4 checkpoint metadata at `tick-0044` and `tick-0064`, `outputs/p06-arms/summary.json`; family reports `P06_1968_FORK.md`, `P06_1973_SHOCK.md`, `P06_POLITICAL_COUNTERFACTUAL.md`.
+- Parent: `.venv/bin/hsm run --scenario p04_endogenous --until 1973Q1 --checkpoint-every 4 --output-dir outputs/p06-fork-parent --json`; wall 5.42s, manifest digest `45999d895dac3b84bc69918273eed0c3b51489cba9ddae4fdbb2a20c54411f27`. `tick-0044` is v4/44 ticks/1967Q4→1968Q1; `tick-0064` is v4/64 ticks/1972Q4→1973Q1.
+- Runs: all 17 prescribed W5–W7 arms, including one empty-intervention control per family, completed 116 ticks through 1985Q4. Per-arm wall 4.316–6.050s; batch 26.29s. Accounting invariants passed in all arms; no rejection, frozen gate change, or run beyond horizon.
+- Clearance: replaced the three unconditional OPEN records with one internal summary validator that requires every specified arm, successful status, 116 ticks, 1985Q4, metrics, and 64-character parameter/intervention/replay hashes. Missing local summary remains OPEN in a fresh clone and reports the regeneration prompt.
+- Check: `.venv/bin/ruff check src tests` clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → 405 passed.
+- Clearance run: `.venv/bin/hsm calibration p06-clearance --with-runs --json` → cleared, 22 PASS / 4 WAIVED / 0 OPEN; fresh historical-F2 digest still matches `92f9ea0a…`.

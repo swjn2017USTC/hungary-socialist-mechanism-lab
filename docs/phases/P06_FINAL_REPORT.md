@@ -4,7 +4,7 @@
 
 This is a deterministic historical-reproduction study under declared behavioural assumptions. `calibrated = 0`; no parameter block is identified. The reserved 1986Q1–1988Q4 window remains closed, and hold-out values were not used for selection. No ABC/pyABC, posterior, calibration, causal identification, or validation claim is made. Results below are model outputs and replication spread across the three declared model seeds (1729, 1730, 1731), not posterior uncertainty. Seeds 1730 and 1731 follow the recorded rule “the next two integer seeds after the existing seed 1729”; this is not a posterior or seed-bank inference. Every executed run stopped at or before 1985Q4.
 
-P05 has 14 admitted variable IDs across calibration (1960–69) and internal validation (1970–78), 28 artifacts. Model output is quarterly and the admitted target series do not yet have a declared commodity/unit crosswalk plus annual aggregation/error tolerances. Therefore a like-for-like numeric target-error table cannot be computed without inventing a mapping; this report records that comparison as OPEN rather than fabricating residuals. Hold-out 1979–85 and reserved 1986–88 series were omitted.
+P05 has 14 admitted variable IDs across calibration (1960–69) and internal validation (1970–78), 28 artifacts. Crosswalk declaration and numeric comparison are the next W9 item; no numeric target values are read by the W5–W7 fork work. Hold-out 1979–85 and reserved 1986–88 values remain unused.
 
 ## Frozen gates and guardrails
 
@@ -97,13 +97,13 @@ No card is validated or promoted to SUPPORTED.
 | W2 OAT | PASS with rejection/inert axes | 24 original arms plus 48 seed replications; rejected wage 4.8 excluded |
 | W3 Morris | PASS, exploratory | 18 original arms plus 36 seed replications; no estimator or Sobol |
 | W4 forcing ladder | CONDITIONAL H4 | residual 1.3666269856210904e-6 vs fixed 1e-6; H0–H3 pass |
-| W5 1968 forks | OPEN | all available tick-0044 checkpoints are v3; current loader refuses v3, requires v4 |
-| W6 1973 shock arms | OPEN | five interventions registered and schema-valid; no political arm executed |
-| W7 political counterfactuals | OPEN | five interventions registered and schema-valid; no political arm executed |
+| W5 1968 forks | PASS (counterfactual evidence) | [five arms including same-checkpoint empty control](P06_1968_FORK.md); all 116 ticks, accounting pass |
+| W6 1973 shock arms | PASS (counterfactual evidence) | [six arms including tick-0064 empty control](P06_1973_SHOCK.md); all 116 ticks, accounting pass |
+| W7 political counterfactuals | PASS (counterfactual evidence) | [six arms including same-checkpoint empty control](P06_POLITICAL_COUNTERFACTUAL.md); all 116 ticks, accounting pass |
 | W8 protocol/bundle/report | PASS with W5–W7 blockers | hold-out/reserved authorization is in target-loading path; bundle CLI assemble/verify tested; seed spread reported |
 
-The checkpoint pilot refused `material-checkpoint-v3` in about 0.633 seconds. That is refusal overhead, not a political-run runtime measurement. The plan’s political-arm runtime prerequisite is therefore unmet; no degradation ladder was applied and no simulation beyond 1985Q4 was attempted. To resume W5–W7, provide a compatible current v4 tick-0044 checkpoint or a current compatible pre-shock political run with that checkpoint.
+A new v4 parent run completed in 5.42 seconds. All 17 political forks ran in 4.316–6.050 seconds each (26.29 seconds concurrent batch wall time), each ending at 1985Q4. No degradation ladder was needed. The three control arms use empty `hist-nem` interventions from the corresponding checkpoint. The result tables are scenario-conditional model responses and do not validate historical mechanisms.
 
 ## Assumptions versus inference
 
-Assumed: declared behavioural inputs, seed bank rule, historical-F2 scenario, compact output definitions and frozen T1–T3 thresholds. Inferred: none of the unidentified political, cultural, information, opposition, coalition or external-policy processes. Deterministic sensitivity and seed spread do not identify those processes. No target-error validation was possible without a declared crosswalk and tolerances. The residual frozen gates remain failed as shown above.
+Assumed: declared behavioural inputs, seed bank rule, historical-F2 scenario, compact output definitions and frozen T1–T3 thresholds. Inferred: none of the unidentified political, cultural, information, opposition, coalition or external-policy processes. Deterministic sensitivity and seed spread do not identify those processes. No target-error comparison is claimed in this W0.5 report state; W9 will declare mappings and published-precision thresholds before numeric target reads. The residual frozen gates remain failed as shown above.
