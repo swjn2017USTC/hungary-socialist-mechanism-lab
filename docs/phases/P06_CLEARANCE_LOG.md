@@ -461,3 +461,50 @@ its numeric content.
 - Check: `.venv/bin/ruff check src tests` clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → 408 passed; `.venv/bin/hsm calibration p06-clearance --with-runs --json` → cleared, 23 PASS / 4 WAIVED / 0 OPEN. Fresh historical-F2 digest matches `92f9ea0a…`.
 - W9 implementation/report commit hash is recorded in the following commit note.
 - W9 implementation/report commit: `28a9bbf2f33e57d1c46339685660ef91ded9cdfe`.
+
+## 2026-10-10 — Reviewer audit of W0.5 + W9
+
+Verified: `hsm calibration p06-clearance **--with-runs**` → 23 PASS / 4 WAIVED / 0 OPEN, exit 0
+(their claim is exact; an invocation **without** `--with-runs` correctly leaves
+`legacy_digest_reproduces` OPEN, which is the item working as designed). Suite **408 passed**,
+`ruff` clean. `linkage = []` and identification unchanged (9 fixed / 6 unidentified): nothing was
+promoted. The three previously-OPEN items are closed by a **real check**
+(`internal: p06_arms_summary` reading `outputs/p06-arms/summary.json`), not by a waiver or a
+status flip, and the waiver list **shrank** from five to four because W3 made Morris real.
+
+W0.5: parent run 5.42 s writes v4 checkpoints at both boundaries; 17 arms (5/6/6) each completed
+116 ticks in 4.3–6.1 s with accounting PASS, and each carries parameter hash, intervention hash,
+replay digest, source checkpoint and wall seconds in the arm summary (15 distinct digests; the
+three controls legitimately share one).
+
+W9: the crosswalk is honest. `index_rule` declares the own-1960 normalization as a scale
+convention, not a fit; `tolerance_policy` fixes the threshold from published rounding **before**
+comparison and forbids tuning to fit; the 14 entries are 1 mapped / 3 no_counterpart / 10 blocked,
+and `gdp`, `industrial_output` and `investment` are refused as `no_counterpart` with the reasons
+the variable registry demands ("summed gross material output" is explicitly not GDP). The
+reproduction table runs through `historical_f2_replay` to 1978Q4, reports
+`holdout_values_read: false` and `reserved_values_read: false`, and reproduces digest `f75ba776…`.
+
+### The study's first numeric result, and it is a direction failure
+
+The one comparable series (household consumption, index 1960 = 100) is **outside tolerance in all
+18 informative years**: the model's index falls 100 → 99.3 (1961) → 42.4 (1978) while the observed
+series rises 100 → 101 → 216, so the residual grows from −1.74 to −173.64 index points. (The 1960
+row is trivially exact by construction of the normalization, so the report's "1 of 19 within"
+counts an uninformative year; the informative count is 18 of 18 outside.) This is the F2 kernel
+collapse diagnosed in P05 (`P05_REPORT` §10c: liveness 0.1116, treasury zero at tick 17-18)
+appearing against the historical target as a **sign error in the consumption trajectory**.
+
+### Findings to fix (reporting level, cheap)
+
+- **R6** three political arms (`coalition-weights`, `soviet-constraint`, `cultural-openness`) are
+  identical to the control on **every** reported metric while their replay digests differ. The
+  document keeps the digests but never states the finding; it needs one sentence, because it is
+  first-order evidence about which political levers are inert in this configuration.
+- **R7** none of the three arm documents states the **ontology/fidelity**. The parent is
+  `intermediate8_v1` / `f1` (`p04_political_simulation`), i.e. the political model on the legacy
+  catalog — **not** the F2 historical material model whose numbers dominate the P06 report. Their
+  metrics (production 16.79 M, consumption 3.40 M) are on a different scale and must not be read as
+  F2 quantities.
+- **R8** `bank_reserves` is null in compact output, so one §3 metric family is unavailable for the
+  arms. Disclosed honestly; either emit it or drop it from the declared metric list.
