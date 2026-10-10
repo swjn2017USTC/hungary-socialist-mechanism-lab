@@ -31,6 +31,8 @@ AVAILABLE_SCENARIOS = (
     "p04_replay_external",
     "p04_endogenous_external",
     "historical_f2_replay",
+    "historical_f2_trade_scenario",
+    "historical_f2_trade_wage_diagnostic",
 )
 
 

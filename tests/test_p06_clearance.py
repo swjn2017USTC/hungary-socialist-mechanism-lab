@@ -198,3 +198,43 @@ def test_p06_arm_summary_check_requires_all_completed_hash_identified_arms(tmp_p
     ok, evidence = _check_p06_arms_summary(tmp_path)
     assert not ok
     assert "political arms missing" in evidence
+
+
+def test_trade_transmission_clearance_reads_run_summary_without_pinning_outcome(tmp_path) -> None:
+    from hsm_lab.calibration.clearance import _check_p06_trade_transmission
+
+    run = {
+        "scenario_id": "declared_scenario",
+        "parameter_hash": "a" * 64,
+        "seed": 1729,
+        "deterministic_replay_digest": "b" * 64,
+        "completed_ticks": 116,
+        "last_completed_quarter": "1985Q4",
+        "by_commodity": {
+            "g01_solid_fuels": {
+                "imports": {"cmea": 1.0, "convertible": 2.0},
+                "exports": {"cmea": 3.0, "convertible": 4.0},
+            }
+        },
+        "invariants": {
+            "max_finance_abs_residual": 0.0,
+            "max_material_abs_residual": 0.0,
+        },
+    }
+    summary = {
+        "schema_version": 1,
+        "scenario_definition": {"scenario_sha256": "c" * 64},
+        "runs": {arm_id: dict(run) for arm_id in ("C0", "C1", "C2")},
+    }
+    evidence_path = tmp_path / "outputs/p06-trade-transmission/summary.json"
+    evidence_path.parent.mkdir(parents=True)
+    evidence_path.write_text(json.dumps(summary))
+
+    passed, _ = _check_p06_trade_transmission(tmp_path)
+    assert passed
+
+    summary["runs"].pop("C2")
+    evidence_path.write_text(json.dumps(summary))
+    passed, evidence = _check_p06_trade_transmission(tmp_path)
+    assert not passed
+    assert "C0, C1 and conditional C2" in evidence

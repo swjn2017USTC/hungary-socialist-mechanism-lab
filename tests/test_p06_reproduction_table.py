@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -207,4 +208,76 @@ def test_mapped_crosswalk_without_a_declared_source_is_refused(tmp_path: Path) -
         )
     )
     with pytest.raises(ConfigError, match="lacks declared source"):
+        load_reproduction_crosswalk(tmp_path)
+
+
+def test_trade_scenario_source_is_digest_pinned_and_limited_to_trade_indices(
+    tmp_path: Path,
+) -> None:
+    scenario_id = "historical_f2_trade_scenario"
+    scenario_path = tmp_path / "config/scenarios" / f"{scenario_id}.json"
+    scenario_path.parent.mkdir(parents=True)
+    scenario_path.write_text('{"scenario_id":"historical_f2_trade_scenario"}\n')
+    digest = hashlib.sha256(scenario_path.read_bytes()).hexdigest()
+    (tmp_path / "config/calibration").mkdir(parents=True)
+    (tmp_path / "data/manifests").mkdir(parents=True)
+    (tmp_path / "config/calibration/p05.json").write_text(
+        '{"reproduction_crosswalk":"config/calibration/crosswalk.json"}'
+    )
+    target = {
+        "variable_id": "trade_import_volume_index",
+        "artifact_id": "trade-import-calibration",
+        "sha256": "a" * 64,
+        "role": "target",
+        "use": "calibration",
+    }
+    (tmp_path / "data/manifests/p05_targets.yml").write_text(
+        yaml.safe_dump({"targets": [target]})
+    )
+    entry = {
+        "variable_id": target["variable_id"],
+        "status": "mapped",
+        "comparison_grade": "normalized_index",
+        "target_unit": "index_1960_100",
+        "model_unit": "index_1960_100",
+        "model_quantity": "total import quantity",
+        "comparison_rule": "index_1960_100",
+        "annual_aggregation": "mean",
+        "comparison_window": ["calibration"],
+        "error_tolerance": 0.5,
+        "precision_basis": "fixed published rounding precision",
+        "source": {
+            "type": "scenario_declared_trade_vectors",
+            "scenario_id": scenario_id,
+            "scenario_sha256": digest,
+            "non_circularity_note": "No target series is used as a demand vector.",
+            "artifacts": [
+                {"artifact_id": target["artifact_id"], "sha256": target["sha256"]}
+            ],
+        },
+    }
+    crosswalk = {
+        "schema_version": "1",
+        "source_manifest": "data/manifests/p05_targets.yml",
+        "model_scenario": scenario_id,
+        "entries": [entry],
+    }
+    crosswalk_path = tmp_path / "config/calibration/crosswalk.json"
+    crosswalk_path.write_text(json.dumps(crosswalk))
+    loaded = load_reproduction_crosswalk(tmp_path)
+    assert loaded["entries"][0]["source"]["scenario_sha256"] == digest
+
+    entry["source"]["scenario_sha256"] = "b" * 64
+    crosswalk_path.write_text(json.dumps(crosswalk))
+    with pytest.raises(ConfigError, match="scenario digest"):
+        load_reproduction_crosswalk(tmp_path)
+
+    target["variable_id"] = "consumption"
+    entry["variable_id"] = "consumption"
+    entry["source"]["scenario_sha256"] = digest
+    (tmp_path / "data/manifests/p05_targets.yml").write_text(
+        yaml.safe_dump({"targets": [target]})
+    )
+    crosswalk_path.write_text(json.dumps(crosswalk))
+    with pytest.raises(ConfigError, match="only supported for the two admitted trade indices"):
         load_reproduction_crosswalk(tmp_path)

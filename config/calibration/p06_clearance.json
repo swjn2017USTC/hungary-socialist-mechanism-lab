@@ -281,6 +281,12 @@
       "kind": "internal",
       "check": "p06_reproduction_table",
       "description": "Declared variable crosswalk and numeric reproduction table include only mapped calibration/internal-validation rows"
+    },
+    {
+      "id": "p06_trade_transmission",
+      "kind": "internal",
+      "check": "p06_trade_transmission",
+      "description": "C0/C1/C2 declared trade transmission run identities, channel volumes and accounting residuals are recorded"
     }
   ]
 }

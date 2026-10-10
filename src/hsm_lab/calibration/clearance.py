@@ -352,6 +352,68 @@ def _check_p06_reproduction_table(root: Path) -> tuple[bool, str]:
     )
 
 
+def _check_p06_trade_transmission(root: Path) -> tuple[bool, str]:
+    """Check that the C0/C1/C2 transmission evidence is recorded completely."""
+    path = root / "outputs/p06-trade-transmission/summary.json"
+    if not path.is_file():
+        return False, "outputs/p06-trade-transmission/summary.json is missing"
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        return False, f"invalid trade transmission summary: {exc}"
+    if payload.get("schema_version") != 1:
+        return False, "trade transmission summary schema_version must be 1"
+    runs = payload.get("runs")
+    if not isinstance(runs, dict) or not {"C0", "C1", "C2"} <= set(runs):
+        return False, "trade transmission summary must record C0, C1 and conditional C2 runs"
+    for arm_id in ("C0", "C1", "C2"):
+        run = runs[arm_id]
+        required = (
+            "scenario_id",
+            "parameter_hash",
+            "seed",
+            "deterministic_replay_digest",
+            "completed_ticks",
+            "last_completed_quarter",
+            "by_commodity",
+            "invariants",
+        )
+        missing = [key for key in required if key not in run]
+        if missing:
+            return False, f"{arm_id} trade summary is missing {missing}"
+        if (
+            len(str(run["parameter_hash"])) != 64
+            or len(str(run["deterministic_replay_digest"])) != 64
+            or int(run["completed_ticks"]) != 116
+            or str(run["last_completed_quarter"]) != "1985Q4"
+        ):
+            return False, f"{arm_id} trade summary has incomplete run identity"
+        by_commodity = run["by_commodity"]
+        if not isinstance(by_commodity, dict) or not by_commodity:
+            return False, f"{arm_id} trade summary has no per-commodity channels"
+        for commodity, metrics in by_commodity.items():
+            for direction in ("imports", "exports"):
+                channels = metrics.get(direction)
+                if not isinstance(channels, dict) or not {
+                    "cmea",
+                    "convertible",
+                } <= set(channels):
+                    return False, f"{arm_id}/{commodity} lacks {direction} channel volumes"
+        invariants = run["invariants"]
+        if not {
+            "max_finance_abs_residual",
+            "max_material_abs_residual",
+        } <= set(invariants):
+            return False, f"{arm_id} trade summary lacks accounting residual evidence"
+    scenario = payload.get("scenario_definition")
+    if not isinstance(scenario, dict) or not scenario.get("scenario_sha256"):
+        return False, "trade transmission summary lacks scenario provenance"
+    return True, (
+        "C0/C1/C2 identities, 116-tick windows, per-commodity channels "
+        "and residual evidence recorded"
+    )
+
+
 def run_clearance(
     root: Path,
     *,
@@ -394,6 +456,8 @@ def run_clearance(
                 passed, evidence = _check_p06_arms_summary(root)
             elif check == "p06_reproduction_table":
                 passed, evidence = _check_p06_reproduction_table(root)
+            elif check == "p06_trade_transmission":
+                passed, evidence = _check_p06_trade_transmission(root)
             else:
                 passed, evidence = False, f"unknown internal check {check!r}"
         else:

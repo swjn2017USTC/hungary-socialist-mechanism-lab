@@ -600,3 +600,14 @@ to compact fork output", or the inventory drops it).
   -p no:cacheprovider` → 412 passed. `hsm calibration p06-clearance --with-runs` → 23 PASS / 4
   WAIVED / 0 OPEN; the full item table is in `docs/phases/P06_CLEARANCE.md`.
 - This entry is included in the Part 1 commit; its hash is recorded in the task completion message.
+
+
+## 2026-10-10 — Trade transmission Part 2 — PARTIAL, channel-dependent result
+
+- Step 1 mechanics: `engine/trade.py::realize_imports` caps CMEA through the declared credit envelope plus settlement balance and convertible imports through the USD budget; `build_export_demands` scales desired exports by Treasury payable cash. No engine change was made.
+- Step 2 scenario: declared `config/scenarios/historical_f2_trade_scenario.json` from P04 external pack `p04_fixture` (internal digest `71642a27…`) and external recipe base levels (both 1.0; SHA `e4e7e8c9…`), divided by the standard admin-price vector. Equal-admin-value basket is structural because the pack has no commodity composition. No admitted target/KSH values entered it. Credit settings were nonbinding and no distribution working-capital guard triggered. Construction imports were set to zero after the compiler's existing housing-edge guard rejected the all-groups attempt; retained exports and the failed compile evidence.
+- Step 3 runs: C0 preserved baseline digest `92f9ea0a…`; C1 and C2 each ran 116 ticks through 1985Q4 (seed 1729). Their parameter hashes, scenario IDs, full digests, channel totals and residuals are in `P06_RUN_REPORT.md` and `outputs/p06-trade-transmission/summary.json`. C1 imported 1,226.7 in each channel; exports were 126.7297 each. C2 wage-factor diagnostic imported the same and exported 74.1846 each; it did not remedy the Treasury constraint.
+- Step 4 disposition: imports transmit and the import index is `mapped` / `normalized_index`; exports transmit initially but become Treasury-constrained (payable cash reaches zero at 1961Q2), so the export index remains `blocked`. Crosswalk counts: 2 mapped / 11 no_counterpart / 1 blocked. Consumption failure is reported first and in full; it remains 18/18 informative years outside the frozen tolerance.
+- Step 5 evidence: added `p06_trade_transmission` internal clearance check reading run summaries; regenerated `outputs/p06-clearance/pytest.json`; `hsm calibration p06-clearance --with-runs` → 24 PASS / 4 WAIVED / 0 OPEN. Hold-out unused; reserved window closed. No calibration or identification claim.
+- Checks: `.venv/bin/ruff check src tests` clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → 414 passed, 0 failed.
+- Part 2 commit: recorded in the task completion response.

@@ -1,5 +1,131 @@
 # P06 run report
 
+## Plan C — trade transmission probe (partial; 2026-10-10)
+
+**Household-consumption failure first.** In the declared C1 trade scenario, the descriptive normalized-index comparison remains outside tolerance in **18 of 18 informative years** (1960 is only the normalization base). Mean absolute residual is **120.2651 index points** and maximum absolute residual is **214.6777**; tolerance remains the frozen 0.5. This is not a calibration or validation claim. The full annual series is below.
+
+| Year | Window | Target index | Model index | Residual | Verdict |
+|---:|---|---:|---:|---:|---|
+| 1960 | calibration | 100.000 | 100.000 | 0.000 | within_tolerance |
+| 1961 | calibration | 101.000 | 87.040 | -13.960 | outside_tolerance |
+| 1962 | calibration | 105.000 | 48.830 | -56.170 | outside_tolerance |
+| 1963 | calibration | 110.000 | 47.891 | -62.109 | outside_tolerance |
+| 1964 | calibration | 116.000 | 46.481 | -69.519 | outside_tolerance |
+| 1965 | calibration | 118.000 | 43.960 | -74.040 | outside_tolerance |
+| 1966 | calibration | 123.000 | 40.061 | -82.939 | outside_tolerance |
+| 1967 | calibration | 131.000 | 35.380 | -95.620 | outside_tolerance |
+| 1968 | calibration | 137.000 | 29.892 | -107.108 | outside_tolerance |
+| 1969 | calibration | 145.000 | 23.912 | -121.088 | outside_tolerance |
+| 1970 | internal_validation | 155.000 | 18.444 | -136.556 | outside_tolerance |
+| 1971 | internal_validation | 163.000 | 14.001 | -148.999 | outside_tolerance |
+| 1972 | internal_validation | 169.000 | 11.038 | -157.962 | outside_tolerance |
+| 1973 | internal_validation | 176.000 | 8.996 | -167.004 | outside_tolerance |
+| 1974 | internal_validation | 187.000 | 6.520 | -180.480 | outside_tolerance |
+| 1975 | internal_validation | 196.000 | 3.239 | -192.761 | outside_tolerance |
+| 1976 | internal_validation | 199.000 | 1.632 | -197.368 | outside_tolerance |
+| 1977 | internal_validation | 208.000 | 1.325 | -206.675 | outside_tolerance |
+| 1978 | internal_validation | 216.000 | 1.322 | -214.678 | outside_tolerance |
+
+The C1 comparison table also gives `trade_import_volume_index` a numeric normalized-index row (19 annual rows, with the 1960 base uninformative): **18 of 18 informative years outside tolerance**, mean absolute residual 159.4211 and maximum 403.0. The model index stays at 100 because the scenario demand is constant; this is a descriptive mismatch, not an adjustment target.
+
+| Year | KSH target | Model index | Residual |
+|---:|---:|---:|---:|
+| 1960 | 100.000 | 100.000 | 0.000 |
+| 1961 | 108.000 | 100.000 | -8.000 |
+| 1962 | 124.000 | 100.000 | -24.000 |
+| 1963 | 142.000 | 100.000 | -42.000 |
+| 1964 | 159.000 | 100.000 | -59.000 |
+| 1965 | 158.000 | 100.000 | -58.000 |
+| 1966 | 168.000 | 100.000 | -68.000 |
+| 1967 | 197.000 | 100.000 | -97.000 |
+| 1968 | 203.000 | 100.000 | -103.000 |
+| 1969 | 215.000 | 100.000 | -115.000 |
+| 1970 | 274.000 | 100.000 | -174.000 |
+| 1971 | 326.000 | 100.000 | -226.000 |
+| 1972 | 309.000 | 100.000 | -209.000 |
+| 1973 | 318.000 | 100.000 | -218.000 |
+| 1974 | 374.000 | 100.000 | -274.000 |
+| 1975 | 398.000 | 100.000 | -298.000 |
+| 1976 | 406.000 | 100.000 | -306.000 |
+| 1977 | 447.000 | 100.000 | -347.000 |
+| 1978 | 503.000 | 100.000 | -403.000 |
+
+### Declared scenario and non-circular provenance
+
+`config/scenarios/historical_f2_trade_scenario.json` copies `historical_f2_replay`, starts at 1957Q1, runs 116 ticks through 1985Q4, seed 1729. Its vectors use the registered P04 external pack `data/fixtures/p04_external_synthetic_pack.json` (`source_id=p04_fixture`, internal digest `71642a27e454097b2c52b2948daaa5492e263a3084c3cfe9a46b6d04b76ed0a8`) and declared external recipe `data/fixtures/p04_priors/p04_external_recipe_parameters.json` (base CMEA and Western demand 1.0; SHA-256 `e4e7e8c9b2ad638a679b2ed96cb6fc9b1141a8f4e833ad0c938f25b5f2237b00`). Each channel signal is multiplied by its declared recipe base demand and divided by `build_material_prices(parameters).standard`; because the external pack has aggregate channel signals but no commodity composition, this is an equal-admin-value structural basket, not an asserted historical composition. No KSH index or target series entered vector construction. Scenario SHA-256: `3ad4510064daa6e0b6f37893eb6a5721c3ad0b34f3284175c2cde77a33397a5f`. Credit envelopes/reserves/loan limits are deliberately high; the distribution working-capital guard did not trigger. The existing model exposes no CMEA opening-reserve parameter: its settlement balance starts at zero, with the declared credit envelope setting the import cap. The initial all-groups compile hit the current housing-edge guard for construction imports; C1 therefore sets g07 construction imports to zero while retaining its declared exports. The failed compile evidence is preserved in `outputs/p06-trade-transmission/C1-network-guard-attempt`.
+
+### Arm outcomes and transmission
+
+| Arm | Scenario | Parameter hash | Seed | Replay digest | Imports CMEA / convertible / total | Exports CMEA / convertible / total | Accounting residual maxima (finance; material) |
+|---|---|---|---:|---|---:|---:|---|
+| C0 | `historical_f2_replay` | `e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445` | 1729 | `92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d` | 0.0000 / 0.0000 / 0.0000 | 0.0000 / 0.0000 / 0.0000 | 4.19e-09; 1.46e-11 |
+| C1 | `historical_f2_trade_scenario` | `632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90` | 1729 | `c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5` | 1226.7000 / 1226.7000 / 2453.4000 | 126.7297 / 126.7297 / 253.4594 | 4.19e-09; 2.91e-11 |
+| C2 | `historical_f2_trade_wage_diagnostic` | `fd3d4f87833b8fb137a350709e4641342f73ec9e13785ae1f12b96d4a33ea5f3` | 1729 | `29dc3d615adf366647c56401ea2cce2092febb12bfb367f790611daa015589a7` | 1226.7000 / 1226.7000 / 2453.4000 | 74.1846 / 74.1846 / 148.3692 | 6.75e-09; 1.46e-11 |
+
+C0 reproduces the frozen zero-trade baseline digest `92f9ea0a…` with all trade flows zero. C1 proves the external channel transmits imports: all declared import demand is realized each quarter in 15 import-enabled commodity groups, with maximum demand mismatch zero in each channel. Its exports initially transmit, but Treasury payable cash depletes: cash reaches zero at 1961Q2 and the first zero-export quarter is 1960Q2; only 9.8645% of declared export volume is realized over the full horizon. C2 was therefore run as the requested wage-factor knife-edge diagnostic (`wage_rate=6.6`, 1.1×); it does not restore export throughput, reduces aggregate exports to 148.3692, and lacks a positive 1960 export index base. C2 is not a remedy. The external channel transmits conditionally: imports are nonbinding in this scenario, while export transmission is Treasury constrained.
+
+C1 full-window commodity quantities (cumulative 1957Q1–1985Q4; CMEA and convertible columns remain separate):
+
+| Commodity group | Imports CMEA | Imports convertible | Exports CMEA | Exports convertible |
+|---|---:|---:|---:|---:|
+| `g01_solid_fuels` | 116.0000 | 116.0000 | 15.0000 | 15.0000 |
+| `g02_oil_gas_fuels` | 116.0000 | 116.0000 | 14.6884 | 14.6884 |
+| `g03_electricity_heat` | 96.6667 | 96.6667 | 0.8333 | 0.8333 |
+| `g04_basic_metals_materials` | 58.0000 | 58.0000 | 4.5669 | 4.5669 |
+| `g05_chemicals_fertilizer` | 77.3333 | 77.3333 | 10.0000 | 10.0000 |
+| `g06_machinery_capital` | 29.0000 | 29.0000 | 0.9252 | 0.9252 |
+| `g07_construction` | 0.0000 | 0.0000 | 3.2500 | 3.2500 |
+| `g08_agricultural_raw` | 145.0000 | 145.0000 | 18.4375 | 18.4375 |
+| `g09_basic_food` | 116.0000 | 116.0000 | 8.6825 | 8.6825 |
+| `g10_animal_food` | 46.4000 | 46.4000 | 2.3688 | 2.3688 |
+| `g11_textiles_footwear` | 77.3333 | 77.3333 | 9.6991 | 9.6991 |
+| `g12_household_nondurables` | 96.6667 | 96.6667 | 12.1233 | 12.1233 |
+| `g13_household_durables` | 14.5000 | 14.5000 | 1.8750 | 1.8750 |
+| `g14_vehicles_transport_equipment` | 5.8000 | 5.8000 | 0.7500 | 0.7500 |
+| `g15_market_services` | 116.0000 | 116.0000 | 11.5000 | 11.5000 |
+| `g16_housing_public_services` | 116.0000 | 116.0000 | 12.0297 | 12.0297 |
+
+### Crosswalk and evidence status
+
+Trade imports are `mapped` at `normalized_index`, sourced only from the declared scenario vectors with scenario id, digest and non-circularity note. Trade exports remain `blocked`: they have a model counterpart and positive initial flow, but Treasury cash makes transmission binding and prevents a nonbinding comparison; this is an observed block, not `no_counterpart`. Remaining variables retain their previous dispositions. Current crosswalk counts: **2 mapped / 11 no_counterpart / 1 blocked**; grades: **2 normalized_index / 11 no_counterpart / 1 blocked**, 0 allocation-assumed. Reproduction table ends 1978Q4, digest `6362001deaf055af6c005acc7d6fc6c4bbaf05b7f417b0c3bec5b7c25b8508b0`; hold-out and reserved values were not read.
+
+
+
+### Clearance item table after Plan C regeneration
+
+**24 PASS / 4 WAIVED / 0 OPEN**. The four waivers are the existing closure audit, frozen acceptance gates, calibration/inference and data-path acquisition; frozen failures remain reported as such.
+
+| id | status | evidence |
+|---|---|---|
+| `gate1_closure_audit` | **WAIVED** | not satisfied: hsm calibration audit-closure --scenario historical_f2_replay reports status collapsed with output_liveness 0.0 |
+| `frozen_acceptance_gates` | **WAIVED** | not satisfied: liveness, household service ratios, treasury self-financing and expiry still fail on the replay |
+| `calibration_and_inference` | **WAIVED** | not satisfied: identifiable_set is empty and no linkage exists, so no paired F1/F2 study or ABC inference can run |
+| `morris_screening` | **PASS** | 4 artifacts present |
+| `data_path_acquisition` | **WAIVED** | not satisfied: the seven unadmitted target-role variables and the P05_REPORT 10b observables are not admitted |
+| `suite_and_lint` | **PASS** | ruff clean; pytest evidence 414 passed, 0 failed |
+| `legacy_digest_reproduces` | **PASS** | historical_f2_replay digest 92f9ea0adcfce1b0... (expected 92f9ea0adcfce1b0...) |
+| `registry_consistency` | **PASS** | all 2 control-file scenario names are registered |
+| `control_structure` | **PASS** | terminal floors declared; linkage empty; identification {'fixed': 9, 'unidentified': 6} |
+| `scope_statement_recorded` | **PASS** | P05_REPORT.md records the reproduction-scope decision |
+| `reserved_window_unread` | **PASS** | 105 recorded runs end at or before 1985Q4 |
+| `data_manifest_frozen` | **PASS** | data/manifests/DATA_MANIFEST_v2.json[missing_required] = [] |
+| `performance_benchmark` | **PASS** | outputs/p05-f2-benchmark/benchmark.json[overall_gate] = 'pass' |
+| `mechanism_cards` | **PASS** | 15 artifacts present |
+| `forcing_ladder` | **PASS** | 3 artifacts present |
+| `window_protocol` | **PASS** | 2 artifacts present |
+| `reproducibility_bundle` | **PASS** | 2 artifacts present |
+| `p06_oat_sensitivity` | **PASS** | 4 artifacts present |
+| `p06_h4_disposition` | **PASS** | 2 artifacts present |
+| `p06_1968_runs` | **PASS** | all 17 required W5-W7 arms completed 116 ticks through 1985Q4 with hashes and metrics |
+| `p06_1973_runs` | **PASS** | all 17 required W5-W7 arms completed 116 ticks through 1985Q4 with hashes and metrics |
+| `p06_political_runs` | **PASS** | all 17 required W5-W7 arms completed 116 ticks through 1985Q4 with hashes and metrics |
+| `p06_window_protocol_wired` | **PASS** | 5 artifacts present |
+| `p06_bundle_cli` | **PASS** | 3 artifacts present |
+| `p06_seedbank_spread` | **PASS** | 1 artifacts present |
+| `p06_final_report` | **PASS** | 2 artifacts present |
+| `p06_reproduction_table` | **PASS** | crosswalk {'mapped': 2, 'no_counterpart': 11, 'blocked': 1}; 38 numeric rows limited to mapped open windows |
+| `p06_trade_transmission` | **PASS** | C0/C1/C2 identities, 116-tick windows, per-commodity channels and residual evidence recorded |
+
 W0.5 parent run command: `.venv/bin/hsm run --scenario p04_endogenous --until 1973Q1 --checkpoint-every 4 --output-dir outputs/p06-fork-parent --json`. Wall time: **5.42 s**; manifest digest: `45999d895dac3b84bc69918273eed0c3b51489cba9ddae4fdbb2a20c54411f27`. Checkpoints: `outputs/p06-fork-parent/checkpoints/tick-0044` (material-checkpoint-v4, 44 completed ticks, last 1967Q4, next 1968Q1) and `outputs/p06-fork-parent/checkpoints/tick-0064` (v4, 64 completed ticks, last 1972Q4, next 1973Q1).
 
 All 17 arms finished 116 ticks through 1985Q4; per-arm time 4.316–6.050 s, concurrent batch 26.29 s. Every arm accounting check passed; none was rejected and the 10-minute degradation trigger did not apply. Values below are counterfactual simulation metrics, not historical evidence. Production is the sum of model commodity-group production over the run, not GDP.

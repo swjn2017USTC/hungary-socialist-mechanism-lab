@@ -10,7 +10,7 @@ from typing import Any
 import polars as pl
 import yaml
 
-from hsm_lab.contract.guards import load_research_contract, load_scenario
+from hsm_lab.contract.guards import load_research_contract, load_scenario, sha256_file
 from hsm_lab.contract.schemas import ConfigError, TargetUse
 from hsm_lab.data.registry import DataRegistry
 from hsm_lab.engine.material import run_material
@@ -94,8 +94,38 @@ def load_reproduction_crosswalk(root: Path) -> dict[str, Any]:
             source = row.get("source")
             if not isinstance(source, dict) or not source:
                 raise ConfigError(f"{row['variable_id']}: mapped crosswalk lacks declared source")
-            if source.get("type") != "admitted_target_artifacts":
+            source_type = source.get("type")
+            if source_type not in {
+                "admitted_target_artifacts",
+                "scenario_declared_trade_vectors",
+            }:
                 raise ConfigError(f"{row['variable_id']}: unsupported mapped source type")
+            if source_type == "scenario_declared_trade_vectors":
+                trade_variables = {
+                    "trade_export_volume_index",
+                    "trade_import_volume_index",
+                }
+                if row["variable_id"] not in trade_variables:
+                    raise ConfigError(
+                        f"{row['variable_id']}: scenario-declared trade source is only "
+                        "supported for the two admitted trade indices"
+                    )
+                scenario_id = str(source.get("scenario_id", ""))
+                scenario_path = root / "config" / "scenarios" / f"{scenario_id}.json"
+                if scenario_id != str(crosswalk.get("model_scenario", "")):
+                    raise ConfigError(
+                        f"{row['variable_id']}: trade source scenario must match model_scenario"
+                    )
+                if not scenario_path.is_file() or sha256_file(scenario_path) != str(
+                    source.get("scenario_sha256", "")
+                ):
+                    raise ConfigError(
+                        f"{row['variable_id']}: declared trade scenario digest is missing or stale"
+                    )
+                if not str(source.get("non_circularity_note", "")).strip():
+                    raise ConfigError(
+                        f"{row['variable_id']}: trade source lacks a non-circularity note"
+                    )
             declared_artifacts = source.get("artifacts")
             if not isinstance(declared_artifacts, list) or not declared_artifacts:
                 raise ConfigError(f"{row['variable_id']}: mapped source must list frozen artifacts")
