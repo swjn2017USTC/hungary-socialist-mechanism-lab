@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M03",
+  "intent": "full_employment_labor_hoarding",
+  "linked_cards": ["M3"],
+  "v1_card_sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+  "status": "blocked",
+  "declared_reason": null,
+  "blocked_reason": "No independent labor hoarding state; wage factor is not a hoarding operation; labor headcount/effective hours/absence identity must be added first",
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "Labor hoarding experiment requires new independent state in the engine."
+}

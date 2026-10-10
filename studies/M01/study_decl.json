@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M01",
+  "intent": "social_contract_ratchet_verification",
+  "linked_cards": ["M1"],
+  "v1_card_sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+  "status": "declared",
+  "declared_reason": "p04_coalition_prior and p04_observation_prior are identified; ratchet metric already wired via household_welfare adaptive expectations; paired checkpoint design ready",
+  "blocked_reason": null,
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "Experiment not yet executed. Status will be updated after paired checkpoint runs are completed."
+}

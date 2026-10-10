@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M09",
+  "intent": "information_optimization_failure",
+  "linked_cards": ["M9"],
+  "v1_card_sha256": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c",
+  "status": "blocked",
+  "declared_reason": null,
+  "blocked_reason": "forecast_accuracy=cadability is a definition not an error measurement; pre-prediction/realized residual tracking not yet implemented; forecast error measurement design prerequisite",
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "Information experiment requires new forecast-issued/realized/residual tracking."
+}

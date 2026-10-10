@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M06",
+  "intent": "external_debt_social_contract",
+  "linked_cards": ["M6"],
+  "v1_card_sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+  "status": "blocked",
+  "declared_reason": null,
+  "blocked_reason": "convertible_credit_envelope not a declared engine parameter; foreign counterparty账 and loan term制度 not yet specified; P08D export finance spec prerequisite",
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "External debt experiment requires new foreign counterparty账 and loan term制度."
+}

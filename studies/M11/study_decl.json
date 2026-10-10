@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M11",
+  "intent": "departmental_i_ii_composition",
+  "linked_cards": ["M11"],
+  "v1_card_sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887",
+  "status": "blocked",
+  "declared_reason": null,
+  "blocked_reason": "P06 report CONDITIONAL (structural); F1 g13 not valid for F2; I/II产出 endogenous, requires exogenously fixed resources not强制 same actual output; M2/M5 enterprise chain prerequisite",
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "Departmental competition requires M2/M5 enterprise chain resolution and exogenous resource control."
+}

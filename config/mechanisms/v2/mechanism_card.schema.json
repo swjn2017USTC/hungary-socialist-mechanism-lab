@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hsm-lab.omp/schema/mechanism_card_v2.schema.json",
+  "title": "MechanismCardV2",
+  "description": "P07A1 v2 mechanism card — supersedes config/p06/mechanism_card.schema.json. Adds typed MetricSpec and InterventionBinding arrays, provenance supersedes pointer, schema_version field, and frozen status. All v1 card SHA-256 values are preserved verbatim in supersedes.v1_card_sha256.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mechanism_id",
+    "schema_version",
+    "hypothesis",
+    "manipulated_variables",
+    "controlled_variables",
+    "metrics",
+    "falsification_criterion",
+    "minimum_replicates",
+    "result_categories",
+    "calibrated_parameter_dependencies",
+    "supersedes",
+    "metric_specs"
+  ],
+  "properties": {
+    "mechanism_id": {
+      "type": "string",
+      "pattern": "^M(?:[1-9]|1[01])$",
+      "description": "Mechanism identifier M1–M11"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "2",
+      "description": "Must be exactly '2'. Schema mismatch with this field rejects the card."
+    },
+    "hypothesis": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identical to v1 hypothesis verbatim"
+    },
+    "manipulated_variables": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "description": "Identical to v1"
+    },
+    "controlled_variables": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "description": "Identical to v1"
+    },
+    "metrics": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "description": "Identical to v1; retained for provenance"
+    },
+    "falsification_criterion": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identical to v1"
+    },
+    "minimum_replicates": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "result_categories": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["SUPPORTED", "CONDITIONAL", "WEAK", "REJECTED", "UNIDENTIFIED"]
+      },
+      "minItems": 1
+    },
+    "calibrated_parameter_dependencies": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "supersedes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["v1_card_sha256", "v1_schema_sha256", "v1_card_path", "change_reason"],
+      "properties": {
+        "v1_card_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 of the v1 card JSON file"
+        },
+        "v1_schema_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 of config/p06/mechanism_card.schema.json"
+        },
+        "v1_card_path": {
+          "type": "string",
+          "description": "Relative path to the superseded v1 card"
+        },
+        "change_reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "metric_specs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "metric_id",
+          "table_or_sidecar",
+          "column",
+          "time_window",
+          "unit",
+          "fidelity",
+          "data_role",
+          "validation_fidelity",
+          "missing_policy"
+        ],
+        "properties": {
+          "metric_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stable identifier, e.g. M2.bottleneck_demand_count"
+          },
+          "table_or_sidecar": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Output table or sidecar file containing this quantity"
+          },
+          "column": {
+            "type": "string",
+            "minLength": 1
+          },
+          "commodity_axis": {
+            "type": ["object", "null"],
+            "description": "Non-empty commodity selector; null if not applicable",
+            "additionalProperties": false,
+            "required": ["commodities", "unit"],
+            "properties": {
+              "commodities": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "minItems": 1
+              },
+              "unit": { "type": "string", "minLength": 1 },
+              "source_recipe": { "type": ["string", "null"] }
+            }
+          },
+          "region_axis": {
+            "type": ["object", "null"],
+            "description": "Non-empty region selector; null if not applicable",
+            "additionalProperties": false,
+            "required": ["regions", "unit", "aggregation"],
+            "properties": {
+              "regions": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "minItems": 1
+              },
+              "unit": { "type": "string", "minLength": 1 },
+              "aggregation": { "type": "string", "minLength": 1 }
+            }
+          },
+          "time_window": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["start_quarter", "end_quarter", "missing_policy"],
+            "properties": {
+              "start_quarter": {
+                "type": "string",
+                "pattern": "^\\d{4}Q[1-4]$",
+                "description": "1957Q1–1985Q4; 1986Q1+ is BLOCKED"
+              },
+              "end_quarter": {
+                "type": "string",
+                "pattern": "^\\d{4}Q[1-4]$",
+                "description": "1957Q1–1985Q4; 1986Q1+ is BLOCKED"
+              },
+              "missing_policy": {
+                "type": "string",
+                "minLength": 1,
+                "description": "zero_fill | skip | interpolate | abort"
+              }
+            }
+          },
+          "unit": { "type": "string", "minLength": 1 },
+          "fidelity": {
+            "type": "string",
+            "enum": ["F1_intermediate_8", "F2_run", "F2_diagnostic", "synthetic"],
+            "description": "Model layer; F1 and F2 must NOT be mixed in one metric"
+          },
+          "data_role": {
+            "type": "string",
+            "enum": [
+              "forcing", "parameter", "target", "reconstructed_initial",
+              "exposure", "candidate_linkage", "not_admitted"
+            ]
+          },
+          "validation_fidelity": {
+            "type": "string",
+            "enum": ["exact", "normalized_index", "proxy", "no_counterpart"]
+          },
+          "missing_policy": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Must NOT be silently填0; abort is the safe default"
+          },
+          "description": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "intervention_bindings": {
+      "type": "array",
+      "description": "Typed manipulation specifications; empty if not yet declared",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "intervention_id",
+          "parameter_path",
+          "baseline_value",
+          "intervention_value",
+          "application_quarter",
+          "persistence",
+          "applicable_scenarios"
+        ],
+        "properties": {
+          "intervention_id": { "type": "string", "minLength": 1 },
+          "parameter_path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Dot-path to model parameter; invalid paths must raise before run"
+          },
+          "baseline_value": {},
+          "intervention_value": {},
+          "application_quarter": {
+            "type": "string",
+            "pattern": "^\\d{4}Q[1-4]$",
+            "description": "Must be 1957Q1–1985Q4; 1986Q1+ is BLOCKED"
+          },
+          "persistence": {
+            "type": "string",
+            "enum": ["one_shot", "sustained", "reverted_at"]
+          },
+          "applicable_scenarios": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "minItems": 1
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "declared", "inconclusive", "supported", "rejected",
+        "conditional", "weak", "blocked", "not_run"
+      ],
+      "description": "Initial status at P07A1 is 'declared' or 'blocked'"
+    },
+    "declared_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why this experiment is declared (or blocked) at this phase"
+    },
+    "blocked_reason": {
+      "type": ["string", "null"],
+      "description": "Required if status is 'blocked'"
+    }
+  }
+}

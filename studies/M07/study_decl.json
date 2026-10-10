@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M07",
+  "intent": "regional_distribution_stability",
+  "linked_cards": ["M7"],
+  "v1_card_sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+  "status": "blocked",
+  "declared_reason": null,
+  "blocked_reason": "investment_intensity and housing_factor are national scalars, not 20-region vectors; no regional budget/fact/flow adapter; national aggregate invariance not established",
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "Regional experiment requires new regional vector adapter and national invariance guarantee."
+}

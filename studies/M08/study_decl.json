@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M08",
+  "intent": "political_coalition_crisis",
+  "linked_cards": ["M8"],
+  "v1_card_sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1",
+  "status": "declared",
+  "declared_reason": "Political probe shows replay null (policy delta=0, digest changes) vs endogenous (autonomy delta=0.075, cultural=0.24); endogenous实质 policy + replay negative control feasible",
+  "blocked_reason": null,
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "Experiment not yet executed. Negative control (replay) vs treatment (endogenous) design available."
+}

@@ -1,0 +1,107 @@
+{
+  "manifest_version": "1.0.0",
+  "phase": "P07A1",
+  "description": "P07A1 evidence identity and P06 status reconciliation. This manifest declares the research intent for each M01–M11. All records are status=DECLARED or BLOCKED; no research_package_complete is claimed. Full experiment execution requires separate phase authorization.",
+  "created_by_phase": "P07A1",
+  "records": [
+    {
+      "record_id": "P07A1-M01",
+      "mechanism_id": "M01",
+      "intent": "social_contract_ratchet_verification",
+      "linked_cards": ["M1"],
+      "status": "declared",
+      "declared_reason": "p04_coalition_prior and p04_observation_prior are identified parameters; ratchet metric already wired via household_welfare adaptive expectations; paired checkpoint design ready",
+      "blocked_reason": null
+    },
+    {
+      "record_id": "P07A1-M02",
+      "mechanism_id": "M02",
+      "intent": "soft_budget_investment_shortage",
+      "linked_cards": ["M2"],
+      "status": "blocked",
+      "declared_reason": null,
+      "blocked_reason": "F2 second economy commodity axes are empty (second_input/output tuples = []); M2 bottleneck/investment metrics require non-empty commodity axis; pending F2 second economy wiring (P07B/P10A)"
+    },
+    {
+      "record_id": "P07A1-M03",
+      "mechanism_id": "M03",
+      "intent": "full_employment_labor_hoarding",
+      "linked_cards": ["M3"],
+      "status": "blocked",
+      "declared_reason": null,
+      "blocked_reason": "No independent labor hoarding state (headcount/effective hours/absence) exists in current engine; wage factor is not a hoarding operation; labor identity must be added before M3 experiment can be declared"
+    },
+    {
+      "record_id": "P07A1-M04",
+      "mechanism_id": "M04",
+      "intent": "second_economy_stabilization_erosion",
+      "linked_cards": ["M4"],
+      "status": "blocked",
+      "declared_reason": null,
+      "blocked_reason": "F2 second economy recipe axes are empty; second_input/output tuples = []; network settle:104 returns early; F2 second economy wiring is prerequisite (P07B)"
+    },
+    {
+      "record_id": "P07A1-M05",
+      "mechanism_id": "M05",
+      "intent": "enterprise_autonomy_1968",
+      "linked_cards": ["M5"],
+      "status": "declared",
+      "declared_reason": "p04_coalition_prior and p04_information_prior are identified; PoliticalSession → policy → material targets path exists; autonomy × hardness 2×2 design available",
+      "blocked_reason": null
+    },
+    {
+      "record_id": "P07A1-M06",
+      "mechanism_id": "M06",
+      "intent": "external_debt_social_contract",
+      "linked_cards": ["M6"],
+      "status": "blocked",
+      "declared_reason": null,
+      "blocked_reason": "convertible_credit_envelope is not a declared parameter in the current engine; foreign counterparty double-entry账 and loan term/late payment制度 not yet specified; P08D export finance spec is prerequisite"
+    },
+    {
+      "record_id": "P07A1-M07",
+      "mechanism_id": "M07",
+      "intent": "regional_distribution_stability",
+      "linked_cards": ["M7"],
+      "status": "blocked",
+      "declared_reason": null,
+      "blocked_reason": "Regional investment_intensity and housing_factor are national scalars, not 20-region vectors; no regional budget/fact/flow adapter exists; national aggregate invariance for regional experiment not yet established"
+    },
+    {
+      "record_id": "P07A1-M08",
+      "mechanism_id": "M08",
+      "intent": "political_coalition_crisis",
+      "linked_cards": ["M8"],
+      "status": "declared",
+      "declared_reason": "Political probe shows replay null (policy delta=0) but digest changes, and endogenous autonomy delta=0.075/cultural_openness=0.24; endogenous实质 policy control + replay negative control available; M8 not fully characterized but experiment design is feasible",
+      "blocked_reason": null
+    },
+    {
+      "record_id": "P07A1-M09",
+      "mechanism_id": "M09",
+      "intent": "information_optimization_failure",
+      "linked_cards": ["M9"],
+      "status": "blocked",
+      "declared_reason": null,
+      "blocked_reason": "technology.py forecast_accuracy = capability is a definition, not an actual prediction error measurement; pre-prediction / realized residual tracking not yet implemented; forecast error measurement design is prerequisite"
+    },
+    {
+      "record_id": "P07A1-M10",
+      "mechanism_id": "M10",
+      "intent": "external_buffer_shock_transmission",
+      "linked_cards": ["M10"],
+      "status": "blocked",
+      "declared_reason": null,
+      "blocked_reason": "P06 old arms only REPORTED_ONLY, not re-run; factor decomposition (price/terms/credit/subsidy) requires P08D external finance账 and trade账 to be closed first"
+    },
+    {
+      "record_id": "P07A1-M11",
+      "mechanism_id": "M11",
+      "intent": "departmental_i_ii_composition",
+      "linked_cards": ["M11"],
+      "status": "blocked",
+      "declared_reason": null,
+      "blocked_reason": "P06 report classifies M11 CONDITIONAL (structural); F1 fork g13 not valid for F2; I/II产出 is endogenous and requires control of exogenously fixed resources rather than强制 same actual output; M2/M5 shared enterprise chain must be resolved first"
+    }
+  ]
+}

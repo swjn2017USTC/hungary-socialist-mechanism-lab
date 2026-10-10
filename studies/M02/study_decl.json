@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M02",
+  "intent": "soft_budget_investment_shortage",
+  "linked_cards": ["M2"],
+  "v1_card_sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+  "status": "blocked",
+  "declared_reason": null,
+  "blocked_reason": "F2 second economy commodity axes empty; bottleneck/investment metrics require non-empty commodity axis; pending F2 second economy wiring (P07B/P10A)",
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "F2 second economy must be wired before M2 experiment can be declared."
+}

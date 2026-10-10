@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M05",
+  "intent": "enterprise_autonomy_1968",
+  "linked_cards": ["M5"],
+  "v1_card_sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879",
+  "status": "declared",
+  "declared_reason": "p04_coalition_prior and p04_information_prior are identified; PoliticalSession→policy→material targets path exists; autonomy×hardness 2×2 design available",
+  "blocked_reason": null,
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "Experiment not yet executed. Paired checkpoint design at 1968Q1 checkpoint ready."
+}

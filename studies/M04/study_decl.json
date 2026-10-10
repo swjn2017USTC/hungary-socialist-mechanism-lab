@@ -1,0 +1,12 @@
+{
+  "mechanism_id": "M04",
+  "intent": "second_economy_stabilization_erosion",
+  "linked_cards": ["M4"],
+  "v1_card_sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+  "status": "blocked",
+  "declared_reason": null,
+  "blocked_reason": "F2 second economy recipe axes empty; second_input/output tuples = []; F2 wiring prerequisite (P07B)",
+  "phase": "P07A1",
+  "research_package_complete": false,
+  "note": "Second economy wiring required before M4 experiment."
+}

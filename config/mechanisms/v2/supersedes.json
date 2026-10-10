@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "description": "v1 card SHA-256 map for P07A1 provenance DAG. Each v2 card (when created) will have supersedes.v1_card_sha256 matching the hash below. This file is a read-only index; modifying it does not change any card.",
+  "M1": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+  "M2": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+  "M3": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+  "M4": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+  "M5": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879",
+  "M6": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+  "M7": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+  "M8": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1",
+  "M9": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c",
+  "M10": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+  "M11": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+}
