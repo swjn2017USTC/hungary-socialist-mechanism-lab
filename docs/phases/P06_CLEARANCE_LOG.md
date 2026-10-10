@@ -611,3 +611,36 @@ to compact fork output", or the inventory drops it).
 - Step 5 evidence: added `p06_trade_transmission` internal clearance check reading run summaries; regenerated `outputs/p06-clearance/pytest.json`; `hsm calibration p06-clearance --with-runs` → 24 PASS / 4 WAIVED / 0 OPEN. Hold-out unused; reserved window closed. No calibration or identification claim.
 - Checks: `.venv/bin/ruff check src tests` clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → 414 passed, 0 failed.
 - Part 2 commit: recorded in the task completion response.
+
+## 2026-10-10 — Reviewer audit of Part 1 and Plan C
+
+Two commits after the prompt split: `401f841` (Part 1 labels) and `0d0e240` (Plan C). Verified:
+`pytest -q -p no:cacheprovider` → **414 passed**; `hsm calibration p06-clearance --with-runs` →
+**24 PASS / 4 WAIVED / 0 OPEN** (the new `p06_trade_transmission` item is an internal check, not a
+hard-coded status); ruff clean.
+
+**Part 1 applied as specified.** Both trade indices are now `blocked` (R9); the crosswalk test no
+longer pins any count — it asserts the 14 admitted variables, status-vocabulary membership, mapped-row
+completeness, and that trade entries assert vocabulary rather than a fixed status (R10); the
+`bank_circuit` inventory note is reconciled.
+
+**Plan C produced a first-class transmission result.** C1 exports exist in 1960–1964 then
+`national_accounts.exports` falls to zero from 1965; `build_export_demands` scales the declared
+requests by Treasury payable cash, so exports remain financially constrained → `trade_export_volume_index`
+is correctly `blocked` with that cause. Imports are nonzero and fully realized in both channels
+through 1985Q4 → `trade_import_volume_index` is `mapped` with a `scenario_declared_trade_vectors`
+source (scenario sha256 `3ad45100…`, P04-pack digest, recipe prior artifact) and a non-circularity
+note. Verified independently: `config/scenarios/historical_f2_trade_scenario.json` declares all four
+trade-demand vectors nonzero (15–16 of 16 entries) with a declared admin-price / external_recipe
+provenance and no target series in the source — **non-circular**.
+
+Crosswalk final counts: **2 mapped / 11 no_counterpart / 1 blocked** (by grade: 2 normalized_index /
+11 no_counterpart / 1 blocked). Household consumption is still reported first and fails in 18 of 18
+informative years under C1 (mean |residual| 120.27 index points; the trade scenario makes the
+trajectory *steeper*, not better). The added import row is a descriptive comparison (the model index
+is flat because the declared scenario demand is constant), reported as such and not tuned.
+
+This is the honest outcome the plan anticipated: the external channel **partially** transmits —
+imports do, exports are financially rationed by the Treasury path. The trade widening added
+comparability for imports and a located cause for exports; it did not change the headline
+consumption failure.
