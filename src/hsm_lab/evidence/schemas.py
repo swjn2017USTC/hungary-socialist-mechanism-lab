@@ -195,6 +195,17 @@ class MetricSpec(BaseModel):
     missing_policy: str = Field(min_length=1)
     description: str | None = Field(default=None, max_length=500)
 
+    @field_validator("missing_policy", mode="after")
+    @classmethod
+    def _missing_policy_not_zero(cls, v: str) -> str:
+        """Reject '0' as missing_policy — silently filling with zero is forbidden."""
+        if v == "0":
+            raise ValueError(
+                "missing_policy='0' is not permitted; "
+                "must be one of: zero_fill | skip | interpolate | abort"
+            )
+        return v
+
     @model_validator(mode="after")
     def _empty_axis_rejected(self) -> MetricSpec:
         """Empty commodity or region list must raise, not silently pass."""
