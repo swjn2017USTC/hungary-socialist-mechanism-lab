@@ -392,3 +392,54 @@ into the target-loading path (audit finding R4).
 - Change: enforced hold-out/reserved refusal in DataRegistry target loading (with non-numeric hold-out manifest read-back); added CLI bundle assembly and replay verification; added seed overrides to OAT/Morris; retained prior clearance digest output by using a unique run directory; reported per-point OAT and Morris replication spread across seeds 1729/1730/1731. No defaults, frozen gates, calibration status, or parameter identification changed.
 - Check: `.venv/bin/ruff check src tests` → clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → 404 passed; `.venv/bin/hsm calibration p06-clearance --with-runs --json` → 19 PASS / 4 WAIVED / 3 OPEN, exit 1. Fresh legacy replay digest matches `92f9ea0a…`; 94 recorded runs end by 1985Q4. OPEN items are W5 1968 runs, W6 1973 runs, W7 political runs, blocked by incompatible v3 checkpoints and v4 loader.
 - Main implementation/report commit: `e746afb`.
+
+## 2026-10-10 — Reviewer audit of the overnight P06 run
+
+Independent verification: `ruff check src tests` clean; `pytest -q -p no:cacheprovider` → **404
+passed**; `hsm calibration p06-clearance` exits **1** with exactly three OPEN items. W1–W4 and
+W8 delivered as claimed:
+
+- **W1** eleven cards load (M1–M11), dependencies name registry `artifact_id`s, every card admits
+  all five result categories, `minimum_replicates = 3`.
+- **W2** 24 OAT arms with per-arm parameter hash, intervention hash and replay digest; every
+  baseline row reproduces `92f9ea0a…`; the one infeasible point (`wage_rate` 4.8) is reported as
+  rejected by the treasury guard rather than worked around.
+- **W3** Morris on eight declared structural axes, 18 arms, per-arm evidence retained; the Sobol
+  entry point refuses without an identified parameter set and was not run.
+- **W4** H4 is documented as CONDITIONAL with the exact residual `1.3666269856210904e-6` against
+  the **unchanged** `1e-6` cutoff, the cause described as low-amplitude year-over-year drift, and
+  the explicit note that the synthetic intermediate8 diagnostic is not evidence about F2.
+- **W8** closes audit finding R4 properly: `data/registry.py::load_targets` now requires an
+  explicit `TargetUse` purpose and routes value reads through `window_protocol.authorize_value_read`
+  ("numeric target access without a declared purpose is refused"); `bundle` and `bundle-verify`
+  are CLI-integrated; the final report **refuses to fabricate** a target-error table.
+
+### The W5–W7 blocker is real, and it is a three-second fix
+
+Every `tick-0044` checkpoint on disk is `material-checkpoint-v3` while
+`storage/checkpoint.py::CHECKPOINT_VERSION` is `material-checkpoint-v4`. The v3→v4 bump (commit
+`2ad0654`) added state arrays (`organization_demand_signal` and others), raised the state version
+to `material-state-v4` and carried six kernel fixes, so an upconverter would have to invent state
+that v3 never stored — re-running is the only safe route. Proven here:
+
+```
+hsm run --scenario p04_endogenous --until 1968Q1 --checkpoint-every 4   → 3 s,
+  writes material-checkpoint-v4 at checkpoints/tick-0044 (completed_ticks 44 = 1967Q4)
+hsm fork --checkpoint .../tick-0044 --intervention config/interventions/no-reform.json --until 1970Q4
+  → 1 s, 56 ticks, political_mode: counterfactual
+```
+
+So the degradation ladder's **top tier applies** (all five 1968 arms, all five 1973 arms, all five
+political arms) and the whole of W5–W7 costs about a minute of compute.
+
+Plan gap, owned: the P06 execution plan asserted that the 1968Q1 checkpoints existed without
+checking their format compatibility with the current fork loader. Codex's fallback behaviour
+(record OPEN, continue) was correct per the plan.
+
+### New finding surfaced by W8: the reproduction claim has no numeric table yet
+
+The final report states that a like-for-like comparison of model output against the 14 admitted
+series cannot be computed because **no commodity/unit crosswalk, annual aggregation rule and
+error tolerance are declared**, and records that comparison as OPEN rather than inventing
+residuals. Correct behaviour — and it is the single item that would give the reproduction claim
+its numeric content.
