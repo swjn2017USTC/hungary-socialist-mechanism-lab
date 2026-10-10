@@ -516,4 +516,14 @@ appearing against the historical target as a **sign error in the consumption tra
 - F3: reproduction rows now mark the 1960 normalization year `informative: false`; summary counts refer to informative years. The consumption report states 18 of 18 informative years outside tolerance.
 - F4: removed bank reserves from the §3 metric vocabulary and disclosed that the compact output does not collect that family in all three arm documents.
 - Check: `.venv/bin/ruff check src tests` clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → 410 passed.
-- Part 1 commit: pending.
+- Part 1 commit: `497210260e825facf42b77bcad345693e4e7813c`.
+
+## 2026-10-10 — Crosswalk widening Part 2 — PARTIAL, NO FABRICATED TRADE MAPPING
+
+- Crosswalk: every admitted variable now has a comparison grade. One consumption mapping remains; all 13 other variables are `no_counterpart`. No allocation share was found in the registered sources/raw data, and no target series was used to derive a share.
+- Group 1 probe: under `historical_f2_replay`, `national_accounts.exports`, `imports`, and CMEA/convertible channels are zero for 1957–1978, including the 1960 index base. Own-1960 trade indices are undefined. The two trade targets were therefore left unused and no counterpart declared; the initial builder refusal occurred before numeric target reads.
+- Model-side method retained: trade quantities are valued by the frozen `build_material_prices(parameters).standard` vector; separate CMEA/convertible columns are diagnostics only. Tests cover this calculation, base-year informativity, grade counts, and missing-source refusal.
+- Groups 2–4: the five industrial product targets have no independent registered rights-cleared allocation share; the three crop targets have no split from the single F2 `g08_agricultural_raw`; GDP, industrial output, and investment retain their prior reasons.
+- Final table: `outputs/p06-reproduction-table-widened-final2/reproduction_table.json`; digest `f75ba776…`; 19 consumption rows, 18/18 informative years outside tolerance; hold-out/reserved values not read, replay ends 1978Q4. Grade counts: normalized_index 1, no_counterpart 13, all other grades 0.
+- Clearance regenerated: 23 PASS / 4 WAIVED / 0 OPEN. Ruff clean; full pytest 412 passed, 0 failed, recorded at `outputs/p06-clearance/pytest.json`. Frozen acceptance gates remain WAIVED/failed as before; no new residual or accounting failure was introduced.
+- Part 2 implementation/report commit is the commit containing this log entry; its hash is recorded in the task completion message.

@@ -298,12 +298,22 @@ def _check_p06_reproduction_table(root: Path) -> tuple[bool, str]:
         status: sum(row.get("status") == status for row in crosswalk["entries"])
         for status in ("mapped", "no_counterpart", "blocked")
     }
-    path = root / "outputs/p06-reproduction-table-w9b/reproduction_table.json"
+    by_grade = {
+        grade: sum(row.get("comparison_grade") == grade for row in crosswalk["entries"])
+        for grade in (
+            "mapped_like_for_like",
+            "normalized_index",
+            "allocation_assumed",
+            "no_counterpart",
+            "blocked",
+        )
+    }
+    path = root / "outputs/p06-reproduction-table-widened-final2/reproduction_table.json"
     if not path.exists():
         return False, (
-            "outputs/p06-reproduction-table-w9b/reproduction_table.json missing; "
+            "outputs/p06-reproduction-table-widened-final2/reproduction_table.json missing; "
             "run hsm calibration reproduction-table --output-dir "
-            "outputs/p06-reproduction-table-w9b"
+            "outputs/p06-reproduction-table-widened-final2"
         )
     try:
         payload = json.loads(path.read_text())
@@ -312,6 +322,10 @@ def _check_p06_reproduction_table(root: Path) -> tuple[bool, str]:
     if payload.get("crosswalk_counts") != counts:
         return False, (
             f"table crosswalk counts {payload.get('crosswalk_counts')} do not match {counts}"
+        )
+    if payload.get("by_grade") != by_grade:
+        return False, (
+            f"table grade counts {payload.get('by_grade')} do not match {by_grade}"
         )
     if (
         payload.get("holdout_values_read") is not False
@@ -327,6 +341,11 @@ def _check_p06_reproduction_table(root: Path) -> tuple[bool, str]:
     for row in payload.get("rows", []):
         if row.get("variable_id") not in mapped or int(row.get("year", -1)) not in years:
             return False, "table contains an unmapped variable or out-of-scope year"
+    if any(
+        row.get("year") == 1960 and row.get("informative") is not False
+        for row in payload.get("rows", [])
+    ):
+        return False, "table treats an index normalization base year as informative"
     return True, (
         f"crosswalk {counts}; {len(payload.get('rows', []))} numeric rows "
         "limited to mapped open windows"

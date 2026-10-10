@@ -19,18 +19,21 @@
   "entries": [
     {
       "variable_id": "ag_cereals",
-      "status": "blocked",
-      "reason": "The model emits one broad food commodity, not a distinct cereal harvest. Commodity concordance and a physical-unit production conversion are missing."
+      "status": "no_counterpart",
+      "reason": "The F2 model emits one broad agricultural-raw commodity (`g08_agricultural_raw`) and no cereals-specific series on the household axis, plot recipes, or stage catalog; no split is available. Permanently no counterpart under this model ontology.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "ag_maize",
-      "status": "blocked",
-      "reason": "The model emits one broad food commodity, not a distinct maize harvest. Commodity concordance and a physical-unit production conversion are missing."
+      "status": "no_counterpart",
+      "reason": "The F2 model emits one broad agricultural-raw commodity (`g08_agricultural_raw`) and no maize-specific series on the household axis, plot recipes, or stage catalog; no split is available. Permanently no counterpart under this model ontology.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "ag_wheat",
-      "status": "blocked",
-      "reason": "The model emits one broad food commodity, not a distinct wheat harvest. Commodity concordance and a physical-unit production conversion are missing."
+      "status": "no_counterpart",
+      "reason": "The F2 model emits one broad agricultural-raw commodity (`g08_agricultural_raw`) and no wheat-specific series on the household axis, plot recipes, or stage catalog; no split is available. Permanently no counterpart under this model ontology.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "consumption",
@@ -47,57 +50,88 @@
       "error_tolerance": 0.5,
       "tolerance_unit": "index points",
       "precision_basis": "The admitted published index is recorded in whole index points; half one displayed point is the rounding-resolution threshold, fixed before computing residuals.",
-      "annual_aggregation_detail": "mean of four quarterly household-consumption totals after summing commodities"
+      "annual_aggregation_detail": "mean of four quarterly household-consumption totals after summing commodities",
+      "comparison_grade": "normalized_index",
+      "source": {
+        "type": "admitted_target_artifacts",
+        "artifacts": [
+          {
+            "artifact_id": "consumption__ksh_gdp__1960__1969__ecd87575fd09__67ac13bbba76",
+            "sha256": "9e8e3594d61400521ad25dec687e38f42ddf9c25db5159217625821a4261455f"
+          },
+          {
+            "artifact_id": "consumption__ksh_gdp__1970__1978__ecd87575fd09__67ac13bbba76",
+            "sha256": "baba0aee0b378b0f7ea071b973aa4e8cff043f253b41ef976748a904182ac94a"
+          }
+        ]
+      }
     },
     {
       "variable_id": "gdp",
       "status": "no_counterpart",
-      "reason": "The model has no GDP aggregate. Summed gross material output is not GDP and is explicitly prohibited as a substitute."
+      "reason": "The model has no GDP aggregate. Summed gross material output is not GDP and is explicitly prohibited as a substitute.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "industrial_cement",
-      "status": "blocked",
-      "reason": "The model has broad construction/material commodity groups but no cement-specific output series or published-unit conversion."
+      "status": "no_counterpart",
+      "reason": "No rights-cleared independent cement allocation-share series is registered in data/manifests/sources.yml, data/manifests/artifacts.yml, or data/raw. Registered KSH industry series are target series and cannot supply a share derived from the target; the model does not produce this product split.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "industrial_crude_steel",
-      "status": "blocked",
-      "reason": "The model has broad raw-material commodity output but no crude-steel-specific series or published-unit conversion."
+      "status": "no_counterpart",
+      "reason": "No rights-cleared independent crude steel allocation-share series is registered in data/manifests/sources.yml, data/manifests/artifacts.yml, or data/raw. Registered KSH industry series are target series and cannot supply a share derived from the target; the model does not produce this product split.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "industrial_electricity",
-      "status": "blocked",
-      "reason": "The model has a broad energy commodity, not gross electricity generation in million kWh; energy-source and physical-unit conversion are missing."
+      "status": "no_counterpart",
+      "reason": "No rights-cleared independent electricity allocation-share series is registered in data/manifests/sources.yml, data/manifests/artifacts.yml, or data/raw. Registered KSH industry series are target series and cannot supply a share derived from the target; the model does not produce this product split.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "industrial_fertilizer",
-      "status": "blocked",
-      "reason": "The model has broad raw-material output but no mineral-fertilizer-specific series or published-unit conversion."
+      "status": "no_counterpart",
+      "reason": "No rights-cleared independent fertilizer allocation-share series is registered in data/manifests/sources.yml, data/manifests/artifacts.yml, or data/raw. Registered KSH industry series are target series and cannot supply a share derived from the target; the model does not produce this product split.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "industrial_output",
       "status": "no_counterpart",
-      "reason": "The model has no weighted industrial-production index. Summing broad commodity production would invent output weights and is not this target."
+      "reason": "The model has no weighted industrial-production index. Summing broad commodity production would invent output weights and is not this target.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "industrial_television",
-      "status": "blocked",
-      "reason": "The model has a broad durable-goods commodity, not a television-set count or unit conversion."
+      "status": "no_counterpart",
+      "reason": "No rights-cleared independent television allocation-share series is registered in data/manifests/sources.yml, data/manifests/artifacts.yml, or data/raw. Registered KSH industry series are target series and cannot supply a share derived from the target; the model does not produce this product split.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "investment",
       "status": "no_counterpart",
-      "reason": "The model has no gross fixed capital formation aggregate. Capital-goods production is not investment and omits other GFCF components."
+      "reason": "The model has no gross fixed capital formation aggregate. Capital-goods production is not investment and omits other GFCF components.",
+      "comparison_grade": "no_counterpart"
     },
     {
       "variable_id": "trade_export_volume_index",
-      "status": "blocked",
-      "reason": "Model exports are broad commodity quantities by channel; the target is a total goods-volume index. Commodity weights, price/volume conversion, and the index construction are missing."
+      "status": "no_counterpart",
+      "reason": "The model's national_accounts.exports and its CMEA/convertible export channels are zero throughout the 1957-1978 replay, including the 1960 base. A model-own-1960 normalized index is undefined; setting a nonzero base or substituting another series would fabricate a mapping. The declared KSH target remains unused.",
+      "comparison_grade": "no_counterpart",
+      "candidate_model_quantity": "national_accounts.exports summed across declared commodities at build_material_prices(parameters).standard",
+      "methodological_difference": "KSH volume-index weights and base differ from an admin-price quantity total; CMEA versus convertible composition is not inferred.",
+      "channel_diagnostics": "CMEA and convertible contributions are kept in separate output columns as diagnostics only, never as target series."
     },
     {
       "variable_id": "trade_import_volume_index",
-      "status": "blocked",
-      "reason": "Model imports are broad commodity quantities by channel; the target is a total goods-volume index. Commodity weights, price/volume conversion, and the index construction are missing. Imports remain outcomes, not quotas."
+      "status": "no_counterpart",
+      "reason": "The model's national_accounts.imports and its CMEA/convertible import channels are zero throughout the 1957-1978 replay, including the 1960 base. A model-own-1960 normalized index is undefined; setting a nonzero base or substituting another series would fabricate a mapping. Imports remain outcomes, never quotas; the declared KSH target remains unused.",
+      "comparison_grade": "no_counterpart",
+      "candidate_model_quantity": "national_accounts.imports summed across declared commodities at build_material_prices(parameters).standard",
+      "methodological_difference": "KSH volume-index weights and base differ from an admin-price quantity total; CMEA versus convertible composition is not inferred.",
+      "channel_diagnostics": "CMEA and convertible contributions are kept in separate output columns as diagnostics only, never as target series.",
+      "imports_policy": "Imports are an outcome, never a quota."
     }
   ]
 }

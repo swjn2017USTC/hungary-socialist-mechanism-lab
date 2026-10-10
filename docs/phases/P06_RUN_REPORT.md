@@ -26,10 +26,46 @@ All 17 arms finished 116 ticks through 1985Q4; per-arm time 4.316–6.050 s, con
 
 Detailed family tables: [1968 forks](P06_1968_FORK.md), [1973 shock arms](P06_1973_SHOCK.md), [political arms](P06_POLITICAL_COUNTERFACTUAL.md). The full local `outputs/p06-arms/summary.json` records parameter/intervention hashes and collected §3 metric families; bank reserves are not collected by compact fork output and are excluded from the declared metric vocabulary. The three arm documents state the F1 parent, `intermediate8_v1` ontology, `f1` fidelity and parent manifest digest; their magnitudes are not comparable with the F2 historical material replay. The political report declares `coalition-weights`, `soviet-constraint` and `cultural-openness` as inert on every reported metric despite distinct replay digests, and a regression test checks the local arm summary against that declaration. Relevant M5/M6/M8/M9/M10 verdicts remain UNIDENTIFIED due their registered unidentified dependencies.
 
-W9 crosswalk counts: **1 mapped / 3 no_counterpart / 10 blocked**. Numeric reproduction table: one variable (`consumption`), 19 years from calibration/internal validation; 1960 is uninformative because normalization fixes it exactly at 100. **18 of 18 informative years outside tolerance**; mean absolute residual 91.74, maximum 173.64 index points. Overall row summary is `outside_tolerance`, descriptive only. The mapped model index uses its own 1960 base and fixed 0.5-point published-rounding threshold. No hold-out or reserved target values were read. The command was invoked twice: after the first output labelled internal validation simply `validation`, I corrected the output label and reran to a fresh directory. Both replay digests are `f75ba776…`; the final report uses only the second result and no outcome-driven mapping or tolerance change occurred.
+Part 2 crosswalk result (partial): `.venv/bin/hsm calibration reproduction-table --output-dir outputs/p06-reproduction-table-widened-final2 --json` completed the historical F2 replay through 1978Q4 with digest `f75ba7767eaf5987eb876413f973e07f13ece4e11906cdd14cbd3b08fbf8ba79`. The first Group 1 probe found exports, imports and all four CMEA/convertible channels were zero in every replay year 1957–1978, including 1960. The own-1960 normalization is therefore undefined. No trade targets were read during that failed probe; both trade variables are `no_counterpart` rather than being assigned a fabricated base. The final table reads only mapped consumption targets, 19 rows, with **18 of 18 informative years outside tolerance**, mean absolute residual 91.7414, maximum 173.6360. Hold-out and reserved values were not read; simulation ended 1978Q4.
 
-Part 1 fixes (F1–F4): F1 run identity is in `docs/phases/P06_1968_FORK.md`, `docs/phases/P06_1973_SHOCK.md`, and `docs/phases/P06_POLITICAL_COUNTERFACTUAL.md`; F2 inert-arm disclosure and declared front matter are in `docs/phases/P06_POLITICAL_COUNTERFACTUAL.md`, with the check in `tests/test_p06_reproduction_table.py`; F3 the informative flag/count are implemented in `src/hsm_lab/calibration/reproduction_table.py` and the 1960 rule is tested in `tests/test_p06_reproduction_table.py`, with the 18-of-18 result in `docs/phases/P06_FINAL_REPORT.md`; F4 the bank-reserve family is removed from §3 of `docs/phases/P06_EXECUTION_PLAN.md` and disclosed as uncollected in all three arm documents.
+Crosswalk totals: **1 mapped / 13 no_counterpart / 0 blocked**. Grade counts: `mapped_like_for_like` 0; `normalized_index` 1; `allocation_assumed` 0; `no_counterpart` 13; `blocked` 0. Consumption is the only numeric verdict (`outside_tolerance`, 18/18 informative years). The added four admin-price CMEA/convertible import/export diagnostics are columns, not targets; they are zero over the reported years. The implementation uses `build_material_prices(parameters).standard`; KSH index weights/base differ from the model's admin-price quantity total, no CMEA/convertible composition is inferred, and imports remain outcomes, never quotas.
 
-Clearance: `.venv/bin/hsm calibration p06-clearance --with-runs --json` is green: **23 PASS / 4 WAIVED / 0 OPEN**. The four WAIVED items preserve the user-declared reproduction scope; no required item remains open. Frozen gates remain failed/unchanged, `calibrated = 0`, no parameter identified, no Sobol/ABC, and no validation claim.
+Per-variable dispositions: `consumption` mapped at grade `normalized_index`; `trade_export_volume_index` and `trade_import_volume_index` no counterpart because their model flows have a zero 1960 denominator; `industrial_electricity`, `industrial_crude_steel`, `industrial_fertilizer`, `industrial_cement`, and `industrial_television` no counterpart because no independent rights-cleared share series appears in `data/manifests/sources.yml`, `data/manifests/artifacts.yml`, or `data/raw` (registered KSH series are target-role); `ag_cereals`, `ag_wheat`, and `ag_maize` permanently no counterpart because the F2 ontology exposes one `g08_agricultural_raw` and no crop split across the household axis, plot recipes, or stage catalog; `gdp`, `industrial_output`, and `investment` retain their prior no-counterpart reasons. No `allocation_assumed` mapping was found or created. The table builder validates every mapped entry's source artifact IDs and SHA-256 values against the admitted target manifest and refuses a missing source.
+
+Part 1 fixes (F1–F4): F1 run identity is in `docs/phases/P06_1968_FORK.md`, `docs/phases/P06_1973_SHOCK.md`, and `docs/phases/P06_POLITICAL_COUNTERFACTUAL.md`; F2 inert-arm disclosure/front matter are in `docs/phases/P06_POLITICAL_COUNTERFACTUAL.md`, checked by `tests/test_p06_reproduction_table.py`; F3 the informative flag/count are implemented in `src/hsm_lab/calibration/reproduction_table.py`, tested in `tests/test_p06_reproduction_table.py`, and reported in `docs/phases/P06_FINAL_REPORT.md`; F4 the bank-reserve family is removed from §3 in `docs/phases/P06_EXECUTION_PLAN.md` and disclosed as uncollected in all three arm documents. Part 1 commit: `497210260e825facf42b77bcad345693e4e7813c`.
+
+Clearance table after regeneration: **23 PASS / 4 WAIVED / 0 OPEN**. The WAIVED items are the F2 closure audit, frozen acceptance gates, calibration/inference, and new-observable acquisition. The frozen gate failures remain visible and waived under the declared reproduction scope; no new residual gate was introduced.
+
+| Clearance item | Status | Evidence |
+|---|---|---|
+| `gate1_closure_audit` | WAIVED | F2 closure audit remains collapsed; Track A exited without meeting both terminal floors. |
+| `frozen_acceptance_gates` | WAIVED | Liveness, service ratios, treasury self-financing and expiry remain failed. |
+| `calibration_and_inference` | WAIVED | Empty identifiable set/linkage; inference remains NOT_RUN. |
+| `morris_screening` | PASS | Four required artifacts present; no Sobol calculation. |
+| `data_path_acquisition` | WAIVED | Seven unadmitted target-role variables and P05 §10b observables remain unadmitted. |
+| `suite_and_lint` | PASS | Ruff clean; pytest 412 passed, 0 failed. |
+| `legacy_digest_reproduces` | PASS | Digest `92f9ea0a…` reproduced. |
+| `registry_consistency` | PASS | Both control-file scenarios registered. |
+| `control_structure` | PASS | Floors declared; linkage empty; 9 fixed / 6 unidentified. |
+| `scope_statement_recorded` | PASS | P05 reproduction-scope decision recorded. |
+| `reserved_window_unread` | PASS | 100 recorded runs stop by 1985Q4. |
+| `data_manifest_frozen` | PASS | `missing_required = []`. |
+| `performance_benchmark` | PASS | Existing Mac F2 benchmark gate passes. |
+| `mechanism_cards` | PASS | M1–M11 artifacts present. |
+| `forcing_ladder` | PASS | H0–H4 artifacts present. |
+| `window_protocol` | PASS | Hold-out/reserved protocol artifacts present. |
+| `reproducibility_bundle` | PASS | Bundle artifacts present. |
+| `p06_oat_sensitivity` | PASS | OAT evidence present. |
+| `p06_h4_disposition` | PASS | H4 disposition remains conditional. |
+| `p06_1968_runs` | PASS | Five 1968 arms completed through 1985Q4 with hashes and metrics. |
+| `p06_1973_runs` | PASS | Six 1973 arms completed through 1985Q4 with hashes and metrics. |
+| `p06_political_runs` | PASS | Six political arms completed through 1985Q4 with hashes and metrics. |
+| `p06_window_protocol_wired` | PASS | DataRegistry target-load path enforces windows. |
+| `p06_bundle_cli` | PASS | Bundle CLI checks present. |
+| `p06_seedbank_spread` | PASS | Three-seed replication evidence present. |
+| `p06_final_report` | PASS | Final and run reports present. |
+| `p06_reproduction_table` | PASS | Crosswalk 1 mapped / 13 no_counterpart / 0 blocked; 19 open-window rows. |
+
+Final checks: `.venv/bin/ruff check src tests` clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → **412 passed**; `outputs/p06-clearance/pytest.json` records 412 passed / 0 failed; `.venv/bin/hsm calibration p06-clearance --with-runs --json` → **23 PASS / 4 WAIVED / 0 OPEN**. Part 1 commit: `497210260e825facf42b77bcad345693e4e7813c`. Part 2 commit is the commit containing this Part 2 report; its hash is in the task completion record.
 
 W0.5 commit: `3a3ad69`. W9 implementation/report commit: `28a9bbf2f33e57d1c46339685660ef91ded9cdfe`. `.omp/config.yml` remains a pre-existing user-local edit and is excluded from commits.

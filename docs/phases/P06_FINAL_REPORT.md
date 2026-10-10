@@ -7,28 +7,9 @@ This is a deterministic historical-reproduction study under declared behavioural
 P05 has 14 admitted variable IDs across calibration (1960–69) and internal validation (1970–78), 28 artifacts. The crosswalk and numeric comparison follow below.
 
 
-## Declared target crosswalk and numeric comparison
+## First result: consumption fails in every informative year
 
-Crosswalk: [`config/calibration/p06_reproduction_crosswalk.json`](../../config/calibration/p06_reproduction_crosswalk.json), referenced by `config/calibration/p05.json`. It covers all 14 admitted target variables exactly once: **1 mapped, 3 no_counterpart, 10 blocked**. The sole mapping is the published household final-consumption index to the annual mean of model household-consumption totals summed across the eight model commodities. The model series is normalized to its own 1960 value (1960=100), a declared scale normalization and not a fit. The fixed absolute tolerance is 0.5 index points, half of one published whole-index-point increment. No defaults or model values were adjusted.
-
-| Variable | Decision | Declared boundary |
-|---|---|---|
-| `ag_cereals` | blocked | The model emits one broad food commodity, not a distinct cereal harvest. Commodity concordance and a physical-unit production conversion are missing. |
-| `ag_maize` | blocked | The model emits one broad food commodity, not a distinct maize harvest. Commodity concordance and a physical-unit production conversion are missing. |
-| `ag_wheat` | blocked | The model emits one broad food commodity, not a distinct wheat harvest. Commodity concordance and a physical-unit production conversion are missing. |
-| `consumption` | mapped | Model household consumption total; own-1960 normalization; 0.5-point published-rounding tolerance. |
-| `gdp` | no_counterpart | The model has no GDP aggregate. Summed gross material output is not GDP and is explicitly prohibited as a substitute. |
-| `industrial_cement` | blocked | The model has broad construction/material commodity groups but no cement-specific output series or published-unit conversion. |
-| `industrial_crude_steel` | blocked | The model has broad raw-material commodity output but no crude-steel-specific series or published-unit conversion. |
-| `industrial_electricity` | blocked | The model has a broad energy commodity, not gross electricity generation in million kWh; energy-source and physical-unit conversion are missing. |
-| `industrial_fertilizer` | blocked | The model has broad raw-material output but no mineral-fertilizer-specific series or published-unit conversion. |
-| `industrial_output` | no_counterpart | The model has no weighted industrial-production index. Summing broad commodity production would invent output weights and is not this target. |
-| `industrial_television` | blocked | The model has a broad durable-goods commodity, not a television-set count or unit conversion. |
-| `investment` | no_counterpart | The model has no gross fixed capital formation aggregate. Capital-goods production is not investment and omits other GFCF components. |
-| `trade_export_volume_index` | blocked | Model exports are broad commodity quantities by channel; the target is a total goods-volume index. Commodity weights, price/volume conversion, and the index construction are missing. |
-| `trade_import_volume_index` | blocked | Model imports are broad commodity quantities by channel; the target is a total goods-volume index. Commodity weights, price/volume conversion, and the index construction are missing. Imports remain outcomes, not quotas. |
-
-The reported reproduction table comes from a `historical_f2_replay` run through 1978Q4 (88 ticks), then mapped calibration/internal-validation target reads through `DataRegistry.load_targets` and the window protocol. The output was rerun once into a fresh directory solely to correct the window label from `validation` to `internal_validation`; both runs had the same replay digest. No hold-out or reserved values were read. The 19 rows below are the complete numeric comparison; blocked/no-counterpart variables emit no numeric rows. A row verdict means only whether this declared descriptive residual is within the published-rounding threshold.
+The admitted household-consumption index is the first and only numeric target comparison. The model series is normalized to its own 1960 value; 1960 is exact by construction and is marked `informative: false`. In the 18 informative years, the model falls while the KSH target rises. The mean absolute residual is 91.7414 index points and the maximum is 173.6360. This is an outside-tolerance reproduction result, not a calibration or general validation claim. The tolerance remains the predeclared 0.5 index points.
 
 | Window | Year | Target index | Model index | Residual (model − target) | Tolerance | Row verdict |
 |---|---:|---:|---:|---:|---:|---|
@@ -52,7 +33,38 @@ The reported reproduction table comes from a `historical_f2_replay` run through 
 | internal_validation | 1977 | 208.00 | 43.30 | -164.70 | 0.50 | outside_tolerance |
 | internal_validation | 1978 | 216.00 | 42.36 | -173.64 | 0.50 | outside_tolerance |
 
-Consumption summary: 19 annual rows; the 1960 normalization base is uninformative because it is exactly 100 by construction. **18 of 18 informative years outside tolerance**; mean absolute residual 91.74, maximum 173.64 index points; overall descriptive verdict **outside_tolerance**. This is evidence against reproduction of the admitted consumption index in this run, not a calibration or general validation claim. Replay digest: `f75ba7767eaf5987eb876413f973e07f13ece4e11906cdd14cbd3b08fbf8ba79`. Machine-readable and CSV outputs: `outputs/p06-reproduction-table-w9b/reproduction_table.json` and `.csv` (local run evidence).
+Consumption summary: 19 annual rows; **18 of 18 informative years outside tolerance**; 1 uninformative normalization row; mean absolute residual 91.7414, maximum 173.6360 index points; descriptive verdict **outside_tolerance**. The model index falls 100 → 99.3 (1961) → 42.4 (1978), while the target rises 100 → 101 → 216. Replay digest: `f75ba7767eaf5987eb876413f973e07f13ece4e11906cdd14cbd3b08fbf8ba79`. Evidence: `outputs/p06-reproduction-table-widened-final2/reproduction_table.json` and `.csv`.
+
+## Graded crosswalk and dispositions
+
+The crosswalk still covers all 14 admitted variables exactly once. Counts are **1 mapped / 13 no_counterpart / 0 blocked**. By comparison grade: `mapped_like_for_like` 0; `normalized_index` 1; `allocation_assumed` 0; `no_counterpart` 13; `blocked` 0. Widening adds explicit dispositions but no additional numeric target fit, and it does not improve the consumption result.
+
+| Grade | Count | Numeric verdict |
+|---|---:|---|
+| `mapped_like_for_like` | 0 | none |
+| `normalized_index` | 1 | `consumption`: outside tolerance, 18/18 informative years |
+| `allocation_assumed` | 0 | none; no independent rights-cleared allocation series found |
+| `no_counterpart` | 13 | no numeric comparison rows |
+| `blocked` | 0 | none |
+
+| Variable | Grade / disposition | Reason or comparison verdict |
+|---|---|---|
+| `consumption` | `normalized_index` / mapped | Sole mapped series; 18/18 informative years outside 0.5-point tolerance. |
+| `trade_export_volume_index` | `no_counterpart` | `national_accounts.exports` and both channel flows are zero throughout 1957–1978, including 1960; own-1960 normalization is undefined. No alternate base or target-derived mapping is used. |
+| `trade_import_volume_index` | `no_counterpart` | `national_accounts.imports` and both channel flows are zero throughout 1957–1978, including 1960; own-1960 normalization is undefined. Imports remain outcomes, never quotas. |
+| `industrial_electricity` | `no_counterpart` | No independent rights-cleared split/share series is registered; the registered KSH product series are targets and cannot be used to derive a share. Model split is absent. |
+| `industrial_crude_steel` | `no_counterpart` | No independent rights-cleared split/share series is registered; the registered KSH product series are targets and cannot be used to derive a share. Model split is absent. |
+| `industrial_fertilizer` | `no_counterpart` | No independent rights-cleared split/share series is registered; the registered KSH product series are targets and cannot be used to derive a share. Model split is absent. |
+| `industrial_cement` | `no_counterpart` | No independent rights-cleared split/share series is registered; the registered KSH product series are targets and cannot be used to derive a share. Model split is absent. |
+| `industrial_television` | `no_counterpart` | No independent rights-cleared split/share series is registered; the registered KSH product series are targets and cannot be used to derive a share. Model split is absent. |
+| `ag_cereals` | `no_counterpart` | F2 has one `g08_agricultural_raw` series; household axis, plot recipes and stage catalog do not distinguish crops. Permanently no counterpart under this ontology. |
+| `ag_wheat` | `no_counterpart` | F2 has one `g08_agricultural_raw` series; household axis, plot recipes and stage catalog do not distinguish crops. Permanently no counterpart under this ontology. |
+| `ag_maize` | `no_counterpart` | F2 has one `g08_agricultural_raw` series; household axis, plot recipes and stage catalog do not distinguish crops. Permanently no counterpart under this ontology. |
+| `gdp` | `no_counterpart` | The model has no GDP aggregate; summed gross material output is not GDP. |
+| `industrial_output` | `no_counterpart` | No weighted industrial-production index; summing broad commodity groups invents weights. |
+| `investment` | `no_counterpart` | No gross fixed capital formation aggregate; capital-goods production is not investment. |
+
+For the attempted Group 1 rule, the declared price vector is `build_material_prices(parameters).standard`; the methodological difference would be KSH index weights/base versus an admin-price quantity total. CMEA/convertible composition is not inferred. The final reproduction CSV keeps CMEA and convertible import/export admin-price values in separate diagnostic columns, not as targets; they are all zero over the reported years. Since both total series have a zero 1960 denominator, neither is presented as a normalized-index mapping. The registered-source search covered `data/manifests/sources.yml`, `data/manifests/artifacts.yml`, and `data/raw`; the industry and agriculture source records are target-role data, not independent allocation shares. The F2 crop check is grounded in `config/ontology/f2_v1.json` (`g08_agricultural_raw`), `src/hsm_lab/contract/households.py`, `src/hsm_lab/engine/network.py`, and the F2 stage/plot recipes in `src/hsm_lab/contract/material.py`.
 
 ## Frozen gates and guardrails
 
