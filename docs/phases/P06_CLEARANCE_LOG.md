@@ -579,3 +579,24 @@ Minor: `docs/phases/P06_EXECUTION_PLAN.md` still lists `bank_circuit` in the ava
 inventory while the arm documents now say the bank-reserve family is not collected by compact fork
 output; the two should be reconciled (either the plan says "available to leak-audit observers, not
 to compact fork output", or the inventory drops it).
+
+## 2026-10-10 — Trade transmission Part 1 label corrections — PASS
+
+- R9: both trade indices are now `blocked` / grade `blocked`. Their existing quantity and method
+  declarations remain; the reasons state that `historical_f2_replay.json` sets all four demand
+  vectors to zero, the model has trade machinery, and the missing item is a declared non-circular
+  trade-demand scenario. The admitted KSH index must never be fed back as demand.
+- R10: the crosswalk test asserts the 14 admitted-variable boundary, status vocabulary, mapped-row
+  declarations, and artifact digests for allocation-assumed rows without pinning observed counts or
+  a particular mapped row/grade. It retains both trade candidate quantities and the CMEA/convertible
+  composition wording.
+- Minor inventory note: `P06_EXECUTION_PLAN.md` identifies `bank_circuit` as available to leak-audit
+  observers but absent from compact fork output.
+- Reproduction evidence regenerated at `outputs/p06-reproduction-table-widened-final2/`;
+  crosswalk counts are 1 mapped / 11 no_counterpart / 2 blocked, with 1 normalized_index / 11
+  no_counterpart / 2 blocked grades. The numeric comparison remains consumption only (19 rows,
+  18 of 18 informative years outside tolerance); hold-out and reserved values were not read.
+- Checks: `.venv/bin/ruff check src tests` clean; `.venv/bin/python -m pytest -q
+  -p no:cacheprovider` → 412 passed. `hsm calibration p06-clearance --with-runs` → 23 PASS / 4
+  WAIVED / 0 OPEN; the full item table is in `docs/phases/P06_CLEARANCE.md`.
+- This entry is included in the Part 1 commit; its hash is recorded in the task completion message.

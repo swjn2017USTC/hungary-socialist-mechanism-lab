@@ -43,7 +43,8 @@ reports **12 PASS / 5 WAIVED / 0 open**.
 | intervention targets | `INTERVENTION_TARGETS` = `coalition_weights`, `broker.objective_weights`, `technology.capability`, `soviet_constraint_multiplier`, `information.broadcast`; plus `policy.<coordinate>` for the 19 coordinates (`plan_utilization`, `enterprise_autonomy`, `investment_intensity`, `industrial_priority`, `admin_price_factor`, `wage_factor`, `credit_fraction`, `budget_hardness`, `housing_factor`, `borrowing_factor`, `consumer_import_factor`, `second_economy_tolerance`, `welfare_provision`, `private_autonomy`, `cultural_openness`, `supported_boundary`, `tolerance_boundary`, `repression`, `information_investment`) | present |
 
 Available artifacts for metrics: `national_accounts`, `aggregates`, `tick_diagnostics`,
-`stage_balances`, `money_stock`, `sector_circuit`, `commodity_circuit`, `bank_circuit`,
+`stage_balances`, `money_stock`, `sector_circuit`, `commodity_circuit`, `bank_circuit` (available to
+leak-audit observers, not emitted by compact fork output),
 `household_budgets`, `organization_diagnostics`, `departments`, `political_quarters`,
 `opposition_regions`, `policy_decisions`, `information_quarters`.
 
