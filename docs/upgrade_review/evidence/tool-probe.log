@@ -1,0 +1,35 @@
+/Users/wahrfreiheit/.matplotlib is not a writable directory
+Matplotlib created a temporary cache directory at /var/folders/n8/3zfwcbfx7hbgkzktpxgs9qh80000gn/T/matplotlib-5mpyca1a because there was an issue with the default path (/Users/wahrfreiheit/.matplotlib); it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+
+Fontconfig error: No writable cache directories
+	/opt/homebrew/var/cache/fontconfig
+	/Users/wahrfreiheit/.cache/fontconfig
+	/Users/wahrfreiheit/.fontconfig
+Matplotlib is building the font cache; this may take a moment.
+Optimization potentially failed:
+Status: warning
+Termination condition: infeasible
+Solution: 0 primals, 0 duals
+Objective: nan
+Solver: highs
+Runtime: 0.00s
+MIP gap: inf
+Dual bound: 0.00e+00
+Solver model: available
+Solver message: Infeasible
+
+Optimization potentially failed:
+Status: warning
+Termination condition: infeasible
+Solution: 0 primals, 0 duals
+Objective: nan
+Solver: highs
+Runtime: 0.00s
+MIP gap: inf
+Dual bound: 0.00e+00
+Solver model: available
+Solver message: Infeasible
+
+AUDIT_JSON={"python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]", "platform": "macOS-26.5-arm64-arm-64bit", "versions": {"linopy": "0.10.0", "highspy": "1.15.1", "pymrio": "0.6.3", "numpy": "2.5.3", "scipy": "1.18.1", "pandas": "3.0.6", "polars": "2.0.0"}, "lp_cases": [{"case": "open", "status": "ok", "termination": "optimal", "scipy_status": 0, "solve_seconds": 1.090952875034418, "objective": 12.0, "max_balance_residual": 0.0, "dual": [[[1.0, 1.0], [1.0, 1.0]], [[-0.0, -0.0], [-0.0, -0.0]], [[-0.0, -0.0], [-0.0, -0.0]]]}, {"case": "cut_edge", "status": "warning", "termination": "infeasible", "scipy_status": 2, "solve_seconds": 0.01141704199835658}, {"case": "zero_cash", "status": "warning", "termination": "infeasible", "scipy_status": 2, "solve_seconds": 0.009895124996546656}], "io": {"output": [15.966386554621849, 27.731092436974787], "max_balance_residual": 0.0, "calc_seconds": 0.01854487496893853}, "total_seconds": 1.8734800420352258, "max_rss_bytes_macos": 295550976}
+       44.85 real        12.53 user         1.06 sys
+time: sysctl kern.clockrate: Operation not permitted

@@ -1,0 +1,332 @@
+{
+  "alignment_status": "LP_FEASIBLE",
+  "compatibility": {
+    "status": "TARGET_RULE_MISMATCH",
+    "engine_output_total": 1124272.145157231,
+    "planned_output_total": 69495.99999999997,
+    "lean_output_total": 69495.99999999997,
+    "excess_output_total": 1054776.145157231,
+    "excess_by_commodity": {
+      "g01_solid_fuels": 36000.0,
+      "g02_oil_gas_fuels": 19800.0,
+      "g03_electricity_heat": 24781.0,
+      "g04_basic_metals_materials": 30600.0,
+      "g05_chemicals_fertilizer": 18000.0,
+      "g06_machinery_capital": 10800.0,
+      "g07_construction": 9000.0,
+      "g08_agricultural_raw": 54083.761340408666,
+      "g09_basic_food": 8642.15561910343,
+      "g10_animal_food": 5610.666666666676,
+      "g11_textiles_footwear": 10800.0,
+      "g12_household_nondurables": 10800.0,
+      "g13_household_durables": 7559.999999999996,
+      "g14_vehicles_transport_equipment": 5040.000000000001,
+      "g15_market_services": 62790.00000000001,
+      "g16_housing_public_services": 21160.0
+    },
+    "expiring_surplus_by_commodity": {
+      "g03_electricity_heat": 24781.0,
+      "g15_market_services": 62790.00000000001,
+      "g16_housing_public_services": 21160.0
+    },
+    "note": "the kernel target rule has no demand-following term, so a surplus over the aligned plan is produced anyway and, for non-stockable goods, can only expire"
+  },
+  "regional": {
+    "none": {
+      "scope": "regional_v1",
+      "solver_status": 2,
+      "solver_message": "The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+      "notes": [
+        "no inter-regional transfers in v1: a region must be self-sufficient",
+        "no explicit edge flows, transport/handling capacity or finance pre-audit",
+        "same-quarter services are non-stockable, so a quarter's use cannot exceed that quarter's output plus the region's opening stock"
+      ],
+      "regions": 20,
+      "activities": 386,
+      "commodities": 16,
+      "quarters": 4,
+      "matrix_shape": 33440,
+      "matrix_nnz": 40856,
+      "transfers": "none",
+      "status": "INFEASIBLE",
+      "regional_gaps": [
+        {
+          "region_id": "csongrad",
+          "commodity_id": "g10_animal_food",
+          "required": 405.25252525252444,
+          "local_potential": 374.40000000000003,
+          "shortfall": 30.8525252525244
+        },
+        {
+          "region_id": "bekes",
+          "commodity_id": "g10_animal_food",
+          "required": 398.3838383838385,
+          "local_potential": 374.40000000000003,
+          "shortfall": 23.983838383838474
+        },
+        {
+          "region_id": "csongrad",
+          "commodity_id": "g07_construction",
+          "required": 20.262626262626224,
+          "local_potential": 0.0,
+          "shortfall": 20.262626262626224
+        },
+        {
+          "region_id": "bekes",
+          "commodity_id": "g07_construction",
+          "required": 19.919191919191928,
+          "local_potential": 0.0,
+          "shortfall": 19.919191919191928
+        },
+        {
+          "region_id": "bacs_kiskun",
+          "commodity_id": "g10_animal_food",
+          "required": 391.515151515152,
+          "local_potential": 374.40000000000003,
+          "shortfall": 17.11515151515198
+        },
+        {
+          "region_id": "vas",
+          "commodity_id": "g07_construction",
+          "required": 16.82828282828284,
+          "local_potential": 0.0,
+          "shortfall": 16.82828282828284
+        },
+        {
+          "region_id": "gyor_sopron",
+          "commodity_id": "g07_construction",
+          "required": 16.48484848484851,
+          "local_potential": 0.0,
+          "shortfall": 16.48484848484851
+        },
+        {
+          "region_id": "veszprem",
+          "commodity_id": "g07_construction",
+          "required": 16.141414141414113,
+          "local_potential": 0.0,
+          "shortfall": 16.141414141414113
+        },
+        {
+          "region_id": "komarom",
+          "commodity_id": "g07_construction",
+          "required": 15.797979797979764,
+          "local_potential": 0.0,
+          "shortfall": 15.797979797979764
+        },
+        {
+          "region_id": "fejer",
+          "commodity_id": "g07_construction",
+          "required": 15.454545454545437,
+          "local_potential": 0.0,
+          "shortfall": 15.454545454545437
+        },
+        {
+          "region_id": "nograd",
+          "commodity_id": "g07_construction",
+          "required": 15.111111111111123,
+          "local_potential": 0.0,
+          "shortfall": 15.111111111111123
+        },
+        {
+          "region_id": "heves",
+          "commodity_id": "g07_construction",
+          "required": 14.767676767676749,
+          "local_potential": 0.0,
+          "shortfall": 14.767676767676749
+        },
+        {
+          "region_id": "borsod_abauj_zemplen",
+          "commodity_id": "g07_construction",
+          "required": 14.424242424242411,
+          "local_potential": 0.0,
+          "shortfall": 14.424242424242411
+        },
+        {
+          "region_id": "pest",
+          "commodity_id": "g07_construction",
+          "required": 14.080808080808072,
+          "local_potential": 0.0,
+          "shortfall": 14.080808080808072
+        },
+        {
+          "region_id": "budapest",
+          "commodity_id": "g07_construction",
+          "required": 13.737373737373726,
+          "local_potential": 0.0,
+          "shortfall": 13.737373737373726
+        },
+        {
+          "region_id": "szolnok",
+          "commodity_id": "g10_animal_food",
+          "required": 384.64646464646466,
+          "local_potential": 374.40000000000003,
+          "shortfall": 10.24646464646463
+        },
+        {
+          "region_id": "szabolcs_szatmar",
+          "commodity_id": "g10_animal_food",
+          "required": 377.77777777777777,
+          "local_potential": 374.40000000000003,
+          "shortfall": 3.3777777777777374
+        }
+      ]
+    },
+    "free": {
+      "scope": "regional_v1",
+      "solver_status": 0,
+      "solver_message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+      "notes": [
+        "no inter-regional transfers in v1: a region must be self-sufficient",
+        "no explicit edge flows, transport/handling capacity or finance pre-audit",
+        "same-quarter services are non-stockable, so a quarter's use cannot exceed that quarter's output plus the region's opening stock"
+      ],
+      "regions": 20,
+      "activities": 386,
+      "commodities": 16,
+      "quarters": 4,
+      "matrix_shape": 36000,
+      "matrix_nnz": 45976,
+      "transfers": "free",
+      "status": "LP_FEASIBLE",
+      "transferred_by_commodity": {
+        "g07_construction": 772.0404040404037,
+        "g10_animal_food": 69.58545454545151
+      },
+      "total_transferred": 841.6258585858552
+    }
+  },
+  "factor_observer_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+  "group_factors": {
+    "material.py:1101:tick_material": {
+      "calls": 116,
+      "active_groups": 45240,
+      "zero_capacity_groups": 14851,
+      "factor_sum": 27403.568692388326,
+      "need_sum": 20815985.13818723,
+      "allowed_need_sum": 15125542.843170943,
+      "mean_factor_active_groups": 0.6057375926699453,
+      "need_weighted_factor": 0.72663113192865
+    },
+    "material.py:1151:tick_material": {
+      "calls": 116,
+      "active_groups": 2320,
+      "zero_capacity_groups": 0,
+      "factor_sum": 2320.0,
+      "need_sum": 1465.248021433082,
+      "allowed_need_sum": 1465.248021433082,
+      "mean_factor_active_groups": 1.0,
+      "need_weighted_factor": 1.0
+    },
+    "material.py:1308:tick_material": {
+      "calls": 348,
+      "active_groups": 57719,
+      "zero_capacity_groups": 5752,
+      "factor_sum": 47292.10212272312,
+      "need_sum": 12954561.087801088,
+      "allowed_need_sum": 8709499.877487274,
+      "mean_factor_active_groups": 0.81935068387746,
+      "need_weighted_factor": 0.6723114599142029
+    },
+    "material.py:1315:tick_material": {
+      "calls": 348,
+      "active_groups": 17135,
+      "zero_capacity_groups": 14000,
+      "factor_sum": 2430.4688758888865,
+      "need_sum": 4245061.210313813,
+      "allowed_need_sum": 667197.7187370114,
+      "mean_factor_active_groups": 0.14184236217618246,
+      "need_weighted_factor": 0.15717034117576112
+    },
+    "material.py:1329:tick_material": {
+      "calls": 116,
+      "active_groups": 11458,
+      "zero_capacity_groups": 3765,
+      "factor_sum": 7557.968438129758,
+      "need_sum": 416543.0845986993,
+      "allowed_need_sum": 64692.53002988588,
+      "mean_factor_active_groups": 0.6596237072900819,
+      "need_weighted_factor": 0.15530813599320978
+    },
+    "material.py:1352:tick_material": {
+      "calls": 116,
+      "active_groups": 928,
+      "zero_capacity_groups": 874,
+      "factor_sum": 51.990451927798595,
+      "need_sum": 352843.11377903214,
+      "allowed_need_sum": 20420.50692513322,
+      "mean_factor_active_groups": 0.056024193887714006,
+      "need_weighted_factor": 0.05787418296597834
+    },
+    "material.py:1392:tick_material": {
+      "calls": 116,
+      "active_groups": 1807,
+      "zero_capacity_groups": 0,
+      "factor_sum": 1807.0,
+      "need_sum": 1684648.4005671646,
+      "allowed_need_sum": 1684648.4005671646,
+      "mean_factor_active_groups": 1.0,
+      "need_weighted_factor": 1.0
+    },
+    "material.py:1411:tick_material": {
+      "calls": 116,
+      "active_groups": 30085,
+      "zero_capacity_groups": 0,
+      "factor_sum": 30080.042020805966,
+      "need_sum": 4553998.889531138,
+      "allowed_need_sum": 4553377.765327213,
+      "mean_factor_active_groups": 0.999835200957486,
+      "need_weighted_factor": 0.999863609056789
+    },
+    "material.py:1423:tick_material": {
+      "calls": 116,
+      "active_groups": 2261,
+      "zero_capacity_groups": 0,
+      "factor_sum": 2261.0,
+      "need_sum": 823.4116950704388,
+      "allowed_need_sum": 823.4116950704388,
+      "mean_factor_active_groups": 1.0,
+      "need_weighted_factor": 1.0
+    },
+    "material.py:1463:tick_material": {
+      "calls": 116,
+      "active_groups": 760,
+      "zero_capacity_groups": 0,
+      "factor_sum": 760.0,
+      "need_sum": 1614522.279121122,
+      "allowed_need_sum": 1614522.279121122,
+      "mean_factor_active_groups": 1.0,
+      "need_weighted_factor": 1.0
+    },
+    "material.py:1374:tick_material": {
+      "calls": 115,
+      "active_groups": 460,
+      "zero_capacity_groups": 0,
+      "factor_sum": 460.0,
+      "need_sum": 1570013.3680522698,
+      "allowed_need_sum": 1570013.3680522698,
+      "mean_factor_active_groups": 1.0,
+      "need_weighted_factor": 1.0
+    }
+  },
+  "cards_validated": 11,
+  "f2_second_input_commodities": [],
+  "f2_second_output_commodities": []
+}
+        7.90 real         7.61 user         0.30 sys
+           675512320  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               71043  page reclaims
+                 300  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   1  messages sent
+                   1  messages received
+                   1  signals received
+                  87  voluntary context switches
+                8681  involuntary context switches
+           142270651  instructions retired
+            52913206  cycles elapsed
+            11436488  peak memory footprint

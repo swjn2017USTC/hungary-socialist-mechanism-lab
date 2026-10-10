@@ -1,0 +1,67 @@
+{
+  "C0": {
+    "production_liveness": 0.11155740328730086,
+    "first_zero_treasury": [
+      {
+        "tick": 18,
+        "quarter": "1961Q3"
+      }
+    ],
+    "trade": {
+      "cmea_imports": 0.0,
+      "convertible_imports": 0.0,
+      "cmea_exports": 0.0,
+      "convertible_exports": 0.0
+    },
+    "sum_expired": 2799243.964171246
+  },
+  "C1": {
+    "production_liveness": 0.021612761644765822,
+    "first_zero_treasury": [
+      {
+        "tick": 17,
+        "quarter": "1961Q2"
+      }
+    ],
+    "trade": {
+      "cmea_imports": 1226.6999999999998,
+      "convertible_imports": 1226.6999999999998,
+      "cmea_exports": 126.72968263337344,
+      "convertible_exports": 126.72968263337344
+    },
+    "sum_expired": 2563202.816431937
+  },
+  "expiry_tail_ratio": {
+    "g03_electricity_heat": 0.8233921493272233,
+    "g16_housing_public_services": 0.9431570747013405,
+    "g15_market_services": 0.9458465490687356
+  },
+  "min_bank_reserves": 70881.34559050768,
+  "money": {
+    "credit_drawn": 15067039.561679764,
+    "principal_repaid": 23006.861915736255,
+    "interest_paid": 5314921.153591325,
+    "fiscal_turnover_remitted": 0.0,
+    "bailout_grants": 83029.53783523243,
+    "voluntary_saving": 4670043.314061622,
+    "forced_saving": 5564790.633199089
+  },
+  "physical_block_share_alternative_delivered_plus_blocked": 0.7042098464353785,
+  "physical_block_share_allocated": 0.7041840227369678,
+  "definitions": {
+    "physical_block_share_allocated": "sum physical_delivery_blocked / sum allocated, audit-leak gate convention",
+    "physical_block_share_alternative_delivered_plus_blocked": "sum physical_delivery_blocked / (sum delivered + sum physical_delivery_blocked), different denominator; NOT frozen gate",
+    "service_realization_over_funded": "sum commodity_circuit.household_realized / sum commodity_circuit.household_funded by commodity over ticks 0..115; ratio of totals. NOT funded/desired or nominal household income.",
+    "expiry_tail_ratio": "sum expired_services / sum production by commodity over ticks 106..115; ratio of totals, excludes initial stock expiry",
+    "production_liveness": "sum production last 10 ticks / sum production first 10 ticks"
+  },
+  "consumption_index_1978": {
+    "C0": 42.36396572021342,
+    "C1": 1.3222625777152497
+  },
+  "service_realization_over_funded": {
+    "g03_electricity_heat": 0.009531795134766803,
+    "g15_market_services": 0.21954635595671482,
+    "g16_housing_public_services": 0.3378533488263455
+  }
+}

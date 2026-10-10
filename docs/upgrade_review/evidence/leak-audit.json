@@ -1,0 +1,41 @@
+{
+  "status": "measured",
+  "inference_status": "NOT_RUN",
+  "scenario_id": "historical_f2_replay",
+  "completed_ticks": 116,
+  "deterministic_replay_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+  "rng_draws_count": 25000,
+  "gate_metrics": {
+    "liveness": 0.11155740328730085,
+    "production_first_10": 251655.92011393426,
+    "production_last_10": 28074.08096978693,
+    "household_consumption_last_10": 1667.9611764682747,
+    "treasury_cash_tick_115": 0.0,
+    "rescue_grants_last_20": 0.0,
+    "terminal_t1_pass": false,
+    "terminal_t2_pass": false,
+    "terminal_t3_pass": true,
+    "terminal_floor_pass": false,
+    "expired_services_tail": 11272.774879749917,
+    "treasury_zero_tick": 18,
+    "allocated_total": 9441356.126254175,
+    "delivered_total": 2792557.7703119926,
+    "physical_blocked_total": 6648452.13707798,
+    "financial_blocked_total": 346.218864202511
+  },
+  "sidecars": {
+    "money_stock": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/leak/money_stock.parquet",
+    "commodity_circuit": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/leak/commodity_circuit.parquet",
+    "bank_circuit": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/leak/bank_circuit.parquet",
+    "sector_circuit": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/leak/sector_circuit.parquet",
+    "service_expiry": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/leak/service_expiry.parquet",
+    "journal_totals": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/leak/journal_totals.parquet"
+  },
+  "max_money_flow_residual": 2.240994945168495e-09,
+  "max_deposit_composition_residual": 5.587935447692871e-09,
+  "max_household_cash_residual": 3.157765604555607e-09,
+  "max_treasury_cash_residual": 6.920686246303376e-12,
+  "max_commodity_balance_residual": 4.656612873077393e-10,
+  "max_expiry_reconciliation_residual": 1.4551915228366852e-11,
+  "money_definition": "currency (structural zero) + deposit liabilities; fund included"
+}

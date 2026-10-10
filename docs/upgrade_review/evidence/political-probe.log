@@ -1,0 +1,83 @@
+[
+  {
+    "scenario": "p04_replay",
+    "quarters": "1958Q1-1958Q2",
+    "digests": {
+      "control": "0360c194a27ed025eaa4424eacaeb10ff97cbf38e2f6eb7edc6a5a81a196f352",
+      "soviet": "8948f962eddb7fc4c0515c4a084761ca3fa3571918fe080e0b689c8c9cbaf524"
+    },
+    "policy_max_abs_delta": {
+      "policy_plan_utilization": 0.0,
+      "policy_enterprise_autonomy": 0.0,
+      "policy_investment_intensity": 0.0,
+      "policy_industrial_priority": 0.0,
+      "policy_admin_price_factor": 0.0,
+      "policy_wage_factor": 0.0,
+      "policy_credit_fraction": 0.0,
+      "policy_budget_hardness": 0.0,
+      "policy_housing_factor": 0.0,
+      "policy_borrowing_factor": 0.0,
+      "policy_consumer_import_factor": 0.0,
+      "policy_second_economy_tolerance": 0.0,
+      "policy_welfare_provision": 0.0,
+      "policy_private_autonomy": 0.0,
+      "policy_cultural_openness": 0.0,
+      "policy_supported_boundary": 0.0,
+      "policy_tolerance_boundary": 0.0,
+      "policy_repression": 0.0,
+      "policy_information_investment": 0.0
+    },
+    "nonzero_policy_coordinates": []
+  },
+  {
+    "scenario": "p04_endogenous",
+    "quarters": "1958Q1-1958Q2",
+    "digests": {
+      "control": "895d4a2c70c1bb389bb7c37b6432bfde7896084f32e932c482169a22d42e4035",
+      "soviet": "f727a366496aebda75230a57d28e85bbf6051ad92f0d045a11c7adf40ee5d16b"
+    },
+    "policy_max_abs_delta": {
+      "policy_plan_utilization": 0.0,
+      "policy_enterprise_autonomy": 0.07500000000000007,
+      "policy_investment_intensity": 0.0,
+      "policy_industrial_priority": 0.0,
+      "policy_admin_price_factor": 0.0,
+      "policy_wage_factor": 0.0,
+      "policy_credit_fraction": 0.0,
+      "policy_budget_hardness": 0.0,
+      "policy_housing_factor": 0.0,
+      "policy_borrowing_factor": 0.0,
+      "policy_consumer_import_factor": 0.0,
+      "policy_second_economy_tolerance": 0.0,
+      "policy_welfare_provision": 0.0,
+      "policy_private_autonomy": 0.0,
+      "policy_cultural_openness": 0.2400000000000001,
+      "policy_supported_boundary": 0.0,
+      "policy_tolerance_boundary": 0.0,
+      "policy_repression": 0.0,
+      "policy_information_investment": 0.0
+    },
+    "nonzero_policy_coordinates": [
+      "policy_enterprise_autonomy",
+      "policy_cultural_openness"
+    ]
+  }
+]
+        2.33 real         2.09 user         0.91 sys
+           307511296  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               86844  page reclaims
+                 178  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   1  messages sent
+                   1  messages received
+                   1  signals received
+                 178  voluntary context switches
+              100267  involuntary context switches
+           140860901  instructions retired
+            50911856  cycles elapsed
+            11338184  peak memory footprint

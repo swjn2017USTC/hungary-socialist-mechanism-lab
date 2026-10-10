@@ -1,0 +1,56 @@
+{
+  "verified_at_utc": "2026-10-10T17:50:48.347425+00:00",
+  "initial_code_head": "bc5f1f682865c150431ec760625cbd6bc4095a8f",
+  "branch": "codex/audit-hsm-vnext-2026-10-11",
+  "preexisting_tracked_files": 269,
+  "preexisting_tracked_files_changed_by_audit": [],
+  "report_files": {
+    "02_MECHANISM_GAP_MATRIX.md": {
+      "lines": 465,
+      "bytes": 20706,
+      "sha256": "2bc43232c053588404c4ab1effb2f0c0cde340ab1b48cb2e921fc0419180cfcd"
+    },
+    "04_REVISED_P07_P12_PLAN.md": {
+      "lines": 111,
+      "bytes": 17567,
+      "sha256": "a5eefcbac40c0fde66eb9b30dd4ec441a9eac1b1246e39c919be00dd69bea531"
+    },
+    "05_OMP_MINIMAX_HANDOFF.md": {
+      "lines": 84,
+      "bytes": 10549,
+      "sha256": "ee5f9c5574f8446a2b5bd071e6f62329492dd6967d32f911e440c336c5bbb673"
+    },
+    "00_REPOSITORY_BASELINE.md": {
+      "lines": 56,
+      "bytes": 6675,
+      "sha256": "0e9a306b1cabae6989ecebfbacb3b4a8254c7606be4ee0d337b8a0924339e584"
+    },
+    "03_DEPENDENCIES_AND_SOURCES.md": {
+      "lines": 104,
+      "bytes": 15674,
+      "sha256": "aaf31d04401b182d2acc4bc124bb89be2504b97e2109be82e6da861e6f85d7c7"
+    },
+    "01_TEST_AND_REPRO_AUDIT.md": {
+      "lines": 94,
+      "bytes": 16056,
+      "sha256": "96dc5847428781d8a127370f4c8531f3856628f42b391d71040a4663b9ff9a7d"
+    }
+  },
+  "broken_local_markdown_links": [],
+  "source_documents_unchanged": {
+    "kickoff_sha256": "3c3a694109a1a44e1b1410ce061b3219aed810db090226fd021f28df4a284686",
+    "baseline_review_sha256": "a47e750b22e858208b9a5df51a0c78e252f82cb0fcf465aa62a472f23d64a1f3"
+  },
+  "scope": {
+    "kernel_modified": false,
+    "baseline_modified": false,
+    "formal_lock_modified": false,
+    "omp_config_modified": false,
+    "inference_run": false,
+    "reserved_values_read": false,
+    "omp_llm_dispatched": false,
+    "push_run": false
+  },
+  "new_output_files": 413,
+  "new_output_bytes": 188461333
+}

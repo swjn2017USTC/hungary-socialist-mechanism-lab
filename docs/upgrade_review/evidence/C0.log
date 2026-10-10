@@ -1,0 +1,19 @@
+{"checkpoint_paths": [], "command": "run", "completed_ticks": 116, "deterministic_replay_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d", "horizon_reached": true, "last_completed_quarter": "1985Q4", "manifest_path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/C0/manifest.json", "output_dir": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/C0", "output_policy": "ensemble_compact", "research_warnings": ["Simulation is an argument, not evidence.", "A probability produced by an agent or decision model is not a historical probability."], "rng_draws_by_module": {"household.initial_attributes": 25000}, "rng_draws_count": 25000, "run_id": "f02d822f7d4e4364b6a49222bc00a571", "run_kind": "material_household_simulation", "seed": 1729, "status": "ok", "stochastic_modules_active": ["household.initial_attributes"], "ticks": 116}
+        7.50 real         7.23 user         0.24 sys
+           643121152  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               63694  page reclaims
+                  97  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   1  messages sent
+                   1  messages received
+                   1  signals received
+                  91  voluntary context switches
+                8480  involuntary context switches
+           131157659  instructions retired
+            49748477  cycles elapsed
+            11420080  peak memory footprint

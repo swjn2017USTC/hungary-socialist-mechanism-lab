@@ -1,0 +1,282 @@
+[
+  {
+    "artifact_id": "ag_cereals__ksh_agriculture_b__1960__1969__2cf17d5bf686__37c9fe80a88a",
+    "path": "data/observed/targets/ksh_agriculture_b/2cf17d5bf68633da1137d27b24512ea24f087631bedb241714579d8f9722e528/ag_cereals_1960_1969_37c9fe80a88a46a97585cf682018719d8fb753ab08e2cc83796a63bec9fe1371.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "ag_cereals__ksh_agriculture_b__1970__1978__2cf17d5bf686__37c9fe80a88a",
+    "path": "data/observed/targets/ksh_agriculture_b/2cf17d5bf68633da1137d27b24512ea24f087631bedb241714579d8f9722e528/ag_cereals_1970_1978_37c9fe80a88a46a97585cf682018719d8fb753ab08e2cc83796a63bec9fe1371.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "ag_maize__ksh_agriculture_b__1960__1969__2cf17d5bf686__37c9fe80a88a",
+    "path": "data/observed/targets/ksh_agriculture_b/2cf17d5bf68633da1137d27b24512ea24f087631bedb241714579d8f9722e528/ag_maize_1960_1969_37c9fe80a88a46a97585cf682018719d8fb753ab08e2cc83796a63bec9fe1371.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "ag_maize__ksh_agriculture_b__1970__1978__2cf17d5bf686__37c9fe80a88a",
+    "path": "data/observed/targets/ksh_agriculture_b/2cf17d5bf68633da1137d27b24512ea24f087631bedb241714579d8f9722e528/ag_maize_1970_1978_37c9fe80a88a46a97585cf682018719d8fb753ab08e2cc83796a63bec9fe1371.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "ag_wheat__ksh_agriculture_b__1960__1969__2cf17d5bf686__37c9fe80a88a",
+    "path": "data/observed/targets/ksh_agriculture_b/2cf17d5bf68633da1137d27b24512ea24f087631bedb241714579d8f9722e528/ag_wheat_1960_1969_37c9fe80a88a46a97585cf682018719d8fb753ab08e2cc83796a63bec9fe1371.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "ag_wheat__ksh_agriculture_b__1970__1978__2cf17d5bf686__37c9fe80a88a",
+    "path": "data/observed/targets/ksh_agriculture_b/2cf17d5bf68633da1137d27b24512ea24f087631bedb241714579d8f9722e528/ag_wheat_1970_1978_37c9fe80a88a46a97585cf682018719d8fb753ab08e2cc83796a63bec9fe1371.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "consumption__ksh_gdp__1960__1969__ecd87575fd09__67ac13bbba76",
+    "path": "data/observed/targets/ksh_gdp/ecd87575fd09a86c93c37d560a2b9a0c390077fa0fde06bebace2a6334761a16/consumption_1960_1969_67ac13bbba76dc769496dc41d43658f19b474e6ca200a3bab438f62223f27011.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "consumption__ksh_gdp__1970__1978__ecd87575fd09__67ac13bbba76",
+    "path": "data/observed/targets/ksh_gdp/ecd87575fd09a86c93c37d560a2b9a0c390077fa0fde06bebace2a6334761a16/consumption_1970_1978_67ac13bbba76dc769496dc41d43658f19b474e6ca200a3bab438f62223f27011.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "gdp__ksh_gdp__1960__1969__ecd87575fd09__67ac13bbba76",
+    "path": "data/observed/targets/ksh_gdp/ecd87575fd09a86c93c37d560a2b9a0c390077fa0fde06bebace2a6334761a16/gdp_1960_1969_67ac13bbba76dc769496dc41d43658f19b474e6ca200a3bab438f62223f27011.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "gdp__ksh_gdp__1970__1978__ecd87575fd09__67ac13bbba76",
+    "path": "data/observed/targets/ksh_gdp/ecd87575fd09a86c93c37d560a2b9a0c390077fa0fde06bebace2a6334761a16/gdp_1970_1978_67ac13bbba76dc769496dc41d43658f19b474e6ca200a3bab438f62223f27011.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_cement__ksh_industry__1960__1969__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_cement_1960_1969_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_cement__ksh_industry__1970__1978__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_cement_1970_1978_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_crude_steel__ksh_industry__1960__1969__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_crude_steel_1960_1969_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_crude_steel__ksh_industry__1970__1978__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_crude_steel_1970_1978_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_electricity__ksh_industry__1960__1969__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_electricity_1960_1969_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_electricity__ksh_industry__1970__1978__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_electricity_1970_1978_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_fertilizer__ksh_industry__1960__1969__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_fertilizer_1960_1969_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_fertilizer__ksh_industry__1970__1978__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_fertilizer_1970_1978_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_output__ksh_industry__1960__1969__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_output_1960_1969_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_output__ksh_industry__1970__1978__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_output_1970_1978_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_television__ksh_industry__1960__1969__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_television_1960_1969_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "industrial_television__ksh_industry__1970__1978__a450b2b978f9__f5fa67c28ffb",
+    "path": "data/observed/targets/ksh_industry/a450b2b978f95730da51d3bec02c7121a8f5c01b3ba6d643cc3e7baffb83b39b/industrial_television_1970_1978_f5fa67c28ffbe66f8131e38cbd9b3b420662309d44935c384b29abe308aaf117.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "investment__ksh_gdp__1960__1969__ecd87575fd09__67ac13bbba76",
+    "path": "data/observed/targets/ksh_gdp/ecd87575fd09a86c93c37d560a2b9a0c390077fa0fde06bebace2a6334761a16/investment_1960_1969_67ac13bbba76dc769496dc41d43658f19b474e6ca200a3bab438f62223f27011.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "investment__ksh_gdp__1970__1978__ecd87575fd09__67ac13bbba76",
+    "path": "data/observed/targets/ksh_gdp/ecd87575fd09a86c93c37d560a2b9a0c390077fa0fde06bebace2a6334761a16/investment_1970_1978_67ac13bbba76dc769496dc41d43658f19b474e6ca200a3bab438f62223f27011.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "trade_export_volume_index__ksh_trade__1960__1969__04dd2c600b8e__eb2481a104d1",
+    "path": "data/observed/targets/ksh_trade/04dd2c600b8e9450b084e5797020af646068b09194a23ae4b4ebf8da76eb1617/trade_export_volume_index_1960_1969_eb2481a104d1da6720a71bda6ae3b5a1815ac884ba09a30953911589d5e92564.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "trade_export_volume_index__ksh_trade__1970__1978__04dd2c600b8e__eb2481a104d1",
+    "path": "data/observed/targets/ksh_trade/04dd2c600b8e9450b084e5797020af646068b09194a23ae4b4ebf8da76eb1617/trade_export_volume_index_1970_1978_eb2481a104d1da6720a71bda6ae3b5a1815ac884ba09a30953911589d5e92564.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "trade_import_volume_index__ksh_trade__1960__1969__04dd2c600b8e__eb2481a104d1",
+    "path": "data/observed/targets/ksh_trade/04dd2c600b8e9450b084e5797020af646068b09194a23ae4b4ebf8da76eb1617/trade_import_volume_index_1960_1969_eb2481a104d1da6720a71bda6ae3b5a1815ac884ba09a30953911589d5e92564.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "calibration",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  },
+  {
+    "artifact_id": "trade_import_volume_index__ksh_trade__1970__1978__04dd2c600b8e__eb2481a104d1",
+    "path": "data/observed/targets/ksh_trade/04dd2c600b8e9450b084e5797020af646068b09194a23ae4b4ebf8da76eb1617/trade_import_volume_index_1970_1978_eb2481a104d1da6720a71bda6ae3b5a1815ac884ba09a30953911589d5e92564.parquet",
+    "present": true,
+    "sha_match": true,
+    "window": "validation",
+    "rights": "verified",
+    "download_allowed": true,
+    "redistribution_allowed": true
+  }
+]

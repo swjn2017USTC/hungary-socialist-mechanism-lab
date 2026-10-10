@@ -1,0 +1,129 @@
+{
+  "epa_years": [
+    {
+      "url": "https://epa.oszk.hu/html/vgi/kardexlap.phtml?aktev=1960&id=5300",
+      "status": 200,
+      "pdf_links": [
+        "https://epa.oszk.hu/05300/05300/00012/pdf",
+        "https://epa.oszk.hu/05300/05300/00012/pdf",
+        "https://epa.oszk.hu/05300/05300/00012/pdf",
+        "https://epa.oszk.hu/05300/05300/00012/pdf",
+        "https://epa.oszk.hu/05300/05300/00012/pdf"
+      ]
+    },
+    {
+      "url": "https://epa.oszk.hu/html/vgi/kardexlap.phtml?aktev=1965&id=5300",
+      "status": 200,
+      "pdf_links": [
+        "https://epa.oszk.hu/05300/05300/00017/pdf",
+        "https://epa.oszk.hu/05300/05300/00017/pdf",
+        "https://epa.oszk.hu/05300/05300/00017/pdf",
+        "https://epa.oszk.hu/05300/05300/00017/pdf",
+        "https://epa.oszk.hu/05300/05300/00017/pdf"
+      ]
+    },
+    {
+      "url": "https://epa.oszk.hu/html/vgi/kardexlap.phtml?aktev=1968&id=5300",
+      "status": 200,
+      "pdf_links": [
+        "https://epa.oszk.hu/05300/05300/00020/pdf",
+        "https://epa.oszk.hu/05300/05300/00020/pdf",
+        "https://epa.oszk.hu/05300/05300/00020/pdf",
+        "https://epa.oszk.hu/05300/05300/00020/pdf",
+        "https://epa.oszk.hu/05300/05300/00020/pdf"
+      ]
+    },
+    {
+      "url": "https://epa.oszk.hu/html/vgi/kardexlap.phtml?aktev=1970&id=5300",
+      "status": 200,
+      "pdf_links": [
+        "https://epa.oszk.hu/05300/05300/00022/pdf",
+        "https://epa.oszk.hu/05300/05300/00022/pdf",
+        "https://epa.oszk.hu/05300/05300/00022/pdf",
+        "https://epa.oszk.hu/05300/05300/00022/pdf",
+        "https://epa.oszk.hu/05300/05300/00022/pdf"
+      ]
+    },
+    {
+      "url": "https://epa.oszk.hu/html/vgi/kardexlap.phtml?aktev=1973&id=5300",
+      "status": 200,
+      "pdf_links": [
+        "https://epa.oszk.hu/05300/05300/00025/pdf",
+        "https://epa.oszk.hu/05300/05300/00025/pdf",
+        "https://epa.oszk.hu/05300/05300/00025/pdf",
+        "https://epa.oszk.hu/05300/05300/00025/pdf",
+        "https://epa.oszk.hu/05300/05300/00025/pdf"
+      ]
+    },
+    {
+      "url": "https://epa.oszk.hu/html/vgi/kardexlap.phtml?aktev=1975&id=5300",
+      "status": 200,
+      "pdf_links": [
+        "https://epa.oszk.hu/05300/05300/00027/pdf",
+        "https://epa.oszk.hu/05300/05300/00027/pdf",
+        "https://epa.oszk.hu/05300/05300/00027/pdf",
+        "https://epa.oszk.hu/05300/05300/00027/pdf",
+        "https://epa.oszk.hu/05300/05300/00027/pdf"
+      ]
+    },
+    {
+      "url": "https://epa.oszk.hu/html/vgi/kardexlap.phtml?aktev=1978&id=5300",
+      "status": 200,
+      "pdf_links": [
+        "https://epa.oszk.hu/05300/05300/00030/pdf",
+        "https://epa.oszk.hu/05300/05300/00030/pdf",
+        "https://epa.oszk.hu/05300/05300/00030/pdf",
+        "https://epa.oszk.hu/05300/05300/00030/pdf",
+        "https://epa.oszk.hu/05300/05300/00030/pdf"
+      ]
+    },
+    {
+      "url": "https://epa.oszk.hu/html/vgi/kardexlap.phtml?aktev=1980&id=5300",
+      "status": 200,
+      "pdf_links": [
+        "https://epa.oszk.hu/05300/05300/00032/pdf",
+        "https://epa.oszk.hu/05300/05300/00032/pdf",
+        "https://epa.oszk.hu/05300/05300/00032/pdf",
+        "https://epa.oszk.hu/05300/05300/00032/pdf",
+        "https://epa.oszk.hu/05300/05300/00032/pdf"
+      ]
+    },
+    {
+      "url": "https://epa.oszk.hu/html/vgi/kardexlap.phtml?aktev=1985&id=5300",
+      "status": 200,
+      "pdf_links": [
+        "https://epa.oszk.hu/05300/05300/00037/pdf",
+        "https://epa.oszk.hu/05300/05300/00037/pdf",
+        "https://epa.oszk.hu/05300/05300/00037/pdf",
+        "https://epa.oszk.hu/05300/05300/00037/pdf",
+        "https://epa.oszk.hu/05300/05300/00037/pdf"
+      ]
+    }
+  ],
+  "ksh_computing_pdf_headers": [
+    {
+      "url": "https://www.kshkonyvtar.hu/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk2OC5wZGY=",
+      "status": 200,
+      "content_type": "application/pdf",
+      "content_length": "45850850"
+    },
+    {
+      "url": "https://www.kshkonyvtar.hu/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk3NC5wZGY=",
+      "status": 200,
+      "content_type": "application/pdf",
+      "content_length": "63708661"
+    },
+    {
+      "url": "https://www.kshkonyvtar.hu/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk3OC5wZGY=",
+      "status": 200,
+      "content_type": "application/pdf",
+      "content_length": "54745029"
+    },
+    {
+      "url": "https://www.kshkonyvtar.hu/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk4My5wZGY=",
+      "status": 200,
+      "content_type": "application/pdf",
+      "content_length": "52332454"
+    }
+  ]
+}

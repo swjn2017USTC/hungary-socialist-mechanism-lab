@@ -1,0 +1,24 @@
+{
+  "python": "3.12.14",
+  "platform": "macOS-26.5-arm64-arm-64bit",
+  "versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "polars": "1.44.2",
+    "duckdb": "1.5.6",
+    "pyarrow": "25.0.1",
+    "pydantic": "2.13.5",
+    "socioverse2": "0.2.0",
+    "networkx": "3.7",
+    "SALib": "1.6.0",
+    "pyabc": "0.13.0",
+    "pytest": "9.1.1",
+    "ruff": "0.16.10"
+  },
+  "baseline_sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+  "research_contract_sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+  "uv_lock_sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+  "omp_config_sha256": "e16efec36889a8f453779e1be1fa3e92988a1b49961e0db66e334962b9de5339",
+  "initial_head": "bc5f1f682865c150431ec760625cbd6bc4095a8f",
+  "branch": "codex/audit-hsm-vnext-2026-10-11"
+}

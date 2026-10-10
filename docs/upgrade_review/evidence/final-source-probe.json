@@ -1,0 +1,129 @@
+[
+  {
+    "url": "https://epa.oszk.hu/05300/05300/00012/pdf",
+    "final_url": "https://epa.oszk.hu/05300/05300/00012/pdf/",
+    "status": 200,
+    "body_sha256": "4ac3bf790c43ab61231855469f92189858229ac512e33e3945f53fa2dcfb9602",
+    "pdf_links": [
+      "https://epa.oszk.hu/05300/05300/00012/pdf/EPA05300_statisztikai_evkonyv_1960.pdf"
+    ],
+    "first_pdf_head": {
+      "url": "https://epa.oszk.hu/05300/05300/00012/pdf/EPA05300_statisztikai_evkonyv_1960.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "length": "110604536"
+    }
+  },
+  {
+    "url": "https://epa.oszk.hu/05300/05300/00030/pdf",
+    "final_url": "https://epa.oszk.hu/05300/05300/00030/pdf/",
+    "status": 200,
+    "body_sha256": "3c70b4f545b6870d1c99ef15a118952351c76a3fb8da93affad7def8af651a21",
+    "pdf_links": [
+      "https://epa.oszk.hu/05300/05300/00030/pdf/EPA05300_statisztikai_evkonyv_1978.pdf"
+    ],
+    "first_pdf_head": {
+      "url": "https://epa.oszk.hu/05300/05300/00030/pdf/EPA05300_statisztikai_evkonyv_1978.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "length": "106314043"
+    }
+  },
+  {
+    "url": "https://linopy.readthedocs.io/en/latest/prerequisites.html",
+    "final_url": "https://linopy.readthedocs.io/en/latest/prerequisites.html",
+    "status": 200,
+    "body_sha256": "7d7dd2825a678dea52429f692dc91f79db22427db7462623b0d2a3e960e29dc4",
+    "pdf_links": []
+  },
+  {
+    "url": "https://linopy.readthedocs.io/en/latest/using-solvers.html",
+    "final_url": "https://linopy.readthedocs.io/en/latest/using-solvers.html",
+    "status": 200,
+    "body_sha256": "7b38f7b3755c9677a1da22debf3403cc1763fbbc35ab6a733915598759359fa1",
+    "pdf_links": []
+  },
+  {
+    "url": "https://highs.dev/",
+    "final_url": "https://highs.dev/",
+    "status": 200,
+    "body_sha256": "98d60d526e2967880421b5a13cb5284189d5df838a7cd6c7752ff1b3563e35bc",
+    "pdf_links": []
+  },
+  {
+    "url": "https://pyomo.readthedocs.io/en/stable/getting_started/solvers.html",
+    "final_url": "https://pyomo.readthedocs.io/en/stable/getting_started/solvers.html",
+    "status": 200,
+    "body_sha256": "59e75e0debc0c5278d8ad4d12aa0f1756bf311f9d4d8d716ed59166c20e5b512",
+    "pdf_links": []
+  },
+  {
+    "url": "https://docs.astral.sh/uv/reference/cli/",
+    "final_url": "https://docs.astral.sh/uv/reference/cli/",
+    "status": 200,
+    "body_sha256": "55e195abd5954acb9025cc871a24c315f57b9eaf47e25889177e5fa1b75f7ee1",
+    "pdf_links": []
+  },
+  {
+    "url": "https://pymrio.readthedocs.io/en/latest/intro.html",
+    "final_url": "https://pymrio.readthedocs.io/en/latest/intro.html",
+    "status": 200,
+    "body_sha256": "2d87ef2d7e65781507f035c4e1af66780eb64c3c900bc93e77379cec1ad9b95a",
+    "pdf_links": []
+  },
+  {
+    "url": "https://mesa.readthedocs.io/stable/index.html",
+    "final_url": "https://mesa.readthedocs.io/stable/index.html",
+    "status": 200,
+    "body_sha256": "05048d230ceea73f73a39e2c8bea218ba20eb139ed0e2445d46ef0c085709f06",
+    "pdf_links": []
+  },
+  {
+    "url": "https://docs.econ-ark.org/docs/guides/installation.html",
+    "final_url": "https://docs.econ-ark.org/docs/guides/installation.html",
+    "status": 200,
+    "body_sha256": "6aceb6228a36d7e970c8ef6265d95a2004495691260fd965ec66d28287e0a616",
+    "pdf_links": []
+  },
+  {
+    "url": "https://salib.readthedocs.io/en/stable/user_guide/getting-started.html",
+    "final_url": "https://salib.readthedocs.io/en/stable/user_guide/getting-started.html",
+    "status": 200,
+    "body_sha256": "55a51ffd281a04fcd9b55bfb5a3c8a5ce7c4fd497337aeef43653e331eded3bb",
+    "pdf_links": []
+  },
+  {
+    "url": "https://pyabc.readthedocs.io/en/latest/installation.html",
+    "final_url": "https://pyabc.readthedocs.io/en/latest/installation.html",
+    "status": 200,
+    "body_sha256": "2bbcab3f3246f56acec3ad881ee6a08681272911a0eb03ca5fb676b746d1f7af",
+    "pdf_links": []
+  },
+  {
+    "url": "https://docs.pypsa.org/latest/home/installation/",
+    "final_url": "https://docs.pypsa.org/latest/home/installation/",
+    "status": 200,
+    "body_sha256": "b45e693fcbebd9d07c7807c44d323db6f81ce7f5cd7add2e8a39e89627faa112",
+    "pdf_links": []
+  },
+  {
+    "url": "https://www.v-dem.net/data/the-v-dem-dataset/",
+    "final_url": "https://www.v-dem.net/data/the-v-dem-dataset/",
+    "status": 200,
+    "body_sha256": "98672b1811e0c998c12ae75f9ef588b6bfccc79876f8373a32cdc0b91f621fba",
+    "pdf_links": [
+      "https://www.v-dem.net/documents/70/codebook_v16.pdf",
+      "https://www.v-dem.net/documents/71/methodology_v16.pdf",
+      "https://www.v-dem.net/documents/72/countryunit_v16.pdf",
+      "https://www.v-dem.net/documents/73/structureofaggregation_v16.pdf",
+      "https://www.v-dem.net/documents/74/Organization_Management_v16.pdf"
+    ],
+    "version_strings": [
+      "country-year-v-dem-fullothers-v16/\" class=\"info-block__link btn btn--small btn--blue-medium\">",
+      "taset/country-year-v-dem-core-v16/\" class=\"info-block__link btn btn--small btn--blue-medium\">",
+      "em-dataset/country-date-v-dem-v16/\" class=\"info-block__link btn btn--small btn--blue-medium\">",
+      "dem-dataset/coder-level-v-dem-v16/\" class=\"info-block__link btn btn--small btn--blue-medium\">",
+      " href=\"/documents/70/codebook_v16.pdf\" target=\"_blank\" rel=\"noopener noreferrer\">"
+    ]
+  }
+]

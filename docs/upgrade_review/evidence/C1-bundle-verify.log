@@ -1,0 +1,19 @@
+{"digest_matches": true, "parameter_hash_matches": true, "rebuilt_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5", "recorded_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5", "run_id": "e070d70a750e42f783bb6b10b4ba41b8", "status": "verified"}
+        7.59 real         7.40 user         0.22 sys
+           639827968  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               65242  page reclaims
+                  94  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   1  messages sent
+                   1  messages received
+                   1  signals received
+                  72  voluntary context switches
+                6408  involuntary context switches
+           130683306  instructions retired
+            48947922  cycles elapsed
+            11354544  peak memory footprint

@@ -1,0 +1,2225 @@
+{
+  "new_root": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011",
+  "manifests": [
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/C0/manifest.json",
+      "sha256": "1c18515d4d562a2f94a5e438b94135f05503b7cead6990a50d738d5ec2a9e342",
+      "run_id": "f02d822f7d4e4364b6a49222bc00a571",
+      "scenario": null,
+      "digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "seed": 1729,
+      "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/C1/manifest.json",
+      "sha256": "48629339abefaf531b9ae7f005821c4228f1e97cd94a686d3b033e67ee01ec3b",
+      "run_id": "e070d70a750e42f783bb6b10b4ba41b8",
+      "scenario": null,
+      "digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+      "seed": 1729,
+      "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/bundle-C0/run/manifest.json",
+      "sha256": "1c18515d4d562a2f94a5e438b94135f05503b7cead6990a50d738d5ec2a9e342",
+      "run_id": "f02d822f7d4e4364b6a49222bc00a571",
+      "scenario": null,
+      "digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "seed": 1729,
+      "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/bundle-C1/run/manifest.json",
+      "sha256": "48629339abefaf531b9ae7f005821c4228f1e97cd94a686d3b033e67ee01ec3b",
+      "run_id": "e070d70a750e42f783bb6b10b4ba41b8",
+      "scenario": null,
+      "digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+      "seed": 1729,
+      "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/factor-observer/manifest.json",
+      "sha256": "71a9db9457d61152652b2b1ae2d53740d9c9bb062a7d13ec909df98d782bcab8",
+      "run_id": "60383bb7861e43c980a6ea92d091917d",
+      "scenario": null,
+      "digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "seed": 1729,
+      "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/leak/manifest.json",
+      "sha256": "ac74463ca4d0a857c2b9440d82b0e3491d05a04df9c991b480854ad025afcf01",
+      "run_id": "c2b62e73322641069dbe4a67814d1ad8",
+      "scenario": null,
+      "digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "seed": 1729,
+      "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/manifest.json",
+      "sha256": "c032335e90df8b553b6934f7cd5e092f279aad32f0ad9ea18e4d4894ff91e284",
+      "run_id": "83673626478c46fca1221c30d2407618",
+      "scenario": null,
+      "digest": "895d4a2c70c1bb389bb7c37b6432bfde7896084f32e932c482169a22d42e4035",
+      "seed": 1729,
+      "parameter_hash": "2cff7aaee486fad0c38d809c6112b8a286d3e215353f674fd2e0e65aed48d2bf",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/manifest.json",
+      "sha256": "e20e480d9a5fdedbdf13001a10bc163475f23f902425f2af3f3aa15d180d0d74",
+      "run_id": "47eeb7e05e4042f5afd5311f85118c31",
+      "scenario": null,
+      "digest": "b1c9f43d0ae1b6edfc7a095c611c3de71f6fae17a79b1678c6f848e97a70f76a",
+      "seed": 1729,
+      "parameter_hash": "2cff7aaee486fad0c38d809c6112b8a286d3e215353f674fd2e0e65aed48d2bf",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/manifest.json",
+      "sha256": "07f70bd80806d39c28f3d52008007a39693391d0a2f87db7e384fcb527d3ab51",
+      "run_id": "30b69a38537b47b58639473f3cd975fa",
+      "scenario": null,
+      "digest": "f727a366496aebda75230a57d28e85bbf6051ad92f0d045a11c7adf40ee5d16b",
+      "seed": 1729,
+      "parameter_hash": "2cff7aaee486fad0c38d809c6112b8a286d3e215353f674fd2e0e65aed48d2bf",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/manifest.json",
+      "sha256": "46d908ec320a0340acbd4e6844539903b24d4d74a1b3ef2674362f774e6a8f8c",
+      "run_id": "55dd554ec0a34a178484eed9e531cd72",
+      "scenario": null,
+      "digest": "0360c194a27ed025eaa4424eacaeb10ff97cbf38e2f6eb7edc6a5a81a196f352",
+      "seed": 1729,
+      "parameter_hash": "2cff7aaee486fad0c38d809c6112b8a286d3e215353f674fd2e0e65aed48d2bf",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/manifest.json",
+      "sha256": "258ed4fa50206dd45982a2829609412a731044c16641676778454b4c216ddf09",
+      "run_id": "38f8d045a042485288ce365960c42f68",
+      "scenario": null,
+      "digest": "d2714dce142a55691bf7309b8532b056fde109e3b11b81a16cf53f17f3f13926",
+      "seed": 1729,
+      "parameter_hash": "2cff7aaee486fad0c38d809c6112b8a286d3e215353f674fd2e0e65aed48d2bf",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/manifest.json",
+      "sha256": "92cb7b957976a9799ef9a4c57be7c0535983bb2619490b12e655fe2ba2916526",
+      "run_id": "abfd93ac935540f1b1cbe417d6fe2935",
+      "scenario": null,
+      "digest": "8948f962eddb7fc4c0515c4a084761ca3fa3571918fe080e0b689c8c9cbaf524",
+      "seed": 1729,
+      "parameter_hash": "2cff7aaee486fad0c38d809c6112b8a286d3e215353f674fd2e0e65aed48d2bf",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/rebuilt-C0/manifest.json",
+      "sha256": "613b1b3f1ee427809ac0c9b384deb62ffe0755ab59acb1bbabd00550dc0cff94",
+      "run_id": "6aeb5517882243cf9a53f9eea04fdf01",
+      "scenario": null,
+      "digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "seed": 1729,
+      "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/rebuilt-C1/manifest.json",
+      "sha256": "f5cdd312d5052b1cad6f92e83f43c7a468c22936ff6445a445c3e070bd496378",
+      "run_id": "3760e578979d4db19b86c356aec5f83e",
+      "scenario": null,
+      "digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+      "seed": 1729,
+      "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+      "end": null
+    },
+    {
+      "manifest": "outputs/codex-audit-vnext-20261011/reproduction/replay/manifest.json",
+      "sha256": "dddcc9cd51030f5e077efb23610e26d932704d880b90fdcaefa1d7c8135a3448",
+      "run_id": "065ae62a322243cc9041e20dff35ba0a",
+      "scenario": null,
+      "digest": "6362001deaf055af6c005acc7d6fc6c4bbaf05b7f417b0c3bec5b7c25b8508b0",
+      "seed": 1729,
+      "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+      "end": null
+    }
+  ],
+  "files": [
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/aggregates.parquet",
+      "bytes": 2365703,
+      "sha256": "3160fd8a9ebe3c6d7d889d555ac3a376f6ef8c9da7ba5a29a9077705edad17f6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/departments.parquet",
+      "bytes": 12638,
+      "sha256": "a3ee9d45cda52648a95126699f9d8768893404dd679b806f6c6da4b1df788acb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/events.parquet",
+      "bytes": 172552,
+      "sha256": "4f73ef379078c4042a8527b9f0c092d4d106940ea0a06c9fb185c0b603ad6be1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/financial_accounts.parquet",
+      "bytes": 57027,
+      "sha256": "784cf661c5cbed53ed2fe3ec741e63398e5c4392d4af596d26bd15a9ef2914ae"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/household_budgets.parquet",
+      "bytes": 170172,
+      "sha256": "a9a3b6d12d08b89a31e3d34b0be27acdfc9aac4cbd0b7c11784e8969b9c9c491"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/information_quarters.parquet",
+      "bytes": 1872,
+      "sha256": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/initial_recipe.json",
+      "bytes": 704,
+      "sha256": "8edfceb160032dbfc9e9eaef321994b7f1d5729b59b0fb516b90c72d810f5aaa"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/manifest.json",
+      "bytes": 5571,
+      "sha256": "1c18515d4d562a2f94a5e438b94135f05503b7cead6990a50d738d5ec2a9e342"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/national_accounts.parquet",
+      "bytes": 158213,
+      "sha256": "93da4282e06ffa39e85d86cc5b4dfeb61046dfbcf4c8828d42f863ecc5486649"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/opposition_regions.parquet",
+      "bytes": 1665,
+      "sha256": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/organization_diagnostics.parquet",
+      "bytes": 951743,
+      "sha256": "e34b6798e1b5e896fa75d3369b0fc85d0703c8f849a3a07f7cc689b846d0d3bc"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/parameters.json",
+      "bytes": 4158,
+      "sha256": "e2ca0005267851bab1cc0872bbe86921edf6b215f6b20e0760b26d42410594ec"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/political_events.parquet",
+      "bytes": 1060,
+      "sha256": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/political_quarters.parquet",
+      "bytes": 4059,
+      "sha256": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/stage_balances.parquet",
+      "bytes": 964153,
+      "sha256": "eb072e6d6d6ef905ffc75b8dba799fe79f04f81470e30e2aaa33b25736ff4436"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/summary.json",
+      "bytes": 9482,
+      "sha256": "701fe5a0ba6713fd197935fd62a04f3248c687787f2e1a4c28b8ae1690e8caf1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/tick_diagnostics.parquet",
+      "bytes": 13313,
+      "sha256": "93c14ccc32fa3881700170e1ae2d743c2c19e7eb3f01188b3987be5f3bb3ff81"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C0/trajectory.duckdb",
+      "bytes": 15216640,
+      "sha256": "dffc62c4c2e438650aa9d893c0dc57c48709ae1c45994038fc4a75897acd203e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/aggregates.parquet",
+      "bytes": 2205845,
+      "sha256": "16d99bdc7e92f9ed21d97e74913349be92e505befeb4488c06039603572aec58"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/departments.parquet",
+      "bytes": 11391,
+      "sha256": "6452edd3a9ce0823dcf6f91bff1d982032a9cd44eba92667737708486189fa5c"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/events.parquet",
+      "bytes": 130572,
+      "sha256": "f11296c928bb833bd6304fffa5ad4b2f2ee39dbb3a9c031a8c0cb813055ca72e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/financial_accounts.parquet",
+      "bytes": 59590,
+      "sha256": "79acf36c086385cfa375769844adc6b9dd66f335ed743871ec2a4ec047e86514"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/household_budgets.parquet",
+      "bytes": 188832,
+      "sha256": "5ffab91fa753956d4b93aa7f6108bb69d6ea5d2116763882f617e34d1a2d2fc1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/information_quarters.parquet",
+      "bytes": 1872,
+      "sha256": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/initial_recipe.json",
+      "bytes": 712,
+      "sha256": "8f50b008226925e29720dc71742cc7aae1678797bacb513d5b304667369d9aa9"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/manifest.json",
+      "bytes": 5571,
+      "sha256": "48629339abefaf531b9ae7f005821c4228f1e97cd94a686d3b033e67ee01ec3b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/national_accounts.parquet",
+      "bytes": 166001,
+      "sha256": "4cfa1cd9e75fa04b391dba07ab0afbbef20679e07fbc379db67ab0a1eeb1b8d5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/opposition_regions.parquet",
+      "bytes": 1665,
+      "sha256": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/organization_diagnostics.parquet",
+      "bytes": 871517,
+      "sha256": "2822f4e815c8b76bc6112cebeaf6928e0fdf86ad8a2ef0f531698605a7be6532"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/parameters.json",
+      "bytes": 5766,
+      "sha256": "dd36cb701c563ea3a9a3a049d34fd6f42c7ed55ddf3eb5259a3df05978c28d78"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/political_events.parquet",
+      "bytes": 1060,
+      "sha256": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/political_quarters.parquet",
+      "bytes": 4059,
+      "sha256": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/stage_balances.parquet",
+      "bytes": 886146,
+      "sha256": "6497521a31ef28cf6e27a78a8e9266302bf01dcef2255fe1ee8ea1e28e4af317"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/summary.json",
+      "bytes": 9757,
+      "sha256": "f29e621b46e900026655f5c61031d90a124129c0f89550cf7a147d52bfd810c1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/tick_diagnostics.parquet",
+      "bytes": 13014,
+      "sha256": "0850c8b11d7cc27abec38432367123207ea77b27c30b575752bcaaad9e0f1a79"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/C1/trajectory.duckdb",
+      "bytes": 14954496,
+      "sha256": "f9efa14905b934cdacaefde9ce2ec1bf95544483bd2af1905d2db5a97dcc95d5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/BASELINE.md",
+      "bytes": 64445,
+      "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/bundle.json",
+      "bytes": 7268,
+      "sha256": "b7ce6521be42d31b3b3dee5014a7c858530fe41adee265099a4991d8bed3ae04"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/config/calibration/p05.json",
+      "bytes": 6141,
+      "sha256": "ef1371b66625ddaf78663cc1181679443d7288c084c18f54e1b206a5470bb6ae"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/config/calibration/p05_parameters.yml",
+      "bytes": 3234,
+      "sha256": "e20c55d4e1166451e2ef7f08faeddfa3e43c49a154546461db36972426775fd2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/config/ontology/f2_v1.json",
+      "bytes": 5846,
+      "sha256": "93ff304d6d90389176570d9d767ede998894ebedcc23adb35229889bd0346812"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/config/research_contract.json",
+      "bytes": 2908,
+      "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/config/scenarios/historical_f2_replay.json",
+      "bytes": 40900,
+      "sha256": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/data/fixtures/p02_material_global_usd_rate_quarterly.parquet",
+      "bytes": 2459,
+      "sha256": "16df220d707d6800ce9e749df5a887e8207310246cd3bfabbd65416cd6652882"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/data/fixtures/p02_material_synthetic_pack.json",
+      "bytes": 1385,
+      "sha256": "92d143a7eaa8922f27847473fe5d25c22b70a00df4ca1809bad35baedba5de7b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/data/fixtures/p02_material_world_oil_quarterly.parquet",
+      "bytes": 2441,
+      "sha256": "93709a3aae211376debb0143a8567ef236e39818bcf653606402c8e53bc364cb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/data/manifests/artifacts.yml",
+      "bytes": 324991,
+      "sha256": "6e4e4f4b4cd3f316ff15ac209737b45559595bd28efcf6672085ba9e33456be2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/data/manifests/sources.yml",
+      "bytes": 26095,
+      "sha256": "1aed7f26a58892d3e2ad3a1815450014e76fafabd0457ffd7905e82499874c4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/data/manifests/variables.yml",
+      "bytes": 18767,
+      "sha256": "0973055006539dfc07eea8352fb187292642c21bc8d1ead90cbaab3a09519975"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/report/P05_REPORT.md",
+      "bytes": 52088,
+      "sha256": "33b75aa3c4e51f43de95384f939639b57b5b22ffe73f67a29acd1f736568c751"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/run/initial_recipe.json",
+      "bytes": 704,
+      "sha256": "8edfceb160032dbfc9e9eaef321994b7f1d5729b59b0fb516b90c72d810f5aaa"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/run/manifest.json",
+      "bytes": 5571,
+      "sha256": "1c18515d4d562a2f94a5e438b94135f05503b7cead6990a50d738d5ec2a9e342"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/run/parameters.json",
+      "bytes": 4158,
+      "sha256": "e2ca0005267851bab1cc0872bbe86921edf6b215f6b20e0760b26d42410594ec"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C0/run/summary.json",
+      "bytes": 9482,
+      "sha256": "701fe5a0ba6713fd197935fd62a04f3248c687787f2e1a4c28b8ae1690e8caf1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/BASELINE.md",
+      "bytes": 64445,
+      "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/bundle.json",
+      "bytes": 7284,
+      "sha256": "be337dd06eaedded285bcb87d155c821116aa82c22801a2eebb1a7bab9698d8b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/config/calibration/p05.json",
+      "bytes": 6141,
+      "sha256": "ef1371b66625ddaf78663cc1181679443d7288c084c18f54e1b206a5470bb6ae"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/config/calibration/p05_parameters.yml",
+      "bytes": 3234,
+      "sha256": "e20c55d4e1166451e2ef7f08faeddfa3e43c49a154546461db36972426775fd2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/config/ontology/f2_v1.json",
+      "bytes": 5846,
+      "sha256": "93ff304d6d90389176570d9d767ede998894ebedcc23adb35229889bd0346812"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/config/research_contract.json",
+      "bytes": 2908,
+      "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/config/scenarios/historical_f2_trade_scenario.json",
+      "bytes": 42508,
+      "sha256": "3ad4510064daa6e0b6f37893eb6a5721c3ad0b34f3284175c2cde77a33397a5f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/data/fixtures/p02_material_global_usd_rate_quarterly.parquet",
+      "bytes": 2459,
+      "sha256": "16df220d707d6800ce9e749df5a887e8207310246cd3bfabbd65416cd6652882"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/data/fixtures/p02_material_synthetic_pack.json",
+      "bytes": 1385,
+      "sha256": "92d143a7eaa8922f27847473fe5d25c22b70a00df4ca1809bad35baedba5de7b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/data/fixtures/p02_material_world_oil_quarterly.parquet",
+      "bytes": 2441,
+      "sha256": "93709a3aae211376debb0143a8567ef236e39818bcf653606402c8e53bc364cb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/data/manifests/artifacts.yml",
+      "bytes": 324991,
+      "sha256": "6e4e4f4b4cd3f316ff15ac209737b45559595bd28efcf6672085ba9e33456be2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/data/manifests/sources.yml",
+      "bytes": 26095,
+      "sha256": "1aed7f26a58892d3e2ad3a1815450014e76fafabd0457ffd7905e82499874c4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/data/manifests/variables.yml",
+      "bytes": 18767,
+      "sha256": "0973055006539dfc07eea8352fb187292642c21bc8d1ead90cbaab3a09519975"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/report/P05_REPORT.md",
+      "bytes": 52088,
+      "sha256": "33b75aa3c4e51f43de95384f939639b57b5b22ffe73f67a29acd1f736568c751"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/run/initial_recipe.json",
+      "bytes": 712,
+      "sha256": "8f50b008226925e29720dc71742cc7aae1678797bacb513d5b304667369d9aa9"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/run/manifest.json",
+      "bytes": 5571,
+      "sha256": "48629339abefaf531b9ae7f005821c4228f1e97cd94a686d3b033e67ee01ec3b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/run/parameters.json",
+      "bytes": 5766,
+      "sha256": "dd36cb701c563ea3a9a3a049d34fd6f42c7ed55ddf3eb5259a3df05978c28d78"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/bundle-C1/run/summary.json",
+      "bytes": 9757,
+      "sha256": "f29e621b46e900026655f5c61031d90a124129c0f89550cf7a147d52bfd810c1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/closure/certificate.json",
+      "bytes": 85094,
+      "sha256": "3b49646c58265804fb3894ed8bfea756072a964124ec8b56a1bdd574aa9f486b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/f2-h0-closure/certificate.json",
+      "bytes": 40155,
+      "sha256": "82e4cb1191ceadca1b4b2175be146588f6bc4ed96590cf6aa516ab072d34c748"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/aggregates.parquet",
+      "bytes": 2365703,
+      "sha256": "3160fd8a9ebe3c6d7d889d555ac3a376f6ef8c9da7ba5a29a9077705edad17f6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/departments.parquet",
+      "bytes": 12638,
+      "sha256": "a3ee9d45cda52648a95126699f9d8768893404dd679b806f6c6da4b1df788acb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/events.parquet",
+      "bytes": 172552,
+      "sha256": "4f73ef379078c4042a8527b9f0c092d4d106940ea0a06c9fb185c0b603ad6be1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/financial_accounts.parquet",
+      "bytes": 57027,
+      "sha256": "784cf661c5cbed53ed2fe3ec741e63398e5c4392d4af596d26bd15a9ef2914ae"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/household_budgets.parquet",
+      "bytes": 170172,
+      "sha256": "a9a3b6d12d08b89a31e3d34b0be27acdfc9aac4cbd0b7c11784e8969b9c9c491"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/information_quarters.parquet",
+      "bytes": 1872,
+      "sha256": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/initial_recipe.json",
+      "bytes": 704,
+      "sha256": "8edfceb160032dbfc9e9eaef321994b7f1d5729b59b0fb516b90c72d810f5aaa"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/manifest.json",
+      "bytes": 5571,
+      "sha256": "71a9db9457d61152652b2b1ae2d53740d9c9bb062a7d13ec909df98d782bcab8"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/national_accounts.parquet",
+      "bytes": 158213,
+      "sha256": "93da4282e06ffa39e85d86cc5b4dfeb61046dfbcf4c8828d42f863ecc5486649"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/opposition_regions.parquet",
+      "bytes": 1665,
+      "sha256": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/organization_diagnostics.parquet",
+      "bytes": 951743,
+      "sha256": "e34b6798e1b5e896fa75d3369b0fc85d0703c8f849a3a07f7cc689b846d0d3bc"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/parameters.json",
+      "bytes": 4158,
+      "sha256": "e2ca0005267851bab1cc0872bbe86921edf6b215f6b20e0760b26d42410594ec"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/political_events.parquet",
+      "bytes": 1060,
+      "sha256": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/political_quarters.parquet",
+      "bytes": 4059,
+      "sha256": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/stage_balances.parquet",
+      "bytes": 964153,
+      "sha256": "eb072e6d6d6ef905ffc75b8dba799fe79f04f81470e30e2aaa33b25736ff4436"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/summary.json",
+      "bytes": 9496,
+      "sha256": "7103c011e2785159f1f0dde5d98f56078fe2551c4e7400044ad8c44294a9c2d8"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/tick_diagnostics.parquet",
+      "bytes": 13313,
+      "sha256": "93c14ccc32fa3881700170e1ae2d743c2c19e7eb3f01188b3987be5f3bb3ff81"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/factor-observer/trajectory.duckdb",
+      "bytes": 15216640,
+      "sha256": "25d88805ac774ffa67e8e29b18930c610515a8e6fd89db24a4e50d113dbc3108"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/aggregates.parquet",
+      "bytes": 2365703,
+      "sha256": "3160fd8a9ebe3c6d7d889d555ac3a376f6ef8c9da7ba5a29a9077705edad17f6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/bank_circuit.parquet",
+      "bytes": 90723,
+      "sha256": "3ef37e6d5c49626b339bd96c10be21823a4c69176982c4c9dc0bcae682aeeccd"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/commodity_circuit.parquet",
+      "bytes": 134181,
+      "sha256": "d934f09f7201513a919f460e9a3a1ed5b4ff86886ccb3758166c33e52fc15ac1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/departments.parquet",
+      "bytes": 12638,
+      "sha256": "a3ee9d45cda52648a95126699f9d8768893404dd679b806f6c6da4b1df788acb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/events.parquet",
+      "bytes": 172552,
+      "sha256": "4f73ef379078c4042a8527b9f0c092d4d106940ea0a06c9fb185c0b603ad6be1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/financial_accounts.parquet",
+      "bytes": 57027,
+      "sha256": "784cf661c5cbed53ed2fe3ec741e63398e5c4392d4af596d26bd15a9ef2914ae"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/household_budgets.parquet",
+      "bytes": 170172,
+      "sha256": "a9a3b6d12d08b89a31e3d34b0be27acdfc9aac4cbd0b7c11784e8969b9c9c491"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/information_quarters.parquet",
+      "bytes": 1872,
+      "sha256": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/initial_recipe.json",
+      "bytes": 704,
+      "sha256": "8edfceb160032dbfc9e9eaef321994b7f1d5729b59b0fb516b90c72d810f5aaa"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/journal_totals.parquet",
+      "bytes": 10454,
+      "sha256": "1c51b9cf035cf125d9f8a2dc5ae2676231bd6fe5eda08709c8377ecde79bd0d5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/leak_audit.json",
+      "bytes": 2238,
+      "sha256": "d306e2af5ef605630c5b7788545720d9463e975f9b1fe53c10ea673cce39f335"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/manifest.json",
+      "bytes": 5571,
+      "sha256": "ac74463ca4d0a857c2b9440d82b0e3491d05a04df9c991b480854ad025afcf01"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/money_stock.parquet",
+      "bytes": 60058,
+      "sha256": "0655ec8350e35f03f9dbf678a5640b52b63a7c5be311f9ad82a3999f821cedc9"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/national_accounts.parquet",
+      "bytes": 158213,
+      "sha256": "93da4282e06ffa39e85d86cc5b4dfeb61046dfbcf4c8828d42f863ecc5486649"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/opposition_regions.parquet",
+      "bytes": 1665,
+      "sha256": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/organization_diagnostics.parquet",
+      "bytes": 951743,
+      "sha256": "e34b6798e1b5e896fa75d3369b0fc85d0703c8f849a3a07f7cc689b846d0d3bc"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/parameters.json",
+      "bytes": 4158,
+      "sha256": "e2ca0005267851bab1cc0872bbe86921edf6b215f6b20e0760b26d42410594ec"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/political_events.parquet",
+      "bytes": 1060,
+      "sha256": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/political_quarters.parquet",
+      "bytes": 4059,
+      "sha256": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/sector_circuit.parquet",
+      "bytes": 52028,
+      "sha256": "d227ff4e6edfe3be41d27551f7e2818298c0d890e701c0e6327cd285cbb78d1e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/service_expiry.parquet",
+      "bytes": 18352,
+      "sha256": "9173a37e3f1550b92ee5c5a56456255b1c9bbf885532d04439a722e87936a683"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/stage_balances.parquet",
+      "bytes": 964153,
+      "sha256": "eb072e6d6d6ef905ffc75b8dba799fe79f04f81470e30e2aaa33b25736ff4436"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/summary.json",
+      "bytes": 9485,
+      "sha256": "5d7b89068868c6e52fa86e6e2a06b003f7ff1f74ee4865437696db1c0d695263"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/tick_diagnostics.parquet",
+      "bytes": 13313,
+      "sha256": "93c14ccc32fa3881700170e1ae2d743c2c19e7eb3f01188b3987be5f3bb3ff81"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/leak/trajectory.duckdb",
+      "bytes": 15216640,
+      "sha256": "fd956d43bae05c714ad13edb74c1b8c1c92be669116f054f92acd46b322a1493"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/aggregates.parquet",
+      "bytes": 79495,
+      "sha256": "f3400bd5f1890c020029f9dd8001f9c03de2a20c54d9c9bade6f5bf52835e875"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/aggregates.parquet",
+      "bytes": 79495,
+      "sha256": "f3400bd5f1890c020029f9dd8001f9c03de2a20c54d9c9bade6f5bf52835e875"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/departments.parquet",
+      "bytes": 3445,
+      "sha256": "92e776ea74f90ac6f893e8595ddeca033ab887da49b0f2165119395841885f2c"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/events.parquet",
+      "bytes": 5438,
+      "sha256": "aa25d98f144ca6a38c5d24d52ba6019532d6cc6cb5164cfcd058cd16dceda460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/financial_accounts.parquet",
+      "bytes": 5525,
+      "sha256": "2ee69a4e6686bf6409abaa4781ec297f31d3a443034aec362d25266eb039f13e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/household_budgets.parquet",
+      "bytes": 16646,
+      "sha256": "0d3982c686f75eb101d30c85fd07eec3d4ec7fab6a271dbde88d51c8dbfa61b0"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/information_quarters.parquet",
+      "bytes": 8117,
+      "sha256": "cbcb52eb2cbf5b31dcf81919aaa98da13600663f364894382659a1f9a23a97ec"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/metadata.json",
+      "bytes": 56277,
+      "sha256": "482885b6b891319d6284d94fbe26b2152c0bb198f5f2128c2b3e5ad34be3a5bb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/national_accounts.parquet",
+      "bytes": 17595,
+      "sha256": "884203e4bd7c236a1da93b06da2781f2d45cccd51f9a82d3fa7bc631fe0a72b8"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/network.npz",
+      "bytes": 318789,
+      "sha256": "e868f4e07716a791942d3732171c4ecdbffcc0c693f48f85b5cd6d8a73b230c5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/opposition_regions.parquet",
+      "bytes": 9677,
+      "sha256": "124de1682d678fb37895d4e19175a6fff0acc973fdd95b54d17d4974588682ff"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/organization_diagnostics.parquet",
+      "bytes": 26776,
+      "sha256": "8dfd79ca4d6ea91714293b4d0685dde76b8ec8fe208a518cdd24465db1eac09f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/policy_decisions.parquet",
+      "bytes": 3116,
+      "sha256": "1c06ed14fd3f5f6740aec9d43417ca441ec54a7de253ca1ec6643bc16a158082"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/political.npz",
+      "bytes": 178144,
+      "sha256": "0e97f87bf682a0fe506c83888404de0a01116cae1d1a834ba6637ce7a5412c44"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/political_events.parquet",
+      "bytes": 4798,
+      "sha256": "65701f32be6046d3eb6140732cc5fc170f6b30423b332b807a6f593dd8321b2a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/political_quarters.parquet",
+      "bytes": 13662,
+      "sha256": "493db70be0cd553234d034dfa826bc6b0e143795684827a8f3cd2658233e6da8"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/stage_balances.parquet",
+      "bytes": 39284,
+      "sha256": "71b983ed479738ebcbd8d9725996f97b73abae258c501e5fc8e15a476c8efb3e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/state.npz",
+      "bytes": 785398,
+      "sha256": "6ddc115c5e10d76695b08a50a7983fb8fb71f9364e75056cae8811934c28c19d"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/checkpoints/tick-0006/tick_diagnostics.parquet",
+      "bytes": 5609,
+      "sha256": "6019d3c983813478656c894c40af958d338531b17ee67e3dd543decca3eb7469"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/departments.parquet",
+      "bytes": 3445,
+      "sha256": "92e776ea74f90ac6f893e8595ddeca033ab887da49b0f2165119395841885f2c"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/events.parquet",
+      "bytes": 5438,
+      "sha256": "aa25d98f144ca6a38c5d24d52ba6019532d6cc6cb5164cfcd058cd16dceda460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/financial_accounts.parquet",
+      "bytes": 5525,
+      "sha256": "2ee69a4e6686bf6409abaa4781ec297f31d3a443034aec362d25266eb039f13e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/household_budgets.parquet",
+      "bytes": 16646,
+      "sha256": "0d3982c686f75eb101d30c85fd07eec3d4ec7fab6a271dbde88d51c8dbfa61b0"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/information_quarters.parquet",
+      "bytes": 8117,
+      "sha256": "cbcb52eb2cbf5b31dcf81919aaa98da13600663f364894382659a1f9a23a97ec"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/manifest.json",
+      "bytes": 7670,
+      "sha256": "c032335e90df8b553b6934f7cd5e092f279aad32f0ad9ea18e4d4894ff91e284"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/national_accounts.parquet",
+      "bytes": 17595,
+      "sha256": "884203e4bd7c236a1da93b06da2781f2d45cccd51f9a82d3fa7bc631fe0a72b8"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/opposition_regions.parquet",
+      "bytes": 9677,
+      "sha256": "124de1682d678fb37895d4e19175a6fff0acc973fdd95b54d17d4974588682ff"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/organization_diagnostics.parquet",
+      "bytes": 26776,
+      "sha256": "8dfd79ca4d6ea91714293b4d0685dde76b8ec8fe208a518cdd24465db1eac09f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/parameters.json",
+      "bytes": 12453,
+      "sha256": "9d98a0cafbf820a5c611b1eaf5682af9fb0e45e1f2343d8279acd28e3d9f2763"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/policy_decisions.parquet",
+      "bytes": 3116,
+      "sha256": "1c06ed14fd3f5f6740aec9d43417ca441ec54a7de253ca1ec6643bc16a158082"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/political_events.parquet",
+      "bytes": 4798,
+      "sha256": "65701f32be6046d3eb6140732cc5fc170f6b30423b332b807a6f593dd8321b2a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/political_quarters.parquet",
+      "bytes": 13662,
+      "sha256": "493db70be0cd553234d034dfa826bc6b0e143795684827a8f3cd2658233e6da8"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/stage_balances.parquet",
+      "bytes": 39284,
+      "sha256": "71b983ed479738ebcbd8d9725996f97b73abae258c501e5fc8e15a476c8efb3e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/summary.json",
+      "bytes": 4546,
+      "sha256": "baec01c009e1156475f1606349d12d81e70daf6af71c65b02b73931c7a3448c7"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/tick_diagnostics.parquet",
+      "bytes": 5609,
+      "sha256": "6019d3c983813478656c894c40af958d338531b17ee67e3dd543decca3eb7469"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/control/trajectory.duckdb",
+      "bytes": 4993024,
+      "sha256": "22b06bc1ded9b1434a80b50fde08adc220b5e0de10fada8ab8b57a5bb44cabca"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/aggregates.parquet",
+      "bytes": 53537,
+      "sha256": "c00ce60873a06de4a942514505e1cd0e9707ebef0afa8f26abf39febdf5ad1e5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/aggregates.parquet",
+      "bytes": 53537,
+      "sha256": "c00ce60873a06de4a942514505e1cd0e9707ebef0afa8f26abf39febdf5ad1e5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/departments.parquet",
+      "bytes": 3219,
+      "sha256": "51453990a7719e522dde04709921bf92f9efcdaff03f5d265b90ab826eb3a5f3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/events.parquet",
+      "bytes": 4494,
+      "sha256": "78fcb67649b7c890e9299d69de86e78a41881417dea498f11d216831516572ef"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/financial_accounts.parquet",
+      "bytes": 5218,
+      "sha256": "66271d16301869dfbb2a8568670897b38532f84e287c588d732f55dadd3388ad"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/household_budgets.parquet",
+      "bytes": 13097,
+      "sha256": "d19683bdeea9081b2d0006ea74a99368739163797e33ae14cbadc3a23a8249f7"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/information_quarters.parquet",
+      "bytes": 7582,
+      "sha256": "7351160d2f2a84fac562d7f5949849820205dbd2512c70302af8cf286273fffd"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/metadata.json",
+      "bytes": 55311,
+      "sha256": "7c9dbba380df9e1c13af3271d15aefea949dab0de0f849f27d00f75c45c9df8f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/national_accounts.parquet",
+      "bytes": 15637,
+      "sha256": "1751ee0d28e81b6d45c819ffe5e5f1edaa72b46508bb7f3b05c07b46ae0c52ba"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/network.npz",
+      "bytes": 318789,
+      "sha256": "e868f4e07716a791942d3732171c4ecdbffcc0c693f48f85b5cd6d8a73b230c5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/opposition_regions.parquet",
+      "bytes": 8496,
+      "sha256": "eec419459a212b47dfc8a4a979ebabb126f8e0584009beabf02753a42021f3dd"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/organization_diagnostics.parquet",
+      "bytes": 19543,
+      "sha256": "ca087591ba175c67f30335dceb79e065501507caa04b52533a86fb6945d48c30"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/policy_decisions.parquet",
+      "bytes": 3051,
+      "sha256": "7bad287946209c12f553d2c685c3e142d5e95aac9cfe6615ba0c1883a858728f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/political.npz",
+      "bytes": 178144,
+      "sha256": "005527161896bd7d339ef5259f2e89be2bcc5559348a1de577073f84dcdbbde1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/political_events.parquet",
+      "bytes": 4776,
+      "sha256": "b562560085c323aabb998d6e871cb603528519e5ed7abb4366e55c6312e6993b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/political_quarters.parquet",
+      "bytes": 13616,
+      "sha256": "3c75d4173b076c492c1a7fa0dd766f388eb1606ff081558aba7b9022068df07f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/stage_balances.parquet",
+      "bytes": 26523,
+      "sha256": "a5f320adbb1da1e3d72da007b29a9444146009b94123a7e02562e88082a45a8a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/state.npz",
+      "bytes": 785398,
+      "sha256": "1433e30e86eb3b759124f5d7e0d15139ef6274b80f15a8c10d149b80de68eedf"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/checkpoints/tick-0004/tick_diagnostics.parquet",
+      "bytes": 5465,
+      "sha256": "811ddc7a020b857d53796ea48bd427f65bcd1206129f93a2c7bd074834691715"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/departments.parquet",
+      "bytes": 3219,
+      "sha256": "51453990a7719e522dde04709921bf92f9efcdaff03f5d265b90ab826eb3a5f3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/events.parquet",
+      "bytes": 4494,
+      "sha256": "78fcb67649b7c890e9299d69de86e78a41881417dea498f11d216831516572ef"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/financial_accounts.parquet",
+      "bytes": 5218,
+      "sha256": "66271d16301869dfbb2a8568670897b38532f84e287c588d732f55dadd3388ad"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/household_budgets.parquet",
+      "bytes": 13097,
+      "sha256": "d19683bdeea9081b2d0006ea74a99368739163797e33ae14cbadc3a23a8249f7"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/information_quarters.parquet",
+      "bytes": 7582,
+      "sha256": "7351160d2f2a84fac562d7f5949849820205dbd2512c70302af8cf286273fffd"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/manifest.json",
+      "bytes": 7497,
+      "sha256": "e20e480d9a5fdedbdf13001a10bc163475f23f902425f2af3f3aa15d180d0d74"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/national_accounts.parquet",
+      "bytes": 15637,
+      "sha256": "1751ee0d28e81b6d45c819ffe5e5f1edaa72b46508bb7f3b05c07b46ae0c52ba"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/opposition_regions.parquet",
+      "bytes": 8496,
+      "sha256": "eec419459a212b47dfc8a4a979ebabb126f8e0584009beabf02753a42021f3dd"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/organization_diagnostics.parquet",
+      "bytes": 19543,
+      "sha256": "ca087591ba175c67f30335dceb79e065501507caa04b52533a86fb6945d48c30"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/parameters.json",
+      "bytes": 12453,
+      "sha256": "9d98a0cafbf820a5c611b1eaf5682af9fb0e45e1f2343d8279acd28e3d9f2763"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/policy_decisions.parquet",
+      "bytes": 3051,
+      "sha256": "7bad287946209c12f553d2c685c3e142d5e95aac9cfe6615ba0c1883a858728f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/political_events.parquet",
+      "bytes": 4776,
+      "sha256": "b562560085c323aabb998d6e871cb603528519e5ed7abb4366e55c6312e6993b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/political_quarters.parquet",
+      "bytes": 13616,
+      "sha256": "3c75d4173b076c492c1a7fa0dd766f388eb1606ff081558aba7b9022068df07f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/stage_balances.parquet",
+      "bytes": 26523,
+      "sha256": "a5f320adbb1da1e3d72da007b29a9444146009b94123a7e02562e88082a45a8a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/summary.json",
+      "bytes": 4546,
+      "sha256": "7c1ec6ffe4278df8b405090d2ef9556e8ffa01c43658cace62d910dd2eca3d8f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/tick_diagnostics.parquet",
+      "bytes": 5465,
+      "sha256": "811ddc7a020b857d53796ea48bd427f65bcd1206129f93a2c7bd074834691715"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/parent/trajectory.duckdb",
+      "bytes": 4993024,
+      "sha256": "e2667b4bb952c2d6e2ccfed6d2d297f233e3803958dca69fa8a387d5dbe682ac"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/aggregates.parquet",
+      "bytes": 79766,
+      "sha256": "f20b3a986e8d9ba5905e01fd1aaa86d637ac6620d51070529ced47cbf0740650"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/aggregates.parquet",
+      "bytes": 79766,
+      "sha256": "f20b3a986e8d9ba5905e01fd1aaa86d637ac6620d51070529ced47cbf0740650"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/departments.parquet",
+      "bytes": 3445,
+      "sha256": "323593febc39535dcb309409be19fd652ba50f1bf4c38714061a5c19fc53ffaa"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/events.parquet",
+      "bytes": 5469,
+      "sha256": "11c675b4249332232e12d028e18616530e8b84c7b718dee40fa95dde0dbc9888"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/financial_accounts.parquet",
+      "bytes": 5528,
+      "sha256": "a53d93acb3a1fde1143455cdff6631cf458ecec563d9137312f39c769e970b1b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/household_budgets.parquet",
+      "bytes": 16797,
+      "sha256": "140eb5a1b4dbe730fb5cd5947f39fdc7063f297c59b92ae4d50137305d32d394"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/information_quarters.parquet",
+      "bytes": 8114,
+      "sha256": "235fe84ba28deedc4b960372d1cde3794a57caff8e3f8db4bf214d35f7f07ded"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/metadata.json",
+      "bytes": 56643,
+      "sha256": "96ffd03ca2ad4e0b85795fa8c250f765cdb793fb7cba85a4f7f5064fc63130e3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/national_accounts.parquet",
+      "bytes": 17621,
+      "sha256": "de2f61493ab9caa130166f05634a9efda6fe53af2a958f0cc7d08afd540524f2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/network.npz",
+      "bytes": 318789,
+      "sha256": "e868f4e07716a791942d3732171c4ecdbffcc0c693f48f85b5cd6d8a73b230c5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/opposition_regions.parquet",
+      "bytes": 9680,
+      "sha256": "812efeb01e37912ff8969c2a8bbaaaaebbe95a0eef5f6082b550a9a033acd351"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/organization_diagnostics.parquet",
+      "bytes": 26881,
+      "sha256": "1852621de80a756a3490c105d1792fde65b9242a5a267834a86745c69bb21fc2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/policy_decisions.parquet",
+      "bytes": 3147,
+      "sha256": "6762b3ef985d662077b827756f55c68648aca53772bb44b1237b45e0fa5cc3bb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/political.npz",
+      "bytes": 178152,
+      "sha256": "0db26d903ae7f2ce7b6387fe12ceeac34e94c4a3ed09d62d71c344dbc65fc937"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/political_events.parquet",
+      "bytes": 4798,
+      "sha256": "65701f32be6046d3eb6140732cc5fc170f6b30423b332b807a6f593dd8321b2a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/political_quarters.parquet",
+      "bytes": 13675,
+      "sha256": "74efec759f350eba551d7256cbc170306a9302e3d021ec283bae60f0a846d968"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/stage_balances.parquet",
+      "bytes": 39493,
+      "sha256": "8976b29b1a3438f3e8e0338dd6249de401f93f0842fd159e97a74e459670ccb9"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/state.npz",
+      "bytes": 785398,
+      "sha256": "c40edde502a36851dcc681598f7953b828eb7988114e94ebc646d890a4aecf3a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/checkpoints/tick-0006/tick_diagnostics.parquet",
+      "bytes": 5613,
+      "sha256": "cc4bd3f7dc676ab72b745bcd7bf3c3e2083ac5ba6e2b64d99a2db5c80b1b00c0"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/departments.parquet",
+      "bytes": 3445,
+      "sha256": "323593febc39535dcb309409be19fd652ba50f1bf4c38714061a5c19fc53ffaa"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/events.parquet",
+      "bytes": 5469,
+      "sha256": "11c675b4249332232e12d028e18616530e8b84c7b718dee40fa95dde0dbc9888"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/financial_accounts.parquet",
+      "bytes": 5528,
+      "sha256": "a53d93acb3a1fde1143455cdff6631cf458ecec563d9137312f39c769e970b1b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/household_budgets.parquet",
+      "bytes": 16797,
+      "sha256": "140eb5a1b4dbe730fb5cd5947f39fdc7063f297c59b92ae4d50137305d32d394"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/information_quarters.parquet",
+      "bytes": 8114,
+      "sha256": "235fe84ba28deedc4b960372d1cde3794a57caff8e3f8db4bf214d35f7f07ded"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/manifest.json",
+      "bytes": 7670,
+      "sha256": "07f70bd80806d39c28f3d52008007a39693391d0a2f87db7e384fcb527d3ab51"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/national_accounts.parquet",
+      "bytes": 17621,
+      "sha256": "de2f61493ab9caa130166f05634a9efda6fe53af2a958f0cc7d08afd540524f2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/opposition_regions.parquet",
+      "bytes": 9680,
+      "sha256": "812efeb01e37912ff8969c2a8bbaaaaebbe95a0eef5f6082b550a9a033acd351"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/organization_diagnostics.parquet",
+      "bytes": 26881,
+      "sha256": "1852621de80a756a3490c105d1792fde65b9242a5a267834a86745c69bb21fc2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/parameters.json",
+      "bytes": 12453,
+      "sha256": "9d98a0cafbf820a5c611b1eaf5682af9fb0e45e1f2343d8279acd28e3d9f2763"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/policy_decisions.parquet",
+      "bytes": 3147,
+      "sha256": "6762b3ef985d662077b827756f55c68648aca53772bb44b1237b45e0fa5cc3bb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/political_events.parquet",
+      "bytes": 4798,
+      "sha256": "65701f32be6046d3eb6140732cc5fc170f6b30423b332b807a6f593dd8321b2a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/political_quarters.parquet",
+      "bytes": 13675,
+      "sha256": "74efec759f350eba551d7256cbc170306a9302e3d021ec283bae60f0a846d968"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/stage_balances.parquet",
+      "bytes": 39493,
+      "sha256": "8976b29b1a3438f3e8e0338dd6249de401f93f0842fd159e97a74e459670ccb9"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/summary.json",
+      "bytes": 4562,
+      "sha256": "1fcbb63c39d683e71d31f896c652d790616a94b797c055eecb5defa3e046f251"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/tick_diagnostics.parquet",
+      "bytes": 5613,
+      "sha256": "cc4bd3f7dc676ab72b745bcd7bf3c3e2083ac5ba6e2b64d99a2db5c80b1b00c0"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_endogenous/soviet/trajectory.duckdb",
+      "bytes": 4993024,
+      "sha256": "2790fc75f014606c7c4d36dfb7f094e63bec3dc9bd946e386569c798774538ba"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/aggregates.parquet",
+      "bytes": 77945,
+      "sha256": "1fe81c1b59b734f6eaa76f10e4546e133fadc084aa9a5ce6ea911ef9f4c85d5d"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/aggregates.parquet",
+      "bytes": 77945,
+      "sha256": "1fe81c1b59b734f6eaa76f10e4546e133fadc084aa9a5ce6ea911ef9f4c85d5d"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/departments.parquet",
+      "bytes": 3446,
+      "sha256": "1626ba950611f06a0776e6512743e9e627faf11ec1be3fa2cde487d3a366ae5f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/events.parquet",
+      "bytes": 5482,
+      "sha256": "99e456a33f8fc2a13e0c302f34fcdf6108af1af3c12822fbf48a58b6d5e2a0fe"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/financial_accounts.parquet",
+      "bytes": 5521,
+      "sha256": "002b44c807860ed7519d7f0984b59e77e7d7a26ed2c9fa9c992722876434a7b3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/household_budgets.parquet",
+      "bytes": 16015,
+      "sha256": "a1b50abd846095961a3936313a5c923d4d6b323a76d516ab5533b2bdece90d55"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/information_quarters.parquet",
+      "bytes": 7796,
+      "sha256": "82110db13f71924543ed8542bbef3a82aa25b9a5fd7248ac8d462861c6dab463"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/metadata.json",
+      "bytes": 56293,
+      "sha256": "3f960c6cac7962813311b1245b7dd5e62ad71593571ccc484f80037ac7b68e26"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/national_accounts.parquet",
+      "bytes": 17566,
+      "sha256": "58150a87058f72935fb2ab2ff8d9d90c5cffea9ba4c688732d4c4bdf715b31d3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/network.npz",
+      "bytes": 318789,
+      "sha256": "e868f4e07716a791942d3732171c4ecdbffcc0c693f48f85b5cd6d8a73b230c5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/opposition_regions.parquet",
+      "bytes": 9669,
+      "sha256": "77c93e23ee0f8b2f19c29ec7bf9b61df25ef747dee690bb8326e6cbbbc586622"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/organization_diagnostics.parquet",
+      "bytes": 27082,
+      "sha256": "4d5067112fc85750877c190d2a25f73a625374a62ffe50ddcf60bbd614e6b26a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/political.npz",
+      "bytes": 178144,
+      "sha256": "39db97b5837f09ae7b9079c5e9b1dea2438399c6a006278b69279fb2d461e760"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/political_events.parquet",
+      "bytes": 4798,
+      "sha256": "65701f32be6046d3eb6140732cc5fc170f6b30423b332b807a6f593dd8321b2a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/political_quarters.parquet",
+      "bytes": 13529,
+      "sha256": "27e7eccdcf839486b8018491bb3f42b9797c1d88dead48c8bba0f492dba3696e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/stage_balances.parquet",
+      "bytes": 38747,
+      "sha256": "04506e3b3dc3e340921bbd13ca8576189082a20c5f60506198a0489a7dfb3fbe"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/state.npz",
+      "bytes": 785398,
+      "sha256": "ce7eb7107a102432a2a00e3eec5f097fed1e6f69dcedb5a1e2c3a1c708b110bf"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/checkpoints/tick-0006/tick_diagnostics.parquet",
+      "bytes": 5629,
+      "sha256": "6ac85ae42fc5a323057b75ae9c87a19439a400687a66c2185f98bb4c57d4776a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/departments.parquet",
+      "bytes": 3446,
+      "sha256": "1626ba950611f06a0776e6512743e9e627faf11ec1be3fa2cde487d3a366ae5f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/events.parquet",
+      "bytes": 5482,
+      "sha256": "99e456a33f8fc2a13e0c302f34fcdf6108af1af3c12822fbf48a58b6d5e2a0fe"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/financial_accounts.parquet",
+      "bytes": 5521,
+      "sha256": "002b44c807860ed7519d7f0984b59e77e7d7a26ed2c9fa9c992722876434a7b3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/household_budgets.parquet",
+      "bytes": 16015,
+      "sha256": "a1b50abd846095961a3936313a5c923d4d6b323a76d516ab5533b2bdece90d55"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/information_quarters.parquet",
+      "bytes": 7796,
+      "sha256": "82110db13f71924543ed8542bbef3a82aa25b9a5fd7248ac8d462861c6dab463"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/manifest.json",
+      "bytes": 7666,
+      "sha256": "46d908ec320a0340acbd4e6844539903b24d4d74a1b3ef2674362f774e6a8f8c"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/national_accounts.parquet",
+      "bytes": 17566,
+      "sha256": "58150a87058f72935fb2ab2ff8d9d90c5cffea9ba4c688732d4c4bdf715b31d3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/opposition_regions.parquet",
+      "bytes": 9669,
+      "sha256": "77c93e23ee0f8b2f19c29ec7bf9b61df25ef747dee690bb8326e6cbbbc586622"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/organization_diagnostics.parquet",
+      "bytes": 27082,
+      "sha256": "4d5067112fc85750877c190d2a25f73a625374a62ffe50ddcf60bbd614e6b26a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/parameters.json",
+      "bytes": 12449,
+      "sha256": "ef3b5e1a4fef6e26a3bcf89dd9e12b1ea3753b9bbb4ce9001823a4b3a7ef70a6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/political_events.parquet",
+      "bytes": 4798,
+      "sha256": "65701f32be6046d3eb6140732cc5fc170f6b30423b332b807a6f593dd8321b2a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/political_quarters.parquet",
+      "bytes": 13529,
+      "sha256": "27e7eccdcf839486b8018491bb3f42b9797c1d88dead48c8bba0f492dba3696e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/stage_balances.parquet",
+      "bytes": 38747,
+      "sha256": "04506e3b3dc3e340921bbd13ca8576189082a20c5f60506198a0489a7dfb3fbe"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/summary.json",
+      "bytes": 4477,
+      "sha256": "4a9a1eecc72f91483a1bf6cf8e5dd7e74a55807757daa151c4788e18276a3b4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/tick_diagnostics.parquet",
+      "bytes": 5629,
+      "sha256": "6ac85ae42fc5a323057b75ae9c87a19439a400687a66c2185f98bb4c57d4776a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/control/trajectory.duckdb",
+      "bytes": 4730880,
+      "sha256": "8c491e6df0b69b982ff52936486c73cf141a68e742b7611661a5a24f8b742ac4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/aggregates.parquet",
+      "bytes": 51829,
+      "sha256": "de39f6ab86fe48de45f3d058e9ba4692ea92d5156b026e7b986a3fb604d4989a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/aggregates.parquet",
+      "bytes": 51829,
+      "sha256": "de39f6ab86fe48de45f3d058e9ba4692ea92d5156b026e7b986a3fb604d4989a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/departments.parquet",
+      "bytes": 3220,
+      "sha256": "408b7287b564c31c7561c5645f20d9665395a51e5cd2d4f3fcbbf455175cbd8a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/events.parquet",
+      "bytes": 4524,
+      "sha256": "12cf1349ec039fdf354919e7a5a2acb7b7fa359a5f4faccb7818f4525ddd6dd0"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/financial_accounts.parquet",
+      "bytes": 5218,
+      "sha256": "4e4957c4375c4f6ebecd29217c6ae90a28acd6a993644af19d2b327623ebb645"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/household_budgets.parquet",
+      "bytes": 12791,
+      "sha256": "971015558b02a244dce61d92a44d1a60a256ac5b9489337637c8f9bec5907d8b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/information_quarters.parquet",
+      "bytes": 7382,
+      "sha256": "bc58a6738b769f4a095acdc5241fe70026d1b121f771bd90dfaf9062806a6fe5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/metadata.json",
+      "bytes": 55329,
+      "sha256": "3f2a1be40e568258e0a7cc8d5069350f3311363a5aebb771e1bc3e5b7d6a1497"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/national_accounts.parquet",
+      "bytes": 15556,
+      "sha256": "67382050b6913d559746644e4d3f737d3d75a518b0b5266d8b632f032cccaa37"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/network.npz",
+      "bytes": 318789,
+      "sha256": "e868f4e07716a791942d3732171c4ecdbffcc0c693f48f85b5cd6d8a73b230c5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/opposition_regions.parquet",
+      "bytes": 8495,
+      "sha256": "baec91f813e24da635d1011cf1c1e7ab8890511a760858be016d7f3ed1e5d40c"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/organization_diagnostics.parquet",
+      "bytes": 19273,
+      "sha256": "8f26325c488e5726ea7050b5772f1fa2d4a9fbc554e5b64ec66ca1547784e268"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/political.npz",
+      "bytes": 178144,
+      "sha256": "803f8a365b00e804b8775dbd0508e7ecc4362a7578a507da61daf293d7cc696a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/political_events.parquet",
+      "bytes": 4776,
+      "sha256": "b562560085c323aabb998d6e871cb603528519e5ed7abb4366e55c6312e6993b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/political_quarters.parquet",
+      "bytes": 13491,
+      "sha256": "da2c6b1a6396049495f6933bd4b0a0a87666ade8e31c3920175fff105825fbd2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/stage_balances.parquet",
+      "bytes": 26072,
+      "sha256": "be6afd9ec5320e54d91555bd2cdbc22640cac1d11f2af8a236f7791cdf44f0a2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/state.npz",
+      "bytes": 785398,
+      "sha256": "8738edbcc4b1c768156bfa0b9de1fb5f8dcb7629c356d0f45eeaa19585d4bb9b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/checkpoints/tick-0004/tick_diagnostics.parquet",
+      "bytes": 5466,
+      "sha256": "33fc4090a6f64c4d5de7a50fee97887be56eb50d2c77a1d421933921a5dfce88"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/departments.parquet",
+      "bytes": 3220,
+      "sha256": "408b7287b564c31c7561c5645f20d9665395a51e5cd2d4f3fcbbf455175cbd8a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/events.parquet",
+      "bytes": 4524,
+      "sha256": "12cf1349ec039fdf354919e7a5a2acb7b7fa359a5f4faccb7818f4525ddd6dd0"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/financial_accounts.parquet",
+      "bytes": 5218,
+      "sha256": "4e4957c4375c4f6ebecd29217c6ae90a28acd6a993644af19d2b327623ebb645"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/household_budgets.parquet",
+      "bytes": 12791,
+      "sha256": "971015558b02a244dce61d92a44d1a60a256ac5b9489337637c8f9bec5907d8b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/information_quarters.parquet",
+      "bytes": 7382,
+      "sha256": "bc58a6738b769f4a095acdc5241fe70026d1b121f771bd90dfaf9062806a6fe5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/manifest.json",
+      "bytes": 7495,
+      "sha256": "258ed4fa50206dd45982a2829609412a731044c16641676778454b4c216ddf09"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/national_accounts.parquet",
+      "bytes": 15556,
+      "sha256": "67382050b6913d559746644e4d3f737d3d75a518b0b5266d8b632f032cccaa37"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/opposition_regions.parquet",
+      "bytes": 8495,
+      "sha256": "baec91f813e24da635d1011cf1c1e7ab8890511a760858be016d7f3ed1e5d40c"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/organization_diagnostics.parquet",
+      "bytes": 19273,
+      "sha256": "8f26325c488e5726ea7050b5772f1fa2d4a9fbc554e5b64ec66ca1547784e268"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/parameters.json",
+      "bytes": 12449,
+      "sha256": "ef3b5e1a4fef6e26a3bcf89dd9e12b1ea3753b9bbb4ce9001823a4b3a7ef70a6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/political_events.parquet",
+      "bytes": 4776,
+      "sha256": "b562560085c323aabb998d6e871cb603528519e5ed7abb4366e55c6312e6993b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/political_quarters.parquet",
+      "bytes": 13491,
+      "sha256": "da2c6b1a6396049495f6933bd4b0a0a87666ade8e31c3920175fff105825fbd2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/stage_balances.parquet",
+      "bytes": 26072,
+      "sha256": "be6afd9ec5320e54d91555bd2cdbc22640cac1d11f2af8a236f7791cdf44f0a2"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/summary.json",
+      "bytes": 4478,
+      "sha256": "70a237702853a621d5766b13cb5ab50afcdb14dc8bb8cf0412b78650a908c153"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/tick_diagnostics.parquet",
+      "bytes": 5466,
+      "sha256": "33fc4090a6f64c4d5de7a50fee97887be56eb50d2c77a1d421933921a5dfce88"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/parent/trajectory.duckdb",
+      "bytes": 4730880,
+      "sha256": "35c97b14a5cab959661118e9dd486a716af8a648c5b05e0b2879c0a2d7da20be"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/aggregates.parquet",
+      "bytes": 77945,
+      "sha256": "1fe81c1b59b734f6eaa76f10e4546e133fadc084aa9a5ce6ea911ef9f4c85d5d"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/aggregates.parquet",
+      "bytes": 77945,
+      "sha256": "1fe81c1b59b734f6eaa76f10e4546e133fadc084aa9a5ce6ea911ef9f4c85d5d"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/departments.parquet",
+      "bytes": 3446,
+      "sha256": "1626ba950611f06a0776e6512743e9e627faf11ec1be3fa2cde487d3a366ae5f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/events.parquet",
+      "bytes": 5483,
+      "sha256": "1ab69db53a897b8bc50f1e1af76551d65c902aa01f1867d5074faced3a86eeff"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/financial_accounts.parquet",
+      "bytes": 5521,
+      "sha256": "002b44c807860ed7519d7f0984b59e77e7d7a26ed2c9fa9c992722876434a7b3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/household_budgets.parquet",
+      "bytes": 16015,
+      "sha256": "a1b50abd846095961a3936313a5c923d4d6b323a76d516ab5533b2bdece90d55"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/information_quarters.parquet",
+      "bytes": 7797,
+      "sha256": "708ae3a8b7de62f719233dd573163ddbe45e5fa9b0760e695a7fbe54ee0de2c6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/metadata.json",
+      "bytes": 56659,
+      "sha256": "42d8669816731f6ebc9045e1d4a42569ba9866390aa36091ad43a1cbe966a09f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/national_accounts.parquet",
+      "bytes": 17566,
+      "sha256": "58150a87058f72935fb2ab2ff8d9d90c5cffea9ba4c688732d4c4bdf715b31d3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/network.npz",
+      "bytes": 318789,
+      "sha256": "e868f4e07716a791942d3732171c4ecdbffcc0c693f48f85b5cd6d8a73b230c5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/opposition_regions.parquet",
+      "bytes": 9669,
+      "sha256": "77c93e23ee0f8b2f19c29ec7bf9b61df25ef747dee690bb8326e6cbbbc586622"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/organization_diagnostics.parquet",
+      "bytes": 27082,
+      "sha256": "4d5067112fc85750877c190d2a25f73a625374a62ffe50ddcf60bbd614e6b26a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/political.npz",
+      "bytes": 178152,
+      "sha256": "99de09b26bd9569a0fdd3300b1817d25ace66413961ad69b7a607409c65f2c5f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/political_events.parquet",
+      "bytes": 4798,
+      "sha256": "65701f32be6046d3eb6140732cc5fc170f6b30423b332b807a6f593dd8321b2a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/political_quarters.parquet",
+      "bytes": 13537,
+      "sha256": "6a8ba790c37f41ee219448fc2097416c49edea6f7605aaaa4a00cc018bb896e8"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/stage_balances.parquet",
+      "bytes": 38747,
+      "sha256": "04506e3b3dc3e340921bbd13ca8576189082a20c5f60506198a0489a7dfb3fbe"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/state.npz",
+      "bytes": 785398,
+      "sha256": "ce7eb7107a102432a2a00e3eec5f097fed1e6f69dcedb5a1e2c3a1c708b110bf"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/checkpoints/tick-0006/tick_diagnostics.parquet",
+      "bytes": 5632,
+      "sha256": "1c271dfe8ae3989ebb93e39f6e2b8c2fd7d066c722e292340096df467b84c564"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/departments.parquet",
+      "bytes": 3446,
+      "sha256": "1626ba950611f06a0776e6512743e9e627faf11ec1be3fa2cde487d3a366ae5f"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/events.parquet",
+      "bytes": 5483,
+      "sha256": "1ab69db53a897b8bc50f1e1af76551d65c902aa01f1867d5074faced3a86eeff"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/financial_accounts.parquet",
+      "bytes": 5521,
+      "sha256": "002b44c807860ed7519d7f0984b59e77e7d7a26ed2c9fa9c992722876434a7b3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/household_budgets.parquet",
+      "bytes": 16015,
+      "sha256": "a1b50abd846095961a3936313a5c923d4d6b323a76d516ab5533b2bdece90d55"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/information_quarters.parquet",
+      "bytes": 7797,
+      "sha256": "708ae3a8b7de62f719233dd573163ddbe45e5fa9b0760e695a7fbe54ee0de2c6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/manifest.json",
+      "bytes": 7666,
+      "sha256": "92cb7b957976a9799ef9a4c57be7c0535983bb2619490b12e655fe2ba2916526"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/national_accounts.parquet",
+      "bytes": 17566,
+      "sha256": "58150a87058f72935fb2ab2ff8d9d90c5cffea9ba4c688732d4c4bdf715b31d3"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/opposition_regions.parquet",
+      "bytes": 9669,
+      "sha256": "77c93e23ee0f8b2f19c29ec7bf9b61df25ef747dee690bb8326e6cbbbc586622"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/organization_diagnostics.parquet",
+      "bytes": 27082,
+      "sha256": "4d5067112fc85750877c190d2a25f73a625374a62ffe50ddcf60bbd614e6b26a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/parameters.json",
+      "bytes": 12449,
+      "sha256": "ef3b5e1a4fef6e26a3bcf89dd9e12b1ea3753b9bbb4ce9001823a4b3a7ef70a6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/political_events.parquet",
+      "bytes": 4798,
+      "sha256": "65701f32be6046d3eb6140732cc5fc170f6b30423b332b807a6f593dd8321b2a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/political_quarters.parquet",
+      "bytes": 13537,
+      "sha256": "6a8ba790c37f41ee219448fc2097416c49edea6f7605aaaa4a00cc018bb896e8"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/stage_balances.parquet",
+      "bytes": 38747,
+      "sha256": "04506e3b3dc3e340921bbd13ca8576189082a20c5f60506198a0489a7dfb3fbe"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/summary.json",
+      "bytes": 4477,
+      "sha256": "4f96bec495dff4e6a8c0766c27b8bedc1f66b9b417246e7e88b795cb7700a30c"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/tick_diagnostics.parquet",
+      "bytes": 5632,
+      "sha256": "1c271dfe8ae3989ebb93e39f6e2b8c2fd7d066c722e292340096df467b84c564"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/political-micro/p04_replay/soviet/trajectory.duckdb",
+      "bytes": 4730880,
+      "sha256": "d593b1c6a892013e4ec03afd5d08a118e8cff2898051ad28c154d7dd3c6ae0d5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/aggregates.parquet",
+      "bytes": 2365703,
+      "sha256": "3160fd8a9ebe3c6d7d889d555ac3a376f6ef8c9da7ba5a29a9077705edad17f6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/departments.parquet",
+      "bytes": 12638,
+      "sha256": "a3ee9d45cda52648a95126699f9d8768893404dd679b806f6c6da4b1df788acb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/events.parquet",
+      "bytes": 172552,
+      "sha256": "4f73ef379078c4042a8527b9f0c092d4d106940ea0a06c9fb185c0b603ad6be1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/financial_accounts.parquet",
+      "bytes": 57027,
+      "sha256": "784cf661c5cbed53ed2fe3ec741e63398e5c4392d4af596d26bd15a9ef2914ae"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/household_budgets.parquet",
+      "bytes": 170172,
+      "sha256": "a9a3b6d12d08b89a31e3d34b0be27acdfc9aac4cbd0b7c11784e8969b9c9c491"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/information_quarters.parquet",
+      "bytes": 1872,
+      "sha256": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/initial_recipe.json",
+      "bytes": 704,
+      "sha256": "8edfceb160032dbfc9e9eaef321994b7f1d5729b59b0fb516b90c72d810f5aaa"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/manifest.json",
+      "bytes": 5571,
+      "sha256": "613b1b3f1ee427809ac0c9b384deb62ffe0755ab59acb1bbabd00550dc0cff94"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/national_accounts.parquet",
+      "bytes": 158213,
+      "sha256": "93da4282e06ffa39e85d86cc5b4dfeb61046dfbcf4c8828d42f863ecc5486649"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/opposition_regions.parquet",
+      "bytes": 1665,
+      "sha256": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/organization_diagnostics.parquet",
+      "bytes": 951743,
+      "sha256": "e34b6798e1b5e896fa75d3369b0fc85d0703c8f849a3a07f7cc689b846d0d3bc"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/parameters.json",
+      "bytes": 4158,
+      "sha256": "e2ca0005267851bab1cc0872bbe86921edf6b215f6b20e0760b26d42410594ec"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/political_events.parquet",
+      "bytes": 1060,
+      "sha256": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/political_quarters.parquet",
+      "bytes": 4059,
+      "sha256": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/stage_balances.parquet",
+      "bytes": 964153,
+      "sha256": "eb072e6d6d6ef905ffc75b8dba799fe79f04f81470e30e2aaa33b25736ff4436"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/summary.json",
+      "bytes": 9485,
+      "sha256": "2de347b4c132ed4bca2b8cd42396f30d5bad2a45dcf73b0e1140b5627e7694b9"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/tick_diagnostics.parquet",
+      "bytes": 13313,
+      "sha256": "93c14ccc32fa3881700170e1ae2d743c2c19e7eb3f01188b3987be5f3bb3ff81"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C0/trajectory.duckdb",
+      "bytes": 15216640,
+      "sha256": "5cf748f1718a6603a982fc4d28115116e0735f65c0016b7995a99b5c743041c0"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/aggregates.parquet",
+      "bytes": 2205845,
+      "sha256": "16d99bdc7e92f9ed21d97e74913349be92e505befeb4488c06039603572aec58"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/departments.parquet",
+      "bytes": 11391,
+      "sha256": "6452edd3a9ce0823dcf6f91bff1d982032a9cd44eba92667737708486189fa5c"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/events.parquet",
+      "bytes": 130572,
+      "sha256": "f11296c928bb833bd6304fffa5ad4b2f2ee39dbb3a9c031a8c0cb813055ca72e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/financial_accounts.parquet",
+      "bytes": 59590,
+      "sha256": "79acf36c086385cfa375769844adc6b9dd66f335ed743871ec2a4ec047e86514"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/household_budgets.parquet",
+      "bytes": 188832,
+      "sha256": "5ffab91fa753956d4b93aa7f6108bb69d6ea5d2116763882f617e34d1a2d2fc1"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/information_quarters.parquet",
+      "bytes": 1872,
+      "sha256": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/initial_recipe.json",
+      "bytes": 712,
+      "sha256": "8f50b008226925e29720dc71742cc7aae1678797bacb513d5b304667369d9aa9"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/manifest.json",
+      "bytes": 5571,
+      "sha256": "f5cdd312d5052b1cad6f92e83f43c7a468c22936ff6445a445c3e070bd496378"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/national_accounts.parquet",
+      "bytes": 166001,
+      "sha256": "4cfa1cd9e75fa04b391dba07ab0afbbef20679e07fbc379db67ab0a1eeb1b8d5"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/opposition_regions.parquet",
+      "bytes": 1665,
+      "sha256": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/organization_diagnostics.parquet",
+      "bytes": 871517,
+      "sha256": "2822f4e815c8b76bc6112cebeaf6928e0fdf86ad8a2ef0f531698605a7be6532"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/parameters.json",
+      "bytes": 5766,
+      "sha256": "dd36cb701c563ea3a9a3a049d34fd6f42c7ed55ddf3eb5259a3df05978c28d78"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/political_events.parquet",
+      "bytes": 1060,
+      "sha256": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/political_quarters.parquet",
+      "bytes": 4059,
+      "sha256": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/stage_balances.parquet",
+      "bytes": 886146,
+      "sha256": "6497521a31ef28cf6e27a78a8e9266302bf01dcef2255fe1ee8ea1e28e4af317"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/summary.json",
+      "bytes": 9755,
+      "sha256": "0e768a9ab104c0e312e1a8bd9329ec5422c5ab4a0bbf0b092792c532c3fdd0ea"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/tick_diagnostics.parquet",
+      "bytes": 13014,
+      "sha256": "0850c8b11d7cc27abec38432367123207ea77b27c30b575752bcaaad9e0f1a79"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/rebuilt-C1/trajectory.duckdb",
+      "bytes": 14954496,
+      "sha256": "7a553fa89ec8145be2dbc3dcebec56a160625fd25e715b98e1c41c79e6d5204a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/aggregates.parquet",
+      "bytes": 1889430,
+      "sha256": "80ae1c1676fb4bc1931b20968b5d1bd99d01252b73d83ac4e460ba2d9b19ac0a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/aggregates.parquet",
+      "bytes": 1889430,
+      "sha256": "80ae1c1676fb4bc1931b20968b5d1bd99d01252b73d83ac4e460ba2d9b19ac0a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/departments.parquet",
+      "bytes": 10120,
+      "sha256": "11777df9469ee58a2b41e1772a006a32f37a9ff8ef86f92afcc7c7375b607b33"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/events.parquet",
+      "bytes": 118666,
+      "sha256": "268d21b35350c2b9156bfe3535d3bde12fd4da93b7ee1fe38b5d629a8578a68a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/financial_accounts.parquet",
+      "bytes": 47035,
+      "sha256": "698a3f6245d0577e33b83b1aa3fb60914b837a492ea269ccf19f9920877d6f94"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/household_budgets.parquet",
+      "bytes": 151729,
+      "sha256": "38b918ccf159c53baa690fe78840ddc5afa397349f8c4146260cbfc7deeef5ea"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/information_quarters.parquet",
+      "bytes": 1872,
+      "sha256": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/metadata.json",
+      "bytes": 51024,
+      "sha256": "62e49afd20365f757dd9ca6fc0db9c89bf66dabecf5203bd6ffb70ae056e7518"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/national_accounts.parquet",
+      "bytes": 136623,
+      "sha256": "bc4c89366bd796e4f9079b67bd63c46a77546cdf29dcba4f1c54c5d895697966"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/network.npz",
+      "bytes": 2388426,
+      "sha256": "2dda10bfa6b860958098e86dfc534f11e37b59472369fa9cd8a50ef151821498"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/opposition_regions.parquet",
+      "bytes": 1665,
+      "sha256": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/organization_diagnostics.parquet",
+      "bytes": 701005,
+      "sha256": "295fadb4ddac44c05116d13cc095e3dd70b83dd3aac2418292d52cb8789648d0"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/political_events.parquet",
+      "bytes": 1060,
+      "sha256": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/political_quarters.parquet",
+      "bytes": 4059,
+      "sha256": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/stage_balances.parquet",
+      "bytes": 784926,
+      "sha256": "9697cf56a95bca84923e5de60e895e8535d35e9e0c0a0c3d095ea3dd7389a8a6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/state.npz",
+      "bytes": 4280826,
+      "sha256": "3d729578df4e762aad2df0e1bfb55a7891a018bdc318b2f8ccb2f1bcc52d8686"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/checkpoints/tick-0088/tick_diagnostics.parquet",
+      "bytes": 11283,
+      "sha256": "1e5bdcbbb91f7534350d6f88efedf39ee46fa7eb1bf19339ce2653f812978404"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/departments.parquet",
+      "bytes": 10120,
+      "sha256": "11777df9469ee58a2b41e1772a006a32f37a9ff8ef86f92afcc7c7375b607b33"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/events.parquet",
+      "bytes": 118666,
+      "sha256": "268d21b35350c2b9156bfe3535d3bde12fd4da93b7ee1fe38b5d629a8578a68a"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/financial_accounts.parquet",
+      "bytes": 47035,
+      "sha256": "698a3f6245d0577e33b83b1aa3fb60914b837a492ea269ccf19f9920877d6f94"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/household_budgets.parquet",
+      "bytes": 151729,
+      "sha256": "38b918ccf159c53baa690fe78840ddc5afa397349f8c4146260cbfc7deeef5ea"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/information_quarters.parquet",
+      "bytes": 1872,
+      "sha256": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/initial_recipe.json",
+      "bytes": 712,
+      "sha256": "8f50b008226925e29720dc71742cc7aae1678797bacb513d5b304667369d9aa9"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/manifest.json",
+      "bytes": 7599,
+      "sha256": "dddcc9cd51030f5e077efb23610e26d932704d880b90fdcaefa1d7c8135a3448"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/national_accounts.parquet",
+      "bytes": 136623,
+      "sha256": "bc4c89366bd796e4f9079b67bd63c46a77546cdf29dcba4f1c54c5d895697966"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/opposition_regions.parquet",
+      "bytes": 1665,
+      "sha256": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/organization_diagnostics.parquet",
+      "bytes": 701005,
+      "sha256": "295fadb4ddac44c05116d13cc095e3dd70b83dd3aac2418292d52cb8789648d0"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/parameters.json",
+      "bytes": 5766,
+      "sha256": "dd36cb701c563ea3a9a3a049d34fd6f42c7ed55ddf3eb5259a3df05978c28d78"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/policy_decisions.parquet",
+      "bytes": 735,
+      "sha256": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/political_events.parquet",
+      "bytes": 1060,
+      "sha256": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/political_quarters.parquet",
+      "bytes": 4059,
+      "sha256": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/stage_balances.parquet",
+      "bytes": 784926,
+      "sha256": "9697cf56a95bca84923e5de60e895e8535d35e9e0c0a0c3d095ea3dd7389a8a6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/summary.json",
+      "bytes": 9803,
+      "sha256": "c5f9c4cae9c55e540929f0681ff79f3475ed542038022bcb331a975f76ce62b9"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/tick_diagnostics.parquet",
+      "bytes": 11283,
+      "sha256": "1e5bdcbbb91f7534350d6f88efedf39ee46fa7eb1bf19339ce2653f812978404"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/replay/trajectory.duckdb",
+      "bytes": 12857344,
+      "sha256": "4a9efbbb6c69886559c22e07fc9ab2e78d09a2a839dda88b2fcb2e8f2b39e031"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/reproduction_table.csv",
+      "bytes": 5922,
+      "sha256": "3cd11cf5f51a9d66c1d35e8d964b2b113179f5d9e373c13106c1a03a0835d0c6"
+    },
+    {
+      "path": "outputs/codex-audit-vnext-20261011/reproduction/reproduction_table.json",
+      "bytes": 25739,
+      "sha256": "6ad8e439504ffdab047673533265141f064b6bd8fedd1a16f703135fab906093"
+    }
+  ],
+  "additional_clearance_dirs_created_in_audit_time_window": [
+    "outputs/p06-clearance-digest-e70ef017fa4141ca9db1146670e4ff61"
+  ]
+}

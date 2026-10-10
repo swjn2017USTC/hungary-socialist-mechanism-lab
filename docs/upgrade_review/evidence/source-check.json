@@ -1,0 +1,94 @@
+[
+  {
+    "url": "https://epa.oszk.hu/05300/05300",
+    "final_url": "https://epa.oszk.hu/05300/05300",
+    "status": 200,
+    "content_type": "text/html",
+    "seconds": 4.3207485,
+    "title": "Elektronikus Periodika Arch\u00edvum",
+    "body_sha256": "e71b6670ca1dc7b077fa9250291e6b563426c3207d70c790e2d4282bf6ddb5e4",
+    "links": [
+      "/html/vgi/kardexlap.phtml?id=05300",
+      "/html/vgi/kardexlap.phtml?aktev=1968&id=5300",
+      "/html/vgi/kardexlap.phtml?aktev=1974&id=5300",
+      "/html/vgi/kardexlap.phtml?aktev=1978&id=5300",
+      "/html/vgi/kardexlap.phtml?aktev=1983&id=5300",
+      "/05300/05300/fotok.html",
+      "/html/kereso.phtml?id=05300",
+      "mailto:epa-info@mek.oszk.hu?subject=epa-05300",
+      "https://epa.oszk.hu/05300/05300"
+    ]
+  },
+  {
+    "url": "https://www.kshkonyvtar.hu/article/4/290/szamitastechnikai-statisztikai-evkoenyv",
+    "final_url": "https://www.kshkonyvtar.hu/article/4/290/szamitastechnikai-statisztikai-evkoenyv",
+    "status": 200,
+    "content_type": "text/html; charset=UTF-8",
+    "seconds": 5.587714458,
+    "title": "KSH K\u00f6nyvt\u00e1r",
+    "body_sha256": "d6d3ddefaaec5ecd15a24f7fbbfd94cd25dec8e549a3e2f9cc07e13be0eb5efa",
+    "links": [
+      "/article/57/248/nepszamlalasi-digitalis-adattar",
+      "/article/57/248/nepszamlalasi-digitalis-adattar",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk2OC5wZGY=",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk3MC5wZGY=",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk3Mi5wZGY=",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk3NC5wZGY=",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk3Ni5wZGY=",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk3OC5wZGY=",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk4MC5wZGY=",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk4MS5wZGY=",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk4My5wZGY=",
+      "/file-download/L2hvbWUvc2lsaW5mby9hcHBsaWNhdGlvbi93b3JrZGlyL2NrZWRpdG9yQ3VzdG9tRmlsZXMvRsOpbnllcyBFbGVrIGRpZ2l0w6FsaXMgc3RhdGlzenRpa2FpIGvDtm55dnTDoXIvU3phbWl0YXN0ZWNobmlrYV9ldmtvbnl2L3N6YW1pdGFzdGVjaG5pa2FpX2V2a29ueXZfMTk4NS5wZGY="
+    ]
+  },
+  {
+    "url": "https://web.kshkonyvtar.hu/article/89/1239/szamitastechnika-1969-1986",
+    "final_url": "https://web.kshkonyvtar.hu/article/89/1239/szamitastechnika-1969-1986",
+    "status": 200,
+    "content_type": "text/html; charset=UTF-8",
+    "seconds": 5.938327,
+    "title": "KSH K\u00f6nyvt\u00e1r",
+    "body_sha256": "856f3c8d51e82eff5f6f667e614febdb9c73560d4d1c452b7c378960ccec8eed",
+    "links": [
+      "/article/57/248/nepszamlalasi-digitalis-adattar",
+      "/article/57/248/nepszamlalasi-digitalis-adattar"
+    ]
+  },
+  {
+    "url": "https://www.elibrary.imf.org/display/book/9781451963830/back-1.xml",
+    "final_url": "https://www.elibrary.imf.org/display/book/9781451963830/back-1.xml",
+    "status": 202,
+    "content_type": "text/html; charset=UTF-8",
+    "seconds": 1.818008792,
+    "title": null,
+    "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "links": []
+  },
+  {
+    "url": "https://www.ksh.hu/copyright_eng",
+    "final_url": "https://www.ksh.hu/copyright_eng",
+    "status": 200,
+    "content_type": "text/html; charset=iso-8859-2",
+    "seconds": 6.22250825,
+    "title": "Hungarian Central Statistical Office",
+    "body_sha256": "fcaf81b6a8cec7e510a0ef5d5533b7ee18f244e3d31bbbc287d35cc8c75f8c6b",
+    "links": [
+      "copyright_eng#main",
+      "https://nepszamlalas2022.ksh.hu/en/database/",
+      "https://nepszamlalas2022.hu/en",
+      "intrastat_eng",
+      "extrastat_eng",
+      "copyright_eng"
+    ]
+  },
+  {
+    "url": "https://statisztika.mnb.hu/sw/static/file/magyarorsza-g-pe-nzu-gyi-sza-mla-i-1970-1989-en.PDF",
+    "final_url": "https://statisztika.mnb.hu/sw/static/file/magyarorsza-g-pe-nzu-gyi-sza-mla-i-1970-1989-en.PDF",
+    "status": 200,
+    "content_type": "application/pdf",
+    "seconds": 3.4991326249999997,
+    "method": "HEAD",
+    "body_not_read": true
+  }
+]

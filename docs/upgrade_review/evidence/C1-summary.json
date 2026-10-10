@@ -1,0 +1,297 @@
+{
+  "by_commodity": {
+    "g01_solid_fuels": {
+      "availability_unmet": 326197.7937330928,
+      "exports": 30.0,
+      "final_stock": 1754650.3546802343,
+      "household_consumption": 37848.34566084517,
+      "household_desired": 364046.13939393795,
+      "imports": 232.0,
+      "production": 2203303.4679205823
+    },
+    "g02_oil_gas_fuels": {
+      "availability_unmet": 81595.9618811862,
+      "exports": 29.37673265156967,
+      "final_stock": 1291122.1903087464,
+      "household_consumption": 9415.572967298296,
+      "household_desired": 91011.53484848449,
+      "imports": 232.0,
+      "production": 1553060.2211005837
+    },
+    "g03_electricity_heat": {
+      "availability_unmet": 172576.28356983807,
+      "exports": 1.6666666666666667,
+      "final_stock": 0.0,
+      "household_consumption": 9446.786127130857,
+      "household_desired": 182023.06969696897,
+      "imports": 193.33333333333312,
+      "production": 1171500.4482486553
+    },
+    "g04_basic_metals_materials": {
+      "availability_unmet": 0.0,
+      "exports": 9.133817580419901,
+      "final_stock": 727437.5244359724,
+      "household_consumption": 0.0,
+      "household_desired": 0.0,
+      "imports": 116.0,
+      "production": 967201.826490245
+    },
+    "g05_chemicals_fertilizer": {
+      "availability_unmet": 0.0,
+      "exports": 19.999999999999996,
+      "final_stock": 354659.279629514,
+      "household_consumption": 0.0,
+      "household_desired": 0.0,
+      "imports": 154.66666666666666,
+      "production": 586276.8685533443
+    },
+    "g06_machinery_capital": {
+      "availability_unmet": 0.0,
+      "exports": 1.8503631853149254,
+      "final_stock": 186966.70357663388,
+      "household_consumption": 0.0,
+      "household_desired": 0.0,
+      "imports": 58.0,
+      "production": 383606.5047745403
+    },
+    "g07_construction": {
+      "availability_unmet": 45.00000000000013,
+      "exports": 6.5,
+      "final_stock": 82335.22932078749,
+      "household_consumption": 0.0,
+      "household_desired": 45.00000000000013,
+      "imports": 0.0,
+      "production": 155079.8554393521
+    },
+    "g08_agricultural_raw": {
+      "availability_unmet": 0.0,
+      "exports": 36.875,
+      "final_stock": 2194265.5261911247,
+      "household_consumption": 0.0,
+      "household_desired": 0.0,
+      "imports": 290.0,
+      "production": 2473197.987496543
+    },
+    "g09_basic_food": {
+      "availability_unmet": 806096.6530305777,
+      "exports": 17.36499640699072,
+      "final_stock": 192120.34536625858,
+      "household_consumption": 106070.50966956165,
+      "household_desired": 912050.0000000098,
+      "imports": 232.0,
+      "production": 283684.9360110009
+    },
+    "g10_animal_food": {
+      "availability_unmet": 708660.1009600628,
+      "exports": 4.737511935838071,
+      "final_stock": 113822.58352507971,
+      "household_consumption": 71620.1527858983,
+      "household_desired": 780280.2537459611,
+      "imports": 92.7999999999998,
+      "production": 175994.6738229138
+    },
+    "g11_textiles_footwear": {
+      "availability_unmet": 168864.94078445534,
+      "exports": 19.398150591604946,
+      "final_stock": 266234.66581497074,
+      "household_consumption": 21907.227665259285,
+      "household_desired": 190772.16844971429,
+      "imports": 154.66666666666666,
+      "production": 277206.62496415514
+    },
+    "g12_household_nondurables": {
+      "availability_unmet": 168865.9136471126,
+      "exports": 24.246682524643816,
+      "final_stock": 266269.45681236155,
+      "household_consumption": 21906.25480260203,
+      "household_desired": 190772.16844971429,
+      "imports": 193.33333333333312,
+      "production": 277206.62496415514
+    },
+    "g13_household_durables": {
+      "availability_unmet": 136705.3994058045,
+      "exports": 3.75,
+      "final_stock": 236208.6912922375,
+      "household_consumption": 5364.348296418698,
+      "household_desired": 142069.74770222313,
+      "imports": 29.0,
+      "production": 233987.78958865616
+    },
+    "g14_vehicles_transport_equipment": {
+      "availability_unmet": 39140.31508497545,
+      "exports": 1.5000000000000002,
+      "final_stock": 156747.4553352255,
+      "household_consumption": 4294.504390545313,
+      "household_desired": 43434.81947552076,
+      "imports": 11.599999999999975,
+      "production": 155991.85972577074
+    },
+    "g15_market_services": {
+      "availability_unmet": 144971.4974671578,
+      "exports": 23.0,
+      "final_stock": 0.0,
+      "household_consumption": 39991.644993545495,
+      "household_desired": 183999.8963580412,
+      "imports": 232.0,
+      "production": 741209.9471521787
+    },
+    "g16_housing_public_services": {
+      "availability_unmet": 135117.1670985826,
+      "exports": 24.059443723698166,
+      "final_stock": 0.0,
+      "household_consumption": 47292.83290141809,
+      "household_desired": 182410.0000000012,
+      "imports": 232.0,
+      "production": 831053.761120514
+    }
+  },
+  "checkpoint_paths": [],
+  "commodity_ids": [
+    "g01_solid_fuels",
+    "g02_oil_gas_fuels",
+    "g03_electricity_heat",
+    "g04_basic_metals_materials",
+    "g05_chemicals_fertilizer",
+    "g06_machinery_capital",
+    "g07_construction",
+    "g08_agricultural_raw",
+    "g09_basic_food",
+    "g10_animal_food",
+    "g11_textiles_footwear",
+    "g12_household_nondurables",
+    "g13_household_durables",
+    "g14_vehicles_transport_equipment",
+    "g15_market_services",
+    "g16_housing_public_services"
+  ],
+  "completed_ticks": 116,
+  "deterministic_replay_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+  "dimensions": {
+    "D": 2637,
+    "K": 1246,
+    "M": 36164,
+    "P": 386,
+    "S": 2775,
+    "commodities": 16,
+    "households": 5000,
+    "organizations": 400,
+    "regions": 20
+  },
+  "end": "1985Q4",
+  "engine_version": "material-engine-v4",
+  "horizon_reached": true,
+  "household_budget": {
+    "final_cash": 10212757.462478487,
+    "forced_saving": 5765362.080292724,
+    "income": 10819607.746894648,
+    "spending": 605702.1331031765,
+    "voluntary_saving": 4447375.572344845
+  },
+  "households": 5000,
+  "initial_recipe_hash": "10655b0706fae7960a6a7b6dec660d160b9c6670186bec7adf82743870432b82",
+  "input_artifact_hashes": {
+    "p02_material_global_usd_rate_quarterly": "16df220d707d6800ce9e749df5a887e8207310246cd3bfabbd65416cd6652882",
+    "p02_material_world_oil_quarterly": "93709a3aae211376debb0143a8567ef236e39818bcf653606402c8e53bc364cb"
+  },
+  "invariants": {
+    "checked_ticks": 116,
+    "max_finance_abs_residual": 4.190951585769653e-09,
+    "max_finance_tolerance_ratio": 0.00034106051316483643,
+    "max_material_abs_residual": 2.9103830456733704e-11,
+    "max_material_tolerance_ratio": 0.0007815970093360491
+  },
+  "last_completed_quarter": "1985Q4",
+  "mechanism_diagnostics": {
+    "assessment_status": "not_assessed",
+    "bailout_expectation_mean_close": 8.735320789266578e-15,
+    "bailout_ticks_with_grants": 17,
+    "expired_services_total": 2563202.816431937,
+    "financial_delivery_blocked_total": 186.04884225287933,
+    "shortage_expectation_mean_close": 0.0
+  },
+  "mechanism_note": "Intermediate-8 economic quantities are synthetic engineering fixture values, not historical Hungarian magnitudes; mechanism diagnostics carry numeric counts only and no theory verdict.",
+  "organizations": 400,
+  "output_policy": "ensemble_compact",
+  "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+  "performance": {
+    "aggregate_wall_s": 0.835175248212181,
+    "allocation_wall_s": 0.09331608732463792,
+    "checkpoint_wall_s": 0.0,
+    "compute_wall_s": 2.0676633310504258,
+    "cpu_s": 6.976492,
+    "delivery_wall_s": 0.3537457073107362,
+    "digest_wall_s": 1.8849084548419341,
+    "effective_scalar_updates": 9607352,
+    "finance_wall_s": 0.21767699770862237,
+    "gates_wall_s": 0.03378554037772119,
+    "households_wall_s": 1.0453306689159945,
+    "init_wall_s": 0.11067537497729063,
+    "orders_wall_s": 0.0148012510035187,
+    "preflight_wall_s": 0.042819166963454336,
+    "production_wall_s": 0.016048537101596594,
+    "target_wall_s": 0.2063518744544126,
+    "total_wall_s": 6.9478339169872925,
+    "trade_wall_s": 0.028840663202572614,
+    "transport_wall_s": 0.009779752988833934,
+    "write_wall_s": 0.37885874998755753
+  },
+  "planned_ticks": 116,
+  "political_mode": null,
+  "region_ids": [
+    "budapest",
+    "pest",
+    "borsod_abauj_zemplen",
+    "heves",
+    "nograd",
+    "fejer",
+    "komarom",
+    "veszprem",
+    "gyor_sopron",
+    "vas",
+    "zala",
+    "baranya",
+    "somogy",
+    "tolna",
+    "hajdu_bihar",
+    "szabolcs_szatmar",
+    "szolnok",
+    "bacs_kiskun",
+    "bekes",
+    "csongrad"
+  ],
+  "research_warnings": [
+    "Simulation is an argument, not evidence.",
+    "A probability produced by an agent or decision model is not a historical probability.",
+    "material_synthetic_fixture_not_historical_fit"
+  ],
+  "rng_draws_by_module": {
+    "household.initial_attributes": 25000
+  },
+  "rng_draws_count": 25000,
+  "rng_scheme_version": "pcg64-sha256-module-v1",
+  "row_counts": {
+    "aggregates": 37120,
+    "departments": 580,
+    "events": 116,
+    "financial_accounts": 1508,
+    "household_budgets": 2320,
+    "information_quarters": 0,
+    "national_accounts": 1856,
+    "opposition_regions": 0,
+    "organization_diagnostics": 20880,
+    "policy_decisions": 0,
+    "political_events": 0,
+    "political_quarters": 0,
+    "stage_balances": 38976,
+    "tick_diagnostics": 116
+  },
+  "run_id": "e070d70a750e42f783bb6b10b4ba41b8",
+  "run_kind": "material_household_simulation",
+  "scenario_id": "historical_f2_trade_scenario",
+  "schema_version": "1",
+  "seed": 1729,
+  "start": "1957Q1",
+  "stochastic_modules_active": [
+    "household.initial_attributes"
+  ]
+}

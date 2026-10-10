@@ -1,0 +1,26 @@
+Installed 42 packages in 185ms
+Optimization potentially failed:
+Status: warning
+Termination condition: infeasible
+Solution: 0 primals, 0 duals
+Objective: nan
+Solver: highs
+Runtime: 0.00s
+MIP gap: inf
+Dual bound: 0.00e+00
+Solver model: available
+Solver message: Infeasible
+
+Optimization potentially failed:
+Status: warning
+Termination condition: infeasible
+Solution: 0 primals, 0 duals
+Objective: nan
+Solver: highs
+Runtime: 0.00s
+MIP gap: inf
+Dual bound: 0.00e+00
+Solver model: available
+Solver message: Infeasible
+
+AUDIT_JSON={"python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]", "platform": "macOS-26.5-arm64-arm-64bit", "versions": {"linopy": "0.10.0", "highspy": "1.15.1", "pymrio": "0.6.3", "numpy": "2.5.3", "scipy": "1.18.1", "pandas": "3.0.6", "polars": "1.44.2"}, "lp_cases": [{"case": "open", "status": "ok", "termination": "optimal", "scipy_status": 0, "solve_seconds": 0.5125656250165775, "objective": 12.0, "max_balance_residual": 0.0, "dual": [[[1.0, 1.0], [1.0, 1.0]], [[-0.0, -0.0], [-0.0, -0.0]], [[-0.0, -0.0], [-0.0, -0.0]]]}, {"case": "cut_edge", "status": "warning", "termination": "infeasible", "scipy_status": 2, "solve_seconds": 0.011171874997671694}, {"case": "zero_cash", "status": "warning", "termination": "infeasible", "scipy_status": 2, "solve_seconds": 0.01030437502777204}], "io": {"output": [15.966386554621849, 27.731092436974787], "max_balance_residual": 0.0, "calc_seconds": 0.01840304199140519}, "total_seconds": 2.0410367090371437, "max_rss_bytes_macos": 286097408}

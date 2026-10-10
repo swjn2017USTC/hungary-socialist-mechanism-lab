@@ -1,0 +1,40 @@
+[
+  {
+    "id": "f2-h0-closure",
+    "argv": [
+      "uv",
+      "run",
+      "--locked",
+      "hsm",
+      "calibration",
+      "audit-closure",
+      "--scenario",
+      "historical_f2_replay",
+      "--output-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/f2-h0-closure",
+      "--diagnostic-ticks",
+      "116",
+      "--json"
+    ],
+    "exit_code": 1,
+    "wall_seconds": 4.461,
+    "log": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/f2-h0-closure.log"
+  },
+  {
+    "id": "clearance",
+    "argv": [
+      "uv",
+      "run",
+      "--locked",
+      "hsm",
+      "calibration",
+      "p06-clearance",
+      "--output",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/P06_CLEARANCE_RECHECK.md",
+      "--json"
+    ],
+    "exit_code": 1,
+    "wall_seconds": 0.409,
+    "log": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/clearance.log"
+  }
+]

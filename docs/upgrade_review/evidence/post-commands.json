@@ -1,0 +1,129 @@
+[
+  {
+    "id": "C0-bundle",
+    "argv": [
+      "uv",
+      "run",
+      "--locked",
+      "hsm",
+      "calibration",
+      "bundle",
+      "--run-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/C0",
+      "--bundle-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/bundle-C0",
+      "--json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.533,
+    "log": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/C0-bundle.log"
+  },
+  {
+    "id": "C0-bundle-verify",
+    "argv": [
+      "uv",
+      "run",
+      "--locked",
+      "hsm",
+      "calibration",
+      "bundle-verify",
+      "--bundle-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/bundle-C0",
+      "--replay-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/rebuilt-C0",
+      "--json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.368,
+    "log": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/C0-bundle-verify.log"
+  },
+  {
+    "id": "C1-bundle",
+    "argv": [
+      "uv",
+      "run",
+      "--locked",
+      "hsm",
+      "calibration",
+      "bundle",
+      "--run-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/C1",
+      "--bundle-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/bundle-C1",
+      "--json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.543,
+    "log": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/C1-bundle.log"
+  },
+  {
+    "id": "C1-bundle-verify",
+    "argv": [
+      "uv",
+      "run",
+      "--locked",
+      "hsm",
+      "calibration",
+      "bundle-verify",
+      "--bundle-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/bundle-C1",
+      "--replay-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/rebuilt-C1",
+      "--json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.597,
+    "log": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/C1-bundle-verify.log"
+  },
+  {
+    "id": "reproduction",
+    "argv": [
+      "uv",
+      "run",
+      "--locked",
+      "hsm",
+      "calibration",
+      "reproduction-table",
+      "--output-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/reproduction",
+      "--json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 6.112,
+    "log": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/reproduction.log"
+  },
+  {
+    "id": "closure",
+    "argv": [
+      "uv",
+      "run",
+      "--locked",
+      "hsm",
+      "calibration",
+      "audit-closure",
+      "--output-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/closure",
+      "--json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.479,
+    "log": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/closure.log"
+  },
+  {
+    "id": "leak",
+    "argv": [
+      "uv",
+      "run",
+      "--locked",
+      "hsm",
+      "calibration",
+      "audit-leak",
+      "--output-dir",
+      "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/leak",
+      "--json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.829,
+    "log": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/leak.log"
+  }
+]

@@ -1,0 +1,19 @@
+{"catalog_id": "intermediate8_v1", "certificate_path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/codex-audit-vnext-20261011/closure/certificate.json", "command": "calibration audit-closure", "credit_debt_growth": -0.7829671290745084, "dead_commodities": [], "debt_to_output": 0.008239834723143533, "diagnostic_ticks": 232, "engine_version": "material-engine-v4", "forced_saving_ratio": 1.435705095749122e-17, "lambda_common": 1.0, "max_finance_tolerance_ratio": 2.8421709430403923e-05, "max_material_tolerance_ratio": 0.006427747223365675, "max_periodic_residual": 0.01710535192051641, "output_liveness": 0.9875151157337088, "passed": true, "periodic_residuals": {"cash": 1.8670403868155956e-07, "output": 4.6279344050565767e-07, "stock": 0.01710535192051641}, "periodic_tolerance": 1e-06, "sbc_transfer_ratio": 0.2312594777093611, "scenario_id": "intermediate8", "status": "ok", "stock_output_ratio_annual_drift": 0.05784907061054094, "stock_output_ratio_residual": 0.01710506894887627, "stock_output_ratio_tolerance": 0.05}
+        5.47 real         5.28 user         0.16 sys
+           213778432  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               28328  page reclaims
+                  94  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   1  messages sent
+                   1  messages received
+                   1  signals received
+                   1  voluntary context switches
+                2061  involuntary context switches
+           142679877  instructions retired
+            51075207  cycles elapsed
+            11387312  peak memory footprint

@@ -1,0 +1,17 @@
+{
+  "id": "clearance-with-runs",
+  "argv": [
+    "uv",
+    "run",
+    "--locked",
+    "hsm",
+    "calibration",
+    "p06-clearance",
+    "--with-runs",
+    "--output",
+    "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/P06_CLEARANCE_WITH_RUNS.md",
+    "--json"
+  ],
+  "exit_code": 0,
+  "wall_seconds": 7.309
+}
