@@ -247,6 +247,7 @@ def _check_p06_arms_summary(root: Path) -> tuple[bool, str]:
         missing = expected_ids - set(index[family])
         if missing:
             return False, f"{family} arms missing: {sorted(missing)}"
+        family_digests: set[str] = set()
         for arm_id in sorted(expected_ids):
             arm = index[family][arm_id]
             if arm.get("status") != "completed":
@@ -257,10 +258,78 @@ def _check_p06_arms_summary(root: Path) -> tuple[bool, str]:
                 value = arm.get(key)
                 if not isinstance(value, str) or len(value) != 64:
                     return False, f"{family}/{arm_id} lacks a SHA-256 {key}"
-            if not isinstance(arm.get("metrics"), dict):
-                return False, f"{family}/{arm_id} metrics are missing"
+            if arm["replay_digest"] in family_digests:
+                return False, f"{family} arms have duplicate replay digest at {arm_id}"
+            family_digests.add(arm["replay_digest"])
+            metrics = arm.get("metrics")
+            if not isinstance(metrics, dict) or (
+                metrics.get("guardrails", {}).get("accounting_invariants_pass") is not True
+            ):
+                return False, f"{family}/{arm_id} accounting metrics missing or failed"
+            run_manifest_path = root / str(arm.get("output_dir", "")) / "manifest.json"
+            if not run_manifest_path.is_file():
+                return False, f"{family}/{arm_id} run manifest is missing"
+            try:
+                run_manifest = json.loads(run_manifest_path.read_text())
+            except (OSError, json.JSONDecodeError) as exc:
+                return False, f"{family}/{arm_id} run manifest is invalid: {exc}"
+            for key in ("completed_ticks", "last_completed_quarter", "parameter_hash"):
+                if run_manifest.get(key) != arm.get(key):
+                    return False, f"{family}/{arm_id} summary disagrees with run manifest {key}"
+            if (
+                run_manifest.get("status") != "completed"
+                or run_manifest.get("deterministic_replay_digest") != arm.get("replay_digest")
+            ):
+                return False, f"{family}/{arm_id} is not backed by its completed replay manifest"
     return True, (
         "all 17 required W5-W7 arms completed 116 ticks through 1985Q4 with hashes and metrics"
+    )
+
+
+def _check_p06_reproduction_table(root: Path) -> tuple[bool, str]:
+    """Verify the declared crosswalk counts and bounded numeric-table artifact."""
+    try:
+        from hsm_lab.calibration.reproduction_table import load_reproduction_crosswalk
+
+        crosswalk = load_reproduction_crosswalk(root)
+    except (OSError, ValueError, KeyError) as exc:
+        return False, f"crosswalk invalid or missing: {exc}"
+    counts = {
+        status: sum(row.get("status") == status for row in crosswalk["entries"])
+        for status in ("mapped", "no_counterpart", "blocked")
+    }
+    path = root / "outputs/p06-reproduction-table-w9b/reproduction_table.json"
+    if not path.exists():
+        return False, (
+            "outputs/p06-reproduction-table-w9b/reproduction_table.json missing; "
+            "run hsm calibration reproduction-table --output-dir "
+            "outputs/p06-reproduction-table-w9b"
+        )
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        return False, f"invalid reproduction table JSON: {exc}"
+    if payload.get("crosswalk_counts") != counts:
+        return False, (
+            f"table crosswalk counts {payload.get('crosswalk_counts')} do not match {counts}"
+        )
+    if (
+        payload.get("holdout_values_read") is not False
+        or payload.get("reserved_values_read") is not False
+    ):
+        return False, "table reports a protected-window numeric read"
+    mapped = {row["variable_id"] for row in crosswalk["entries"] if row["status"] == "mapped"}
+    years = {
+        year
+        for window in crosswalk["comparison_windows"].values()
+        for year in range(int(window["start_year"]), int(window["end_year"]) + 1)
+    }
+    for row in payload.get("rows", []):
+        if row.get("variable_id") not in mapped or int(row.get("year", -1)) not in years:
+            return False, "table contains an unmapped variable or out-of-scope year"
+    return True, (
+        f"crosswalk {counts}; {len(payload.get('rows', []))} numeric rows "
+        "limited to mapped open windows"
     )
 
 
@@ -304,6 +373,8 @@ def run_clearance(
                 passed, evidence = _check_reserved_window(root)
             elif check == "p06_arms_summary":
                 passed, evidence = _check_p06_arms_summary(root)
+            elif check == "p06_reproduction_table":
+                passed, evidence = _check_p06_reproduction_table(root)
             else:
                 passed, evidence = False, f"unknown internal check {check!r}"
         else:

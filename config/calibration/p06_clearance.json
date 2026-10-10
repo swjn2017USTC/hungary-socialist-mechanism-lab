@@ -275,6 +275,12 @@
         "docs/phases/P06_FINAL_REPORT.md",
         "docs/phases/P06_RUN_REPORT.md"
       ]
+    },
+    {
+      "id": "p06_reproduction_table",
+      "kind": "internal",
+      "check": "p06_reproduction_table",
+      "description": "Declared variable crosswalk and numeric reproduction table include only mapped calibration/internal-validation rows"
     }
   ]
 }

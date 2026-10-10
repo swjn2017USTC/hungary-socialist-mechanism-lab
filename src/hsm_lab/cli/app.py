@@ -667,6 +667,37 @@ def calibration_bundle_verify(
     _guard(action, json_mode)
 
 
+@calibration_app.command("reproduction-table")
+def calibration_reproduction_table(
+    output_dir: Path = typer.Option(
+        ..., "--output-dir", help="New reproduction-table output directory."
+    ),
+    json_mode: bool = JsonOption,
+) -> None:
+    """Compare only mapped P05 targets in the open calibration/validation windows."""
+
+    def action() -> None:
+        from hsm_lab.calibration.reproduction_table import run_reproduction_table
+
+        root = _repo_root()
+        target = _fresh_output_dir(output_dir, "p06-reproduction-table")
+        payload = run_reproduction_table(root, target)
+        _emit(
+            payload,
+            json_mode,
+            [
+                "crosswalk counts: "
+                + ", ".join(f"{key}={value}" for key, value in payload["crosswalk_counts"].items()),
+                "; ".join(
+                    f"{item['variable_id']}: {item['overall_verdict']}"
+                    for item in payload["variable_summaries"]
+                ),
+            ],
+        )
+
+    _guard(action, json_mode)
+
+
 @calibration_app.command("audit-leak")
 def calibration_audit_leak(
     output_dir: Path | None = typer.Option(None, "--output-dir", help="Fresh output directory."),

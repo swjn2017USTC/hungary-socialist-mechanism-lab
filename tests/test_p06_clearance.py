@@ -153,25 +153,42 @@ def test_p06_arm_summary_check_requires_all_completed_hash_identified_arms(tmp_p
             "second-economy",
         ],
     }
-    digest = "a" * 64
     arms = []
+    next_digest = 0
     for family, arm_ids in required.items():
         for arm_id in arm_ids:
+            next_digest += 1
+            digest = f"{next_digest:064x}"
+            output_dir = f"outputs/p06-arms/{family}/{arm_id}"
+            run_dir = tmp_path / output_dir
+            run_dir.mkdir(parents=True)
+            (run_dir / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "status": "completed",
+                        "completed_ticks": 116,
+                        "last_completed_quarter": "1985Q4",
+                        "parameter_hash": "b" * 64,
+                        "deterministic_replay_digest": digest,
+                    }
+                )
+            )
             arms.append(
                 {
                     "family": family,
                     "arm_id": arm_id,
+                    "output_dir": output_dir,
                     "status": "completed",
                     "completed_ticks": 116,
                     "last_completed_quarter": "1985Q4",
-                    "parameter_hash": digest,
-                    "intervention_hash": digest,
+                    "parameter_hash": "b" * 64,
+                    "intervention_hash": "c" * 64,
                     "replay_digest": digest,
-                    "metrics": {"accounting": "pass"},
+                    "metrics": {"guardrails": {"accounting_invariants_pass": True}},
                 }
             )
     summary_dir = tmp_path / "outputs" / "p06-arms"
-    summary_dir.mkdir(parents=True)
+    summary_dir.mkdir(parents=True, exist_ok=True)
     (summary_dir / "summary.json").write_text(json.dumps({"arms": arms}))
     ok, evidence = _check_p06_arms_summary(tmp_path)
     assert ok, evidence

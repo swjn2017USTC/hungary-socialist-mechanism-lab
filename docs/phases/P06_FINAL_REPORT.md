@@ -4,7 +4,55 @@
 
 This is a deterministic historical-reproduction study under declared behavioural assumptions. `calibrated = 0`; no parameter block is identified. The reserved 1986Q1–1988Q4 window remains closed, and hold-out values were not used for selection. No ABC/pyABC, posterior, calibration, causal identification, or validation claim is made. Results below are model outputs and replication spread across the three declared model seeds (1729, 1730, 1731), not posterior uncertainty. Seeds 1730 and 1731 follow the recorded rule “the next two integer seeds after the existing seed 1729”; this is not a posterior or seed-bank inference. Every executed run stopped at or before 1985Q4.
 
-P05 has 14 admitted variable IDs across calibration (1960–69) and internal validation (1970–78), 28 artifacts. Crosswalk declaration and numeric comparison are the next W9 item; no numeric target values are read by the W5–W7 fork work. Hold-out 1979–85 and reserved 1986–88 values remain unused.
+P05 has 14 admitted variable IDs across calibration (1960–69) and internal validation (1970–78), 28 artifacts. The crosswalk and numeric comparison follow below.
+
+
+## Declared target crosswalk and numeric comparison
+
+Crosswalk: [`config/calibration/p06_reproduction_crosswalk.json`](../../config/calibration/p06_reproduction_crosswalk.json), referenced by `config/calibration/p05.json`. It covers all 14 admitted target variables exactly once: **1 mapped, 3 no_counterpart, 10 blocked**. The sole mapping is the published household final-consumption index to the annual mean of model household-consumption totals summed across the eight model commodities. The model series is normalized to its own 1960 value (1960=100), a declared scale normalization and not a fit. The fixed absolute tolerance is 0.5 index points, half of one published whole-index-point increment. No defaults or model values were adjusted.
+
+| Variable | Decision | Declared boundary |
+|---|---|---|
+| `ag_cereals` | blocked | The model emits one broad food commodity, not a distinct cereal harvest. Commodity concordance and a physical-unit production conversion are missing. |
+| `ag_maize` | blocked | The model emits one broad food commodity, not a distinct maize harvest. Commodity concordance and a physical-unit production conversion are missing. |
+| `ag_wheat` | blocked | The model emits one broad food commodity, not a distinct wheat harvest. Commodity concordance and a physical-unit production conversion are missing. |
+| `consumption` | mapped | Model household consumption total; own-1960 normalization; 0.5-point published-rounding tolerance. |
+| `gdp` | no_counterpart | The model has no GDP aggregate. Summed gross material output is not GDP and is explicitly prohibited as a substitute. |
+| `industrial_cement` | blocked | The model has broad construction/material commodity groups but no cement-specific output series or published-unit conversion. |
+| `industrial_crude_steel` | blocked | The model has broad raw-material commodity output but no crude-steel-specific series or published-unit conversion. |
+| `industrial_electricity` | blocked | The model has a broad energy commodity, not gross electricity generation in million kWh; energy-source and physical-unit conversion are missing. |
+| `industrial_fertilizer` | blocked | The model has broad raw-material output but no mineral-fertilizer-specific series or published-unit conversion. |
+| `industrial_output` | no_counterpart | The model has no weighted industrial-production index. Summing broad commodity production would invent output weights and is not this target. |
+| `industrial_television` | blocked | The model has a broad durable-goods commodity, not a television-set count or unit conversion. |
+| `investment` | no_counterpart | The model has no gross fixed capital formation aggregate. Capital-goods production is not investment and omits other GFCF components. |
+| `trade_export_volume_index` | blocked | Model exports are broad commodity quantities by channel; the target is a total goods-volume index. Commodity weights, price/volume conversion, and the index construction are missing. |
+| `trade_import_volume_index` | blocked | Model imports are broad commodity quantities by channel; the target is a total goods-volume index. Commodity weights, price/volume conversion, and the index construction are missing. Imports remain outcomes, not quotas. |
+
+The reported reproduction table comes from a `historical_f2_replay` run through 1978Q4 (88 ticks), then mapped calibration/internal-validation target reads through `DataRegistry.load_targets` and the window protocol. The output was rerun once into a fresh directory solely to correct the window label from `validation` to `internal_validation`; both runs had the same replay digest. No hold-out or reserved values were read. The 19 rows below are the complete numeric comparison; blocked/no-counterpart variables emit no numeric rows. A row verdict means only whether this declared descriptive residual is within the published-rounding threshold.
+
+| Window | Year | Target index | Model index | Residual (model − target) | Tolerance | Row verdict |
+|---|---:|---:|---:|---:|---:|---|
+| calibration | 1960 | 100.00 | 100.00 | +0.00 | 0.50 | within_tolerance |
+| calibration | 1961 | 101.00 | 99.26 | -1.74 | 0.50 | outside_tolerance |
+| calibration | 1962 | 105.00 | 69.85 | -35.15 | 0.50 | outside_tolerance |
+| calibration | 1963 | 110.00 | 69.20 | -40.80 | 0.50 | outside_tolerance |
+| calibration | 1964 | 116.00 | 67.62 | -48.38 | 0.50 | outside_tolerance |
+| calibration | 1965 | 118.00 | 65.27 | -52.73 | 0.50 | outside_tolerance |
+| calibration | 1966 | 123.00 | 62.79 | -60.21 | 0.50 | outside_tolerance |
+| calibration | 1967 | 131.00 | 60.18 | -70.82 | 0.50 | outside_tolerance |
+| calibration | 1968 | 137.00 | 56.55 | -80.45 | 0.50 | outside_tolerance |
+| calibration | 1969 | 145.00 | 53.49 | -91.51 | 0.50 | outside_tolerance |
+| internal_validation | 1970 | 155.00 | 50.60 | -104.40 | 0.50 | outside_tolerance |
+| internal_validation | 1971 | 163.00 | 47.77 | -115.23 | 0.50 | outside_tolerance |
+| internal_validation | 1972 | 169.00 | 45.68 | -123.32 | 0.50 | outside_tolerance |
+| internal_validation | 1973 | 176.00 | 45.08 | -130.92 | 0.50 | outside_tolerance |
+| internal_validation | 1974 | 187.00 | 44.71 | -142.29 | 0.50 | outside_tolerance |
+| internal_validation | 1975 | 196.00 | 44.32 | -151.68 | 0.50 | outside_tolerance |
+| internal_validation | 1976 | 199.00 | 43.88 | -155.12 | 0.50 | outside_tolerance |
+| internal_validation | 1977 | 208.00 | 43.30 | -164.70 | 0.50 | outside_tolerance |
+| internal_validation | 1978 | 216.00 | 42.36 | -173.64 | 0.50 | outside_tolerance |
+
+Consumption summary: 19 annual rows; 1 within tolerance, 18 outside; mean absolute residual 91.74, maximum 173.64 index points; overall descriptive verdict **outside_tolerance**. This is evidence against reproduction of the admitted consumption index in this run, not a calibration or general validation claim. Replay digest: `f75ba7767eaf5987eb876413f973e07f13ece4e11906cdd14cbd3b08fbf8ba79`. Machine-readable and CSV outputs: `outputs/p06-reproduction-table-w9b/reproduction_table.json` and `.csv` (local run evidence).
 
 ## Frozen gates and guardrails
 
@@ -23,7 +71,7 @@ Frozen gates remain unchanged and blocked. Every completed W2/W3 arm passed its 
 
 ## W2 OAT arm replication spread
 
-Each cell is min–max across the three model seeds; units are model units. `T1/T2/T3` records number of passing replicates. All runs are 116 ticks. Full per-arm hashes/digests are in the raw ignored artifacts `outputs/p06-w2-oat/sensitivity.json` and `outputs/p06-w8-seedbank/seedbank.json`. The baseline is included as the original seed-1729 arm plus its matching seed-1730/1731 arms.
+Each cell is min–max across the three model seeds; units are model units. `T1/T2/T3` records number of passing replicates. All runs are 116 ticks. Full per-arm hashes/digests are in local `outputs/p06-w2-oat/sensitivity.json` and `outputs/p06-w8-seedbank/seedbank.json`. The baseline includes original seed 1729 and matching seed-1730/1731 arms.
 
 | Axis | Value | Production last-10 min–max | HH consumption last-10 min–max | T1/T2/T3 passes | Accounting |
 |---|---:|---:|---:|---:|---|
@@ -31,7 +79,7 @@ Each cell is min–max across the three model seeds; units are model units. `T1/
 | `bailout_envelope_fraction` | 0.25 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
 | `bailout_envelope_fraction` | 0.3 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
 | `handling_work_per_unit.scale` | 0.8 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
-| `handling_work_per_unit.scale` | 1.0 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
+| `handling_work_per_unit.scale` | 1 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
 | `handling_work_per_unit.scale` | 1.2 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
 | `service_split.0` | 0.56 | 18,406.53–18,416.48 | 437.21–442.23 | 0 / 0 / 3 | PASS |
 | `service_split.0` | 0.7 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
@@ -43,17 +91,16 @@ Each cell is min–max across the three model seeds; units are model units. `T1/
 | `service_split.2` | 0.1 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
 | `service_split.2` | 0.12 | 25,891.98–25,893.41 | 1,592.48–1,594.80 | 0 / 0 / 3 | PASS |
 | `trade.cmea_export_demands.scale` | 0.8 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
-| `trade.cmea_export_demands.scale` | 1.0 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
+| `trade.cmea_export_demands.scale` | 1 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
 | `trade.cmea_export_demands.scale` | 1.2 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
 | `trade.convertible_export_demands.scale` | 0.8 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
-| `trade.convertible_export_demands.scale` | 1.0 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
+| `trade.convertible_export_demands.scale` | 1 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
 | `trade.convertible_export_demands.scale` | 1.2 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
-| `wage_rate` | 6.0 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
+| `wage_rate` | 6 | 28,072.90–28,074.08 | 1,666.16–1,667.96 | 0 / 0 / 3 | PASS |
 | `wage_rate` | 6.6 | 15,970.10–15,980.24 | 249.31–255.52 | 0 / 0 / 3 | PASS |
 | `wage_rate` | 7.2 | 14,516.58–14,524.69 | 205.86–213.18 | 0 / 0 / 3 | PASS |
 
 The preflight wage-rate 4.8 point remains rejected before tick 0 by the Treasury opening-deposit guard and is not counted as a replicate or outcome. Trade-demand vectors remained inert on this replay path. Sensitivity ordering by largest absolute movement remains service_split.1, wage_rate, service_split.0, service_split.2; bailout envelope and handling-work scale move neither selected terminal aggregate. These are structural responses, not historical fit improvements.
-
 ## W3 Morris screen across model seeds
 
 For each factor, the table reports μ* (production units per full factor range) across three model seeds, with the same two Morris trajectories (trajectory generator seed 1729). Ranking stability is descriptive only; with two trajectories it is exploratory.
@@ -79,12 +126,12 @@ No Sobol calculation was run; its entry point refuses empty/non-identified param
 | M2 | CONDITIONAL | shortage is present and bailout OAT is terminally inert; no direct hard-budget/credit intervention |
 | M3 | CONDITIONAL | structural wage-rate sensitivity only; labour arrears/policy wage-factor channel not tested |
 | M4 | UNIDENTIFIED | cultural block; mechanism not exercised |
-| M5 | UNIDENTIFIED | coalition/information dependency; political forks blocked |
-| M6 | UNIDENTIFIED | external recipe dependency; 1973 arms registered but not run |
+| M5 | UNIDENTIFIED | v4 1968 forks ran, but coalition/information dependencies remain unidentified |
+| M6 | UNIDENTIFIED | v4 1973 arms ran; external-recipe dependency remains unidentified |
 | M7 | UNIDENTIFIED | opposition/coalition dependency; no regional test |
-| M8 | UNIDENTIFIED | political information dependency; no executable fork evidence |
-| M9 | UNIDENTIFIED | observation dependency; no executable fork evidence |
-| M10 | UNIDENTIFIED | external-recipe dependency; shock arms not run |
+| M8 | UNIDENTIFIED | v4 1968 and political forks ran; coalition/observation/information dependencies remain unidentified |
+| M9 | UNIDENTIFIED | digital-nem and political arms ran; information dependency remains unidentified |
+| M10 | UNIDENTIFIED | v4 1973 shock arms ran; external-recipe dependency remains unidentified |
 | M11 | CONDITIONAL | service composition moves terminal aggregates; department-I/durable-wait mechanism not tested |
 
 No card is validated or promoted to SUPPORTED.
@@ -100,7 +147,7 @@ No card is validated or promoted to SUPPORTED.
 | W5 1968 forks | PASS (counterfactual evidence) | [five arms including same-checkpoint empty control](P06_1968_FORK.md); all 116 ticks, accounting pass |
 | W6 1973 shock arms | PASS (counterfactual evidence) | [six arms including tick-0064 empty control](P06_1973_SHOCK.md); all 116 ticks, accounting pass |
 | W7 political counterfactuals | PASS (counterfactual evidence) | [six arms including same-checkpoint empty control](P06_POLITICAL_COUNTERFACTUAL.md); all 116 ticks, accounting pass |
-| W8 protocol/bundle/report | PASS with W5–W7 blockers | hold-out/reserved authorization is in target-loading path; bundle CLI assemble/verify tested; seed spread reported |
+| W8 protocol/bundle/report | PASS | hold-out/reserved authorization is in target-loading path; bundle CLI assemble/verify tested; seed spread reported |
 
 A new v4 parent run completed in 5.42 seconds. All 17 political forks ran in 4.316–6.050 seconds each (26.29 seconds concurrent batch wall time), each ending at 1985Q4. No degradation ladder was needed. The three control arms use empty `hist-nem` interventions from the corresponding checkpoint. The result tables are scenario-conditional model responses and do not validate historical mechanisms.
 

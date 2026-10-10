@@ -1,0 +1,103 @@
+{
+  "schema_version": "1",
+  "source_manifest": "data/manifests/p05_targets.yml",
+  "scope": "calibration 1960-1969 and internal validation 1970-1978 only; hold-out and reserved values are forbidden",
+  "model_scenario": "historical_f2_replay",
+  "simulation_until": "1978Q4",
+  "comparison_windows": {
+    "calibration": {
+      "start_year": 1960,
+      "end_year": 1969
+    },
+    "internal_validation": {
+      "start_year": 1970,
+      "end_year": 1978
+    }
+  },
+  "index_rule": "For index targets, compute each model year's annual aggregate and normalize it to the model's own 1960 aggregate, multiplied by 100. This is a declared scale normalization, not a fit; do not adjust the model to match the target.",
+  "tolerance_policy": "Absolute residual threshold is fixed from published rounding precision before comparison, never tuned to fit residuals.",
+  "entries": [
+    {
+      "variable_id": "ag_cereals",
+      "status": "blocked",
+      "reason": "The model emits one broad food commodity, not a distinct cereal harvest. Commodity concordance and a physical-unit production conversion are missing."
+    },
+    {
+      "variable_id": "ag_maize",
+      "status": "blocked",
+      "reason": "The model emits one broad food commodity, not a distinct maize harvest. Commodity concordance and a physical-unit production conversion are missing."
+    },
+    {
+      "variable_id": "ag_wheat",
+      "status": "blocked",
+      "reason": "The model emits one broad food commodity, not a distinct wheat harvest. Commodity concordance and a physical-unit production conversion are missing."
+    },
+    {
+      "variable_id": "consumption",
+      "status": "mapped",
+      "target_unit": "index_1960_100",
+      "model_unit": "model_native_household_consumption_index_1960_100",
+      "model_quantity": "national_accounts.household_consumption summed across the eight declared model commodities",
+      "comparison_rule": "index_1960_100",
+      "annual_aggregation": "mean",
+      "comparison_window": [
+        "calibration",
+        "internal_validation"
+      ],
+      "error_tolerance": 0.5,
+      "tolerance_unit": "index points",
+      "precision_basis": "The admitted published index is recorded in whole index points; half one displayed point is the rounding-resolution threshold, fixed before computing residuals.",
+      "annual_aggregation_detail": "mean of four quarterly household-consumption totals after summing commodities"
+    },
+    {
+      "variable_id": "gdp",
+      "status": "no_counterpart",
+      "reason": "The model has no GDP aggregate. Summed gross material output is not GDP and is explicitly prohibited as a substitute."
+    },
+    {
+      "variable_id": "industrial_cement",
+      "status": "blocked",
+      "reason": "The model has broad construction/material commodity groups but no cement-specific output series or published-unit conversion."
+    },
+    {
+      "variable_id": "industrial_crude_steel",
+      "status": "blocked",
+      "reason": "The model has broad raw-material commodity output but no crude-steel-specific series or published-unit conversion."
+    },
+    {
+      "variable_id": "industrial_electricity",
+      "status": "blocked",
+      "reason": "The model has a broad energy commodity, not gross electricity generation in million kWh; energy-source and physical-unit conversion are missing."
+    },
+    {
+      "variable_id": "industrial_fertilizer",
+      "status": "blocked",
+      "reason": "The model has broad raw-material output but no mineral-fertilizer-specific series or published-unit conversion."
+    },
+    {
+      "variable_id": "industrial_output",
+      "status": "no_counterpart",
+      "reason": "The model has no weighted industrial-production index. Summing broad commodity production would invent output weights and is not this target."
+    },
+    {
+      "variable_id": "industrial_television",
+      "status": "blocked",
+      "reason": "The model has a broad durable-goods commodity, not a television-set count or unit conversion."
+    },
+    {
+      "variable_id": "investment",
+      "status": "no_counterpart",
+      "reason": "The model has no gross fixed capital formation aggregate. Capital-goods production is not investment and omits other GFCF components."
+    },
+    {
+      "variable_id": "trade_export_volume_index",
+      "status": "blocked",
+      "reason": "Model exports are broad commodity quantities by channel; the target is a total goods-volume index. Commodity weights, price/volume conversion, and the index construction are missing."
+    },
+    {
+      "variable_id": "trade_import_volume_index",
+      "status": "blocked",
+      "reason": "Model imports are broad commodity quantities by channel; the target is a total goods-volume index. Commodity weights, price/volume conversion, and the index construction are missing. Imports remain outcomes, not quotas."
+    }
+  ]
+}
