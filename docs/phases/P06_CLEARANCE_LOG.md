@@ -527,3 +527,55 @@ appearing against the historical target as a **sign error in the consumption tra
 - Final table: `outputs/p06-reproduction-table-widened-final2/reproduction_table.json`; digest `f75ba776…`; 19 consumption rows, 18/18 informative years outside tolerance; hold-out/reserved values not read, replay ends 1978Q4. Grade counts: normalized_index 1, no_counterpart 13, all other grades 0.
 - Clearance regenerated: 23 PASS / 4 WAIVED / 0 OPEN. Ruff clean; full pytest 412 passed, 0 failed, recorded at `outputs/p06-clearance/pytest.json`. Frozen acceptance gates remain WAIVED/failed as before; no new residual or accounting failure was introduced.
 - Part 2 implementation/report commit is the commit containing this log entry; its hash is recorded in the task completion message.
+
+## 2026-10-10 — Reviewer audit of the step-1 fixes and the crosswalk widening
+
+Verified: 412 passed, `ruff` clean, and `hsm calibration p06-clearance --with-runs` → **23 PASS /
+4 WAIVED / 0 OPEN**, exit 0. Part 1 is fully applied: the run-identity line (parent
+`p04_endogenous`, `ontology_id = intermediate8_v1`, `fidelity = f1`, digest `45999d89…`, "not
+comparable with the F2 replay") heads all three arm documents; the three inert political arms are
+named in prose and declared in the document front matter, and
+`tests/test_p06_reproduction_table.py::test_political_arms_matching_every_reported_metric_are_declared_inert`
+enforces the declaration (skipping cleanly when the local arm summary is absent); the index
+normalization base year is now marked uninformative and the report reads **18 of 18 informative
+years outside tolerance**; and the bank-reserve family is explicitly declared as *not collected by
+compact fork output* instead of being silently null.
+
+Part 2 held the line on honesty: 14 entries, **1 mapped / 13 no_counterpart / 0 blocked**, no
+allocation was invented, and `reproduction_table.py` raises when a `mapped` row lacks a declared
+`source` of type `admitted_target_artifacts` with frozen artifact digests. The single mapped series
+remains household consumption, and the report leads with its failure before any graded table.
+
+### R9 — the two trade indices are mislabelled `no_counterpart`; they are `blocked`
+
+Their rejection is factually right and their reasoning is good: `national_accounts.imports` and
+`exports` (and both CMEA and convertible channels) are **identically zero for the whole 1957-1978
+replay**, so a model-own-1960 normalized index has no base, and inventing one would be fabrication.
+Verified independently: the cause is the **scenario declaration** — `config/scenarios/
+historical_f2_replay.json` declares `cmea_desired_imports`, `convertible_desired_imports`,
+`cmea_export_demands` and `convertible_export_demands` as all-zero vectors. The model has the trade
+machinery (`engine/trade.py::build_export_demands`, per-commodity demand vectors, credit envelopes,
+declared admin prices); it is simply fed zeros.
+
+So `no_counterpart` ("the model has no such quantity") is the wrong label: the model has the
+quantity, the **scenario declares none**. The honest disposition is `blocked`, naming exactly what
+is missing: *a declared, non-circular trade-demand scenario*. The circularity trap must be stated
+where it can be seen — feeding the admitted KSH trade index in as a demand vector would make the
+later comparison circular — so the missing item is an independent trade-demand declaration (for
+example the external pack's CMEA/western demand signals), not the target series.
+
+### R10 — the crosswalk test pins the observed disposition counts
+
+`test_reproduction_crosswalk_covers_exactly_the_admitted_target_variables` asserts
+`statuses.count("mapped") == 1`, `no_counterpart == 13` and `blocked == 0`. Those are *this run's
+counts*, not invariants, so the test would fail on the R9 reclassification and on any later
+genuinely sourced mapping — it obstructs exactly the corrections the audit recommends. It should
+assert the invariants instead: the crosswalk covers exactly the 14 admitted variables, every status
+is in the declared vocabulary, every `mapped` row carries a grade, source, window and tolerance,
+and no `mapped` row has `allocation_assumed` without an artifact digest. The counts belong in the
+report as observed evidence.
+
+Minor: `docs/phases/P06_EXECUTION_PLAN.md` still lists `bank_circuit` in the available-artifact
+inventory while the arm documents now say the bank-reserve family is not collected by compact fork
+output; the two should be reconciled (either the plan says "available to leak-audit observers, not
+to compact fork output", or the inventory drops it).
