@@ -52,7 +52,7 @@ The reported reproduction table comes from a `historical_f2_replay` run through 
 | internal_validation | 1977 | 208.00 | 43.30 | -164.70 | 0.50 | outside_tolerance |
 | internal_validation | 1978 | 216.00 | 42.36 | -173.64 | 0.50 | outside_tolerance |
 
-Consumption summary: 19 annual rows; 1 within tolerance, 18 outside; mean absolute residual 91.74, maximum 173.64 index points; overall descriptive verdict **outside_tolerance**. This is evidence against reproduction of the admitted consumption index in this run, not a calibration or general validation claim. Replay digest: `f75ba7767eaf5987eb876413f973e07f13ece4e11906cdd14cbd3b08fbf8ba79`. Machine-readable and CSV outputs: `outputs/p06-reproduction-table-w9b/reproduction_table.json` and `.csv` (local run evidence).
+Consumption summary: 19 annual rows; the 1960 normalization base is uninformative because it is exactly 100 by construction. **18 of 18 informative years outside tolerance**; mean absolute residual 91.74, maximum 173.64 index points; overall descriptive verdict **outside_tolerance**. This is evidence against reproduction of the admitted consumption index in this run, not a calibration or general validation claim. Replay digest: `f75ba7767eaf5987eb876413f973e07f13ece4e11906cdd14cbd3b08fbf8ba79`. Machine-readable and CSV outputs: `outputs/p06-reproduction-table-w9b/reproduction_table.json` and `.csv` (local run evidence).
 
 ## Frozen gates and guardrails
 

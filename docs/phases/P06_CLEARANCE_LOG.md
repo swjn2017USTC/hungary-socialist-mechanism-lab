@@ -508,3 +508,12 @@ appearing against the historical target as a **sign error in the consumption tra
   F2 quantities.
 - **R8** `bank_reserves` is null in compact output, so one §3 metric family is unavailable for the
   arms. Disclosed honestly; either emit it or drop it from the declared metric list.
+
+## 2026-10-10 — Crosswalk widening Part 1 reporting fixes — PASS
+
+- F1: added the parent run identity (`p04_political_simulation`, `intermediate8_v1`, `f1`, manifest digest `45999d89…`) and the scale-comparability boundary to each of the three arm documents.
+- F2: declared the three politically inert arms in the political document front matter, stated their metric identity and digest differences, and added a regression check against the local arm summary.
+- F3: reproduction rows now mark the 1960 normalization year `informative: false`; summary counts refer to informative years. The consumption report states 18 of 18 informative years outside tolerance.
+- F4: removed bank reserves from the §3 metric vocabulary and disclosed that the compact output does not collect that family in all three arm documents.
+- Check: `.venv/bin/ruff check src tests` clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → 410 passed.
+- Part 1 commit: pending.

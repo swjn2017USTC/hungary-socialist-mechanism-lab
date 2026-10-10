@@ -96,6 +96,11 @@ def annual_household_consumption_index(frame: pl.DataFrame) -> dict[int, float]:
     return {year: value / base * 100.0 for year, value in by_year.items()}
 
 
+def index_year_is_informative(year: int, base_year: int = 1960) -> bool:
+    """The normalization base is exact by construction and carries no fit information."""
+    return int(year) != int(base_year)
+
+
 def run_reproduction_table(root: Path, output_dir: Path) -> dict[str, Any]:
     """Run one replay, read only mapped training/internal-validation targets, and compare."""
     root = Path(root)
@@ -159,6 +164,7 @@ def run_reproduction_table(root: Path, output_dir: Path) -> dict[str, Any]:
                     "variable_id": entry["variable_id"],
                     "window": window_name,
                     "year": year,
+                    "informative": index_year_is_informative(year),
                     "target_value": target_value,
                     "model_value": model_value,
                     "residual": residual,
@@ -175,16 +181,25 @@ def run_reproduction_table(root: Path, output_dir: Path) -> dict[str, Any]:
     mapped = sum(row["status"] == "mapped" for row in crosswalk["entries"])
     no_counterpart = sum(row["status"] == "no_counterpart" for row in crosswalk["entries"])
     blocked = sum(row["status"] == "blocked" for row in crosswalk["entries"])
+    informative_rows = [row for row in rows if row["informative"]]
+    outside_informative = sum(
+        row["verdict"] == "outside_tolerance" for row in informative_rows
+    )
     variable_summary = {
         "variable_id": "consumption",
         "comparison_count": len(rows),
+        "informative_year_count": len(informative_rows),
         "within_tolerance_count": sum(row["verdict"] == "within_tolerance" for row in rows),
         "outside_tolerance_count": sum(row["verdict"] == "outside_tolerance" for row in rows),
+        "informative_outside_tolerance_count": outside_informative,
+        "informative_outside_tolerance_statement": (
+            f"{outside_informative} of {len(informative_rows)} informative years outside tolerance"
+        ),
         "mean_absolute_residual": sum(row["absolute_residual"] for row in rows) / len(rows),
         "max_absolute_residual": max(row["absolute_residual"] for row in rows),
         "overall_verdict": (
             "within_tolerance_all"
-            if all(row["verdict"] == "within_tolerance" for row in rows)
+            if all(row["verdict"] == "within_tolerance" for row in informative_rows)
             else "outside_tolerance"
         ),
         "interpretation": "descriptive reproduction comparison only; not calibration or validation",

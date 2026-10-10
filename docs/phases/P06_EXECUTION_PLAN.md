@@ -138,7 +138,7 @@ Reported for every arm, from compact outputs only:
 - **shortage/assortment proxies**: `tick_diagnostics.bottleneck_demand_count`,
   `aggregates.undelivered` share, `commodity_circuit.stock_close` piles by commodity;
 - **finance**: `money_stock.interest_paid/principal_close/money_total_close`,
-  `treasury_cash` path, `bank_circuit` reserves;
+  `treasury_cash` path;
 - **political**: `political_quarters` weights and policy coordinates, `elite_cohesion`,
   `soviet_bound/soviet_violation`, `selected_candidate`;
 - **opposition**: `opposition_regions.capacity`, `weighted_grievance`, `weighted_voice`,
@@ -151,6 +151,9 @@ Reported for every arm, from compact outputs only:
 Terminal criteria T1–T3 from `config/calibration/p05.json` are reported for material arms
 (they are diagnostic here, not a pass/fail gate, because the reproduction scope waives the
 frozen acceptance gates).
+
+The compact fork output does not collect the bank-reserve metric family; it is outside the
+declared §3 metrics.
 
 ## 4. Budget and prerequisites
 
