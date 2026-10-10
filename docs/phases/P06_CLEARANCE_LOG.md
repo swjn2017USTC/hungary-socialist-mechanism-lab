@@ -644,3 +644,27 @@ This is the honest outcome the plan anticipated: the external channel **partiall
 imports do, exports are financially rationed by the Treasury path. The trade widening added
 comparability for imports and a located cause for exports; it did not change the headline
 consumption failure.
+
+
+## 2026-10-10 — Final P06 close-out Step 1 — conclusion frozen
+
+- Added `## Conclusion` immediately after `## Scope and evidence boundary` in `docs/phases/P06_FINAL_REPORT.md`, before results.
+- Recorded reproduction scope (`calibrated = 0`, nothing identified), both consumption failures and mean absolute residuals (91.7414 base; 120.2651 trade; 18/18 informative years outside tolerance in each), crosswalk breadth (2 mapped / 1 Treasury-rationed blocked / 11 no counterpart), partial trade transmission, no SUPPORTED mechanism cards as a result, conditions for a changed outcome, and the required sentence verbatim.
+- No mechanism, crosswalk disposition or verdict changed.
+
+## 2026-10-10 — Final P06 close-out Step 2 — release manifest frozen
+
+- Added `docs/phases/P06_RELEASE.md` with frozen source HEAD `fd025a5bdedf698100e05f736b4209ddc62dd144`, legacy digest `92f9ea0a…`, F1 parent digest `45999d89…`, crosswalk SHA-256 `433f53dd…`, final clearance counts, suite result, seven unadmitted target-role variables, P05 §10b observable candidates, and all four waiver reasons verbatim.
+- The manifest states no parameter is calibrated or identified and the reserved window was never read.
+
+## 2026-10-10 — Final P06 close-out Step 3 — reproducibility bundles rebuilt
+
+- Bundled and verified `outputs/p05-historical-replay`: rebuilt digest equals recorded legacy digest `92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d`; parameter hash also matches.
+- Bundled and verified completed 116-tick C1 `historical_f2_trade_scenario`: rebuilt digest equals recorded digest `c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5`; parameter hash also matches.
+- The previous bytes at `outputs/p05-historical-replay` had digest `86f44f6f…` and did not rebuild under the current parameter schema (five P05 structural fields were absent; verifier produced a different parameter hash and digest). Those bytes and the failed bundle attempt were retained under explicit pre-closeout names. The crosswalk's 1978Q4 comparison replay is paused by design and bundle assembly rejects it; the completed C1 run for the same scenario was used without weakening verification.
+
+## 2026-10-10 — Final P06 close-out Step 4 — clearance and final checks
+
+- Added `p06_release_manifest` and `p06_bundle_rebuilt` checks; they inspect the release file, current crosswalk digest, verbatim configured waivers, bundle metadata and completed replay manifests.
+- Regenerated `outputs/p06-clearance/pytest.json` and the clearance checklist. Final clearance: 26 PASS / 4 WAIVED / 0 OPEN.
+- Final checks: `.venv/bin/ruff check src tests` clean; `.venv/bin/python -m pytest -q -p no:cacheprovider` → 416 passed, 0 failed. Regenerated `outputs/p06-clearance/pytest.json`; `hsm calibration p06-clearance --with-runs` → 26 PASS / 4 WAIVED / 0 OPEN.

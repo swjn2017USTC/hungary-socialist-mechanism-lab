@@ -7,6 +7,11 @@ This is a deterministic historical-reproduction study under declared behavioural
 P05 has 14 admitted variable IDs across calibration (1960–69) and internal validation (1970–78), 28 artifacts. The crosswalk and numeric comparison follow below.
 
 
+
+## Conclusion
+
+This study is limited to historical reproduction under declared behavioural assumptions: `calibrated = 0` and nothing is identified. The headline household-consumption direction fails: the model index falls while the observed index rises, outside tolerance in 18 of 18 informative years in both runs. The base replay mean absolute residual is **91.7414** index points; the declared trade-scenario mean absolute residual is **120.2651** index points. The crosswalk covers 2 mapped variables, 1 blocked variable because Treasury payable cash rations exports, and 11 variables with no model counterpart. The external channel transmits partially: imports are nonbinding in C1; exports are Treasury-rationed after 1964, and in this run the annual export index is already zero from 1962 onward. No mechanism card is SUPPORTED; that absence is a result. A changed outcome requires a structural account of the consumption scale/direction failure, a non-rationed Treasury export path for a trade-export comparison, and new independently sourced admissible observables with declared parameter linkages before any parameter can be identified. this study establishes no calibrated or validated historical estimate; it establishes a reproduction failure and its located causes.
+
 ## First result: consumption fails in every informative year
 
 The admitted household-consumption index is the first and only numeric target comparison. The model series is normalized to its own 1960 value; 1960 is exact by construction and is marked `informative: false`. In the 18 informative years, the model falls while the KSH target rises. The mean absolute residual is 91.7414 index points and the maximum is 173.6360. This is an outside-tolerance reproduction result, not a calibration or general validation claim. The tolerance remains the predeclared 0.5 index points.

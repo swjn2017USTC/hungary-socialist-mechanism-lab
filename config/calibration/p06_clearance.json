@@ -287,6 +287,20 @@
       "kind": "internal",
       "check": "p06_trade_transmission",
       "description": "C0/C1/C2 declared trade transmission run identities, channel volumes and accounting residuals are recorded"
+    },
+    {
+      "id": "p06_release_manifest",
+      "kind": "internal",
+      "check": "p06_release_manifest",
+      "description": "P06 release file records frozen digest, clearance counts and declared waiver reasons",
+      "required": true
+    },
+    {
+      "id": "p06_bundle_rebuilt",
+      "kind": "internal",
+      "check": "p06_bundle_rebuilt",
+      "description": "Legacy and trade scenario bundles rebuild to their recorded digests and parameter hashes",
+      "required": true
     }
   ]
 }

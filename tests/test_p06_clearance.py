@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -238,3 +239,76 @@ def test_trade_transmission_clearance_reads_run_summary_without_pinning_outcome(
     passed, evidence = _check_p06_trade_transmission(tmp_path)
     assert not passed
     assert "C0, C1 and conditional C2" in evidence
+
+
+def test_release_manifest_check_requires_frozen_digests_and_verbatim_waivers(tmp_path) -> None:
+    from hsm_lab.calibration.clearance import _check_p06_release_manifest
+
+    docs = tmp_path / "docs/phases"
+    docs.mkdir(parents=True)
+    config_dir = tmp_path / "config/calibration"
+    config_dir.mkdir(parents=True)
+    crosswalk = config_dir / "p06_reproduction_crosswalk.json"
+    crosswalk.write_text("{}")
+    reason = "the declared waiver reason"
+    (config_dir / "p06_clearance.json").write_text(
+        json.dumps({"waivers": [{"item": "gate", "reason": reason}]})
+    )
+    digest = hashlib.sha256(crosswalk.read_bytes()).hexdigest()
+    release = docs / "P06_RELEASE.md"
+    release.write_text(
+        "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d "
+        "45999d895dac3b84bc69918273eed0c3b51489cba9ddae4fdbb2a20c54411f27 "
+        f"{digest} 26 PASS / 4 WAIVED / 0 OPEN 416 passed, 0 failed calibrated = 0 "
+        "no parameter is identified Reserved window 1986Q1–1988Q4 was never read "
+        f"{reason}"
+    )
+    passed, evidence = _check_p06_release_manifest(tmp_path)
+    assert passed, evidence
+    release.write_text(release.read_text().replace(reason, "edited waiver"))
+    passed, evidence = _check_p06_release_manifest(tmp_path)
+    assert not passed
+    assert "waiver reason" in evidence
+
+
+def test_bundle_rebuilt_check_compares_both_recorded_digests_and_parameter_hashes(
+    tmp_path,
+) -> None:
+    from hsm_lab.calibration.clearance import _check_p06_bundle_rebuilt
+
+    cases = (
+        ("p05-historical-replay", "replayed-p05-historical", "historical_f2_replay"),
+        ("trade-scenario", "replayed-trade-c1", "historical_f2_trade_scenario"),
+    )
+    for bundle_name, replay_name, scenario in cases:
+        bundle_dir = tmp_path / "outputs/p06-release-bundles" / bundle_name
+        replay_dir = tmp_path / "outputs/p06-release-bundles" / replay_name
+        bundle_dir.mkdir(parents=True)
+        replay_dir.mkdir(parents=True)
+        (bundle_dir / "bundle.json").write_text(
+            json.dumps(
+                {
+                    "scenario_id": scenario,
+                    "deterministic_replay_digest": "a" * 64,
+                    "parameter_hash": "b" * 64,
+                }
+            )
+        )
+        (replay_dir / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "status": "completed",
+                    "deterministic_replay_digest": "a" * 64,
+                    "parameter_hash": "b" * 64,
+                }
+            )
+        )
+    passed, evidence = _check_p06_bundle_rebuilt(tmp_path)
+    assert passed, evidence
+    replay = tmp_path / "outputs/p06-release-bundles/replayed-trade-c1/manifest.json"
+    payload = json.loads(replay.read_text())
+    payload["deterministic_replay_digest"] = "c" * 64
+    replay.write_text(json.dumps(payload))
+    passed, evidence = _check_p06_bundle_rebuilt(tmp_path)
+    assert not passed
+    assert "differs" in evidence

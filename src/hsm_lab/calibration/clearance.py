@@ -11,6 +11,7 @@ Statuses: ``PASS`` (checked and true), ``WAIVED`` (explicitly not required, with
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from dataclasses import dataclass, field
@@ -414,6 +415,70 @@ def _check_p06_trade_transmission(root: Path) -> tuple[bool, str]:
     )
 
 
+
+def _check_p06_release_manifest(root: Path) -> tuple[bool, str]:
+    path = root / "docs/phases/P06_RELEASE.md"
+    if not path.is_file():
+        return False, "docs/phases/P06_RELEASE.md is missing"
+    text = path.read_text()
+    crosswalk_path = root / "config/calibration/p06_reproduction_crosswalk.json"
+    crosswalk_digest = hashlib.sha256(crosswalk_path.read_bytes()).hexdigest()
+    required = [
+        "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+        "45999d895dac3b84bc69918273eed0c3b51489cba9ddae4fdbb2a20c54411f27",
+        crosswalk_digest,
+        "26 PASS / 4 WAIVED / 0 OPEN",
+        "416 passed, 0 failed",
+        "calibrated = 0",
+        "no parameter is identified",
+        "Reserved window 1986Q1–1988Q4 was never read",
+    ]
+    missing = [value for value in required if value not in text]
+    config = json.loads((root / "config/calibration/p06_clearance.json").read_text())
+    for waiver in config.get("waivers", []):
+        if str(waiver.get("reason", "")) not in text:
+            missing.append(f"waiver reason for {waiver.get('item')}")
+    if missing:
+        return False, f"release manifest is missing frozen evidence: {missing}"
+    return True, (
+        "release manifest has frozen digests, final counts, suite result "
+        "and all waiver reasons"
+    )
+
+
+def _check_p06_bundle_rebuilt(root: Path) -> tuple[bool, str]:
+    bundles = (
+        (
+            "outputs/p06-release-bundles/p05-historical-replay",
+            "outputs/p06-release-bundles/replayed-p05-historical",
+            "historical_f2_replay",
+        ),
+        (
+            "outputs/p06-release-bundles/trade-scenario",
+            "outputs/p06-release-bundles/replayed-trade-c1",
+            "historical_f2_trade_scenario",
+        ),
+    )
+    for bundle_rel, replay_rel, scenario_id in bundles:
+        try:
+            bundle = json.loads((root / bundle_rel / "bundle.json").read_text())
+            rebuilt = json.loads((root / replay_rel / "manifest.json").read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            return False, f"bundle evidence missing or invalid for {scenario_id}: {exc}"
+        if bundle.get("scenario_id") != scenario_id:
+            return False, f"wrong bundled scenario for {scenario_id}"
+        recorded_digest = bundle.get("deterministic_replay_digest")
+        recorded_parameters = bundle.get("parameter_hash")
+        if (
+            rebuilt.get("status") != "completed"
+            or rebuilt.get("deterministic_replay_digest") != recorded_digest
+            or rebuilt.get("parameter_hash") != recorded_parameters
+            or not recorded_digest
+            or not recorded_parameters
+        ):
+            return False, f"rebuilt digest or parameter hash differs for {scenario_id}"
+    return True, "legacy baseline and trade scenario match recorded digests and parameter hashes"
+
 def run_clearance(
     root: Path,
     *,
@@ -458,6 +523,10 @@ def run_clearance(
                 passed, evidence = _check_p06_reproduction_table(root)
             elif check == "p06_trade_transmission":
                 passed, evidence = _check_p06_trade_transmission(root)
+            elif check == "p06_release_manifest":
+                passed, evidence = _check_p06_release_manifest(root)
+            elif check == "p06_bundle_rebuilt":
+                passed, evidence = _check_p06_bundle_rebuilt(root)
             else:
                 passed, evidence = False, f"unknown internal check {check!r}"
         else:

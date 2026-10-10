@@ -126,6 +126,15 @@ Trade imports are `mapped` at `normalized_index`, sourced only from the declared
 | `p06_reproduction_table` | **PASS** | crosswalk {'mapped': 2, 'no_counterpart': 11, 'blocked': 1}; 38 numeric rows limited to mapped open windows |
 | `p06_trade_transmission` | **PASS** | C0/C1/C2 identities, 116-tick windows, per-commodity channels and residual evidence recorded |
 
+## Final P06 close-out (partial reproduction result; 2026-10-10)
+
+The frozen conclusion is in [P06_FINAL_REPORT.md](P06_FINAL_REPORT.md), immediately after its scope boundary. It records `calibrated = 0`, nothing identified, consumption falling against a rising observed index (18/18 informative years outside tolerance; mean absolute residual 91.7414 in the base replay and 120.2651 in the trade scenario), 2 mapped / 1 Treasury-rationed blocked / 11 no-counterpart crosswalk rows, partial external-channel transmission, and no SUPPORTED mechanism card as a result. The required sentence is reproduced verbatim there. No mechanism or crosswalk verdict changed.
+
+The release manifest is [P06_RELEASE.md](P06_RELEASE.md). Frozen source HEAD: `fd025a5bdedf698100e05f736b4209ddc62dd144`; crosswalk SHA-256: `433f53dd09643bc963b2f7002a508284b7e153bcd9ebae5ffb55f88820826aeb`. Both final bundle replays match their recorded digests and parameter hashes: legacy `92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d` and C1 trade scenario `c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5`. The stale pre-closeout bytes and their mismatch are preserved and explained in the release manifest.
+
+Final clearance after regeneration: **26 PASS / 4 WAIVED / 0 OPEN**. The final suite result and lint evidence are recorded at `outputs/p06-clearance/pytest.json` and in the generated clearance checklist. This close-out adds only documentation, bundle evidence and clearance checks; it does not alter mechanisms, crosswalk dispositions or verdicts.
+
+
 W0.5 parent run command: `.venv/bin/hsm run --scenario p04_endogenous --until 1973Q1 --checkpoint-every 4 --output-dir outputs/p06-fork-parent --json`. Wall time: **5.42 s**; manifest digest: `45999d895dac3b84bc69918273eed0c3b51489cba9ddae4fdbb2a20c54411f27`. Checkpoints: `outputs/p06-fork-parent/checkpoints/tick-0044` (material-checkpoint-v4, 44 completed ticks, last 1967Q4, next 1968Q1) and `outputs/p06-fork-parent/checkpoints/tick-0064` (v4, 64 completed ticks, last 1972Q4, next 1973Q1).
 
 All 17 arms finished 116 ticks through 1985Q4; per-arm time 4.316–6.050 s, concurrent batch 26.29 s. Every arm accounting check passed; none was rejected and the 10-minute degradation trigger did not apply. Values below are counterfactual simulation metrics, not historical evidence. Production is the sum of model commodity-group production over the run, not GDP.
