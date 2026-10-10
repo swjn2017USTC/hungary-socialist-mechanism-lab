@@ -30,4 +30,4 @@ W9 crosswalk counts: **1 mapped / 3 no_counterpart / 10 blocked**. Numeric repro
 
 Clearance: `.venv/bin/hsm calibration p06-clearance --with-runs --json` is green: **23 PASS / 4 WAIVED / 0 OPEN**. The four WAIVED items preserve the user-declared reproduction scope; no required item remains open. Frozen gates remain failed/unchanged, `calibrated = 0`, no parameter identified, no Sobol/ABC, and no validation claim.
 
-W0.5 commit: `3a3ad69`. W9 implementation/report commit hash is recorded in the final clearance log. `.omp/config.yml` remains a pre-existing user-local edit and is excluded from commits.
+W0.5 commit: `3a3ad69`. W9 implementation/report commit: `28a9bbf2f33e57d1c46339685660ef91ded9cdfe`. `.omp/config.yml` remains a pre-existing user-local edit and is excluded from commits.
