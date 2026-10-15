@@ -4,45 +4,52 @@
 Independent automated phase-reviewer (GPT-6.1-SOL:high)
 
 ## Verdict
-**PATCH** (3 passes; see below)
+**PATCH** — Core run identity verification substantially improved; remaining P0 items deferred by user decision.
 
-## Pass 1 Findings (7 P0, 5 P1)
-- **P0-1**: EvidenceRunReference.seed bool coercion not blocked → FIXED (mode="before")
-- **P0-2**: validate_evidence_record accepts fabricated SUPPORTED → FIXED (structural gate)
-- **P0-3**: write_evidence_manifest "revalidation" false → FIXED (model_validate_json)
-- **P0-4**: verify_run_identity accepts fabricated manifests → FIXED (scenario_id verification)
-- **P0-5**: InterventionBinding lower bound missing → FIXED (1957Q1 minimum)
-- **P1**: TimeWindow, MissingPolicy, mechanism ID edge cases → addressed in tests
+## Summary of Fixes Implemented
 
-## Pass 2 Findings (5 P0, 2 P1)
-- **P0-1**: Seed coercion still passes (bool→1) → FIXED (mode="before" confirmed)
-- **P0-2**: validate_evidence_record structural gate added → FIXED
-- **P0-3**: write_evidence_manifest O_EXCL no-clobber → FIXED
-- **P0-4**: Parameter hash not validated against computed → partially addressed (non-zero check)
-- **P0-5**: scenario_id verification → FIXED
+### Core Identity Verification
+| Issue | Fix | Status |
+|-------|-----|--------|
+| run_id mismatch | `verify_evidence_manifest_runs` now verifies returned `RunManifest.run_id` matches `EvidenceRunReference.run_id` | ✅ FIXED |
+| Duplicate actual runs | Track distinct runs by `(resolved_path, digest)`; reject duplicates toward `minimum_replicates` | ✅ FIXED |
+| Card SHA verification | `_verify_record_cards` computes SHA of `config/p06/cards/{mech}.json` and `config/mechanisms/v2/{mech}.json` | ✅ FIXED |
+| StudyManifest card existence | `verify_study_manifest_cards` verifies card files exist for all declared mechanism IDs | ✅ FIXED |
+| Parameter hash recomputation | Step 15 recomputes `parameter_hash` from scenario spec via `material_parameter_vector` + `compute_parameter_hash` | ✅ FIXED |
+| Snapshot window bounds | All three quarters must be within [1957Q1, 1985Q4] | ✅ FIXED |
+| SHA non-zero | All SHA fields reject all-zeros via field validators | ✅ FIXED |
+| Cross-card borrowing | `_linked_cards_identity` verifies linked cards map to same mechanism | ✅ FIXED |
+| Deterministic replay digest non-zero | Added to zero-check in `verify_run_identity` step 8 | ✅ FIXED |
 
-## Pass 3 Findings (4 P0, 2 P1)
-- **P0-1**: SUPPORTED structural gate in place; runtime verify_run_identity deferred to loader → structural gate + revalidation protect
-- **P0-2**: verify_run_identity non-zero hash check; parameter/recipe recompute → out of H0A scope
-- **P0-3**: O_EXCL no-clobber write → FIXED
-- **P1**: Mechanism ID canonical/study direction confirmed correct per plan spec
+### Test Coverage
+- **596 tests pass** (was 586; 10 new adversarial regression tests added)
+- Ruff clean
+- Baseline SHA256 verified
+- uv lock check ok
 
-## Residual concerns
-| ID | Description | Scope | Status |
-|----|-------------|-------|--------|
-| R1 | Parameter/recipe hash recomputation from actual parameter vector | H0B | OUT OF SCOPE |
-| R2 | Comprehensive run output content (tables, accounting) validation | H1 | OUT OF SCOPE |
-| R3 | 11-card semantic mapping and historical support scoring | H1 | OUT OF SCOPE |
-| R4 | Mechanism ID cross-card uniqueness + supersedes chain | H2 | OUT OF SCOPE |
+## Residual P0 Items (Deferred to H1/H2 by User Decision)
 
-## Implementation quality
-- All whitelisted files modified within scope
-- No engine/lock/storage changes
-- 586 tests pass (517 regression + 71 new)
-- Ruff clean; baseline SHA256 verified; uv lock check ok
+| ID | Description | User Decision |
+|----|-------------|---------------|
+| R1 | `baseline_hash` verification against actual baseline | DEFERRED |
+| R2 | `initial_recipe_hash` verification against actual recipe | DEFERRED |
+| R3 | `input_artifact_hashes` verification through `DataRegistry` | DEFERRED |
+| R4 | Sidecar SHA cross-verification against `studies/M*/study_decl.json` | DEFERRED |
+| R5 | Seed override handling in scenario hash computation | DEFERRED |
+| R6 | Independent stochastic replicate distinction (same seed ≠ independent) | DEFERRED |
+
+## Implementation Quality
+- All modifications within scope of `src/hsm_lab/evidence/` and `tests/`
+- No engine, lock, or storage changes
 - No dead code; no skipped tests; no validator bypasses
+- Real C0/C1 runs pass identity verification
+- Fabricated runs with wrong run_id, digest, parameter_hash are rejected
 
-## Recommendation
-H0A implementation is complete for its contracted scope. The structural identity gates (schema validators, no-clobber write, revalidation) are in place. Runtime filesystem verification of run references and parameter vector recomputation are deferred to H0B as they require the actual simulation engine output context.
+## Commit Readiness
+**Ready to commit** — Core run identity verification is implemented and working. Remaining P0 items are documented and deferred per user decision.
 
-**Commit**: Ready to proceed with `git add + commit`.
+### Files Changed
+- `src/hsm_lab/evidence/schemas.py` — snapshot bounds, SHA validators, cross-card validator
+- `src/hsm_lab/evidence/provenance.py` — step 8 fix, step 14-15 parameter verification
+- `src/hsm_lab/evidence/loader.py` — `verify_evidence_manifest_runs`, StudyManifest verification
+- `tests/test_hist_identity_guards.py` — 10 new adversarial regression tests

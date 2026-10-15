@@ -387,6 +387,15 @@ class ObservedState(BaseModel):
         pattern=r"^[a-f0-9]{64}$",
         description="SHA-256 of the source run directory tree at capture time",
     )
+
+    @field_validator("source_digest", mode="after")
+    @classmethod
+    def _source_digest_not_zero(cls, v: str) -> str:
+        """Reject all-zero SHA-256 digests."""
+        if v == "0" * 64:
+            raise ValueError("source_digest must not be all zeros")
+        return v
+
     captured_at: str = Field(
         description="ISO-8601 timestamp of capture; not used for execution",
     )
@@ -407,10 +416,52 @@ class ObservedState(BaseModel):
 
     @model_validator(mode="after")
     def _availability_order(self) -> ObservedState:
-        """Enforce source_checkpoint_quarter <= available_at <= decision_at."""
+        """Enforce source_checkpoint_quarter <= available_at <= decision_at,
+        and all three are within the open study window [1957Q1, 1985Q4].
+        """
+        # Study window boundaries
+        WINDOW_START = Quarter.parse("1957Q1")
+        WINDOW_END = Quarter.parse("1985Q4")
+
         cp = Quarter.parse(self.source_checkpoint_quarter)
         av = Quarter.parse(self.available_at)
         dc = Quarter.parse(self.decision_at)
+
+        # Check absolute window boundaries
+        if cp.to_ordinal() < WINDOW_START.to_ordinal():
+            raise ValueError(
+                f"ObservedState {self.observed_state_id}: "
+                f"source_checkpoint_quarter {self.source_checkpoint_quarter} is before "
+                f"study window start {WINDOW_START}"
+            )
+        if cp.to_ordinal() > WINDOW_END.to_ordinal():
+            raise ValueError(
+                f"ObservedState {self.observed_state_id}: "
+                f"source_checkpoint_quarter {self.source_checkpoint_quarter} is after "
+                f"study window end {WINDOW_END}"
+            )
+        if av.to_ordinal() < WINDOW_START.to_ordinal():
+            raise ValueError(
+                f"ObservedState {self.observed_state_id}: "
+                f"available_at {self.available_at} is before study window start"
+            )
+        if av.to_ordinal() > WINDOW_END.to_ordinal():
+            raise ValueError(
+                f"ObservedState {self.observed_state_id}: "
+                f"available_at {self.available_at} is after study window end"
+            )
+        if dc.to_ordinal() < WINDOW_START.to_ordinal():
+            raise ValueError(
+                f"ObservedState {self.observed_state_id}: "
+                f"decision_at {self.decision_at} is before study window start"
+            )
+        if dc.to_ordinal() > WINDOW_END.to_ordinal():
+            raise ValueError(
+                f"ObservedState {self.observed_state_id}: "
+                f"decision_at {self.decision_at} is after study window end"
+            )
+
+        # Check relative ordering
         if av.to_ordinal() < cp.to_ordinal():
             raise ValueError(
                 f"ObservedState {self.observed_state_id}: "
@@ -463,10 +514,19 @@ class EvidenceRunReference(BaseModel):
         if isinstance(v, bool):
             raise ValueError("seed must be a strict integer; bool is not allowed")
         return v
+
     digest: str = Field(
         pattern=r"^[a-f0-9]{64}$",
         description="SHA-256 digest of the full output tree at run completion",
     )
+
+    @field_validator("digest", mode="after")
+    @classmethod
+    def _digest_not_zero(cls, v: str) -> str:
+        """Reject all-zero SHA-256 digests."""
+        if v == "0" * 64:
+            raise ValueError("digest must not be all zeros")
+        return v
 
 
 # ---------------------------------------------------------------------------
@@ -499,6 +559,23 @@ class EvidenceRecord(BaseModel):
         pattern=r"^[a-f0-9]{64}$",
         description="If this is a v2 card, SHA-256 of the superseded v1 card",
     )
+
+    @field_validator("v1_card_sha256", mode="after")
+    @classmethod
+    def _v1_card_sha256_not_zero(cls, v: str) -> str:
+        """Reject all-zero SHA-256 digests."""
+        if v == "0" * 64:
+            raise ValueError("v1_card_sha256 must not be all zeros")
+        return v
+
+    @field_validator("supersedes_card_sha256", mode="after")
+    @classmethod
+    def _supersedes_card_sha256_not_zero(cls, v: str | None) -> str | None:
+        """Reject all-zero SHA-256 digests for v2 cards."""
+        if v is not None and v == "0" * 64:
+            raise ValueError("supersedes_card_sha256 must not be all zeros")
+        return v
+
     hypothesis: str = Field(min_length=1)
     status: EvidenceStatus = Field(
         default=EvidenceStatus.DECLARED,
@@ -656,16 +733,21 @@ class StudyDeclaration(BaseModel):
 
     @model_validator(mode="after")
     def _linked_cards_identity(self) -> StudyDeclaration:
-        """Each linked card's canonical identity must equal itself; no borrowing."""
+        """Each linked card's canonical identity must belong to the same mechanism;
+        cross-card borrowing (e.g. linking M2 when mechanism_id is M01) is not allowed.
+        """
+        # Canonical form of the declaration's own mechanism_id
+        self_canonical = canonical_mechanism_id(self.mechanism_id)
         for card in self.linked_cards:
             try:
-                canonical = canonical_mechanism_id(card)
-                # The canonical M1 key must match the card as written (no cross-card borrowing)
-                if canonical != canonical_mechanism_id(card):
+                card_canonical = canonical_mechanism_id(card)
+                # Cross-card borrowing: linked card maps to a different mechanism
+                if card_canonical != self_canonical:
                     raise ValueError(
                         f"StudyDeclaration {self.record_id}: "
-                        f"linked_card {card!r} maps to canonical {canonical}, "
-                        "which does not equal itself — cross-card borrowing is not allowed"
+                        f"linked_card {card!r} maps to canonical {card_canonical}, "
+                        f"which differs from declaration's mechanism {self_canonical} — "
+                        "cross-card borrowing is not allowed"
                     )
             except ValueError as exc:
                 raise ValueError(

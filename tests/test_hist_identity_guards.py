@@ -19,6 +19,7 @@ from hsm_lab.evidence.loader import (
     load_evidence_manifest,
     validate_evidence_manifest,
     validate_study_manifest,
+    verify_study_manifest_cards,
     write_evidence_manifest,
 )
 from hsm_lab.evidence.provenance import verify_run_identity
@@ -769,3 +770,198 @@ class TestVerifyRunIdentity:
                 expected_digest="a" * 64,
                 output_dir=tmp_path,
             )
+
+
+# ---------------------------------------------------------------------------
+# verify_run_identity — parameter_hash recomputation from the scenario spec
+# ---------------------------------------------------------------------------
+
+_PARAMETER_SCENARIO = "historical_f2_replay"
+
+
+def _write_self_consistent_material_run(
+    run_dir: Path,
+    *,
+    parameter_hash: str,
+    scenario_id: str = _PARAMETER_SCENARIO,
+    expected_digest: str = "a" * 64,
+) -> Path:
+    """Write a material run dir whose own artefacts fully agree.
+
+    ``manifest.json``, ``parameters.json`` and ``manifest.output_hashes`` are
+    mutually consistent, so steps 1–14 of verify_run_identity pass regardless
+    of ``parameter_hash``; only the scenario-spec recomputation can reject a
+    fabricated value. All non-parameter hashes are computed from the live repo.
+    """
+    from hsm_lab.contract.guards import load_scenario
+    from hsm_lab.engine.material import material_parameter_vector
+    from hsm_lab.provenance.manifest import (
+        compute_data_manifest_hash,
+        compute_lock_hash,
+        compute_scenario_hash,
+        hash_output_tree,
+    )
+
+    spec = load_scenario(ROOT, scenario_id)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "summary.json").write_text(
+        json.dumps({"run_id": "test-run"}), encoding="utf-8"
+    )
+    (run_dir / "initial_recipe.json").write_text("{}", encoding="utf-8")
+    (run_dir / "parameters.json").write_text(
+        json.dumps({
+            "parameter_vector": material_parameter_vector(spec),
+            "parameter_hash": parameter_hash,
+        }),
+        encoding="utf-8",
+    )
+    manifest = _make_minimal_run_manifest(
+        parameter_hash=parameter_hash,
+        scenario_hash=compute_scenario_hash(spec),
+        lock_hash=compute_lock_hash(ROOT),
+        data_manifest_hash=compute_data_manifest_hash(ROOT),
+        deterministic_replay_digest=expected_digest,
+    )
+    manifest["output_hashes"] = hash_output_tree(run_dir)
+    (run_dir / "manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+    return run_dir
+
+
+class TestVerifyRunIdentityParameterHash:
+    def test_fabricated_parameter_hash_is_rejected(self, tmp_path: Path) -> None:
+        """A hash that no step 1–14 contradicts is still rejected if the spec disagrees."""
+        run_dir = _write_self_consistent_material_run(
+            tmp_path / "run", parameter_hash="a" * 64
+        )
+        with pytest.raises(ValueError, match="recomputed from scenario"):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=1729,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )
+
+    def test_spec_derived_parameter_hash_is_accepted(self, tmp_path: Path) -> None:
+        from hsm_lab.contract.guards import load_scenario
+        from hsm_lab.engine.material import material_parameter_vector
+        from hsm_lab.provenance.manifest import compute_parameter_hash
+
+        spec_hash = compute_parameter_hash(
+            material_parameter_vector(load_scenario(ROOT, _PARAMETER_SCENARIO))
+        )
+        run_dir = _write_self_consistent_material_run(
+            tmp_path / "run", parameter_hash=spec_hash
+        )
+        manifest = verify_run_identity(
+            root=ROOT,
+            scenario_id=_PARAMETER_SCENARIO,
+            seed=1729,
+            expected_digest="a" * 64,
+            output_dir=run_dir,
+        )
+        assert manifest.parameter_hash == spec_hash
+
+
+# ---------------------------------------------------------------------------
+# StudyManifest card verification (loader)
+# ---------------------------------------------------------------------------
+
+def _write_study_manifest(
+    root: Path,
+    *,
+    mechanism_id: str = "M01",
+    linked_cards: list[str] | None = None,
+    v1_card_sha256: str | None = None,
+) -> Path:
+    manifest_path = root / "studies" / "manifest.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    record: dict[str, object] = {
+        "record_id": f"TEST-{mechanism_id}",
+        "mechanism_id": mechanism_id,
+        "intent": "unit_test_intent",
+        "linked_cards": linked_cards if linked_cards is not None else [mechanism_id],
+        "status": "declared",
+        "declared_reason": "unit-test declaration",
+        "blocked_reason": None,
+    }
+    if v1_card_sha256 is not None:
+        record["v1_card_sha256"] = v1_card_sha256
+    manifest_path.write_text(
+        json.dumps({
+            "manifest_version": "1.0.0",
+            "phase": "P07A1",
+            "created_by_phase": "P07A1",
+            "records": [record],
+        }),
+        encoding="utf-8",
+    )
+    return manifest_path
+
+
+def _stage_card(root: Path, card_name: str) -> Path:
+    """Copy a real v1 card into ``root`` under the study card directory."""
+    source = ROOT / "config" / "p06" / "cards" / card_name
+    target = root / "config" / "p06" / "cards" / card_name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(source.read_bytes())
+    return target
+
+
+class TestStudyManifestCardVerification:
+    def test_real_study_manifest_cards_are_verified(self) -> None:
+        manifest = load_evidence_manifest(ROOT, ROOT / "studies" / "manifest.json")
+        assert isinstance(manifest, StudyManifest)
+        # Real records declare no v1_card_sha256, but every declared card must
+        # still exist on disk.
+        verify_study_manifest_cards(ROOT, manifest)
+        for record in manifest.records:
+            assert (ROOT / "config" / "p06" / "cards" / f"{record.linked_cards[0]}.json").is_file()
+
+    def test_missing_card_is_rejected(self, tmp_path: Path) -> None:
+        manifest_path = _write_study_manifest(tmp_path)
+        with pytest.raises(ValueError, match="v1 card not found"):
+            load_evidence_manifest(tmp_path, manifest_path)
+
+    def test_declared_card_sha_mismatch_is_rejected(self, tmp_path: Path) -> None:
+        card = _stage_card(tmp_path, "M1.json")
+        assert card.is_file()
+        manifest_path = _write_study_manifest(tmp_path, v1_card_sha256="b" * 64)
+        with pytest.raises(ValueError, match="v1_card_sha256 mismatch"):
+            load_evidence_manifest(tmp_path, manifest_path)
+
+    @pytest.mark.parametrize(
+        "mechanism_id, card_name",
+        [("M01", "M1.json"), ("M1", "M1.json"), ("M11", "M11.json")],
+    )
+    def test_declared_card_sha_match_is_accepted(
+        self, tmp_path: Path, mechanism_id: str, card_name: str
+    ) -> None:
+        from hsm_lab.contract.guards import sha256_file
+
+        card = _stage_card(tmp_path, card_name)
+        manifest_path = _write_study_manifest(
+            tmp_path,
+            mechanism_id=mechanism_id,
+            linked_cards=[card_name.removesuffix(".json")],
+            v1_card_sha256=sha256_file(card),
+        )
+        manifest = load_evidence_manifest(tmp_path, manifest_path)
+        assert isinstance(manifest, StudyManifest)
+        assert manifest.records[0].v1_card_sha256 == sha256_file(card)
+
+    def test_card_sha_absent_still_requires_card(self, tmp_path: Path) -> None:
+        """A record without v1_card_sha256 is still bound to an existing card."""
+        _stage_card(tmp_path, "M1.json")
+        manifest_path = _write_study_manifest(tmp_path)
+        manifest = load_evidence_manifest(tmp_path, manifest_path)
+        assert isinstance(manifest, StudyManifest)
+        assert manifest.records[0].v1_card_sha256 is None
+
+    def test_verify_runs_false_skips_card_verification(self, tmp_path: Path) -> None:
+        manifest_path = _write_study_manifest(tmp_path)
+        manifest = load_evidence_manifest(tmp_path, manifest_path, verify_runs=False)
+        assert isinstance(manifest, StudyManifest)
+

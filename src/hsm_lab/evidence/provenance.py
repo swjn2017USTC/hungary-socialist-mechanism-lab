@@ -314,6 +314,14 @@ def verify_run_identity(
     This is a READ-ONLY function: it only reads files already on disk and
     performs no model execution, no writes, and no engine modifications.
 
+    Beyond the standard run-provenance checks, the recorded
+    ``parameters.json`` must declare the same ``parameter_hash`` as the run
+    manifest, and that hash must equal the hash recomputed from the scenario
+    spec's material parameter vector (``material_parameter_vector`` →
+    ``compute_parameter_hash``). A manifest therefore cannot claim a parameter
+    identity that its own output directory — or the scenario it names —
+    contradicts.
+
     Parameters
     ----------
     root
@@ -442,6 +450,7 @@ def verify_run_identity(
         "lock_hash",
         "data_manifest_hash",
         "parameter_hash",
+        "deterministic_replay_digest",
     ):
         h = getattr(manifest, field_name, None)
         if not h or h == "0" * 64:
@@ -516,5 +525,63 @@ def verify_run_identity(
             "verify_run_identity: manifest.parameter_hash is zero "
             "(not a formal run)"
         )
+
+    # 14. parameters.json must record the same parameter hash as the manifest.
+    # The byte-level integrity of parameters.json is already covered by the
+    # output-tree digest check (step 9); this check binds the parameter identity
+    # declared inside the run output to the value the manifest claims.
+    parameters_path = resolved / "parameters.json"
+    try:
+        parameters_raw = json.loads(parameters_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"verify_run_identity: parameters.json is not valid JSON: {exc}"
+        ) from exc
+    if not isinstance(parameters_raw, dict):
+        raise ValueError(
+            "verify_run_identity: parameters.json must be a JSON object"
+        )
+    recorded_parameter_hash = parameters_raw.get("parameter_hash")
+    if not isinstance(recorded_parameter_hash, str) or not recorded_parameter_hash:
+        raise ValueError(
+            "verify_run_identity: parameters.json has no 'parameter_hash' field"
+        )
+    if recorded_parameter_hash != manifest.parameter_hash:
+        raise ValueError(
+            "verify_run_identity: parameters.json parameter_hash "
+            f"{recorded_parameter_hash[:16]}... does not match "
+            f"manifest.parameter_hash {manifest.parameter_hash[:16]}..."
+        )
+
+    # 15. Parameter identity must match the scenario specification. Steps 13–14
+    # only bind parameters.json to the run manifest, so a fabricated run could
+    # satisfy both while claiming parameters the scenario never declared.
+    # Recomputing the hash from the canonical spec's material parameter vector
+    # (exactly as the run itself derives it) ties ``parameter_hash`` to
+    # ``scenario_id``. Non-material scenarios (e.g. ``smoke``, used by
+    # ``synthetic_engine_smoke``) declare no parameter vector to recompute from,
+    # so this binding only applies where the spec actually carries one.
+    if (
+        scenario_spec.material_parameters is not None
+        and scenario_spec.material_initial is not None
+    ):
+        try:
+            from hsm_lab.engine.material import material_parameter_vector
+
+            recomputed_parameter_hash = compute_parameter_hash(
+                material_parameter_vector(scenario_spec)
+            )
+        except Exception as exc:
+            raise ValueError(
+                "verify_run_identity: failed to recompute parameter_hash from "
+                f"scenario spec {scenario_id!r}: {exc}"
+            ) from exc
+        if manifest.parameter_hash != recomputed_parameter_hash:
+            raise ValueError(
+                "verify_run_identity: manifest.parameter_hash "
+                f"{manifest.parameter_hash[:16]}... does not match the hash "
+                f"recomputed from scenario {scenario_id!r} "
+                f"({recomputed_parameter_hash[:16]}...)"
+            )
 
     return manifest
