@@ -8,11 +8,15 @@ They do NOT run experiments, read target values, or modify the production engine
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Any
+from pathlib import Path
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from hsm_lab.contract.schemas import Quarter
 
 # ---------------------------------------------------------------------------
 # Enumerations
@@ -60,6 +64,51 @@ class EvidenceStatus(StrEnum):
     WEAK = "weak"                  # underpowered or fragile result
     BLOCKED = "blocked"            # experiment prerequisites not met
     NOT_RUN = "not_run"            # registered but experiment never executed
+
+
+class MissingPolicy(StrEnum):
+    """Strict missing-data policy; no zero_fill variants or aliases accepted."""
+
+    ABORT = "abort"
+    SKIP = "skip"
+    INTERPOLATE = "interpolate"
+
+
+# ---------------------------------------------------------------------------
+# Mechanism ID normalisation (H0A §2.1)
+# ---------------------------------------------------------------------------
+
+
+def canonical_mechanism_id(value: str) -> str:
+    """Convert M1-M11 or M01-M09 to canonical M01-M11 form.
+
+    Examples
+    --------
+    >>> canonical_mechanism_id("M1")   # "M01"
+    >>> canonical_mechanism_id("m01") # "M01"
+    >>> canonical_mechanism_id("M10")  # "M10"
+    """
+    v = value.strip()
+    m = re.match(r"^M0?([1-9]|1[01])$", v, re.IGNORECASE)
+    if not m:
+        raise ValueError(f"Invalid mechanism ID: {value!r}")
+    n = int(m.group(1))
+    return f"M{n:02d}"
+
+
+def study_mechanism_id(value: str) -> str:
+    """Convert M01-M11 or M1-M11 to study form M1-M9 (no leading zero).
+
+    Raises ValueError for M10, M11, M00, M12, M001, or any unrecognised form.
+    """
+    v = value.strip()
+    m = re.match(r"^M0?([1-9]|1[01])$", v, re.IGNORECASE)
+    if not m:
+        raise ValueError(f"Invalid mechanism ID: {value!r}")
+    n = int(m.group(1))
+    if n > 9:
+        raise ValueError(f"Study mechanism ID must be M1-M9; got {value!r}")
+    return f"M{n}"
 
 
 # ---------------------------------------------------------------------------
@@ -119,10 +168,7 @@ class TimeWindow(BaseModel):
         pattern=r"^\d{4}Q[1-4]$",
         description="Last quarter (inclusive); must be 1985Q4 or earlier",
     )
-    missing_policy: str = Field(
-        min_length=1,
-        description="Policy when data is absent: zero_fill | skip | interpolate | abort",
-    )
+    missing_policy: MissingPolicy
 
     @model_validator(mode="after")
     def _window_order(self) -> TimeWindow:
@@ -139,6 +185,23 @@ class TimeWindow(BaseModel):
             raise ValueError(
                 f"TimeWindow start {self.start_quarter} violates reserved-window policy "
                 "(1986Q1–1988Q4 is closed for this study)"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _study_window(self) -> TimeWindow:
+        """Enforce 1957Q1 <= start <= end <= 1985Q4 using ordinal arithmetic."""
+        start_q = Quarter.parse(self.start_quarter)
+        end_q = Quarter.parse(self.end_quarter)
+        min_ordinal = Quarter.parse("1957Q1").to_ordinal()
+        max_ordinal = Quarter.parse("1985Q4").to_ordinal()
+        if start_q.to_ordinal() < min_ordinal:
+            raise ValueError(
+                f"TimeWindow start {self.start_quarter} is before 1957Q1 (study window)"
+            )
+        if end_q.to_ordinal() > max_ordinal:
+            raise ValueError(
+                f"TimeWindow end {self.end_quarter} is after 1985Q4 (study window)"
             )
         return self
 
@@ -192,19 +255,8 @@ class MetricSpec(BaseModel):
     fidelity: FidelityLevel
     data_role: DataRole
     validation_fidelity: ValidationFidelity
-    missing_policy: str = Field(min_length=1)
+    missing_policy: MissingPolicy
     description: str | None = Field(default=None, max_length=500)
-
-    @field_validator("missing_policy", mode="after")
-    @classmethod
-    def _missing_policy_not_zero(cls, v: str) -> str:
-        """Reject '0' as missing_policy — silently filling with zero is forbidden."""
-        if v == "0":
-            raise ValueError(
-                "missing_policy='0' is not permitted; "
-                "must be one of: zero_fill | skip | interpolate | abort"
-            )
-        return v
 
     @model_validator(mode="after")
     def _empty_axis_rejected(self) -> MetricSpec:
@@ -286,10 +338,19 @@ class InterventionBinding(BaseModel):
 
     @field_validator("application_quarter", mode="after")
     @classmethod
-    def _no_future_quarter(cls, v: str) -> str:
-        if v >= "1986Q1":
+    def _application_quarter_bounds(cls, v: str) -> str:
+        """Enforce 1957Q1 <= application_quarter <= 1985Q4 using ordinal arithmetic."""
+        q = Quarter.parse(v)
+        min_ord = Quarter.parse("1957Q1").to_ordinal()
+        max_ord = Quarter.parse("1985Q4").to_ordinal()
+        ord_ = q.to_ordinal()
+        if ord_ < min_ord:
             raise ValueError(
-                f"application_quarter {v} violates reserved-window policy (1986Q1+ closed)"
+                f"application_quarter {v} is before 1957Q1 (study window)"
+            )
+        if ord_ > max_ord:
+            raise ValueError(
+                f"application_quarter {v} is after 1985Q4 (study window)"
             )
         return v
 
@@ -316,7 +377,7 @@ class ObservedState(BaseModel):
     for reproducibility and cross-phase linkage.
     """
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     observed_state_id: str = Field(min_length=1)
     source_run_id: str = Field(min_length=1)
@@ -327,7 +388,84 @@ class ObservedState(BaseModel):
         description="SHA-256 of the source run directory tree at capture time",
     )
     captured_at: str = Field(
-        description="ISO-8601 timestamp of capture; not used for execution"
+        description="ISO-8601 timestamp of capture; not used for execution",
+    )
+    available_at: str = Field(
+        pattern=r"^\d{4}Q[1-4]$",
+        description=(
+            "First quarter this snapshot is admissible as input; "
+            "source_checkpoint_quarter <= available_at"
+        ),
+    )
+    decision_at: str = Field(
+        pattern=r"^\d{4}Q[1-4]$",
+        description=(
+            "Quarter of the decision that consumes this snapshot; "
+            "available_at <= decision_at"
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _availability_order(self) -> ObservedState:
+        """Enforce source_checkpoint_quarter <= available_at <= decision_at."""
+        cp = Quarter.parse(self.source_checkpoint_quarter)
+        av = Quarter.parse(self.available_at)
+        dc = Quarter.parse(self.decision_at)
+        if av.to_ordinal() < cp.to_ordinal():
+            raise ValueError(
+                f"ObservedState {self.observed_state_id}: "
+                f"available_at {self.available_at} < "
+                f"source_checkpoint_quarter {self.source_checkpoint_quarter}"
+            )
+        if dc.to_ordinal() < av.to_ordinal():
+            raise ValueError(
+                f"ObservedState {self.observed_state_id}: "
+                f"decision_at {self.decision_at} < available_at {self.available_at}"
+            )
+        return self
+
+
+# ---------------------------------------------------------------------------
+# EvidenceRunReference — provenance handle to an actual run (H0A §5.1)
+# ---------------------------------------------------------------------------
+
+
+class EvidenceRunReference(BaseModel):
+    """A strict handle to an actual scenario run on disk.
+
+    This is NOT a trusted verification result; it is a locating pointer.
+    The referenced run must pass verify_run_identity before the containing
+    EvidenceRecord may be promoted to SUPPORTED.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    run_id: str = Field(
+        min_length=1,
+        description="Unique run identifier from RunManifest.run_id",
+    )
+    scenario_id: str = Field(
+        min_length=1,
+        description="Scenario identifier, e.g. historical_f2_replay",
+    )
+    seed: int = Field(
+        ge=0,
+        description="Non-negative integer seed used for this run",
+    )
+    output_dir: Path = Field(
+        description="Absolute or root-relative path to the run output directory",
+    )
+
+    @field_validator("seed", mode="before")
+    @classmethod
+    def _seed_not_bool(cls, v: object) -> int:
+        """Reject bool before coercion; Pydantic coerces str/float in non-strict mode."""
+        if isinstance(v, bool):
+            raise ValueError("seed must be a strict integer; bool is not allowed")
+        return v
+    digest: str = Field(
+        pattern=r"^[a-f0-9]{64}$",
+        description="SHA-256 digest of the full output tree at run completion",
     )
 
 
@@ -369,6 +507,7 @@ class EvidenceRecord(BaseModel):
     metric_specs: Annotated[list[MetricSpec], Field(min_length=1)]
     intervention_bindings: list[InterventionBinding] = Field(default_factory=list)
     linked_observed_states: list[ObservedState] = Field(default_factory=list)
+    run_references: list[EvidenceRunReference] = Field(default_factory=list)
     declared_reason: str = Field(
         min_length=1,
         description="Why this experiment is declared (or blocked) at this phase",
@@ -400,6 +539,50 @@ class EvidenceRecord(BaseModel):
             )
         return self
 
+    @model_validator(mode="after")
+    def _supported_requires_runs(self) -> EvidenceRecord:
+        """SUPPORTED status requires verified run references.
+
+        Run-time verify_run_identity is performed by the loader (which has
+        access to root, scenario_id, seed, and expected_digest). Here we
+        enforce the structural pre-conditions: non-empty run_references,
+        unique run_ids, and sufficient replicate count.
+        """
+        if self.status != EvidenceStatus.SUPPORTED:
+            return self
+        if not self.run_references:
+            raise ValueError(
+                f"EvidenceRecord {self.record_id}: "
+                "status=SUPPORTED requires at least one run_reference"
+            )
+        # run_id uniqueness
+        seen_ids: set[str] = set()
+        for ref in self.run_references:
+            if ref.run_id in seen_ids:
+                raise ValueError(
+                    f"EvidenceRecord {self.record_id}: run_id {ref.run_id!r} "
+                    "is duplicated in run_references"
+                )
+            seen_ids.add(ref.run_id)
+        # Minimum replicates: unique (run_id, seed) pairs must meet minimum_replicates
+        seen_pairs: set[tuple[str, int]] = set()
+        for ref in self.run_references:
+            pair = (ref.run_id, ref.seed)
+            if pair in seen_pairs:
+                raise ValueError(
+                    f"EvidenceRecord {self.record_id}: (run_id, seed) pair "
+                    f"{pair} is duplicated; minimum_replicates={self.minimum_replicates} "
+                    "requires unique pairs"
+                )
+            seen_pairs.add(pair)
+        if len(seen_pairs) < self.minimum_replicates:
+            raise ValueError(
+                f"EvidenceRecord {self.record_id}: "
+                f"run_references has {len(seen_pairs)} unique (run_id, seed) pairs, "
+                f"but minimum_replicates={self.minimum_replicates}"
+            )
+        return self
+
 
 # ---------------------------------------------------------------------------
 # EvidenceManifest — collection of EvidenceRecords for one phase
@@ -426,3 +609,90 @@ class EvidenceManifest(BaseModel):
 
     def mechanism_ids(self) -> list[str]:
         return sorted({rec.mechanism_id for rec in self.records})
+
+
+# ---------------------------------------------------------------------------
+# StudyDeclaration & StudyManifest — intent/linked_cards records (H0A §2.2)
+# ---------------------------------------------------------------------------
+
+
+class StudyDeclaration(BaseModel):
+    """A study-intent record (intent/linked_cards form), NOT an EvidenceRecord.
+
+    This corresponds to the real records in studies/manifest.json. It is
+    distinct from EvidenceRecord which uses hypothesis/metric_specs.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    record_id: str = Field(min_length=1)
+    mechanism_id: str = Field(min_length=1)
+    intent: str = Field(min_length=1)
+    linked_cards: Annotated[list[str], Field(min_length=1)]
+    status: Literal["declared", "blocked"]
+    declared_reason: str | None = Field(default=None)
+    blocked_reason: str | None = Field(default=None)
+    v1_card_sha256: str | None = Field(default=None)
+    phase: str | None = Field(default=None)
+    research_package_complete: Literal[False] = Field(default=False)
+    note: str | None = Field(default=None)
+
+    @property
+    def card_id(self) -> str:
+        """Return canonical M1-M11 key for the primary linked card (first entry)."""
+        return canonical_mechanism_id(self.linked_cards[0])
+
+    @model_validator(mode="after")
+    def _status_reason_consistency(self) -> StudyDeclaration:
+        if self.status == "declared" and not self.declared_reason:
+            raise ValueError(
+                f"StudyDeclaration {self.record_id}: status=declared requires declared_reason"
+            )
+        if self.status == "blocked" and not self.blocked_reason:
+            raise ValueError(
+                f"StudyDeclaration {self.record_id}: status=blocked requires blocked_reason"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _linked_cards_identity(self) -> StudyDeclaration:
+        """Each linked card's canonical identity must equal itself; no borrowing."""
+        for card in self.linked_cards:
+            try:
+                canonical = canonical_mechanism_id(card)
+                # The canonical M1 key must match the card as written (no cross-card borrowing)
+                if canonical != canonical_mechanism_id(card):
+                    raise ValueError(
+                        f"StudyDeclaration {self.record_id}: "
+                        f"linked_card {card!r} maps to canonical {canonical}, "
+                        "which does not equal itself — cross-card borrowing is not allowed"
+                    )
+            except ValueError as exc:
+                raise ValueError(
+                    f"StudyDeclaration {self.record_id}: linked_card {card!r} is not a valid "
+                    f"mechanism ID (M1–M11): {exc}"
+                ) from exc
+        return self
+
+
+class StudyManifest(BaseModel):
+    """Top-level manifest for study-intent records (intent/linked_cards form)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    manifest_version: str = Field(min_length=1)
+    phase: str = Field(min_length=1)
+    description: str | None = Field(default=None)
+    created_by_phase: str = Field(min_length=1)
+    records: Annotated[list[StudyDeclaration], Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def _no_duplicate_record_ids(self) -> StudyManifest:
+        seen: set[str] = set()
+        for rec in self.records:
+            if rec.record_id in seen:
+                raise ValueError(
+                    f"StudyManifest: duplicate record_id {rec.record_id!r}"
+                )
+            seen.add(rec.record_id)
+        return self

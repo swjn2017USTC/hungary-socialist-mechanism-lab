@@ -10,11 +10,20 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from hsm_lab.evidence.schemas import EvidenceStatus  # noqa: F401
+from hsm_lab.provenance.manifest import (  # noqa: F401
+    MANIFEST_FILENAME,
+    RunManifest,
+    compute_data_manifest_hash,
+    compute_lock_hash,
+    compute_parameter_hash,
+    hash_output_tree,
+)
 
 
 class DAGNodeType(StrEnum):
@@ -272,3 +281,240 @@ def build_card_provenance(
         edges=edges,
         manifest_version="1.0.0",
     )
+
+
+# ---------------------------------------------------------------------------
+# verify_run_identity — strict run provenance verification (H0A §4)
+# ---------------------------------------------------------------------------
+
+_ALLOWED_RUN_KINDS = frozenset({
+    "synthetic_engine_smoke",
+    "toy4_f0_simulation",
+    "material_household_simulation",
+})
+
+
+def _resolve_output_dir(output_dir: Path, root: Path) -> Path:
+    """Resolve output_dir: absolute paths used as-is; relative resolved from root."""
+    if output_dir.is_absolute():
+        return output_dir
+    return (root / output_dir).resolve()
+
+
+def verify_run_identity(
+    *,
+    root: Path,
+    scenario_id: str,
+    seed: int,
+    expected_digest: str,
+    output_dir: Path,
+) -> RunManifest:
+    """Verify an actual run's provenance against expected parameters.
+
+    This is a READ-ONLY function: it only reads files already on disk and
+    performs no model execution, no writes, and no engine modifications.
+
+    Parameters
+    ----------
+    root
+        Repository root (used to resolve relative output_dir).
+    scenario_id
+        Scenario identifier, e.g. ``"historical_f2_replay"``.
+    seed
+        Non-negative integer seed used for the run.
+    expected_digest
+        The expected SHA-256 digest of the full output tree.
+    output_dir
+        Path to the run output directory.
+
+    Returns
+    -------
+    RunManifest
+        The parsed and validated run manifest.
+
+    Raises
+    ------
+    ValueError
+        If any provenance check fails (missing file, hash mismatch,
+        wrong seed, non-completed run, etc.). The error message contains
+        the failing field but does NOT leak sensitive data.
+    """
+    import json
+
+    from hsm_lab.contract.guards import load_scenario
+    from hsm_lab.contract.schemas import ScenarioSpec
+
+    resolved = _resolve_output_dir(output_dir, root)
+
+    # 1. Read and parse manifest
+    manifest_path = resolved / MANIFEST_FILENAME
+    if not manifest_path.exists():
+        raise ValueError(
+            "verify_run_identity: manifest.json not found at "
+            f"{manifest_path}"
+        )
+    try:
+        raw = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"verify_run_identity: manifest.json is not valid JSON: {exc}"
+        ) from exc
+
+    manifest: RunManifest
+    try:
+        manifest = RunManifest.model_validate(raw)
+    except Exception as exc:
+        raise ValueError(
+            "verify_run_identity: manifest.json does not conform to "
+            f"RunManifest schema: {exc}"
+        ) from exc
+
+    # 2. run_kind must be a known non-politics material scenario
+    if manifest.run_kind not in _ALLOWED_RUN_KINDS:
+        raise ValueError(
+            f"verify_run_identity: run_kind={manifest.run_kind!r} is not "
+            "in allowed set (non-politics material scenarios only)"
+        )
+
+    # 3. Completed / no-failure check
+    if manifest.status != "completed":
+        raise ValueError(
+            f"verify_run_identity: run status is {manifest.status!r}, "
+            "expected 'completed'"
+        )
+    if manifest.failure_message:
+        raise ValueError(
+            f"verify_run_identity: run has failure_message: "
+            f"{manifest.failure_message!r}"
+        )
+
+    # 4. completed_ticks must equal ticks (full run completed, not paused)
+    if manifest.completed_ticks != manifest.ticks:
+        raise ValueError(
+            f"verify_run_identity: completed_ticks={manifest.completed_ticks} "
+            f"!= ticks={manifest.ticks} (run not fully completed)"
+        )
+
+    # 5. Seed check (strict int — no bool coercion)
+    if not isinstance(manifest.seed, int) or isinstance(manifest.seed, bool):
+        raise ValueError(
+            f"verify_run_identity: manifest.seed={manifest.seed!r} is not a "
+            "strict integer"
+        )
+    if manifest.seed != seed:
+        raise ValueError(
+            f"verify_run_identity: manifest.seed={manifest.seed} does not "
+            f"match expected seed={seed}"
+        )
+
+    # 6. Digest check (top-level output tree digest)
+    if manifest.deterministic_replay_digest != expected_digest:
+        raise ValueError(
+            "verify_run_identity: manifest.deterministic_replay_digest "
+            "does not match expected_digest"
+        )
+
+    # 7. scenario_id must be a known scenario; recompute scenario_hash
+    try:
+        scenario_spec: ScenarioSpec = load_scenario(root, scenario_id)
+    except Exception as exc:
+        raise ValueError(
+            f"verify_run_identity: scenario_id={scenario_id!r} is not "
+            f"a known scenario: {exc}"
+        ) from exc
+    try:
+        from hsm_lab.provenance.manifest import compute_scenario_hash
+
+        computed_hash = compute_scenario_hash(scenario_spec)
+    except Exception as exc:
+        raise ValueError(
+            f"verify_run_identity: failed to compute scenario_hash: {exc}"
+        ) from exc
+    if manifest.scenario_hash != computed_hash:
+        raise ValueError(
+            "verify_run_identity: manifest.scenario_hash does not match "
+            f"computed scenario_hash for scenario_id={scenario_id!r}"
+        )
+
+    # 8. All manifest hashes must be non-zero (no stub/zero digests)
+    for field_name in (
+        "scenario_hash",
+        "lock_hash",
+        "data_manifest_hash",
+        "parameter_hash",
+    ):
+        h = getattr(manifest, field_name, None)
+        if not h or h == "0" * 64:
+            raise ValueError(
+                f"verify_run_identity: manifest.{field_name} is zero or missing; "
+                "run is not a complete formal run"
+            )
+
+    # 9. Output tree hash integrity: recompute from disk and compare
+    try:
+        disk_hashes = hash_output_tree(resolved)
+    except Exception as exc:
+        raise ValueError(
+            f"verify_run_identity: failed to hash output tree: {exc}"
+        ) from exc
+
+    manifest_hashes = manifest.output_hashes or {}
+    if set(disk_hashes.keys()) != set(manifest_hashes.keys()):
+        disk_only = set(disk_hashes.keys()) - set(manifest_hashes.keys())
+        manifest_only = set(manifest_hashes.keys()) - set(disk_hashes.keys())
+        raise ValueError(
+            f"verify_run_identity: output file set mismatch — "
+            f"disk-only: {sorted(disk_only)}, manifest-only: {sorted(manifest_only)}"
+        )
+    for rel_path, disk_hash in disk_hashes.items():
+        manifest_hash = manifest_hashes.get(rel_path, "")
+        if disk_hash != manifest_hash:
+            raise ValueError(
+                f"verify_run_identity: hash mismatch for {rel_path}: "
+                f"disk={disk_hash[:16]}... manifest={manifest_hash[:16]}..."
+            )
+
+    # 10. Required output files must be present
+    required_files = ("summary.json", "parameters.json", "initial_recipe.json")
+    for fname in required_files:
+        fpath = resolved / fname
+        if not fpath.exists():
+            raise ValueError(
+                f"verify_run_identity: required output file {fname} is missing"
+            )
+
+    # 11. Verify lock hash against root
+    try:
+        lock_hash = compute_lock_hash(root)
+    except Exception as exc:
+        raise ValueError(
+            f"verify_run_identity: compute_lock_hash failed: {exc}"
+        ) from exc
+    if manifest.lock_hash != lock_hash:
+        raise ValueError(
+            "verify_run_identity: manifest.lock_hash does not match "
+            "computed lock_hash"
+        )
+
+    # 12. Verify data manifest hash
+    try:
+        data_hash = compute_data_manifest_hash(root)
+    except Exception as exc:
+        raise ValueError(
+            "verify_run_identity: compute_data_manifest_hash failed: "
+            f"{exc}"
+        ) from exc
+    if manifest.data_manifest_hash != data_hash:
+        raise ValueError(
+            "verify_run_identity: manifest.data_manifest_hash does not match "
+            "computed data_manifest_hash"
+        )
+
+    # 13. Verify parameter hash is non-zero
+    if not manifest.parameter_hash or manifest.parameter_hash == "0" * 64:
+        raise ValueError(
+            "verify_run_identity: manifest.parameter_hash is zero "
+            "(not a formal run)"
+        )
+
+    return manifest

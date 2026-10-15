@@ -173,11 +173,10 @@ def test_null_digest_inconclusive_not_supported() -> None:
 
 
 def test_record_with_null_digest_cannot_be_supported() -> None:
-    """SUPPORTED status requires at least one metric_spec."""
-    # A record with no metric_specs cannot be SUPPORTED.
-    # The guard is enforced by the model_validator on DECLARED status.
-    # For other statuses, empty metric_specs is technically allowed.
-    from hsm_lab.evidence.schemas import TimeWindow
+    """SUPPORTED status requires metric_specs AND run_references (H0A)."""
+    from pathlib import Path
+
+    from hsm_lab.evidence.schemas import EvidenceRunReference, MissingPolicy, TimeWindow
 
     fake_spec = MetricSpec(
         metric_id="M01.test",
@@ -186,13 +185,20 @@ def test_record_with_null_digest_cannot_be_supported() -> None:
         time_window=TimeWindow(
             start_quarter="1957Q1",
             end_quarter="1985Q4",
-            missing_policy="abort",
+            missing_policy=MissingPolicy.ABORT,
         ),
         unit="units",
         fidelity=FidelityLevel.F2_RUN,
         data_role=DataRole.CANDIDATE_LINKAGE,
         validation_fidelity=ValidationFidelity.NO_COUNTERPART,
-        missing_policy="abort",
+        missing_policy=MissingPolicy.ABORT,
+    )
+    run_ref = EvidenceRunReference(
+        run_id="test-run-001",
+        scenario_id="historical_f2_replay",
+        seed=1729,
+        output_dir=Path("/tmp/test-run"),
+        digest="a" * 64,
     )
     record = EvidenceRecord(
         record_id="P07A1-TEST2",
@@ -201,6 +207,7 @@ def test_record_with_null_digest_cannot_be_supported() -> None:
         hypothesis="test",
         status=EvidenceStatus.SUPPORTED,
         metric_specs=[fake_spec],
+        run_references=[run_ref],
         declared_reason="test",
         created_by_phase="P07A1",
     )

@@ -16,12 +16,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from hsm_lab.evidence.adapter import MetricSpecRegistry
-from hsm_lab.evidence.schemas import (
-    EvidenceRecord,
-    EvidenceStatus,
-    MetricSpec,
-)
+from hsm_lab.evidence.provenance import verify_run_identity
 
 
 class AdapterConfig(BaseModel):
@@ -40,73 +35,6 @@ class AdapterConfig(BaseModel):
     )
 
 
-def build_stub_evidence_record(
-    scenario_id: str,
-    phase: str,
-    mechanism_ids: list[str],
-    registry: MetricSpecRegistry,
-    run_digest: str | None = None,
-    status: EvidenceStatus = EvidenceStatus.DECLARED,
-) -> EvidenceRecord:
-    """Build a stub EvidenceRecord with the scenario's metric specs.
-
-    This is a *declaration* record: it records which metrics are in scope
-    for this scenario and which mechanism IDs are linked. It does NOT contain
-    experiment results.
-
-    Parameters
-    ----------
-    scenario_id
-        e.g. "historical_f2_replay".
-    phase
-        Current phase, e.g. "P07B1".
-    mechanism_ids
-        Which M1–M11 are in scope for this scenario.
-    registry
-        The MetricSpecRegistry with all known metric specs.
-    run_digest
-        The digest of the run output (if a run has been performed).
-    status
-        Initial status; at B1 this is DECLARED.
-
-    Returns
-    -------
-    EvidenceRecord
-        Stub evidence record with metric specs from the registry.
-    """
-    # Collect all metric specs for the specified mechanism IDs
-    all_specs: list[MetricSpec] = []
-    for spec in registry.metric_specs:
-        # metric_id format is "{mechanism}.{metric}" e.g. "m1.household_consumption"
-        for mid in mechanism_ids:
-            if spec.metric_id.startswith(f"{mid.lower()}."):
-                all_specs.append(spec)
-                break
-
-    record_id = f"{phase}-{scenario_id}-stub"
-    # For single-card stubs use the real ID; for multi-card use first ID
-    # (the declared_reason records the full list)
-    primary_mechanism = mechanism_ids[0] if mechanism_ids else "M1"
-
-    return EvidenceRecord(
-        record_id=record_id,
-        mechanism_id=primary_mechanism,
-        v1_card_sha256="0" * 64,  # stub; real SHA set per-card later
-        hypothesis=f"Stub evidence record for scenario {scenario_id} at {phase}",
-        status=status,
-        metric_specs=all_specs,
-        intervention_bindings=[],
-        linked_observed_states=[],
-        declared_reason=(
-            f"B1 stub: adapter declared for scenario={scenario_id}, "
-            f"mechanisms={mechanism_ids}, {len(all_specs)} metric specs in scope"
-        ),
-        blocked_reason=None,
-        minimum_replicates=1,
-        created_by_phase=phase,
-    )
-
-
 def verify_digest_unchanged(
     scenario_id: str,
     seed: int,
@@ -116,26 +44,26 @@ def verify_digest_unchanged(
 ) -> bool:
     """Verify that a scenario run produces the expected digest.
 
-    This function does NOT run the model; it only checks whether a
-    previously-run output directory contains the expected digest.
+    Delegates to ``verify_run_identity`` for full provenance verification.
+    Returns False on any verification failure (missing files, hash mismatch,
+    wrong seed, incomplete run, etc.).
 
     Returns
     -------
     bool
-        True if the output dir exists and its digest matches expected_digest.
+        True if verification passes; False on any failure.
     """
-    import json
-
-    manifest_path = output_dir / "manifest.json"
-    if not manifest_path.exists():
-        return False
     try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+        verify_run_identity(
+            root=root,
+            scenario_id=scenario_id,
+            seed=seed,
+            expected_digest=expected_digest,
+            output_dir=output_dir,
+        )
+    except (ValueError, OSError):
         return False
-
-    digest = manifest.get("deterministic_replay_digest") or manifest.get("run_digest")
-    return digest == expected_digest
+    return True
 
 
 def get_c0_digest() -> str:
