@@ -53,6 +53,7 @@ class ValidationResult:
 # Maps each H2A actor role to the H1B permission that authorizes their decisions.
 _ROLE_PERMISSION_MAP: dict[ActorRole, str] = {
     ActorRole.PROCUREMENT_ORGANIZATION: "procurement",
+    ActorRole.INVESTMENT_ORGANIZATION: "investment_approval",
     ActorRole.APPROVER: "price_setting",
     ActorRole.HOUSEHOLD_RECEIVER: "consumption_allocation",
 }
@@ -60,6 +61,7 @@ _ROLE_PERMISSION_MAP: dict[ActorRole, str] = {
 # Sectors for each role (minimal synthetic scope)
 _ROLE_SECTOR_IDS: dict[ActorRole, tuple[str, ...]] = {
     ActorRole.PROCUREMENT_ORGANIZATION: ("industry", "agriculture"),
+    ActorRole.INVESTMENT_ORGANIZATION: ("industry",),
     ActorRole.APPROVER: ("industry",),
     ActorRole.HOUSEHOLD_RECEIVER: ("household",),
 }
@@ -67,6 +69,7 @@ _ROLE_SECTOR_IDS: dict[ActorRole, tuple[str, ...]] = {
 # Organizations for each role
 _ROLE_ORG_IDS: dict[ActorRole, tuple[str, ...]] = {
     ActorRole.PROCUREMENT_ORGANIZATION: ("ORG-ENT-A", "ORG-ENT-B"),
+    ActorRole.INVESTMENT_ORGANIZATION: ("ORG-ENT-A",),
     ActorRole.APPROVER: ("ORG-GOV",),
     ActorRole.HOUSEHOLD_RECEIVER: ("HH-001", "HH-002"),
 }
@@ -286,6 +289,15 @@ class BoundedPlanning(DecisionRule):
                 f"bounded_planning violated: available_at {decision.available_at} "
                 f"is after decision_at {decision.decision_at}"
             )
+        # Bounded planning: observation must be within decision's information horizon
+        if observation is not None:
+            # observation may be an ActorObservation or a raw dict
+            obs_avail = getattr(observation, "available_at", None)
+            if obs_avail is not None and obs_avail > decision.decision_at:
+                return False, (
+                    f"bounded_planning violated: observation available_at "
+                    f"{obs_avail} is after decision_at {decision.decision_at}"
+                )
         return True, "bounded_planning: information horizon respected"
 
 

@@ -47,8 +47,13 @@ _HOUSEHOLD_RECEIVER_WHITELIST: frozenset[str] = frozenset({
     "access_score",
 })
 
+_INVESTMENT_ORG_WHITELIST: frozenset[str] = frozenset({
+    "project_id", "requested_amount", "approved_amount", "allocation_quota",
+})
+
 _ROLE_WHITELISTS: dict[str, frozenset[str]] = {
     "procurement_organization": _PROCUREMENT_ORG_WHITELIST,
+    "investment_organization": _INVESTMENT_ORG_WHITELIST,
     "approver": _APPROVER_WHITELIST,
     "household_receiver": _HOUSEHOLD_RECEIVER_WHITELIST,
 }
@@ -119,6 +124,14 @@ class ActorObservation(StrictModel):
                     f"Value for field {name!r} is not deep-immutable: "
                     f"type={type(value).__name__}"
                 )
+            # Check for prohibited keys inside the value (tuple-of-pairs format)
+            if isinstance(value, (tuple, dict)):
+                try:
+                    _check_no_prohibited_keys(value)
+                except TypeError as exc:
+                    raise TypeError(
+                        f"Prohibited content in field {name!r}: {exc}"
+                    ) from exc
 
     def get_field(self, field_name: str) -> Any:
         """Return the value for a whitelisted field, or raise KeyError."""
@@ -200,6 +213,14 @@ class ObservationBuilder:
         # Filter to whitelist, deep-immutable conversion
         filtered: list[tuple[str, Any]] = []
         for field_name, value in raw_data.items():
+            # Reject prohibited top-level keys immediately (before whitelist filter)
+            fn_lower = field_name.lower()
+            for prohibited in _PROHIBITED_KEYS:
+                if prohibited in fn_lower:
+                    raise TypeError(
+                        f"Prohibited key {field_name!r} (contains '{prohibited}') "
+                        f"found in raw_data; not allowed at any nesting level"
+                    )
             if field_name not in self._whitelist:
                 continue
             immutable_value = _to_immutable(value)
@@ -246,9 +267,19 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
                     )
             _check_no_prohibited_keys(v, path=f"{path}.{k}")
     elif t is tuple:
+        # Handle (key, value) pairs — check key, recurse into value
         for i, v in enumerate(value):
             if isinstance(v, (tuple, dict)):
                 _check_no_prohibited_keys(v, path=f"{path}[{i}]")
+            elif isinstance(v, str):
+                # It's a key in a (key, value) pair
+                v_lower = v.lower()
+                for prohibited in _PROHIBITED_KEYS:
+                    if prohibited in v_lower:
+                        raise TypeError(
+                            f"Prohibited key {v!r} (contains '{prohibited}') "
+                            f"found in observation at {path}[{i}]"
+                        )
     elif t is list:
         for i, v in enumerate(value):
             if isinstance(v, (tuple, dict)):

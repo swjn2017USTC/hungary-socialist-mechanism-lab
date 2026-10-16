@@ -120,9 +120,7 @@ class TestObservationWhitelist:
                 "inventory_level": 30.0,
                 "capacity_utilization": 0.85,
                 "shortage_indicator": 0.1,
-                # Not in whitelist — should be dropped
-                "raw_truth": 999.0,
-                "session_id": "sess-123",
+                # Not in whitelist and not prohibited — should be dropped silently
                 "household_income": 500.0,
                 "unrelated_field": "should_not_appear",
             },
@@ -132,9 +130,8 @@ class TestObservationWhitelist:
         assert "supply_quantity" in field_names
         assert "demand_quantity" in field_names
         assert "administered_price" in field_names
-        assert "raw_truth" not in field_names
-        assert "session_id" not in field_names
         assert "household_income" not in field_names
+        assert "unrelated_field" not in field_names
 
     def test_approver_sees_only_approver_fields(self):
         builder = ObservationBuilder("approver")
@@ -151,14 +148,14 @@ class TestObservationWhitelist:
                 "price_level": 48.0,
                 "budget_available": 10000.0,
                 "priority_score": 0.9,
-                "raw_truth": 42.0,  # should be dropped
+                "foreign_key": "fk-abc",  # not whitelisted — should be dropped
             },
         )
         field_names = {name for name, _ in obs.observed_fields}
         assert "requested_quantity" in field_names
         assert "approved_quantity" in field_names
         assert "priority_score" in field_names
-        assert "raw_truth" not in field_names
+        assert "foreign_key" not in field_names
 
     def test_household_receiver_sees_only_household_fields(self):
         builder = ObservationBuilder("household_receiver")
@@ -434,6 +431,38 @@ class TestDecisionRules:
         assert not passed
         assert "bounded_planning" in reason.lower()
 
+    def test_bounded_planning_rejects_future_observation(self):
+        """BoundedPlanning must reject when observation.available_at > decision.decision_at."""
+        rule = BoundedPlanning()
+        # Decision at 1968-01-15, observation available at 1985-01-10
+        decision = ProcurementDecision(
+            decision_id="d9",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q1",
+            decision_at=date(1968, 1, 15),
+            available_at=date(1968, 1, 10),  # decision's own cutoff is fine
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        # Observation with future available_at
+        future_obs = ActorObservation(
+            actor_role="procurement_organization",
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            geographic_id="national",
+            quarter="1985Q1",
+            decision_at=date(1985, 1, 15),
+            available_at=date(1985, 1, 10),
+            observed_fields=(("inventory_level", 999.0),),
+        )
+        passed, reason = rule.evaluate(decision, future_obs)
+        assert not passed
+        assert "bounded_planning" in reason.lower()
+        assert "observation" in reason.lower()
+
     def test_bounded_planning_accepts_legal_info(self):
         rule = BoundedPlanning()
         decision = ProcurementDecision(
@@ -627,26 +656,21 @@ class TestSingleClock:
 
 class TestObservationInvariants:
     def test_no_raw_truth_in_observation(self):
-        """raw_truth is dropped by the whitelist, so it never appears in observed_fields."""
+        """raw_truth is rejected outright — no silent drop. Prohibited keys raise TypeError."""
         builder = ObservationBuilder("procurement_organization")
-        obs = builder.build(
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
-            geographic_id="national",
-            quarter="1968Q1",
-            decision_at=date(1968, 1, 15),
-            available_at=date(1968, 1, 10),
-            raw_data={
-                "supply_quantity": 100.0,
-                "raw_truth": 999.0,  # not in whitelist — silently dropped
-            },
-        )
-        # raw_truth should not appear in the observation
-        field_names = {name for name, _ in obs.observed_fields}
-        assert "raw_truth" not in field_names
-        # Clean observation passes all invariants
-        violations = verify_observation_invariants(obs)
-        assert len(violations) == 0, f"Unexpected violations: {violations}"
+        with pytest.raises(TypeError, match="Prohibited key"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={
+                    "supply_quantity": 100.0,
+                    "raw_truth": 999.0,  # prohibited — raises
+                },
+            )
 
     def test_all_invariants_pass_for_clean_observation(self):
         builder = ObservationBuilder("procurement_organization")
@@ -860,6 +884,42 @@ class TestObservationBoundaryEnforcement:
                 },
             )
 
+    def test_role_as_top_level_key_rejected(self):
+        """Top-level 'role' key (indicator of target-role information) must be rejected."""
+        builder = ObservationBuilder("procurement_organization")
+        with pytest.raises(TypeError, match="Prohibited key"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={
+                    "role": "calibration_target",
+                    "inventory_level": 999.0,
+                },
+            )
+
+    def test_tuple_of_pairs_with_prohibited_keys_rejected(self):
+        """Tuple-of-pairs representation containing prohibited keys must be rejected."""
+        # Simulate the internal format with prohibited content
+        payload = (
+            ("role", "calibration_target"),
+            ("raw_truth", 999.0),
+        )
+        with pytest.raises((ValueError, TypeError), match="Prohibited"):
+            ActorObservation(
+                actor_role="procurement_organization",
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                observed_fields=(("inventory_level", payload),),
+            )
+
 
 # ---------------------------------------------------------------------------
 # Test 13 — P0 regression: authority binding
@@ -887,6 +947,42 @@ class TestAuthorityBindingEnforcement:
         # ORG-ENT-B's procurement is revoked — must be rejected
         assert result_b.authority_status == "revoked"
         assert not result_b.is_legal
+
+    def test_investment_decision_with_correct_role_and_permission(self, calendar):
+        """InvestmentDecision with INVESTMENT_ORGANIZATION queries investment_approval."""
+        decision = InvestmentDecision(
+            decision_id="inv-1",
+            actor_role=ActorRole.INVESTMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q1",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            project_id="P1",
+            requested_amount=50.0,
+        )
+        result = validate_proposal(decision, calendar)
+        # ORG-ENT-A has investment_approval granted in 1968
+        assert result.is_legal
+        assert result.authority_status == "granted"
+        assert "investment" in result.reason.lower()
+
+    def test_investment_decision_with_wrong_role_rejected(self, calendar):
+        """InvestmentDecision with PROCUREMENT_ORGANIZATION role must be rejected."""
+        decision = InvestmentDecision(
+            decision_id="inv-wrong-role",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q1",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            project_id="P1",
+            requested_amount=50.0,
+        )
+        result = validate_proposal(decision, calendar)
+        assert not result.is_legal
+        assert "INVESTMENT_ORGANIZATION" in result.reason
 
     def test_procurement_decision_with_approver_role_rejected(self, calendar):
         """ProcurementDecision with APPROVER role must be rejected."""

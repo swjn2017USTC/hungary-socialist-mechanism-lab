@@ -15,9 +15,10 @@ from hsm_lab.contract.base import StrictModel
 
 
 class ActorRole(Enum):
-    """Three synthetic minimal roles for H2A."""
+    """Four synthetic minimal roles for H2A."""
 
     PROCUREMENT_ORGANIZATION = "procurement_organization"
+    INVESTMENT_ORGANIZATION = "investment_organization"
     APPROVER = "approver"
     HOUSEHOLD_RECEIVER = "household_receiver"
 
@@ -155,10 +156,10 @@ class InvestmentDecision(Decision):
 
     def validate_legality(self) -> tuple[bool, str]:
         import math
-        if self.actor_role not in (ActorRole.PROCUREMENT_ORGANIZATION, ActorRole.APPROVER):
+        if self.actor_role != ActorRole.INVESTMENT_ORGANIZATION:
             return False, (
                 f"InvestmentDecision may only be issued by "
-                f"PROCUREMENT_ORGANIZATION or APPROVER, got {self.actor_role.value}"
+                f"INVESTMENT_ORGANIZATION, got {self.actor_role.value}"
             )
         if self.requested_amount < 0:
             return False, f"requested_amount cannot be negative: {self.requested_amount}"
