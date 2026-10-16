@@ -13,7 +13,7 @@ All whitelisted files modified and passing. Phase gate: ✅ 586 tests, ruff clea
 | `TimeWindow._study_window` | 1957Q1–1985Q4 ordinal bounds; future/1956Q4 rejected |
 | `ObservedState` | `extra="forbid"`, `available_at`+`decision_at`, ordering validator |
 | `EvidenceRunReference` | Strict seed:int (bool rejected via `mode="before"`), digest pattern |
-| `EvidenceRecord._supported_requires_runs` | Non-empty, unique run_ids, unique (run_id,seed) pairs, minimum_replicates |
+| `EvidenceRecord._supported_requires_runs` | Non-empty, unique run_ids, unique (run_id,seed) pairs, minimum_replicates counted over DISTINCT seeds |
 | `StudyDeclaration` / `StudyManifest` | Intent form, card_id property, self-card identity |
 
 ### src/hsm_lab/evidence/loader.py
@@ -22,6 +22,8 @@ All whitelisted files modified and passing. Phase gate: ✅ 586 tests, ruff clea
 | `validate_evidence_manifest` | Strict dispatch: EvidenceManifest requires `hypothesis` field, StudyManifest requires `intent` |
 | `load_all_evidence_records` | Union return type |
 | `write_evidence_manifest` | Rejects StudyManifest; re-validates via `model_validate_json`; O_EXCL no-clobber |
+| `verify_evidence_manifest_runs` | Run identity per reference, `run_id` match, duplicate actual-run rejection, and only DISTINCT seeds count as independent replicates |
+| `_verify_study_sidecar` / `_verify_sidecar_content` | Sidecar is read and cross-verified: canonical `mechanism_id`, `intent`, `status`, canonical `linked_cards`, `phase` (record phase, else manifest phase), and card-bound `v1_card_sha256` |
 
 ### src/hsm_lab/evidence/run_adapter.py
 | Change | Description |
@@ -42,7 +44,8 @@ All whitelisted files modified and passing. Phase gate: ✅ 586 tests, ruff clea
 | `TestTimeWindowBounds` | 8 (1957Q1–1985Q4, 1956Q4, future) |
 | `TestObservedState` | 7 (availability ordering, extra=forbid) |
 | `TestEvidenceRunReference` | 7 (valid, invalid, bool seed) |
-| `TestSupportedRequiresRuns` | 6 (structural gate) |
+| `TestSupportedRequiresRuns` | 8 (structural gate, distinct-seed replicate gate) |
+| `TestSameSeedReplicateGate` | 4 (same-seed publish gate, JSON parse path, distinct-seed control) |
 | `TestVerifyRunIdentity` | 13 (boundary tests) |
 | `TestStudyDeclarationManifest` | 10 (intent form, dispatch) |
 | `TestInterventionBinding` | 4 (quarter bounds) |
@@ -60,9 +63,27 @@ All whitelisted files modified and passing. Phase gate: ✅ 586 tests, ruff clea
 ✅ P0: verify_run_identity scenario_id verification (load_scenario → compute_scenario_hash)
 ✅ P1: InterventionBinding quarter lower bound (1957Q1 minimum)
 
+### P0 closure follow-up (REVIEW.md residual R6 + sidecar content)
+✅ P0: Independent stochastic replicate distinction — `_supported_requires_runs` and
+`verify_evidence_manifest_runs` count replicates over DISTINCT seeds; two references
+sharing a seed are deterministic replays and are rejected with an explicit same-seed
+message, however many distinct run_ids/pairs/output dirs they contribute.
+✅ P0: Sidecar content cross-verification — `_verify_study_sidecar` reads
+`studies/<id>/study_decl.json` and requires its `intent`, `status`, canonical
+`linked_cards` and `phase` (record phase, else the containing manifest's phase) to
+match the declaration, alongside the existing canonical `mechanism_id` and
+card-bound `v1_card_sha256` checks. Missing content keys are errors, never skipped.
+Reason texts (`declared_reason`/`blocked_reason`) are deliberately NOT compared
+full-text: the plan records that the manifest and sidecar word them differently.
+
+Regression tests: 17 added (2 in `TestSupportedRequiresRuns`, 4 in
+`TestSameSeedReplicateGate`, 11 sidecar-content tests in
+`TestStudyManifestCardVerification`, including real-data content binding).
+Full suite: 647 passed; ruff clean; `hsm baseline verify` ok.
+
 ### Known limitations (out of H0A scope)
 ⏳ P0: Parameter/recipe hash recomputation from actual material_parameter_vector — requires scenario spec access
-⏳ P0: Comprehensive run output content validation (tables, accounting) — requires domain-specific checks
+⏳ P0: Recomputing the accounting residuals from run tables (balance identities) — requires domain-specific checks; the run's own certification block IS verified, and table/column/window/selector/unit content binding IS covered (see the closure sections below)
 ⏳ P1: 11-card semantic mapping and historical support scoring — H1 scope
 ⏳ P1: Mechanism ID cross-card uniqueness and supersedes chain — H2 scope
 
@@ -73,3 +94,186 @@ All ruff checks passed
 uv lock --check --offline: Resolved 101 packages
 hsm baseline verify: SHA256 matches frozen audit anchor
 ```
+
+## P0-2 / P0-3 closure (metric content + fabricated trajectories)
+
+Two residual P0s from the upgrade review — "metric content verification" and
+"fabricated trajectories" — are closed. Both extend gates that were already the
+single choke points, so no new bypass path is introduced.
+
+### P0-2: metric content verification (`loader.py`)
+`verify_supported_record_runs` now ends with `verify_supported_metric_content`,
+which checks **every** `metric_specs` entry against the output of **every** run
+the record references (not just the first replicate):
+
+| Check | Behaviour |
+|-------|-----------|
+| Table/sidecar existence | `_metric_artifact_path` resolves `<name>.parquet` at the run root or under `trajectory_tables/`, a file `<name>`, or sidecar `<name>.json`; results outside the run directory are refused |
+| Column existence | Parquet: column must be in the table schema. Sidecar: key must be present with a non-null value |
+| Actual data (TARGET / CANDIDATE_LINKAGE) | The column may not be entirely null/NaN — a placeholder column is not a measurement |
+| Time-window coverage | Every quarter in the declared `time_window` must appear in the table's `quarter` column (ordinal arithmetic, inclusive) |
+| Selector coverage | Declared `commodity_axis`/`region_axis` values must all appear in the table's `commodity_id`/`region_id` column; the enricher's `all_20_regions` alias is expanded |
+
+Errors name the record, metric, artifact and run directory. A metric declared
+in one replicate but absent from another is rejected.
+
+### P0-3: fabricated trajectories (`provenance.py::_verify_material_tick_data`)
+Material runs must now ship content, not just files:
+
+| Artefact | Requirement |
+|----------|-------------|
+| `summary.json` | Must carry the identity fields a completed material run records (`run_kind`, `scenario_id`, `seed`, `planned_ticks`, `completed_ticks`, `households`, `commodity_ids`, `region_ids`, `parameter_hash`, `initial_recipe_hash`, `deterministic_replay_digest`, `input_artifact_hashes`, `row_counts`), each typed and bound to the manifest by the existing mirrored-field check — a `{"run_id": "test"}` placeholder is rejected |
+| `initial_recipe.json` | Non-empty object, non-empty `declaration`, an `initial_recipe_hash` equal to `manifest.initial_recipe_hash`, and a `scenario_id` equal to the summary's — `{}` is rejected |
+| Trajectory tables | The material runner's schema, not `tick,value`: `tick` + `quarter` keys, the table's axis key columns (`region_id`/`commodity_id`/`stage`, from the F2 registry), and ≥3 columns — enforced for 0-row tables too |
+| Universe coverage | Every non-empty axis table must contain every `manifest.commodity_ids` / `manifest.region_ids` value |
+
+Existing checks (trajectory store or non-empty `trajectory_tables/`, declared
+row counts, `tick` column, tick coverage of every completed tick) are unchanged.
+
+### Regression tests (30 added, `tests/test_hist_identity_guards.py`)
+- `TestVerifyRunIdentityFabricatedArtefacts` (12): `tick,value` stub, missing
+  axis columns, missing `quarter` key, stub schema on a 0-row table, table
+  covering one of 16 commodities, empty `{}` recipe, declaration-less recipe,
+  recipe hash mismatch, recipe from another scenario, placeholder summary,
+  summary without `scenario_id`, summary with an empty commodity universe.
+- `TestSupportedMetricContentBinding` (16): positive control (four bound
+  metrics + sidecar), publish-gate path, missing table, missing column, empty
+  table, uncovered window, uncovered commodity selector, region selector on an
+  axis-less table, quarter-less table, sidecar missing column, sidecar null
+  value, all-null column, all-NaN column, metric present in only one of two
+  replicates, the exact P0-2 fabrication (plausible table/column no run wrote),
+  and the real-C0 whole-gate binding control.
+- Real-run controls: `test_real_audit_run_still_verifies[C0,C1]` re-verifies the
+  frozen audit runs with the hardened schema checks, and
+  `test_real_audit_run_metric_bindings_pass` drives the whole SUPPORTED gate
+  over the real C0 output (6 metric bindings across 5 tables).
+- The shared fixture `_write_self_consistent_material_run` now writes the
+  material runner's table schema, the scenario's commodity/region universe, a
+  real recipe declaration and the full summary identity set (the old fixture
+  wrote `tick,value` tables and `{}` recipes, i.e. exactly the fabrication
+  P0-3 was raised about).
+
+Full suite: 679 passed, 0 failed; `ruff check src tests` clean;
+`hsm baseline verify` ok; real C0/C1 digests still verify.
+
+## P0-1 / P0-2 / P0-3 residual closure (joint coverage, recipe content, linked snapshots)
+
+Three remaining H0A P0 residuals are closed. All three harden gates that were
+already the single choke point, so no new bypass path or public API is added.
+
+### P0-1: quarter × selector coverage is joint (`loader.py`)
+
+Window coverage and selector coverage were checked independently, so a table
+could carry every declared quarter *and* every declared commodity/region while
+having no row for a declared commodity in part of the window (e.g. no
+`g09_basic_food` rows in `1957Q1`). `_verify_metric_parquet_content` now ends
+with `_verify_joint_coverage`, which requires a row for **every** declared
+quarter × commodity × region combination of the metric's axes (an undeclared
+axis stays unrestricted). Missing combinations are reported by name, and the
+`missing_policy` is echoed in the error.
+
+### P0-2: recipe declaration is content-bound (`provenance.py`)
+
+`initial_recipe.json` was only checked to be non-empty and to agree on hash and
+scenario. The recipe hash binds the scenario's organization/technology/route
+recipe — *not* the initial-state declaration — so a hand-written declaration
+rode along on a correct hash. `_verify_material_tick_data` (now receiving the
+loaded `ScenarioSpec`) validates the declaration against the
+`MaterialInitialRecipe` schema (unknown fields, wrong literals and wrong types
+are rejected) and then requires it to equal the recipe the scenario actually
+declares, reporting the differing fields. Verified runs cannot present an
+initial state the scenario never declared.
+
+### P0-3: linked observed states are root-backed (`loader.py`)
+
+`linked_observed_states` was never consulted, so a SUPPORTED record could link
+snapshots of runs and quarters that do not exist. `verify_supported_record_runs`
+now collects the `_VerifiedRun`s produced by `verify_run_identity` and calls
+`_verify_linked_observed_states`:
+
+| Check | Behaviour |
+|-------|-----------|
+| Non-empty linkage | A SUPPORTED record must link at least one observed state |
+| `source_run_id` | Must name one of the record's verified runs |
+| `source_scenario` | Must be that run's verified scenario |
+| `source_digest` | Must be the digest the run verified with |
+| `source_checkpoint_quarter` | Must appear in the source run's own output, read from the `quarter` columns of the tables its `summary.json` declares (`_run_output_quarter_labels`) |
+
+### Regression tests (14 added, `tests/test_hist_identity_guards.py`)
+- `TestSupportedJointQuarterSelectorCoverage` (4): commodity missing in one
+  declared quarter, region missing in one declared quarter, missing
+  commodity × region pair, and the intact-run control.
+- `TestSupportedLinkedObservedStates` (6): no linked state, unverified
+  `source_run_id`, wrong `source_scenario`, wrong `source_digest`, checkpoint
+  quarter absent from the source run's output, and the real-C0 control
+  (`1985Q4` checkpoint over the real run).
+- `TestVerifyRunIdentityFabricatedArtefacts` (+4): fabricated declaration value,
+  unknown declaration field, wrong declaration `role`, and the unmodified-recipe
+  control.
+
+The shared SUPPORTED fixture now carries a valid linked observed state (the
+gate requires one), so the existing positive controls exercise the new check.
+
+Full suite: 693 passed, 0 failed; `ruff check src tests` clean;
+`hsm baseline verify` ok; real C0/C1 runs still verify.
+
+## P0-1 / P0-2 / P0-3 residual closure (non-finite data, layer/unit binding, certification)
+
+The last three H0A P0 residuals are closed. All three harden gates that were
+already the single choke point, so no new bypass path or public API is added.
+
+### P0-1: non-finite metric values are not data (`loader.py`)
+
+`_verify_metric_parquet_content`'s data check for TARGET/CANDIDATE_LINKAGE
+metrics rejected an *entirely* null/NaN column but accepted `inf`/`-inf`, which
+aggregate into an infinite metric. The check now also rejects any infinite
+value in the column (`_is_nonfinite_value`, `math.isfinite`), reported with the
+count, an example, and the row count, so one infinite cell cannot ride along
+behind finite ones. NaN stays classified as missing data (its own message).
+
+### P0-2: metric fidelity and unit are bound to the run (`loader.py`)
+
+`_verify_supported_metric_fidelity` only rejected `no_counterpart` metrics;
+nothing tied a metric's declared `fidelity`/`unit` to the run it claims to be
+measured in. `verify_supported_metric_content` now checks, per referenced run:
+
+| Check | Behaviour |
+|-------|-----------|
+| Run layer | `_run_declared_layer` reads `fidelity` from the run's own `manifest.json` (`ontology_id` prefix when absent, the rule `p05_manifest_fields` applies); a run declaring neither is refused rather than assumed |
+| Metric fidelity | `_RUN_LAYER_METRIC_FIDELITIES` maps `f1` → `F1_intermediate_8` and `f2` → `F2_run`/`F2_diagnostic`; an F1 metric against an F2 run (or the reverse), or a `synthetic` probe (no run layer), is rejected |
+| Metric unit | `_verify_metric_unit_binding` requires the declared `unit` to be one of the units the model declares for the `(table, column)` pair (`metric_table_units()`, derived from the enricher's map); an unregistered pair (sidecar, custom column) has no declared unit and is left to the content checks |
+
+Unit binding is checked after the artefact-level checks, so a record is never
+rejected on its unit claim for an artefact that was never there.
+
+### P0-3: the run's accounting certification is verified (`provenance.py`)
+
+`summary.json`'s `invariants` block was never read. `_verify_material_tick_data`
+now requires it to be present and self-consistent — the residual/tolerance
+fields the runner's certification records (finite, non-negative), tolerance
+ratios at or below the 1.0 ceiling, and `checked_ticks` equal to the
+`completed_ticks` the run reports (already bound to the manifest). This checks
+the certification the run reports; it does not recompute the accounting
+(`verify_run_identity` is read-only and the residuals are the engine's).
+
+### Regression tests (29 added, `tests/test_hist_identity_guards.py`)
+- `TestSupportedMetricContentBinding` (+15): all-infinite column, one `inf` /
+  `-inf` among finite values, finite-extreme control, F1 metric against an F2
+  run, F2 metric against an F1 run, synthetic probe against a run, run without
+  a declared layer, ontology-implies-layer control, unit mismatch, registry-unit
+  control, unregistered-pair control.
+- `TestVerifyRunIdentityAccountingInvariants` (+17): certified-run control,
+  ratio-at-the-ceiling control, missing block, empty block, missing field, ratio
+  above the ceiling (both ratios), non-finite values (NaN/±inf), non-numeric
+  values, negative value, partial `checked_ticks`, non-integer `checked_ticks`.
+- The shared fixture now writes the certification block and declares the run's
+  layer (`fidelity="f2"`, `ontology_id="f2_v1"`, as the real C0 run does); two
+  positive controls that declared a `count` column in `M_forint` now declare it
+  in its registry unit.
+
+All 416 material run summaries in the repository satisfy the certification
+check (`checked_ticks` == `completed_ticks`, ratios < 1.0), and the real C0/C1
+runs still verify.
+
+Full suite: 722 passed, 0 failed; `ruff check src tests` clean;
+real C0/C1 runs still verify.

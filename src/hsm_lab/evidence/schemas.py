@@ -14,7 +14,15 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 from hsm_lab.contract.schemas import Quarter
 
@@ -241,6 +249,10 @@ class MetricSpec(BaseModel):
         Outcome of the mapping assessment.
     missing_policy
         What to do when the column/row is absent or empty; must NOT be silently填0.
+    blocked_reason
+        Set when the metric has no known model counterpart: the explicit
+        blocking condition, so the declared metric is preserved instead of
+        dropped or zero-filled.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -257,6 +269,14 @@ class MetricSpec(BaseModel):
     validation_fidelity: ValidationFidelity
     missing_policy: MissingPolicy
     description: str | None = Field(default=None, max_length=500)
+    blocked_reason: str | None = Field(
+        default=None,
+        description=(
+            "If the metric has no known model counterpart, the explicit "
+            "reason it is blocked (H0B: blocked metrics are kept as "
+            "MetricSpecs, never dropped or zero-filled)"
+        ),
+    )
 
     @model_validator(mode="after")
     def _empty_axis_rejected(self) -> MetricSpec:
@@ -534,6 +554,23 @@ class EvidenceRunReference(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+def _root_from_validation_context(info: ValidationInfo) -> Path | None:
+    """Extract the repository root threaded through the validation context.
+
+    A SUPPORTED EvidenceRecord can only be root-backed verified while ``root``
+    is available, so the loader passes it as
+    ``model_validate(payload, context={"root": root})`` (or the
+    ``validate_evidence_record``/``validate_evidence_manifest`` ``root=``
+    keyword). Any other validation leaves it ``None``.
+    """
+    context = info.context
+    if isinstance(context, dict):
+        root = context.get("root")
+        if root is not None:
+            return Path(root)
+    return None
+
+
 class EvidenceRecord(BaseModel):
     """One mechanism's pre-registered experiment bundle.
 
@@ -544,6 +581,13 @@ class EvidenceRecord(BaseModel):
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
+
+    # Root-backed verification marker. Set only by the SUPPORTED gate in
+    # ``_supported_requires_runs`` after the referenced runs are re-verified
+    # against disk. It is never serialized and never accepted as input
+    # (``extra="forbid"`` rejects a ``_verified`` keyword), so a manifest
+    # cannot self-report trust.
+    _verified: bool = PrivateAttr(default=False)
 
     record_id: str = Field(min_length=1, description="Unique, stable identifier")
     mechanism_id: str = Field(
@@ -599,6 +643,16 @@ class EvidenceRecord(BaseModel):
     )
     created_by_phase: str = Field(min_length=1)
 
+    @property
+    def verified(self) -> bool:
+        """Whether this record passed root-backed run verification.
+
+        Read-only outcome marker, never a trust cache: a SUPPORTED record can
+        only be constructed/parsed with a root validation context, and every
+        such validation re-verifies the referenced runs against disk.
+        """
+        return self._verified
+
     @model_validator(mode="after")
     def _blocked_must_have_reason(self) -> EvidenceRecord:
         if self.status == EvidenceStatus.BLOCKED and not self.blocked_reason:
@@ -617,13 +671,25 @@ class EvidenceRecord(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def _supported_requires_runs(self) -> EvidenceRecord:
-        """SUPPORTED status requires verified run references.
+    def _supported_requires_runs(self, info: ValidationInfo) -> EvidenceRecord:
+        """SUPPORTED status requires root-verified run references.
 
-        Run-time verify_run_identity is performed by the loader (which has
-        access to root, scenario_id, seed, and expected_digest). Here we
-        enforce the structural pre-conditions: non-empty run_references,
-        unique run_ids, and sufficient replicate count.
+        Two gates guard SUPPORTED. First, the structural pre-conditions: a
+        non-empty ``run_references``, unique ``run_id``s, and a sufficient
+        *independent* replicate count — only distinct seeds count as
+        independent stochastic replicates, because runs sharing a seed replay
+        one and the same stochastic trajectory.
+
+        Second — and this is what makes the status meaningful — the referenced
+        runs must be verified against ``root``: the declared card SHAs must
+        match the cards on disk and every run reference must pass
+        ``verify_run_identity``. That requires ``root``, which the record
+        cannot supply, so it is threaded in through the Pydantic validation
+        context. Without a root context a SUPPORTED record cannot be
+        constructed or parsed at all, which closes the direct-construction /
+        ``model_validate`` bypass. ``model_copy``/``model_construct`` skip this
+        validator, so the loader re-validates from serialized bytes with the
+        root context before publishing.
         """
         if self.status != EvidenceStatus.SUPPORTED:
             return self
@@ -658,6 +724,42 @@ class EvidenceRecord(BaseModel):
                 f"run_references has {len(seen_pairs)} unique (run_id, seed) pairs, "
                 f"but minimum_replicates={self.minimum_replicates}"
             )
+        # Independent replicates need distinct seeds. Two references sharing a
+        # seed are deterministic replays of one and the same stochastic
+        # trajectory, so they cannot count as independent replicates however
+        # many distinct run_ids/pairs they contribute.
+        seen_seeds: set[int] = {ref.seed for ref in self.run_references}
+        if len(seen_seeds) < self.minimum_replicates:
+            raise ValueError(
+                f"EvidenceRecord {self.record_id}: run_references cover only "
+                f"{len(seen_seeds)} distinct seed(s) {sorted(seen_seeds)}, but "
+                f"minimum_replicates={self.minimum_replicates}; runs sharing a "
+                "seed are deterministic replays, not independent stochastic "
+                "replicates, so same-seed runs cannot count as independent "
+                "replicates"
+            )
+        # Root-backed verification gate. The structural checks above can be
+        # satisfied by fabricated references; only verifying the referenced
+        # runs against the actual repository root can promote a record to
+        # SUPPORTED. ``root`` arrives through the validation context because
+        # the schema alone cannot locate or hash run outputs.
+        root = _root_from_validation_context(info)
+        if root is None:
+            raise ValueError(
+                f"EvidenceRecord {self.record_id}: status=SUPPORTED requires "
+                "root-backed verification of its run references; construct or "
+                "parse it with a root validation context "
+                "(validate_evidence_record(..., root=...) / "
+                "validate_evidence_manifest(..., root=...) / "
+                "verify_evidence_manifest_runs) — a record cannot be SUPPORTED "
+                "on structural checks alone"
+            )
+        # Imported lazily: ``loader`` imports this module, so a module-level
+        # import would be circular.
+        from hsm_lab.evidence.loader import verify_supported_record_runs
+
+        verify_supported_record_runs(root, self)
+        self._verified = True
         return self
 
 

@@ -27,7 +27,7 @@
 - `TimeWindow.missing_policy` / `MetricSpec.missing_policy`: now `MissingPolicy` type
 - `ObservedState`: `extra="forbid"`, added `available_at` + `decision_at`, `_availability_order` validator (source_checkpoint_quarter ≤ available_at ≤ decision_at)
 - `EvidenceRunReference`: strict run handle (run_id, scenario_id, seed:int, output_dir:Path, digest)
-- `EvidenceRecord.run_references` + `_supported_requires_runs`: non-empty, unique run_ids, unique (run_id,seed) pairs, minimum_replicates count
+- `EvidenceRecord.run_references` + `_supported_requires_runs`: non-empty, unique run_ids, unique (run_id,seed) pairs, minimum_replicates count counted over DISTINCT seeds (same-seed runs are deterministic replays, not independent replicates)
 - `StudyDeclaration` / `StudyManifest`: intent/linked_cards form, `card_id` property, self-card identity validation
 
 ### 2. loader.py
@@ -35,6 +35,8 @@
 - `load_evidence_manifest`: returns `EvidenceManifest | StudyManifest` union
 - `load_all_evidence_records`: returns `list[StudyDeclaration | EvidenceRecord]`
 - `write_evidence_manifest`: rejects StudyManifest; re-validates via `model_validate_json` before write; O_EXCL no-clobber publication
+- `_verify_metric_parquet_content` + `_verify_joint_coverage`: a declared window and a declared commodity/region selector are checked at their intersection — every declared quarter must carry rows for every declared selector
+- `_verify_linked_observed_states` (+ `_VerifiedRun`, `_run_output_quarter_labels`): a SUPPORTED record links at least one observed state, and each one names a verified run (id/scenario/digest) and a checkpoint quarter that run's own output contains
 
 ### 3. run_adapter.py
 - Removed `build_stub_evidence_record` (no production callers)
@@ -42,6 +44,7 @@
 
 ### 4. provenance.py
 - `verify_run_identity`: full manifest validation — run_kind (non-politics material), status=completed, completed_ticks==ticks, strict seed int, scenario_id→load_scenario→compute_scenario_hash match, non-zero hashes, output tree integrity, required files, lock_hash, data_manifest_hash
+- `_verify_material_tick_data`: the `initial_recipe.json` declaration must validate as a `MaterialInitialRecipe` *and* equal the recipe the scenario declares (the recipe hash binds the organization/technology/route recipe, not the declaration)
 
 ## Test coverage
 - `test_hist_identity_guards.py`: 71 new tests

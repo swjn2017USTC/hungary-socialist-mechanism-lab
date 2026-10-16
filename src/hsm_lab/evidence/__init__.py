@@ -36,6 +36,7 @@ from hsm_lab.evidence.metric_enricher import (
     enrich_metric_spec,
     get_metric_enrichment,
     is_mapped_metric,
+    metric_table_units,
 )
 from hsm_lab.evidence.provenance import (
     EvidenceDAGEdge,
@@ -97,6 +98,7 @@ __all__ = [
     "enrich_metric_spec",
     "get_metric_enrichment",
     "is_mapped_metric",
+    "metric_table_units",
     # intervention validator (P07A2)
     "InterventionValidationError",
     "get_policy_column",

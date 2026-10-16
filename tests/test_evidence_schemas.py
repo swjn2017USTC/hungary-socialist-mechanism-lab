@@ -172,8 +172,13 @@ def test_null_digest_inconclusive_not_supported() -> None:
     assert record.status == EvidenceStatus.INCONCLUSIVE
 
 
-def test_record_with_null_digest_cannot_be_supported() -> None:
-    """SUPPORTED status requires metric_specs AND run_references (H0A)."""
+def test_supported_record_requires_root_verification() -> None:
+    """A SUPPORTED record cannot be built without root-backed verification.
+
+    Run references are only locating pointers, not trust: a directly
+    constructed SUPPORTED record is a validation bypass and must be rejected
+    (H0A P0-1).
+    """
     from pathlib import Path
 
     from hsm_lab.evidence.schemas import EvidenceRunReference, MissingPolicy, TimeWindow
@@ -200,18 +205,18 @@ def test_record_with_null_digest_cannot_be_supported() -> None:
         output_dir=Path("/tmp/test-run"),
         digest="a" * 64,
     )
-    record = EvidenceRecord(
-        record_id="P07A1-TEST2",
-        mechanism_id="M1",
-        v1_card_sha256="7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
-        hypothesis="test",
-        status=EvidenceStatus.SUPPORTED,
-        metric_specs=[fake_spec],
-        run_references=[run_ref],
-        declared_reason="test",
-        created_by_phase="P07A1",
-    )
-    assert record.status == EvidenceStatus.SUPPORTED
+    with pytest.raises(ValidationError, match="root-backed verification"):
+        EvidenceRecord(
+            record_id="P07A1-TEST2",
+            mechanism_id="M1",
+            v1_card_sha256="7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+            hypothesis="test",
+            status=EvidenceStatus.SUPPORTED,
+            metric_specs=[fake_spec],
+            run_references=[run_ref],
+            declared_reason="test",
+            created_by_phase="P07A1",
+        )
 
 
 def test_blocked_status_requires_blocked_reason() -> None:

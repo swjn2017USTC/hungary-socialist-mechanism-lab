@@ -22,6 +22,7 @@ from hsm_lab.evidence.intervention_validator import (
 from hsm_lab.evidence.metric_enricher import (
     enrich_card_metrics,
     enrich_metric_spec,
+    is_mapped_metric,
 )
 from hsm_lab.evidence.schemas import (
     DataRole,
@@ -117,13 +118,18 @@ def test_national_accounts_has_household_consumption_column() -> None:
 # ---------------------------------------------------------------------------
 
 def test_m1_household_consumption_enriches_correctly() -> None:
-    """M1.household_consumption → national_accounts.household_consumption."""
+    """M1.household_consumption → national_accounts.household_consumption.
+
+    H0B: the original card metric is a preserved physical quantity, so the
+    validation fidelity is EXACT, not a normalised index.
+    """
     spec = enrich_metric_spec("M1", "household_consumption")
     assert spec is not None
     assert spec.table_or_sidecar == "national_accounts"
     assert spec.column == "household_consumption"
     assert spec.data_role == DataRole.TARGET
-    assert spec.validation_fidelity == ValidationFidelity.NORMALIZED_INDEX
+    assert spec.validation_fidelity == ValidationFidelity.EXACT
+    assert spec.blocked_reason is None
     assert spec.missing_policy != "0"
     assert spec.fidelity == FidelityLevel.F2_RUN
 
@@ -167,14 +173,29 @@ def test_m9_forecast_accuracy_enriches() -> None:
     assert spec.data_role == DataRole.CANDIDATE_LINKAGE
 
 
-def test_unmapped_metric_returns_none() -> None:
-    """A metric with no known counterpart must return None, not raise."""
+def test_unmapped_metric_returns_blocked_spec() -> None:
+    """A metric with no known counterpart must return a blocked MetricSpec.
+
+    H0B: the declared metric is preserved with an explicit blocked_reason
+    instead of being dropped as None.
+    """
     spec = enrich_metric_spec("M2", "nonexistent_metric_xyz")
-    assert spec is None
+    assert spec is not None
+    assert spec.blocked_reason is not None
+    assert "nonexistent_metric_xyz" in spec.blocked_reason
+    assert spec.column == "nonexistent_metric_xyz"
+    assert spec.metric_id == "m2.nonexistent_metric_xyz"
+    assert spec.validation_fidelity == ValidationFidelity.NO_COUNTERPART
+    assert spec.missing_policy != "0"
+    assert is_mapped_metric("M2", "nonexistent_metric_xyz") is False
 
 
 def test_enrich_card_metrics_returns_list() -> None:
-    """enrich_card_metrics must return a list (possibly empty)."""
+    """enrich_card_metrics must return one spec per declared metric.
+
+    H0B: unmapped metrics are returned as blocked MetricSpecs, so the batch
+    keeps all 4 declarations (3 mapped + 1 blocked).
+    """
     metrics = enrich_card_metrics("M1", [
         "household_consumption",
         "household_budgets.spending",
@@ -182,38 +203,52 @@ def test_enrich_card_metrics_returns_list() -> None:
         "nonexistent_metric",
     ])
     assert isinstance(metrics, list)
-    # 3 are mapped, 1 is not
-    assert len(metrics) == 3
+    assert len(metrics) == 4
+    # declaration order is preserved (one metric_id per declared metric)
+    assert [spec.metric_id for spec in metrics] == [
+        "m1.household_consumption",
+        "m1.household_budgets_spending",
+        "m1.forced_saving",
+        "m1.nonexistent_metric",
+    ]
+    mapped = [spec for spec in metrics if spec.blocked_reason is None]
+    blocked = [spec for spec in metrics if spec.blocked_reason is not None]
+    assert len(mapped) == 3
+    assert len(blocked) == 1
+    # the blocked spec keeps the original card metric string verbatim
+    assert blocked[0].column == "nonexistent_metric"
+    assert blocked[0].validation_fidelity == ValidationFidelity.NO_COUNTERPART
 
 
 def test_missing_policy_not_zero() -> None:
-    """All enriched MetricSpecs must have missing_policy != '0'."""
+    """All enriched MetricSpecs (mapped and blocked) must have missing_policy != '0'."""
     test_cases = [
         ("M1", "household_consumption"),
         ("M2", "tick_diagnostics.bottleneck_demand_count"),
         ("M5", "tick_diagnostics.bottleneck_demand_count"),
         ("M9", "technology.forecast_accuracy"),
         ("M11", "national_accounts.production"),
+        # blocked spec: the missing-data guard applies there too
+        ("M1", "nonexistent_metric"),
     ]
     for mechanism_id, metric in test_cases:
         spec = enrich_metric_spec(mechanism_id, metric)
-        if spec is not None:
-            assert spec.missing_policy != "0", (
-                f"{mechanism_id}.{metric} has missing_policy='0'"
-            )
+        assert spec.missing_policy != "0", (
+            f"{mechanism_id}.{metric} has missing_policy='0'"
+        )
+        if spec.blocked_reason is not None:
+            assert spec.validation_fidelity == ValidationFidelity.NO_COUNTERPART
 
 
 def test_metric_id_not_forbidden_path() -> None:
     """Metric IDs must not start with forbidden parameter-write prefixes."""
-    # These are all the mapped metrics — none should produce a forbidden ID
+    # Mix of mapped and unmapped card metrics — none may produce a forbidden ID
     for mechanism_id in [f"M{i}" for i in range(1, 12)]:
         for metric in [
             "household_consumption", "tick_diagnostics.bottleneck_demand_count",
             "technology.forecast_accuracy",
         ]:
             spec = enrich_metric_spec(mechanism_id, metric)
-            if spec is None:
-                continue
             forbidden = ("p04.", "p05.", "p06.", "parameter.", "force_", "write_")
             for prefix in forbidden:
                 assert not spec.metric_id.startswith(prefix), (

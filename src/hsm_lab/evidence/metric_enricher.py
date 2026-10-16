@@ -24,6 +24,12 @@ from hsm_lab.evidence.table_registry import F2_COMMODITY_IDS, get_f2_table_regis
 # ---------------------------------------------------------------------------
 _MISSING_POLICY_NOT_ZERO = "abort"
 
+# Sentinel values for a metric with no known model counterpart. H0B forbids
+# dropping such metrics or zero-filling them: they are returned as MetricSpecs
+# carrying an explicit ``blocked_reason``.
+_BLOCKED_TABLE = "BLOCKED_METRIC"
+_BLOCKED_UNIT = "unmapped"
+
 # Default time window
 _DEFAULT_WINDOW = TimeWindow(
     start_quarter="1957Q1",
@@ -81,11 +87,14 @@ def _build_metric_map() -> dict[str, _EnrichmentTuple]:
 
     return {
         # ── M1 metrics ──────────────────────────────────────────────
+        # H0B: household_consumption is a preserved physical quantity
+        # (flows.household_realized aggregated over regions keeps the
+        # commodity dimension), not an own-base-year normalised index.
         m("M1", "household_consumption"): (
             "national_accounts", "household_consumption",
             "M_forint (model currency)", FidelityLevel.F2_RUN,
             False, None, False, None, None,
-            DataRole.TARGET, ValidationFidelity.NORMALIZED_INDEX,
+            DataRole.TARGET, ValidationFidelity.EXACT,
         ),
         m("M1", "household_budgets.spending"): (
             "household_budgets", "spending",
@@ -335,19 +344,84 @@ def get_metric_enrichment(
     return _METRIC_MAP.get(_m(mechanism_id, v1_metric_name))
 
 
+def metric_table_units() -> dict[tuple[str, str], frozenset[str]]:
+    """The unit(s) the model declares for each ``(table, column)`` pair.
+
+    A MetricSpec's ``unit`` describes the quantity its ``table``/``column``
+    pair carries, so the pairs the enrichment map binds are exactly the pairs
+    whose unit the model declares. Consumers use this to check that a declared
+    metric unit matches the quantity the table holds; a pair the map does not
+    bind (a sidecar, or a column no mapped metric reads) has no declared unit.
+
+    Returns
+    -------
+    dict[tuple[str, str], frozenset[str]]
+        ``(table, column)`` → the units the mapped metrics declare for it.
+    """
+    units: dict[tuple[str, str], set[str]] = {}
+    for table, column, unit, *_rest in _METRIC_MAP.values():
+        units.setdefault((table, column), set()).add(unit)
+    return {pair: frozenset(values) for pair, values in units.items()}
+
+
+def _build_metric_id(mechanism_id: str, v1_metric_name: str) -> str:
+    """Build a stable metric_id from mechanism + normalized metric name."""
+    return (
+        f"{mechanism_id.lower()}."
+        f"{v1_metric_name.replace(' ', '_').replace('.', '_').replace('/', '_')}"
+    )
+
+
+def _blocked_metric_spec(
+    mechanism_id: str,
+    v1_metric_name: str,
+) -> MetricSpec:
+    """Build an explicitly blocked MetricSpec for a metric without counterpart.
+
+    H0B: an unmapped metric MUST NOT be returned as ``None``, dropped from the
+    batch, or silently filled with 0. It is returned as a MetricSpec whose
+    ``blocked_reason`` records the gap and whose ``validation_fidelity`` is
+    NO_COUNTERPART; the original card metric string is preserved verbatim in
+    ``column``.
+    """
+    return MetricSpec(
+        metric_id=_build_metric_id(mechanism_id, v1_metric_name),
+        table_or_sidecar=_BLOCKED_TABLE,
+        column=v1_metric_name,
+        commodity_axis=None,
+        region_axis=None,
+        time_window=_DEFAULT_WINDOW,
+        unit=_BLOCKED_UNIT,
+        fidelity=FidelityLevel.F2_RUN,
+        data_role=DataRole.CANDIDATE_LINKAGE,
+        validation_fidelity=ValidationFidelity.NO_COUNTERPART,
+        missing_policy=_MISSING_POLICY_NOT_ZERO,
+        blocked_reason=(
+            f"No known F2 model counterpart for "
+            f"'{mechanism_id}.{v1_metric_name}'"
+        ),
+        description=(
+            f"BLOCKED: v1 card metric '{v1_metric_name}' ({mechanism_id}) "
+            "has no known model counterpart"
+        ),
+    )
+
+
 def enrich_metric_spec(
     mechanism_id: str,
     v1_metric_name: str,
-) -> MetricSpec | None:
+) -> MetricSpec:
     """Enrich one v1 card metric into a typed MetricSpec.
 
-    Returns None if the metric has no known model counterpart.
+    A metric with no known model counterpart is returned as a blocked
+    MetricSpec (``blocked_reason`` set, ``validation_fidelity`` NO_COUNTERPART)
+    rather than ``None``; callers never lose the declared metric.
     Raises ValueError if the mapped table/column is invalid.
     Raises ValueError if the resulting metric_id is a forbidden parameter path.
     """
     enrichment = get_metric_enrichment(mechanism_id, v1_metric_name)
     if enrichment is None:
-        return None
+        return _blocked_metric_spec(mechanism_id, v1_metric_name)
 
     (
         table, column, unit, fidelity,
@@ -389,10 +463,7 @@ def enrich_metric_spec(
         )
 
     # Build stable metric_id from mechanism + normalized metric name
-    metric_id = (
-        f"{mechanism_id.lower()}."
-        f"{v1_metric_name.replace(' ', '_').replace('.', '_').replace('/', '_')}"
-    )
+    metric_id = _build_metric_id(mechanism_id, v1_metric_name)
 
     # Forbidden path check
     forbidden_prefixes = ("p04.", "p05.", "p06.", "parameter.", "force_", "write_")
@@ -425,12 +496,12 @@ def enrich_card_metrics(
 ) -> list[MetricSpec]:
     """Enrich all v1 card metrics for one mechanism.
 
-    Metrics with no known model counterpart are excluded (they remain
-    NO_COUNTERPART in the adapter's MetricSpecRegistry).
+    One MetricSpec is returned per declared metric, in declaration order:
+    mapped metrics are enriched from the F2 registry, unmapped metrics are
+    returned as blocked MetricSpecs (``blocked_reason`` set). Nothing is
+    silently dropped.
     """
-    specs: list[MetricSpec] = []
-    for metric_name in v1_card_metrics:
-        spec = enrich_metric_spec(mechanism_id, metric_name)
-        if spec is not None:
-            specs.append(spec)
-    return specs
+    return [
+        enrich_metric_spec(mechanism_id, metric_name)
+        for metric_name in v1_card_metrics
+    ]
