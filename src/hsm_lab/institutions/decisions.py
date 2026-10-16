@@ -81,8 +81,11 @@ class ProcurementDecision(Decision):
         )
 
     def validate_legality(self) -> tuple[bool, str]:
+        import math
         if self.requested_quantity < 0:
             return False, f"requested_quantity cannot be negative: {self.requested_quantity}"
+        if not math.isfinite(self.requested_quantity):
+            return False, f"requested_quantity must be finite: {self.requested_quantity}"
         if not self.commodity_id or not self.commodity_id.strip():
             return False, "commodity_id must be non-empty"
         if self.available_at > self.decision_at:
@@ -112,8 +115,11 @@ class PriceProposalDecision(Decision):
         )
 
     def validate_legality(self) -> tuple[bool, str]:
+        import math
         if self.proposed_price < 0:
             return False, f"proposed_price cannot be negative: {self.proposed_price}"
+        if not math.isfinite(self.proposed_price):
+            return False, f"proposed_price must be finite: {self.proposed_price}"
         if not self.commodity_id or not self.commodity_id.strip():
             return False, "commodity_id must be non-empty"
         if self.available_at > self.decision_at:
@@ -138,8 +144,11 @@ class InvestmentDecision(Decision):
         )
 
     def validate_legality(self) -> tuple[bool, str]:
+        import math
         if self.requested_amount < 0:
             return False, f"requested_amount cannot be negative: {self.requested_amount}"
+        if not math.isfinite(self.requested_amount):
+            return False, f"requested_amount must be finite: {self.requested_amount}"
         if not self.project_id or not self.project_id.strip():
             return False, "project_id must be non-empty"
         if self.available_at > self.decision_at:
@@ -171,8 +180,11 @@ class HouseholdNeedDecision(Decision):
         )
 
     def validate_legality(self) -> tuple[bool, str]:
+        import math
         if self.claimed_quantity < 0:
             return False, f"claimed_quantity cannot be negative: {self.claimed_quantity}"
+        if not math.isfinite(self.claimed_quantity):
+            return False, f"claimed_quantity must be finite: {self.claimed_quantity}"
         if not self.household_id or not self.household_id.strip():
             return False, "household_id must be non-empty"
         if not self.commodity_id or not self.commodity_id.strip():

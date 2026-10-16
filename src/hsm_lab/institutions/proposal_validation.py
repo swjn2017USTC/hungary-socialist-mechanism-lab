@@ -80,24 +80,12 @@ _ROLE_ORG_IDS: dict[ActorRole, tuple[str, ...]] = {
 def validate_proposal(
     decision: Decision,
     calendar: RegimeCalendar,
-    organization_id: str,
-    sector_id: str,
     geographic_id: str = "national",
 ) -> ValidationResult:
     """Validate one decision against authority and legality rules.
 
-    Parameters
-    ----------
-    decision:
-        The decision record to validate.
-    calendar:
-        The H1B regime calendar used for authority queries.
-    organization_id:
-        The organization the actor belongs to.
-    sector_id:
-        The sector relevant to this decision.
-    geographic_id:
-        The geographic scope (default: "national").
+    The organization and sector are derived from the decision's own declared identity.
+    The caller-supplied geographic_id supplements the decision's context.
 
     Returns
     -------
@@ -115,7 +103,7 @@ def validate_proposal(
             reason=legal_reason,
         )
 
-    # Step 2: authority check via H1B calendar
+    # Step 2: authority check via H1B calendar — use decision's own identity
     permission = _ROLE_PERMISSION_MAP.get(decision.actor_role, "unknown")
     warnings: list[str] = []
 
@@ -127,11 +115,15 @@ def validate_proposal(
             reason=f"No H1B permission mapped for role {decision.actor_role.value}",
         )
 
+    # Derive organization and sector from the decision's own declared identity
+    org_id = decision.organization_id
+    sec_id = decision.sector_id
+
     try:
         auth_result = authority_at(
             calendar,
-            organization_id=organization_id,
-            sector_id=sector_id,
+            organization_id=org_id,
+            sector_id=sec_id,
             geographic_id=geographic_id,
             permission=permission,
             decision_at=decision.decision_at,
@@ -150,14 +142,14 @@ def validate_proposal(
             authority_status=auth_status,
             reason=(
                 f"Authority for {permission} is {auth_status} at "
-                f"{decision.decision_at} for {organization_id}/{sector_id}; "
+                f"{decision.decision_at} for {org_id}/{sec_id}; "
                 f"decision is not legally valid"
             ),
             warnings=tuple(warnings),
         )
 
     # Step 3: additional role-specific checks
-    extra_reason = _role_specific_check(decision, organization_id, sector_id)
+    extra_reason = _role_specific_check(decision, org_id, sec_id)
     if extra_reason:
         warnings.append(extra_reason)
 
@@ -167,7 +159,7 @@ def validate_proposal(
         authority_status=auth_status,
         reason=(
             f"Legal {permission} authority confirmed ({auth_status}) for "
-            f"{organization_id}/{sector_id} at {decision.decision_at}. "
+            f"{org_id}/{sec_id} at {decision.decision_at}. "
             f"{legal_reason}"
         ),
         warnings=tuple(warnings),
@@ -219,8 +211,6 @@ def _commodity_in_scope(commodity_id: str, sector_id: str) -> bool:
 def validate_proposals(
     decisions: list[Decision],
     calendar: RegimeCalendar,
-    organization_id: str,
-    sector_id: str,
     geographic_id: str = "national",
 ) -> list[ValidationResult]:
     """Validate a batch of decisions, each independently.
@@ -228,7 +218,7 @@ def validate_proposals(
     Returns a list of ValidationResult in the same order as input decisions.
     """
     return [
-        validate_proposal(d, calendar, organization_id, sector_id, geographic_id)
+        validate_proposal(d, calendar, geographic_id)
         for d in decisions
     ]
 

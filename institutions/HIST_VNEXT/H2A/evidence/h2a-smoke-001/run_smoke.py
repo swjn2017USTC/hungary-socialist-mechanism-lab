@@ -29,7 +29,7 @@ from hsm_lab.institutions.proposal_validation import (
 # ---------------------------------------------------------------------------
 
 _H1B_PATH = (
-    Path(__file__).parents[4]
+    Path(__file__).parents[5]
     / "institutions"
     / "HIST_VNEXT"
     / "h1b_synthetic_calendar.json"
@@ -153,7 +153,7 @@ decision = ProcurementDecision(
     commodity_id="coal",
     requested_quantity=50.0,
 )
-result = validate_proposal(decision, calendar, "ORG-ENT-A", "industry")
+result = validate_proposal(decision, calendar)
 check("S5: legal proposal validated", result.is_legal, result.reason)
 
 # S6: Negative quantity rejected

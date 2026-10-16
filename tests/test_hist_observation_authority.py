@@ -26,6 +26,7 @@ from hsm_lab.institutions.calendar import load_calendar
 from hsm_lab.institutions.decisions import (
     ActorRole,
     HouseholdNeedDecision,
+    HouseholdNeedKind,
     InvestmentDecision,
     PriceProposalDecision,
     PriceProposalKind,
@@ -33,6 +34,7 @@ from hsm_lab.institutions.decisions import (
     ProcurementDecision,
 )
 from hsm_lab.institutions.observed import (
+    ActorObservation,
     ObservationBuilder,
     _to_immutable,
     verify_observation_invariants,
@@ -382,8 +384,6 @@ class TestAuthorityValidation:
         result = validate_proposal(
             decision,
             calendar,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
         )
         assert result.is_legal, result.reason
         assert result.authority_status in ("granted", "unknown")
@@ -405,8 +405,6 @@ class TestAuthorityValidation:
         result = validate_proposal(
             decision,
             calendar,
-            organization_id="ORG-ENT-B",
-            sector_id="industry",
         )
         # After revoke: authority should be revoked
         assert result.authority_status == "revoked"
@@ -521,8 +519,8 @@ class TestRolePermissionIsolation:
     def test_same_quarter_different_roles(self, calendar):
         """Procurement org and household receiver have different permissions.
 
-        Same observation data, but only the role with granted authority
-        can have a legal decision.
+        ORG-ENT-A has procurement authority (enacted 1968) but HH-001 has no
+        corresponding grant in the calendar — authorization differs by role+org.
         """
         # Procurement org: ORG-ENT-A has procurement authority (enacted 1968)
         proc_decision = ProcurementDecision(
@@ -539,12 +537,10 @@ class TestRolePermissionIsolation:
         )
         proc_result = validate_proposal(
             proc_decision, calendar,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
         )
 
         # Household receiver: HH-001 has no procurement authority
-        hh_decision = ProcurementDecision(
+        hh_decision = HouseholdNeedDecision(
             decision_id="d13",
             actor_role=ActorRole.HOUSEHOLD_RECEIVER,
             organization_id="HH-001",
@@ -552,23 +548,20 @@ class TestRolePermissionIsolation:
             quarter="1968Q1",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
-            kind=ProcurementChoiceKind.REQUEST,
+            kind=HouseholdNeedKind.REGISTER,
+            household_id="HH-001",
             commodity_id="coal",
-            requested_quantity=50.0,
+            claimed_quantity=50.0,
         )
         hh_result = validate_proposal(
             hh_decision, calendar,
-            organization_id="HH-001",
-            sector_id="household",
         )
 
-        # The results differ: one may be legal, the other not
-        # (specific outcomes depend on calendar content)
+        # The results differ: org+role match determines outcome
         assert proc_result.decision_id != hh_result.decision_id
-        # At minimum, the authority statuses differ because roles have different permissions
         proc_auth = proc_result.authority_status
         hh_auth = hh_result.authority_status
-        # Both should be determinate (granted/unknown/revoked)
+        # Both determinate
         assert proc_auth in ("granted", "unknown", "revoked")
         assert hh_auth in ("granted", "unknown", "revoked")
 
@@ -712,8 +705,6 @@ class TestBatchValidation:
         results = validate_proposals(
             decisions,
             calendar,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
         )
         assert len(results) == 2
         assert results[0].decision_id == "batch-1"
@@ -725,6 +716,158 @@ class TestBatchValidation:
 # ---------------------------------------------------------------------------
 # Test 11 — ValidationResult is frozen
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Test 12 — P0 regression: observation boundary enforcement
+# ---------------------------------------------------------------------------
+
+class TestObservationBoundaryEnforcement:
+    """Regression tests for P0 issue: unsafe values must be rejected."""
+
+    def test_callback_rejected_in_observation(self):
+        """A callable passed as a field value must be rejected by _to_immutable."""
+        builder = ObservationBuilder("procurement_organization")
+        with pytest.raises(TypeError, match="not allowed"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={"supply_quantity": lambda: {"state": 999}},  # callable
+            )
+
+    def test_object_with_state_rejected(self):
+        """A plain object (not a dict/tuple/float) must be rejected."""
+        builder = ObservationBuilder("procurement_organization")
+
+        class MutableContainer:
+            def __init__(self):
+                self.value = 42
+
+        with pytest.raises(TypeError, match="not allowed"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={"supply_quantity": MutableContainer()},
+            )
+
+    def test_direct_construction_rejects_mutable_values(self):
+        """Direct ActorObservation construction with mutable values must fail."""
+        # A mutable dict smuggled through raw_fields tuple
+        with pytest.raises((ValueError, TypeError)):
+            ActorObservation(
+                actor_role="procurement_organization",
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                observed_fields=(
+                    ("supply_quantity", {"mutable": "dict"}),  # dict is mutable
+                ),
+            )
+
+    def test_direct_construction_rejects_unregistered_role(self):
+        """Direct construction with an unregistered role must fail."""
+        with pytest.raises(ValueError, match="not a registered role"):
+            ActorObservation(
+                actor_role="unregistered_role",
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                observed_fields=(),
+            )
+
+    def test_direct_construction_rejects_off_whitelist_field(self):
+        """Direct construction with a field not in the role whitelist must fail."""
+        with pytest.raises(ValueError, match="not in the whitelist"):
+            ActorObservation(
+                actor_role="procurement_organization",
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                observed_fields=(
+                    ("raw_truth", 999.0),  # not in procurement whitelist
+                ),
+            )
+
+
+# ---------------------------------------------------------------------------
+# Test 13 — P0 regression: authority binding
+# ---------------------------------------------------------------------------
+
+class TestAuthorityBindingEnforcement:
+    """Regression: authority must use decision's own identity, not caller-supplied."""
+
+    def test_validate_proposal_uses_decision_own_org(self, calendar):
+        """validate_proposal must use the decision's organization_id, not a parameter."""
+        # A decision for ORG-ENT-B (revoked) validated against itself
+        decision_b = ProcurementDecision(
+            decision_id="bind-b",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-B",
+            sector_id="industry",
+            quarter="1973Q1",
+            decision_at=date(1973, 1, 1),
+            available_at=date(1972, 12, 20),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        result_b = validate_proposal(decision_b, calendar)
+        # ORG-ENT-B's procurement is revoked — must be rejected
+        assert result_b.authority_status == "revoked"
+        assert not result_b.is_legal
+
+    def test_nan_quantity_rejected(self):
+        """NaN quantities must be rejected in legal validation."""
+        decision = ProcurementDecision(
+            decision_id="nan-qty",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q1",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=float("nan"),
+        )
+        is_legal, reason = decision.validate_legality()
+        assert not is_legal
+        assert "finite" in reason.lower()
+
+    def test_inf_quantity_rejected(self):
+        """Inf quantities must be rejected in legal validation."""
+        decision = PriceProposalDecision(
+            decision_id="inf-price",
+            actor_role=ActorRole.APPROVER,
+            organization_id="ORG-GOV",
+            sector_id="industry",
+            quarter="1968Q1",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=PriceProposalKind.SET,
+            commodity_id="steel",
+            proposed_price=float("inf"),
+        )
+        is_legal, reason = decision.validate_legality()
+        assert not is_legal
+        assert "finite" in reason.lower()
+
 
 class TestValidationResultFrozen:
     def test_validation_result_is_frozen(self, calendar):
@@ -742,8 +885,6 @@ class TestValidationResultFrozen:
         )
         result = validate_proposal(
             decision, calendar,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
         )
         from dataclasses import FrozenInstanceError
 
@@ -765,8 +906,6 @@ class TestValidationResultFrozen:
         )
         result = validate_proposal(
             decision, calendar,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
         )
         d = result.to_dict()
         assert isinstance(d, dict)

@@ -90,6 +90,27 @@ class ActorObservation(StrictModel):
                 f"available_at {self.available_at} cannot be after "
                 f"decision_at {self.decision_at}"
             )
+        # Enforce actor_role is registered
+        if self.actor_role not in _ROLE_WHITELISTS:
+            raise ValueError(
+                f"actor_role {self.actor_role!r} is not a registered role; "
+                f"allowed: {list(_ROLE_WHITELISTS.keys())}"
+            )
+        # Enforce all field names are in the role whitelist
+        role_whitelist = _ROLE_WHITELISTS[self.actor_role]
+        for name, _ in self.observed_fields:
+            if name not in role_whitelist:
+                raise ValueError(
+                    f"Field {name!r} is not in the whitelist for role "
+                    f"{self.actor_role!r}; allowed: {sorted(role_whitelist)}"
+                )
+        # Enforce all values are deep-immutable
+        for name, value in self.observed_fields:
+            if not _is_deep_immutable(value):
+                raise TypeError(
+                    f"Value for field {name!r} is not deep-immutable: "
+                    f"type={type(value).__name__}"
+                )
 
     def get_field(self, field_name: str) -> Any:
         """Return the value for a whitelisted field, or raise KeyError."""
@@ -198,23 +219,51 @@ class ObservationBuilder:
 def _to_immutable(value: Any) -> Any:
     """Convert a value to a deep-immutable representation.
 
-    tuple: recursively convert elements
-    list: convert to tuple
-    dict: convert to tuple of sorted (k, v) pairs
-    set: convert to frozenset (recursively)
-    Other: return as-is (primitives are immutable)
+    Only the following types are accepted; all others raise TypeError:
+    - None, bool, int, float, str (primitives — returned as-is)
+    - tuple: recursively convert elements
+    - frozenset: recursively convert elements
+    - list: converted to tuple
+    - dict: converted to sorted tuple of (k, v) pairs
+    - set: converted to frozenset
+
+    Rejected: callable, object with __dict__, subclasses of primitives
+    carrying mutable state, or any type not in the above list.
     """
-    if isinstance(value, tuple):
+    # Primitives — exact types only (not subclasses)
+    if value is None or type(value) is type(None):  # noqa: E721
+        return None
+    if type(value) is bool:  # noqa: E721
+        return value
+    if type(value) is int:  # noqa: E721
+        return value
+    if type(value) is float:  # noqa: E721 — not subclasses
+        if not (value == value):  # NaN check
+            raise TypeError(f"NaN is not allowed in observations: {value!r}")
+        if abs(value) == float("inf"):
+            raise TypeError(f"Non-finite float is not allowed: {value!r}")
+        return value
+    if type(value) is str:  # noqa: E721
+        return value
+    # Container types
+    if type(value) is tuple:
         return tuple(_to_immutable(v) for v in value)
-    if isinstance(value, list):
+    if type(value) is frozenset:
+        return frozenset(_to_immutable(v) for v in value)
+    if type(value) is list:
         return tuple(_to_immutable(v) for v in value)
-    if isinstance(value, dict):
+    if type(value) is set:
+        return frozenset(_to_immutable(v) for v in value)
+    if type(value) is dict:
         return tuple(sorted(
             (str(k), _to_immutable(v)) for k, v in value.items()
         ))
-    if isinstance(value, set):
-        return frozenset(_to_immutable(v) for v in value)
-    return value
+    # Reject everything else: callable, object, subclassed primitive, etc.
+    raise TypeError(
+        f"Value of type {type(value).__name__!r} is not allowed in "
+        f"observations; only primitive types and plain tuple/frozenset/dict "
+        f"containers are accepted"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -261,11 +310,14 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
 
 
 def _is_deep_immutable(value: Any) -> bool:
-    """Return True if value is deep-immutable (primitives, tuples, frozensets)."""
-    if isinstance(value, (str, int, float, bool, type(None))):
+    """Return True only for exact immutable-primitive types and plain tuple/frozenset."""
+    t = type(value)
+    if value is None or t is type(None):  # noqa: E721
         return True
-    if isinstance(value, tuple):
+    if t in (bool, int, float, str):
+        return True
+    if t is tuple:
         return all(_is_deep_immutable(v) for v in value)
-    if isinstance(value, frozenset):
+    if t is frozenset:
         return all(_is_deep_immutable(v) for v in value)
     return False
