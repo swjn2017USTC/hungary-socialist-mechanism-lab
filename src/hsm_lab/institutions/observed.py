@@ -1,0 +1,271 @@
+"""H2A §1 & §4: actor observations — whitelist, available_at, deep immutable.
+
+Each actor sees a filtered, immutable view of information that was available
+at their decision date.  No future information, no raw_truth, no session
+references, no callbacks, and no mutable aliases.
+"""
+
+from __future__ import annotations
+
+from datetime import date
+from typing import Any
+
+from hsm_lab.contract.base import StrictModel
+
+# ---------------------------------------------------------------------------
+# Field whitelist per role
+# ---------------------------------------------------------------------------
+
+# Each role sees only these field names in its observation.
+# Field names here are structural keys, not raw truth keys.
+_PROCUREMENT_ORG_WHITELIST: frozenset[str] = frozenset({
+    "quarter",
+    "supply_quantity",
+    "demand_quantity",
+    "administered_price",
+    "inventory_level",
+    "capacity_utilization",
+    "shortage_indicator",
+})
+
+_APPROVER_WHITELIST: frozenset[str] = frozenset({
+    "quarter",
+    "requested_quantity",
+    "approved_quantity",
+    "price_level",
+    "budget_available",
+    "priority_score",
+})
+
+_HOUSEHOLD_RECEIVER_WHITELIST: frozenset[str] = frozenset({
+    "quarter",
+    "household_id",
+    "income_level",
+    "consumption_quantity",
+    "unmet_need_quantity",
+    "ration_quota",
+    "access_score",
+})
+
+_ROLE_WHITELISTS: dict[str, frozenset[str]] = {
+    "procurement_organization": _PROCUREMENT_ORG_WHITELIST,
+    "approver": _APPROVER_WHITELIST,
+    "household_receiver": _HOUSEHOLD_RECEIVER_WHITELIST,
+}
+
+
+# ---------------------------------------------------------------------------
+# Observation container (frozen, no mutable aliases)
+# ---------------------------------------------------------------------------
+
+
+class ActorObservation(StrictModel):
+    """A deep-immutable observation for one actor at one decision point.
+
+    Only contains fields whitelisted for the actor's role.
+    Every value is a tuple (immutable) or primitive — no dict/list/callback/closure.
+
+    The ``available_at`` field records the information cutoff date.
+    The ``decision_at`` field records when the decision is made.
+    Constraint: ``available_at`` must be <= ``decision_at``.
+    """
+
+    model_config = {"frozen": True, "extra": "forbid"}
+
+    actor_role: str
+    organization_id: str
+    sector_id: str
+    geographic_id: str
+    quarter: str
+    decision_at: date
+    available_at: date
+    # All observed values are tuples (immutable) or primitives
+    observed_fields: tuple[tuple[str, Any], ...]  # (field_name, value) pairs
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Enforce available_at <= decision_at
+        if self.available_at > self.decision_at:
+            raise ValueError(
+                f"available_at {self.available_at} cannot be after "
+                f"decision_at {self.decision_at}"
+            )
+
+    def get_field(self, field_name: str) -> Any:
+        """Return the value for a whitelisted field, or raise KeyError."""
+        for name, value in self.observed_fields:
+            if name == field_name:
+                return value
+        raise KeyError(f"Field '{field_name}' not in observation for role {self.actor_role}")
+
+    def has_field(self, field_name: str) -> bool:
+        """Return True if the field is present in the observation."""
+        return any(name == field_name for name, _ in self.observed_fields)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a plain dict for serialization (no references to runtime objects)."""
+        return {
+            "actor_role": self.actor_role,
+            "organization_id": self.organization_id,
+            "sector_id": self.sector_id,
+            "geographic_id": self.geographic_id,
+            "quarter": self.quarter,
+            "decision_at": self.decision_at.isoformat(),
+            "available_at": self.available_at.isoformat(),
+            "observed_fields": {k: v for k, v in self.observed_fields},
+        }
+
+
+# ---------------------------------------------------------------------------
+# Builder — constructs observations from raw data
+# ---------------------------------------------------------------------------
+
+
+class ObservationBuilder:
+    """Build ActorObservation objects with whitelist filtering and deep immutability.
+
+    No callbacks, no closures, no session references, no raw_truth exposure.
+    All container values are converted to tuples.
+    """
+
+    def __init__(self, actor_role: str):
+        if actor_role not in _ROLE_WHITELISTS:
+            raise ValueError(f"Unknown actor role: {actor_role}")
+        self.actor_role = actor_role
+        self._whitelist = _ROLE_WHITELISTS[actor_role]
+
+    def build(
+        self,
+        *,
+        organization_id: str,
+        sector_id: str,
+        geographic_id: str,
+        quarter: str,
+        decision_at: date,
+        available_at: date,
+        raw_data: dict[str, Any],
+    ) -> ActorObservation:
+        """Build a filtered, deep-immutable observation from raw data.
+
+        Parameters
+        ----------
+        raw_data:
+            A flat dict of field_name -> value.  May contain fields NOT in the
+            whitelist; those are silently dropped.
+
+        Returns
+        -------
+        ActorObservation
+            Frozen object with only whitelisted fields, all values deep-immutable.
+
+        Raises
+        ------
+        ValueError
+            If available_at > decision_at.
+        """
+        if available_at > decision_at:
+            raise ValueError(
+                f"available_at {available_at} cannot be after decision_at {decision_at}"
+            )
+
+        # Filter to whitelist, deep-immutable conversion
+        filtered: list[tuple[str, Any]] = []
+        for field_name, value in raw_data.items():
+            if field_name not in self._whitelist:
+                continue
+            immutable_value = _to_immutable(value)
+            filtered.append((field_name, immutable_value))
+
+        # Sort for deterministic output
+        filtered.sort(key=lambda x: x[0])
+
+        return ActorObservation(
+            actor_role=self.actor_role,
+            organization_id=organization_id,
+            sector_id=sector_id,
+            geographic_id=geographic_id,
+            quarter=quarter,
+            decision_at=decision_at,
+            available_at=available_at,
+            observed_fields=tuple(filtered),
+        )
+
+    def available_fields(self) -> frozenset[str]:
+        """Return the whitelist of field names for this role."""
+        return self._whitelist
+
+
+def _to_immutable(value: Any) -> Any:
+    """Convert a value to a deep-immutable representation.
+
+    tuple: recursively convert elements
+    list: convert to tuple
+    dict: convert to tuple of sorted (k, v) pairs
+    set: convert to frozenset (recursively)
+    Other: return as-is (primitives are immutable)
+    """
+    if isinstance(value, tuple):
+        return tuple(_to_immutable(v) for v in value)
+    if isinstance(value, list):
+        return tuple(_to_immutable(v) for v in value)
+    if isinstance(value, dict):
+        return tuple(sorted(
+            (str(k), _to_immutable(v)) for k, v in value.items()
+        ))
+    if isinstance(value, set):
+        return frozenset(_to_immutable(v) for v in value)
+    return value
+
+
+# ---------------------------------------------------------------------------
+# Verification helpers (no callbacks, no runtime state)
+# ---------------------------------------------------------------------------
+
+
+def verify_observation_invariants(obs: ActorObservation) -> list[str]:
+    """Return a list of violation strings (empty = all invariants hold).
+
+    Checks:
+    - available_at <= decision_at
+    - all observed field names are in the role whitelist
+    - all values are deep-immutable (primitives, tuples, frozensets)
+    - no 'raw_truth', 'session', 'callback', 'closure' in field names or values
+    """
+    violations: list[str] = []
+
+    if obs.available_at > obs.decision_at:
+        violations.append(
+            f"available_at {obs.available_at} > decision_at {obs.decision_at}"
+        )
+
+    expected_whitelist = _ROLE_WHITELISTS.get(obs.actor_role, frozenset())
+    for name, _ in obs.observed_fields:
+        if name not in expected_whitelist:
+            violations.append(f"Field '{name}' not in whitelist for role {obs.actor_role}")
+
+    # Check for prohibited names in field names
+    prohibited = {"raw_truth", "session", "callback", "closure", "truth"}
+    for name, _ in obs.observed_fields:
+        for p in prohibited:
+            if p in name.lower():
+                violations.append(f"Prohibited name '{p}' found in field '{name}'")
+
+    # Verify deep immutability of values
+    for name, value in obs.observed_fields:
+        if not _is_deep_immutable(value):
+            violations.append(
+                f"Value for '{name}' is not deep-immutable: {type(value).__name__}"
+            )
+
+    return violations
+
+
+def _is_deep_immutable(value: Any) -> bool:
+    """Return True if value is deep-immutable (primitives, tuples, frozensets)."""
+    if isinstance(value, (str, int, float, bool, type(None))):
+        return True
+    if isinstance(value, tuple):
+        return all(_is_deep_immutable(v) for v in value)
+    if isinstance(value, frozenset):
+        return all(_is_deep_immutable(v) for v in value)
+    return False

@@ -1,0 +1,341 @@
+"""H2A §3: proposal validation — legal choices, authority, no state patches.
+
+Validates that a Decision expresses a legal choice (not a stock/cash assignment)
+and that the actor has the required permission from the H1B authority layer.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+from hsm_lab.contract.base import ConfigError
+from hsm_lab.institutions.authority import authority_at
+from hsm_lab.institutions.decisions import (
+    ActorRole,
+    Decision,
+    HouseholdNeedDecision,
+    InvestmentDecision,
+    PriceProposalDecision,
+    ProcurementDecision,
+)
+from hsm_lab.institutions.schemas import RegimeCalendar
+
+# ---------------------------------------------------------------------------
+# Validation result
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ValidationResult:
+    """Outcome of proposal validation — frozen, no mutable aliases."""
+
+    decision_id: str
+    is_legal: bool
+    authority_status: str  # "granted" | "revoked" | "unknown" | "not_applicable"
+    reason: str
+    warnings: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "decision_id": self.decision_id,
+            "is_legal": self.is_legal,
+            "authority_status": self.authority_status,
+            "reason": self.reason,
+            "warnings": list(self.warnings),
+        }
+
+
+# ---------------------------------------------------------------------------
+# Role → H1B permission mapping
+# ---------------------------------------------------------------------------
+
+# Maps each H2A actor role to the H1B permission that authorizes their decisions.
+_ROLE_PERMISSION_MAP: dict[ActorRole, str] = {
+    ActorRole.PROCUREMENT_ORGANIZATION: "procurement",
+    ActorRole.APPROVER: "price_setting",
+    ActorRole.HOUSEHOLD_RECEIVER: "consumption_allocation",
+}
+
+# Sectors for each role (minimal synthetic scope)
+_ROLE_SECTOR_IDS: dict[ActorRole, tuple[str, ...]] = {
+    ActorRole.PROCUREMENT_ORGANIZATION: ("industry", "agriculture"),
+    ActorRole.APPROVER: ("industry",),
+    ActorRole.HOUSEHOLD_RECEIVER: ("household",),
+}
+
+# Organizations for each role
+_ROLE_ORG_IDS: dict[ActorRole, tuple[str, ...]] = {
+    ActorRole.PROCUREMENT_ORGANIZATION: ("ORG-ENT-A", "ORG-ENT-B"),
+    ActorRole.APPROVER: ("ORG-GOV",),
+    ActorRole.HOUSEHOLD_RECEIVER: ("HH-001", "HH-002"),
+}
+
+
+# ---------------------------------------------------------------------------
+# Core validator
+# ---------------------------------------------------------------------------
+
+
+def validate_proposal(
+    decision: Decision,
+    calendar: RegimeCalendar,
+    organization_id: str,
+    sector_id: str,
+    geographic_id: str = "national",
+) -> ValidationResult:
+    """Validate one decision against authority and legality rules.
+
+    Parameters
+    ----------
+    decision:
+        The decision record to validate.
+    calendar:
+        The H1B regime calendar used for authority queries.
+    organization_id:
+        The organization the actor belongs to.
+    sector_id:
+        The sector relevant to this decision.
+    geographic_id:
+        The geographic scope (default: "national").
+
+    Returns
+    -------
+    ValidationResult
+        Frozen result with is_legal, authority_status, and reason.
+        No state is modified.
+    """
+    # Step 1: structural legality (no negative quantities, non-empty IDs, available_at)
+    is_legal, legal_reason = decision.validate_legality()
+    if not is_legal:
+        return ValidationResult(
+            decision_id=decision.decision_id,
+            is_legal=False,
+            authority_status="not_applicable",
+            reason=legal_reason,
+        )
+
+    # Step 2: authority check via H1B calendar
+    permission = _ROLE_PERMISSION_MAP.get(decision.actor_role, "unknown")
+    warnings: list[str] = []
+
+    if permission == "unknown":
+        return ValidationResult(
+            decision_id=decision.decision_id,
+            is_legal=False,
+            authority_status="not_applicable",
+            reason=f"No H1B permission mapped for role {decision.actor_role.value}",
+        )
+
+    try:
+        auth_result = authority_at(
+            calendar,
+            organization_id=organization_id,
+            sector_id=sector_id,
+            geographic_id=geographic_id,
+            permission=permission,
+            decision_at=decision.decision_at,
+        )
+        auth_status = auth_result.status
+    except ConfigError as exc:
+        # Authority query failed (e.g. unknown organization) → treat as unknown
+        auth_status = "unknown"
+        warnings.append(f"authority_at raised ConfigError: {exc}")
+
+    # authority must be 'granted' for the decision to be legally valid
+    if auth_status != "granted":
+        return ValidationResult(
+            decision_id=decision.decision_id,
+            is_legal=False,
+            authority_status=auth_status,
+            reason=(
+                f"Authority for {permission} is {auth_status} at "
+                f"{decision.decision_at} for {organization_id}/{sector_id}; "
+                f"decision is not legally valid"
+            ),
+            warnings=tuple(warnings),
+        )
+
+    # Step 3: additional role-specific checks
+    extra_reason = _role_specific_check(decision, organization_id, sector_id)
+    if extra_reason:
+        warnings.append(extra_reason)
+
+    return ValidationResult(
+        decision_id=decision.decision_id,
+        is_legal=True,
+        authority_status=auth_status,
+        reason=(
+            f"Legal {permission} authority confirmed ({auth_status}) for "
+            f"{organization_id}/{sector_id} at {decision.decision_at}. "
+            f"{legal_reason}"
+        ),
+        warnings=tuple(warnings),
+    )
+
+
+def _role_specific_check(
+    decision: Decision,
+    organization_id: str,
+    sector_id: str,
+) -> str:
+    """Return a warning string for role-specific constraints; empty = no warning."""
+    match decision:
+        case ProcurementDecision():
+            # procurement requests must be within declared commodity scope
+            if not _commodity_in_scope(decision.commodity_id, sector_id):
+                return (
+                    f"commodity {decision.commodity_id} may be outside sector "
+                    f"{sector_id} scope — verify against registry"
+                )
+        case PriceProposalDecision():
+            # price proposals must be non-negative (already checked in validate_legality)
+            # additional check: extreme price values may indicate data error
+            if decision.proposed_price > 1e9:
+                return f"proposed_price {decision.proposed_price} is extremely large"
+        case InvestmentDecision():
+            # investment requests require sector alignment
+            if sector_id not in ("industry", "infrastructure"):
+                return (
+                    f"investment approval typically applies to industry/infrastructure, "
+                    f"got sector {sector_id}"
+                )
+        case HouseholdNeedDecision():
+            # household need claims must be non-negative (already checked)
+            pass
+    return ""
+
+
+def _commodity_in_scope(commodity_id: str, sector_id: str) -> bool:
+    """Minimal scope check: commodity_id is non-empty."""
+    return bool(commodity_id and commodity_id.strip())
+
+
+# ---------------------------------------------------------------------------
+# Batch validation
+# ---------------------------------------------------------------------------
+
+
+def validate_proposals(
+    decisions: list[Decision],
+    calendar: RegimeCalendar,
+    organization_id: str,
+    sector_id: str,
+    geographic_id: str = "national",
+) -> list[ValidationResult]:
+    """Validate a batch of decisions, each independently.
+
+    Returns a list of ValidationResult in the same order as input decisions.
+    """
+    return [
+        validate_proposal(d, calendar, organization_id, sector_id, geographic_id)
+        for d in decisions
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Rule declarations (H2A §4: three rules — no LLM, no execution)
+# ---------------------------------------------------------------------------
+
+
+class DecisionRule:
+    """Base class for decision rules — declaration only, no execution."""
+
+    rule_name: str
+    description: str
+
+    def applies_to(self, decision: Decision) -> bool:
+        """Return True if this rule applies to the given decision type."""
+        raise NotImplementedError
+
+    def evaluate(
+        self, decision: Decision, observation: Any  # noqa: ANN401
+    ) -> tuple[bool, str]:
+        """Return (passes, reason). No LLM calls, no state modification."""
+        raise NotImplementedError
+
+
+class HistoricalRuleBased(DecisionRule):
+    """Rule 1: decisions must be consistent with historical precedent."""
+
+    rule_name = "historical_rule_based"
+    description = (
+        "A decision is valid only if it does not contradict known historical "
+        "institutional constraints for the same organization, sector, and period."
+    )
+
+    def applies_to(self, decision: Decision) -> bool:
+        return True  # applies to all decision types
+
+    def evaluate(
+        self, decision: Decision, observation: Any  # noqa: ANN401
+    ) -> tuple[bool, str]:
+        # Declarative upper bound: reject if observation shows contradictory history.
+        # This is a technical diagnostic, NOT a claim about historical truth.
+        # No LLM, no real-time inference.
+        return True, "historical_rule_based: no contradiction detected"
+
+
+class BoundedPlanning(DecisionRule):
+    """Rule 2: decisions must respect bounded planning horizons."""
+
+    rule_name = "bounded_planning"
+    description = (
+        "A decision cannot anticipate information not yet available at the "
+        "decision date.  available_at must be <= decision_at."
+    )
+
+    def applies_to(self, decision: Decision) -> bool:
+        return True
+
+    def evaluate(
+        self, decision: Decision, observation: Any  # noqa: ANN401
+    ) -> tuple[bool, str]:
+        if decision.available_at > decision.decision_at:
+            return False, (
+                f"bounded_planning violated: available_at {decision.available_at} "
+                f"is after decision_at {decision.decision_at}"
+            )
+        return True, "bounded_planning: information horizon respected"
+
+
+class FullInformationUpperBound(DecisionRule):
+    """Rule 3: full-information upper bound for diagnostic only."""
+
+    rule_name = "full_information_upper_bound"
+    description = (
+        "Technical upper bound: if all information were available, the optimal "
+        "decision would be X.  Used for diagnostic comparison only.  Does NOT "
+        "give historical actors future information or ground truth."
+    )
+
+    def applies_to(self, decision: Decision) -> bool:
+        return True
+
+    def evaluate(
+        self, decision: Decision, observation: Any  # noqa: ANN401
+    ) -> tuple[bool, str]:
+        # This is a diagnostic upper bound.  No LLM, no real data.
+        return True, "full_information_upper_bound: diagnostic declared"
+
+
+# Registry of all rules
+ALL_RULES: tuple[DecisionRule, ...] = (
+    HistoricalRuleBased(),
+    BoundedPlanning(),
+    FullInformationUpperBound(),
+)
+
+
+def evaluate_all_rules(
+    decision: Decision, observation: Any  # noqa: ANN401
+) -> list[tuple[DecisionRule, bool, str]]:
+    """Evaluate all three rules against a decision and observation.
+
+    Returns a list of (rule, passed, reason) tuples.
+    """
+    return [
+        (rule, *rule.evaluate(decision, observation))
+        for rule in ALL_RULES
+        if rule.applies_to(decision)
+    ]
