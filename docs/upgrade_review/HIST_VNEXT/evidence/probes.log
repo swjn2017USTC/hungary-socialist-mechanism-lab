@@ -1,0 +1,101 @@
+{
+  "cards": 11,
+  "all_hashes_match": true,
+  "ontology_nodes": 40,
+  "missing_ontology_nodes": 22,
+  "registry_fake_columns": 4,
+  "schema_accepted": {
+    "TimeWindow_end_1988": true,
+    "TimeWindow_before_start": true,
+    "TimeWindow_zero": true,
+    "Metric_zero_fill": true,
+    "Metric_unknown_column": true,
+    "Observed_future_snapshot": true,
+    "M01_stub_id": false,
+    "Unsupported_status_without_run": true
+  },
+  "wrong_identity_digest_accepted": true,
+  "service_tiny": {
+    "legacy": {
+      "capacity": 5.0,
+      "produced": 5.0,
+      "service_used": 3.0,
+      "expired": 2.0,
+      "delivered": 10.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    "exact_use": {
+      "capacity": 3.0,
+      "produced": 3.0,
+      "service_used": 3.0,
+      "expired": 0.0,
+      "delivered": 10.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    "zero_capacity": {
+      "capacity": 0.0,
+      "produced": 0.0,
+      "service_used": 0.0,
+      "expired": 0.0,
+      "delivered": 0.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    }
+  },
+  "inventory": {
+    "0.0": [
+      {
+        "tick": 0,
+        "activity_realized": [
+          0.0,
+          3.0,
+          0.0,
+          0.0
+        ],
+        "delivered": 3.0,
+        "max_material_residual": 0.0,
+        "max_finance_residual": 0.0
+      },
+      {
+        "tick": 1,
+        "activity_realized": [
+          0.0,
+          0.0,
+          3.0,
+          0.0
+        ],
+        "delivered": 3.0,
+        "max_material_residual": 0.0,
+        "max_finance_residual": 0.0
+      }
+    ],
+    "2.0": [
+      {
+        "tick": 0,
+        "activity_realized": [
+          0.0,
+          3.0,
+          2.0,
+          0.0
+        ],
+        "delivered": 3.0,
+        "max_material_residual": 0.0,
+        "max_finance_residual": 0.0
+      },
+      {
+        "tick": 1,
+        "activity_realized": [
+          8.0,
+          0.0,
+          3.0,
+          0.0
+        ],
+        "delivered": 3.08,
+        "max_material_residual": 0.0,
+        "max_finance_residual": 0.0
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "hist_vnext_h1a_v1",
+  "approved_excerpts": [],
+  "access_log": [
+    {
+      "source_id": "EXPOSURE_DISCLOSURE",
+      "content_sha256": null,
+      "pages": [],
+      "access_kind": "metadata_only",
+      "reader_role": "auditor",
+      "accessed_at": "2026-10-16",
+      "purpose": "prior_exposure_audit_record",
+      "exposure_window": null,
+      "allowed_use": "none",
+      "review_reference": "docs/upgrade_review/HIST_VNEXT/evidence/EXPOSURE_DISCLOSURE.md"
+    }
+  ]
+}

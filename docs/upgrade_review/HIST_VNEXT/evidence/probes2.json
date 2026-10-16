@@ -1,0 +1,344 @@
+{
+  "transport": {
+    "no_freight": {
+      "relaxed_lp_delivery": 10.0,
+      "freight_lp_delivery": -0.0,
+      "allocated": 10.0,
+      "actual_delivery": 0.0,
+      "freight_fee": 0.0,
+      "buyer_cash_delta": 0.0,
+      "seller_receipts": 0.0,
+      "carrier_receipts": 0.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    "freight": {
+      "relaxed_lp_delivery": 10.0,
+      "freight_lp_delivery": 10.0,
+      "allocated": 10.0,
+      "actual_delivery": 10.0,
+      "freight_fee": 0.9090909090909091,
+      "buyer_cash_delta": -10.909090909088263,
+      "seller_receipts": 10.0,
+      "carrier_receipts": 0.9090909090909091,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    }
+  },
+  "credit_without_material": {
+    "credit_drawn": 12.0,
+    "wages_paid": 10.0,
+    "production": 0.0,
+    "max_material_residual": 0.0,
+    "max_finance_residual": 0.0
+  },
+  "food_pipeline": [
+    {
+      "tick": 0,
+      "ready_food_produced": 8.0,
+      "household_food": 0.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    {
+      "tick": 1,
+      "ready_food_produced": 0.0,
+      "household_food": 0.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    {
+      "tick": 2,
+      "ready_food_produced": 0.0,
+      "household_food": 6.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    }
+  ],
+  "load_all_evidence_records": {
+    "result": "rejected",
+    "type": "ValidationError",
+    "error": "85 validation errors for EvidenceManifest\nrecords.0.mechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M01', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nrecords.0.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M01'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.0.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M01'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.0.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M01'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.0.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M01'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.0.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='social_contract_ratchet_verification', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.0.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M1'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.1.mechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M02', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nrecords.1.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M02'...omy wiring (P07B/P10A)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.1.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M02'...omy wiring (P07B/P10A)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.1.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M02'...omy wiring (P07B/P10A)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.1.declared_reason\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nrecords.1.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M02'...omy wiring (P07B/P10A)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.1.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='soft_budget_investment_shortage', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.1.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M2'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.2.mechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M03', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nrecords.2.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M03'...riment can be declared'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.2.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M03'...riment can be declared'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.2.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M03'...riment can be declared'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.2.declared_reason\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nrecords.2.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M03'...riment can be declared'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.2.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='full_employment_labor_hoarding', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.2.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M3'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.3.mechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M04', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nrecords.3.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M04'...is prerequisite (P07B)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.3.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M04'...is prerequisite (P07B)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.3.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M04'...is prerequisite (P07B)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.3.declared_reason\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nrecords.3.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M04'...is prerequisite (P07B)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.3.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='second_economy_stabilization_erosion', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.3.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M4'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.4.mechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M05', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nrecords.4.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M05'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.4.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M05'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.4.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M05'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.4.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M05'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.4.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='enterprise_autonomy_1968', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.4.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M5'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.5.mechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M06', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nrecords.5.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M06'...e spec is prerequisite'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.5.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M06'...e spec is prerequisite'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.5.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M06'...e spec is prerequisite'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.5.declared_reason\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nrecords.5.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M06'...e spec is prerequisite'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.5.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='external_debt_social_contract', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.5.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M6'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.6.mechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M07', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nrecords.6.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M07'...nt not yet established'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.6.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M07'...nt not yet established'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.6.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M07'...nt not yet established'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.6.declared_reason\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nrecords.6.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M07'...nt not yet established'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.6.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='regional_distribution_stability', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.6.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M7'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.7.mechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M08', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nrecords.7.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M08'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.7.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M08'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.7.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M08'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.7.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M08'... 'blocked_reason': None}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.7.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='political_coalition_crisis', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.7.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M8'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.8.mechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M09', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nrecords.8.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M09'...design is prerequisite'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.8.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M09'...design is prerequisite'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.8.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M09'...design is prerequisite'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.8.declared_reason\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nrecords.8.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M09'...design is prerequisite'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.8.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='information_optimization_failure', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.8.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M9'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.9.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M10'...\u8d26 to be closed first'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.9.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M10'...\u8d26 to be closed first'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.9.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M10'...\u8d26 to be closed first'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.9.declared_reason\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nrecords.9.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M10'...\u8d26 to be closed first'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.9.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='external_buffer_shock_transmission', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.9.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M10'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.10.v1_card_sha256\n  Field required [type=missing, input_value={'record_id': 'P07A1-M11'...must be resolved first'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.10.hypothesis\n  Field required [type=missing, input_value={'record_id': 'P07A1-M11'...must be resolved first'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.10.metric_specs\n  Field required [type=missing, input_value={'record_id': 'P07A1-M11'...must be resolved first'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.10.declared_reason\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nrecords.10.created_by_phase\n  Field required [type=missing, input_value={'record_id': 'P07A1-M11'...must be resolved first'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nrecords.10.intent\n  Extra inputs are not permitted [type=extra_forbidden, input_value='departmental_i_ii_composition', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrecords.10.linked_cards\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['M11'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\ndescription\n  Extra inputs are not permitted [type=extra_forbidden, input_value='P07A1 evidence identity ...te phase authorization.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\ncreated_by_phase\n  Extra inputs are not permitted [type=extra_forbidden, input_value='P07A1', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden"
+  },
+  "runs": {
+    "C0-r1": {
+      "manifest": {
+        "completed_ticks": 116,
+        "deterministic_replay_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+        "lock_hash": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+        "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+        "dependency_versions": {
+          "PyYAML": "6.0.3",
+          "SALib": "1.6.0",
+          "duckdb": "1.5.6",
+          "networkx": "3.7",
+          "numpy": "2.5.3",
+          "polars": "1.44.2",
+          "pyabc": "0.13.0",
+          "pyarrow": "25.0.1",
+          "pydantic": "2.13.5",
+          "scipy": "1.18.1",
+          "socioverse2": "0.2.0",
+          "typer": "0.27.3"
+        },
+        "python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+        "output_hashes": {
+          "aggregates.parquet": "3160fd8a9ebe3c6d7d889d555ac3a376f6ef8c9da7ba5a29a9077705edad17f6",
+          "departments.parquet": "a3ee9d45cda52648a95126699f9d8768893404dd679b806f6c6da4b1df788acb",
+          "events.parquet": "4f73ef379078c4042a8527b9f0c092d4d106940ea0a06c9fb185c0b603ad6be1",
+          "financial_accounts.parquet": "784cf661c5cbed53ed2fe3ec741e63398e5c4392d4af596d26bd15a9ef2914ae",
+          "household_budgets.parquet": "a9a3b6d12d08b89a31e3d34b0be27acdfc9aac4cbd0b7c11784e8969b9c9c491",
+          "information_quarters.parquet": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb",
+          "initial_recipe.json": "8edfceb160032dbfc9e9eaef321994b7f1d5729b59b0fb516b90c72d810f5aaa",
+          "national_accounts.parquet": "93da4282e06ffa39e85d86cc5b4dfeb61046dfbcf4c8828d42f863ecc5486649",
+          "opposition_regions.parquet": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460",
+          "organization_diagnostics.parquet": "e34b6798e1b5e896fa75d3369b0fc85d0703c8f849a3a07f7cc689b846d0d3bc",
+          "parameters.json": "e2ca0005267851bab1cc0872bbe86921edf6b215f6b20e0760b26d42410594ec",
+          "policy_decisions.parquet": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4",
+          "political_events.parquet": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e",
+          "political_quarters.parquet": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b",
+          "stage_balances.parquet": "eb072e6d6d6ef905ffc75b8dba799fe79f04f81470e30e2aaa33b25736ff4436",
+          "summary.json": "925a9f8fe603e03892784bcd0756b3d42a5c62d828749520604825437bb9af09",
+          "tick_diagnostics.parquet": "93c14ccc32fa3881700170e1ae2d743c2c19e7eb3f01188b3987be5f3bb3ff81",
+          "trajectory.duckdb": "bc08ab35425d54ef431e6240d5c8c47f62055adfecff652fba7f0950d7072f28"
+        }
+      },
+      "invariants": {
+        "checked_ticks": 116,
+        "max_finance_abs_residual": 4.190951585769653e-09,
+        "max_finance_tolerance_ratio": 0.0002441622813981239,
+        "max_material_abs_residual": 1.4551915228366852e-11,
+        "max_material_tolerance_ratio": 0.0009574563364366433
+      },
+      "gates": {
+        "liveness": 0.11155740328730085,
+        "production_first_10": 251655.92011393426,
+        "production_last_10": 28074.08096978693,
+        "household_consumption_last_10": 1667.9611764682747,
+        "treasury_cash_tick_115": 0.0,
+        "rescue_grants_last_20": 0.0,
+        "terminal_t1_pass": false,
+        "terminal_t2_pass": false,
+        "terminal_t3_pass": true,
+        "terminal_floor_pass": false,
+        "expired_services_tail": 11272.774879749917,
+        "treasury_zero_tick": 18,
+        "allocated_total": 9441356.126254175,
+        "delivered_total": 2792557.7703119926,
+        "physical_blocked_total": 6648452.13707798,
+        "financial_blocked_total": 346.218864202511
+      },
+      "consumption_index_1978": 42.36396572021342
+    },
+    "C0-r2": {
+      "manifest": {
+        "completed_ticks": 116,
+        "deterministic_replay_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+        "lock_hash": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+        "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+        "dependency_versions": {
+          "PyYAML": "6.0.3",
+          "SALib": "1.6.0",
+          "duckdb": "1.5.6",
+          "networkx": "3.7",
+          "numpy": "2.5.3",
+          "polars": "1.44.2",
+          "pyabc": "0.13.0",
+          "pyarrow": "25.0.1",
+          "pydantic": "2.13.5",
+          "scipy": "1.18.1",
+          "socioverse2": "0.2.0",
+          "typer": "0.27.3"
+        },
+        "python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+        "output_hashes": {
+          "aggregates.parquet": "3160fd8a9ebe3c6d7d889d555ac3a376f6ef8c9da7ba5a29a9077705edad17f6",
+          "departments.parquet": "a3ee9d45cda52648a95126699f9d8768893404dd679b806f6c6da4b1df788acb",
+          "events.parquet": "4f73ef379078c4042a8527b9f0c092d4d106940ea0a06c9fb185c0b603ad6be1",
+          "financial_accounts.parquet": "784cf661c5cbed53ed2fe3ec741e63398e5c4392d4af596d26bd15a9ef2914ae",
+          "household_budgets.parquet": "a9a3b6d12d08b89a31e3d34b0be27acdfc9aac4cbd0b7c11784e8969b9c9c491",
+          "information_quarters.parquet": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb",
+          "initial_recipe.json": "8edfceb160032dbfc9e9eaef321994b7f1d5729b59b0fb516b90c72d810f5aaa",
+          "national_accounts.parquet": "93da4282e06ffa39e85d86cc5b4dfeb61046dfbcf4c8828d42f863ecc5486649",
+          "opposition_regions.parquet": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460",
+          "organization_diagnostics.parquet": "e34b6798e1b5e896fa75d3369b0fc85d0703c8f849a3a07f7cc689b846d0d3bc",
+          "parameters.json": "e2ca0005267851bab1cc0872bbe86921edf6b215f6b20e0760b26d42410594ec",
+          "policy_decisions.parquet": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4",
+          "political_events.parquet": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e",
+          "political_quarters.parquet": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b",
+          "stage_balances.parquet": "eb072e6d6d6ef905ffc75b8dba799fe79f04f81470e30e2aaa33b25736ff4436",
+          "summary.json": "6cdde7d1fffee00aea48ef601598cfeafcf5c157af57c4727cbb30de527317bb",
+          "tick_diagnostics.parquet": "93c14ccc32fa3881700170e1ae2d743c2c19e7eb3f01188b3987be5f3bb3ff81",
+          "trajectory.duckdb": "6187e8e4637a7acaf5cd047f04644b1e0c1144e9b0fc7239e69177af9c216635"
+        }
+      },
+      "invariants": {
+        "checked_ticks": 116,
+        "max_finance_abs_residual": 4.190951585769653e-09,
+        "max_finance_tolerance_ratio": 0.0002441622813981239,
+        "max_material_abs_residual": 1.4551915228366852e-11,
+        "max_material_tolerance_ratio": 0.0009574563364366433
+      },
+      "gates": {
+        "liveness": 0.11155740328730085,
+        "production_first_10": 251655.92011393426,
+        "production_last_10": 28074.08096978693,
+        "household_consumption_last_10": 1667.9611764682747,
+        "treasury_cash_tick_115": 0.0,
+        "rescue_grants_last_20": 0.0,
+        "terminal_t1_pass": false,
+        "terminal_t2_pass": false,
+        "terminal_t3_pass": true,
+        "terminal_floor_pass": false,
+        "expired_services_tail": 11272.774879749917,
+        "treasury_zero_tick": 18,
+        "allocated_total": 9441356.126254175,
+        "delivered_total": 2792557.7703119926,
+        "physical_blocked_total": 6648452.13707798,
+        "financial_blocked_total": 346.218864202511
+      },
+      "consumption_index_1978": 42.36396572021342
+    },
+    "C1-r1": {
+      "manifest": {
+        "completed_ticks": 116,
+        "deterministic_replay_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+        "lock_hash": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+        "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+        "dependency_versions": {
+          "PyYAML": "6.0.3",
+          "SALib": "1.6.0",
+          "duckdb": "1.5.6",
+          "networkx": "3.7",
+          "numpy": "2.5.3",
+          "polars": "1.44.2",
+          "pyabc": "0.13.0",
+          "pyarrow": "25.0.1",
+          "pydantic": "2.13.5",
+          "scipy": "1.18.1",
+          "socioverse2": "0.2.0",
+          "typer": "0.27.3"
+        },
+        "python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+        "output_hashes": {
+          "aggregates.parquet": "16d99bdc7e92f9ed21d97e74913349be92e505befeb4488c06039603572aec58",
+          "departments.parquet": "6452edd3a9ce0823dcf6f91bff1d982032a9cd44eba92667737708486189fa5c",
+          "events.parquet": "f11296c928bb833bd6304fffa5ad4b2f2ee39dbb3a9c031a8c0cb813055ca72e",
+          "financial_accounts.parquet": "79acf36c086385cfa375769844adc6b9dd66f335ed743871ec2a4ec047e86514",
+          "household_budgets.parquet": "5ffab91fa753956d4b93aa7f6108bb69d6ea5d2116763882f617e34d1a2d2fc1",
+          "information_quarters.parquet": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb",
+          "initial_recipe.json": "8f50b008226925e29720dc71742cc7aae1678797bacb513d5b304667369d9aa9",
+          "national_accounts.parquet": "4cfa1cd9e75fa04b391dba07ab0afbbef20679e07fbc379db67ab0a1eeb1b8d5",
+          "opposition_regions.parquet": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460",
+          "organization_diagnostics.parquet": "2822f4e815c8b76bc6112cebeaf6928e0fdf86ad8a2ef0f531698605a7be6532",
+          "parameters.json": "dd36cb701c563ea3a9a3a049d34fd6f42c7ed55ddf3eb5259a3df05978c28d78",
+          "policy_decisions.parquet": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4",
+          "political_events.parquet": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e",
+          "political_quarters.parquet": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b",
+          "stage_balances.parquet": "6497521a31ef28cf6e27a78a8e9266302bf01dcef2255fe1ee8ea1e28e4af317",
+          "summary.json": "71b9afe6bd5c3b431dce68f57b4f9a12ea05d52f73d6474656a963c4b3fc9cc5",
+          "tick_diagnostics.parquet": "0850c8b11d7cc27abec38432367123207ea77b27c30b575752bcaaad9e0f1a79",
+          "trajectory.duckdb": "5686955755ae6eee9b83c46e06d472a9055411e2fb1b3afecd3919b94f2a5cce"
+        }
+      },
+      "invariants": {
+        "checked_ticks": 116,
+        "max_finance_abs_residual": 4.190951585769653e-09,
+        "max_finance_tolerance_ratio": 0.00034106051316483643,
+        "max_material_abs_residual": 2.9103830456733704e-11,
+        "max_material_tolerance_ratio": 0.0007815970093360491
+      },
+      "gates": {
+        "liveness": 0.021612761644765822,
+        "production_first_10": 259556.55125705968,
+        "production_last_10": 5609.733875656273,
+        "household_consumption_last_10": 122.82101370497939,
+        "treasury_cash_tick_115": 0.0,
+        "rescue_grants_last_20": 0.0,
+        "terminal_t1_pass": false,
+        "terminal_t2_pass": false,
+        "terminal_t3_pass": true,
+        "terminal_floor_pass": false,
+        "expired_services_tail": 3939.07537123944,
+        "treasury_zero_tick": 17,
+        "allocated_total": 6048729.045634572,
+        "delivered_total": 2863088.4860767084,
+        "physical_blocked_total": 3185454.5107156103,
+        "financial_blocked_total": 186.04884225287933
+      },
+      "consumption_index_1978": 1.3222625777152495
+    },
+    "C1-r2": {
+      "manifest": {
+        "completed_ticks": 116,
+        "deterministic_replay_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+        "lock_hash": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+        "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+        "dependency_versions": {
+          "PyYAML": "6.0.3",
+          "SALib": "1.6.0",
+          "duckdb": "1.5.6",
+          "networkx": "3.7",
+          "numpy": "2.5.3",
+          "polars": "1.44.2",
+          "pyabc": "0.13.0",
+          "pyarrow": "25.0.1",
+          "pydantic": "2.13.5",
+          "scipy": "1.18.1",
+          "socioverse2": "0.2.0",
+          "typer": "0.27.3"
+        },
+        "python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+        "output_hashes": {
+          "aggregates.parquet": "16d99bdc7e92f9ed21d97e74913349be92e505befeb4488c06039603572aec58",
+          "departments.parquet": "6452edd3a9ce0823dcf6f91bff1d982032a9cd44eba92667737708486189fa5c",
+          "events.parquet": "f11296c928bb833bd6304fffa5ad4b2f2ee39dbb3a9c031a8c0cb813055ca72e",
+          "financial_accounts.parquet": "79acf36c086385cfa375769844adc6b9dd66f335ed743871ec2a4ec047e86514",
+          "household_budgets.parquet": "5ffab91fa753956d4b93aa7f6108bb69d6ea5d2116763882f617e34d1a2d2fc1",
+          "information_quarters.parquet": "15f1f48bfa4148fbd49b27f99429ea1e1e65291cb275c2a3f33972f0eba9ebfb",
+          "initial_recipe.json": "8f50b008226925e29720dc71742cc7aae1678797bacb513d5b304667369d9aa9",
+          "national_accounts.parquet": "4cfa1cd9e75fa04b391dba07ab0afbbef20679e07fbc379db67ab0a1eeb1b8d5",
+          "opposition_regions.parquet": "294b17d9b859e1f5aabd88e99a7c404a2a1b9c52ddee5d62ca2ba87fe140b460",
+          "organization_diagnostics.parquet": "2822f4e815c8b76bc6112cebeaf6928e0fdf86ad8a2ef0f531698605a7be6532",
+          "parameters.json": "dd36cb701c563ea3a9a3a049d34fd6f42c7ed55ddf3eb5259a3df05978c28d78",
+          "policy_decisions.parquet": "c8da9dec9033c7e62f073b6c35d0e62c6a4772db418f88f9c047e24ecfd824b4",
+          "political_events.parquet": "b83a39d6427d692bc424108e40f9b3981168c6dfc49be7348f57cbf62fadca4e",
+          "political_quarters.parquet": "e37f5c73a18494bef98e0de7c2995fb82395440a77332be29267d0bc1410fb0b",
+          "stage_balances.parquet": "6497521a31ef28cf6e27a78a8e9266302bf01dcef2255fe1ee8ea1e28e4af317",
+          "summary.json": "2994a6a7f6927439f8de37ace3ae5c09f5929a971390b9f266f265a0c6f87a72",
+          "tick_diagnostics.parquet": "0850c8b11d7cc27abec38432367123207ea77b27c30b575752bcaaad9e0f1a79",
+          "trajectory.duckdb": "0b63b82bc4dd8bacb4b20bb8b20d0a1fb672475acdfb5d34e15ae4a8a15d0ed8"
+        }
+      },
+      "invariants": {
+        "checked_ticks": 116,
+        "max_finance_abs_residual": 4.190951585769653e-09,
+        "max_finance_tolerance_ratio": 0.00034106051316483643,
+        "max_material_abs_residual": 2.9103830456733704e-11,
+        "max_material_tolerance_ratio": 0.0007815970093360491
+      },
+      "gates": {
+        "liveness": 0.021612761644765822,
+        "production_first_10": 259556.55125705968,
+        "production_last_10": 5609.733875656273,
+        "household_consumption_last_10": 122.82101370497939,
+        "treasury_cash_tick_115": 0.0,
+        "rescue_grants_last_20": 0.0,
+        "terminal_t1_pass": false,
+        "terminal_t2_pass": false,
+        "terminal_t3_pass": true,
+        "terminal_floor_pass": false,
+        "expired_services_tail": 3939.07537123944,
+        "treasury_zero_tick": 17,
+        "allocated_total": 6048729.045634572,
+        "delivered_total": 2863088.4860767084,
+        "physical_blocked_total": 3185454.5107156103,
+        "financial_blocked_total": 186.04884225287933
+      },
+      "consumption_index_1978": 1.3222625777152495
+    }
+  },
+  "installed_lock_mismatches": [],
+  "installed_locked_count": 97,
+  "beb_prefix_manifest_hits": []
+}

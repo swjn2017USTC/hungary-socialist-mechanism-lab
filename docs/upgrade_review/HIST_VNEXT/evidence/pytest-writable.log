@@ -1,0 +1,30 @@
+........................................................................ [ 13%]
+........................................................................ [ 27%]
+........................................................................ [ 41%]
+........................................................................ [ 55%]
+........................................................................ [ 69%]
+........................................................................ [ 83%]
+........................................................................ [ 97%]
+.............                                                            [100%]
+=============================== warnings summary ===============================
+tests/test_evidence_run_adapter.py::test_stub_record_has_no_experiment_results
+tests/test_evidence_run_adapter.py::test_stub_record_contains_m1_metrics
+tests/test_evidence_run_adapter.py::test_stub_record_multi_mechanism
+tests/test_evidence_run_adapter.py::test_stub_record_record_id_contains_phase_and_scenario
+tests/test_evidence_schemas.py::test_v2_card_version_mismatch_rejected
+tests/test_evidence_schemas.py::test_null_digest_inconclusive_not_supported
+tests/test_evidence_schemas.py::test_record_with_null_digest_cannot_be_supported
+tests/test_evidence_schemas.py::test_blocked_status_requires_blocked_reason
+  /Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/src/hsm_lab/evidence/schemas.py:382: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    default_factory=lambda: datetime.utcnow().isoformat() + "Z"
+
+tests/test_evidence_schemas.py: 66 warnings
+  /Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/src/hsm_lab/evidence/provenance.py:68: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    datetime.utcnow().isoformat() + "Z",
+
+tests/test_evidence_schemas.py: 33 warnings
+  /Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/src/hsm_lab/evidence/provenance.py:102: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    default_factory=lambda: datetime.utcnow().isoformat() + "Z"
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+517 passed, 107 warnings in 46.79s

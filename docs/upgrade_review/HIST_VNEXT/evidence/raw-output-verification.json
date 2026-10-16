@@ -1,0 +1,21 @@
+{
+  "location": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/hist-vnext-audit-20261015",
+  "runs": {
+    "C0-r1": {
+      "checked": 18,
+      "mismatches": []
+    },
+    "C0-r2": {
+      "checked": 18,
+      "mismatches": []
+    },
+    "C1-r1": {
+      "checked": 18,
+      "mismatches": []
+    },
+    "C1-r2": {
+      "checked": 18,
+      "mismatches": []
+    }
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "schema_version": "hist_vnext_h1a_v1",
+  "records": [
+    {
+      "source_id": "balassa_1982_swp506",
+      "work_id": "balassa_1982_swp506",
+      "title": "The Hungarian Economic Reform, 1968–81",
+      "authors": [
+        "Béla Balassa"
+      ],
+      "publication_date": "1982-01-01",
+      "document_number": "SWP506",
+      "archival_reference": null,
+      "source_type": "secondary_analysis",
+      "purpose": "secondary_context",
+      "local_path": "data/private/hist_vnext_sources/batch01_20261016/D01_balassa_1982/original/source.pdf",
+      "source_sha256": "dd1e86533cf71cfb2842b1c4bcf209e240c0811841a08e74211ed40bd97d95ad",
+      "pdf_pages": 43,
+      "pdf_page_range": "1-43",
+      "printed_page_range": null,
+      "statistical_period": null,
+      "source_available_at": "1982-01-01",
+      "rights": {
+        "license": "unknown",
+        "source": "unknown"
+      },
+      "remote_model_upload_allowed": false,
+      "data_role": "not_admitted",
+      "admission_status": "candidate",
+      "observation_ids": [],
+      "cited_observation_ids": [],
+      "approved_excerpt_ids": [],
+      "missing_fields": [
+        "archival_reference",
+        "usage_rights",
+        "printed_page_mapping"
+      ]
+    },
+    {
+      "source_id": "kenen_1990_wp9079",
+      "work_id": "kenen_1990_wp9079",
+      "title": "Transitional Arrangements for Trade and Payments Among the CMEA Countries",
+      "authors": [
+        "Peter B. Kenen"
+      ],
+      "publication_date": "1990-09-01",
+      "document_number": "WP/90/79",
+      "archival_reference": null,
+      "source_type": "secondary_analysis",
+      "purpose": "secondary_context",
+      "local_path": "data/private/hist_vnext_sources/batch01_20261016/D02_imf_1990_cmea/original/source.pdf",
+      "source_sha256": "3e933c7e229e7f7cd866e4e238c8b8bcf081f446f752fd6c9f2b0f84d10ccc0a",
+      "pdf_pages": 40,
+      "pdf_page_range": "1-40",
+      "printed_page_range": null,
+      "statistical_period": null,
+      "source_available_at": "1990-09-01",
+      "rights": {
+        "license": "unknown",
+        "source": "unknown"
+      },
+      "remote_model_upload_allowed": false,
+      "data_role": "not_admitted",
+      "admission_status": "candidate",
+      "observation_ids": [],
+      "cited_observation_ids": [],
+      "approved_excerpt_ids": [],
+      "missing_fields": [
+        "archival_reference",
+        "usage_rights",
+        "printed_page_mapping"
+      ]
+    },
+    {
+      "source_id": "boote_somogyi_1991_ch02",
+      "work_id": "boote_somogyi_1991_op83",
+      "title": "Economic Reform in Hungary Since 1968 — Chapter II: Framework for Reform Since 1968",
+      "authors": [
+        "Anthony R. Boote",
+        "János Somogyi"
+      ],
+      "publication_date": "1991-01-01",
+      "document_number": "OP/83",
+      "archival_reference": null,
+      "source_type": "secondary_analysis",
+      "purpose": "secondary_context",
+      "local_path": "data/private/hist_vnext_sources/batch01_20261016/D02_imf_1991_ch02/original/source.pdf",
+      "source_sha256": "0c8e4bf97fcca2329ef25c585469e53379d879c91d9cace4bd37d350cdd2a1bf",
+      "pdf_pages": 2,
+      "pdf_page_range": "1-2",
+      "printed_page_range": null,
+      "statistical_period": null,
+      "source_available_at": "1991-01-01",
+      "rights": {
+        "license": "unknown",
+        "source": "unknown"
+      },
+      "remote_model_upload_allowed": false,
+      "data_role": "not_admitted",
+      "admission_status": "candidate",
+      "observation_ids": [],
+      "cited_observation_ids": [],
+      "approved_excerpt_ids": [],
+      "missing_fields": [
+        "archival_reference",
+        "usage_rights",
+        "printed_page_mapping"
+      ]
+    },
+    {
+      "source_id": "boote_somogyi_1991_ch05",
+      "work_id": "boote_somogyi_1991_op83",
+      "title": "Economic Reform in Hungary Since 1968 — Chapter V: Foreign Trade and Exchange Rate Reform",
+      "authors": [
+        "Anthony R. Boote",
+        "János Somogyi"
+      ],
+      "publication_date": "1991-01-01",
+      "document_number": "OP/83",
+      "archival_reference": null,
+      "source_type": "secondary_analysis",
+      "purpose": "secondary_context",
+      "local_path": "data/private/hist_vnext_sources/batch01_20261016/D02_imf_1991_ch05/original/source.pdf",
+      "source_sha256": "19e339a02a0aecc389ea4bd2baf3bb3fd58941926d4caa7c35fbf26f98d7009a",
+      "pdf_pages": 4,
+      "pdf_page_range": "1-4",
+      "printed_page_range": null,
+      "statistical_period": null,
+      "source_available_at": "1991-01-01",
+      "rights": {
+        "license": "unknown",
+        "source": "unknown"
+      },
+      "remote_model_upload_allowed": false,
+      "data_role": "not_admitted",
+      "admission_status": "candidate",
+      "observation_ids": [],
+      "cited_observation_ids": [],
+      "approved_excerpt_ids": [],
+      "missing_fields": [
+        "archival_reference",
+        "usage_rights",
+        "printed_page_mapping"
+      ]
+    }
+  ]
+}

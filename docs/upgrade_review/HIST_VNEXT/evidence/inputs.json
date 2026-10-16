@@ -1,0 +1,37 @@
+[
+  {
+    "path": "/Users/wahrfreiheit/Downloads/HSM_Historical_Institutional_Simulation_VNext_Codex_Review_Baseline_2026-10-15.md",
+    "sha256": "ff8838da6c27e05d688736f81781e1214fac7fc88ea3c31f0db76896fa196d5e",
+    "lines": 441
+  },
+  {
+    "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/HSM_Hungary_Project_Diagnostic_and_Upgrade_Recommendations_2026-10-15.md",
+    "sha256": "db9b81d8eb77350bcf9602cbf664cb135e9f0fa325a9a871dc10884d1498012e",
+    "lines": 691
+  },
+  {
+    "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/01_TEST_AND_REPRO_AUDIT.md",
+    "sha256": "96dc5847428781d8a127370f4c8531f3856628f42b391d71040a4663b9ff9a7d",
+    "lines": 94
+  },
+  {
+    "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/02_MECHANISM_GAP_MATRIX.md",
+    "sha256": "2bc43232c053588404c4ab1effb2f0c0cde340ab1b48cb2e921fc0419180cfcd",
+    "lines": 465
+  },
+  {
+    "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/04_REVISED_P07_P12_PLAN.md",
+    "sha256": "a5eefcbac40c0fde66eb9b30dd4ec441a9eac1b1246e39c919be00dd69bea531",
+    "lines": 111
+  },
+  {
+    "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/P07_EXECUTION_STATUS_AND_NEXT_STEPS.md",
+    "sha256": "50a7a1bc357dc968af34ec38953d55b08e7bcf683a4b0f2b33937c8ec50e6d49",
+    "lines": 288
+  },
+  {
+    "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/evidence/P08_DIAGNOSTIC_ONTOLOGY.md",
+    "sha256": "ee19929746f261fa9fe2eb3bbe47214a0caf808faf5f2e17515d690b843d0841",
+    "lines": 611
+  }
+]

@@ -1,12 +1,13 @@
 modelRoleStorage: project
 modelRoles:
-  default: opencode-go/gpt-6-luna:medium
-  slow: zhipu-coding-plan/glm-5.3:max
-  smol: zhipu-coding-plan/glm-5.3-flash
+  default: minimax-code-cn/MiniMax-M2.7-highspeed:medium
+  slow: minimax-code-cn/MiniMax-M3.1-Flash-Preview:high
+  smol: minimax-code-cn/MiniMax-M3.1-Flash-Preview
   task: deepseek/deepseek-flash:high
-  commit: zhipu-coding-plan/glm-5.3-flash
+  commit: deepseek/deepseek-flash
   plan: openai-codex/gpt-6.1-sol:high
   review: openai-codex/gpt-6.1-sol:high
+  designer: openai-codex/gpt-6.1-sol
 plan:
   enabled: true
   defaultOnStartup: false

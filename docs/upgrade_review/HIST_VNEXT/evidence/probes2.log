@@ -1,0 +1,63 @@
+{
+  "transport": {
+    "no_freight": {
+      "relaxed_lp_delivery": 10.0,
+      "freight_lp_delivery": -0.0,
+      "allocated": 10.0,
+      "actual_delivery": 0.0,
+      "freight_fee": 0.0,
+      "buyer_cash_delta": 0.0,
+      "seller_receipts": 0.0,
+      "carrier_receipts": 0.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    "freight": {
+      "relaxed_lp_delivery": 10.0,
+      "freight_lp_delivery": 10.0,
+      "allocated": 10.0,
+      "actual_delivery": 10.0,
+      "freight_fee": 0.9090909090909091,
+      "buyer_cash_delta": -10.909090909088263,
+      "seller_receipts": 10.0,
+      "carrier_receipts": 0.9090909090909091,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    }
+  },
+  "credit_without_material": {
+    "credit_drawn": 12.0,
+    "wages_paid": 10.0,
+    "production": 0.0,
+    "max_material_residual": 0.0,
+    "max_finance_residual": 0.0
+  },
+  "food_pipeline": [
+    {
+      "tick": 0,
+      "ready_food_produced": 8.0,
+      "household_food": 0.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    {
+      "tick": 1,
+      "ready_food_produced": 0.0,
+      "household_food": 0.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    {
+      "tick": 2,
+      "ready_food_produced": 0.0,
+      "household_food": 6.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    }
+  ],
+  "installed_lock_mismatches": [],
+  "installed_locked_count": 97,
+  "beb_prefix_manifest_hits": []
+}
+manifest loader: rejected
+C0 gates {"liveness": 0.11155740328730085, "production_first_10": 251655.92011393426, "production_last_10": 28074.08096978693, "household_consumption_last_10": 1667.9611764682747, "treasury_cash_tick_115": 0.0, "rescue_grants_last_20": 0.0, "terminal_t1_pass": false, "terminal_t2_pass": false, "terminal_t3_pass": true, "terminal_floor_pass": false, "expired_services_tail": 11272.774879749917, "treasury_zero_tick": 18, "allocated_total": 9441356.126254175, "delivered_total": 2792557.7703119926, "physical_blocked_total": 6648452.13707798, "financial_blocked_total": 346.218864202511}

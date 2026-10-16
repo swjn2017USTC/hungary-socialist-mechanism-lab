@@ -1,0 +1,33 @@
+{
+  "schema_version": "hist_vnext_h1a_v1",
+  "requests": [
+    {
+      "request_id": "RR-001",
+      "source_id": "balassa_1982_swp506",
+      "page_range": "10-18",
+      "reason": "price/investment/1972 adjustment clues — institutional authority reference",
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "request_id": "RR-002",
+      "source_id": "boote_somogyi_1991_ch02",
+      "page_range": "1-2",
+      "reason": "1965/1966/1968 reform approval vs implementation distinction",
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "request_id": "RR-003",
+      "source_id": "kenen_1990_wp9079",
+      "page_range": "7",
+      "reason": "CMEA rules and institutional authority clues",
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "request_id": "RR-004",
+      "source_id": "boote_somogyi_1991_ch05",
+      "page_range": "1-4",
+      "reason": "foreign trade / exchange rate reform — institutional evidence, high risk of mixed-window data",
+      "status": "REVIEW_REQUIRED"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "H3F-D0",
+    "parent": "H3F",
+    "objective": "只建立legacy_treasury_prepay的版本化参考与双账观察，不实现替代融资",
+    "tests": "原Treasury缩放出口的资金顺序、币种与实际交付/收款记录；零现金出口受限是合法旧行为"
+  },
+  {
+    "id": "H3F-D1",
+    "parent": "H3F",
+    "objective": "只增加有额度/期限的外贸工作资本贷款，不增加应收或CMEA新规则",
+    "tests": "真实贷款资产/存款负债和采购支付；零额度、非绑定授信、无货、有贷无交付反例；无准备金透支"
+  },
+  {
+    "id": "H3F-D2",
+    "parent": "H3F",
+    "objective": "只在已批准制度上加入出口应收、收汇账期与违约反向分录",
+    "tests": "交付/收款时点、未到款不可提前消费、逾期/坏账/本金/利息身份；禁止另一币种轧差"
+  },
+  {
+    "id": "H3F-D3",
+    "parent": "H3F",
+    "objective": "只加入有单独规则的CMEA清算制度，保留USD与国内账独立",
+    "tests": "清算余额/额度/合同价格/应付应收；1975前后规则不可串期；无原件只标synthetic"
+  },
+  {
+    "id": "H5A-A1",
+    "parent": "H5A",
+    "objective": "只做M2软预算×投资饥渴在声明需求regime中的专用实验",
+    "tests": "申请/批准/投入/安装/短缺first-stage与因子交互；不增加M5/M11实验；collapsed样本出BLOCKED而非历史反证"
+  },
+  {
+    "id": "H5A-A2",
+    "parent": "H5A",
+    "objective": "只做M5自主权×预算约束的效率与失衡双结果实验",
+    "tests": "相同初态/外部/RNG，效率和失衡独立测量，不能以bottleneck计数或M2前缀替代"
+  },
+  {
+    "id": "H5A-A3",
+    "parent": "H5A",
+    "objective": "只做M11两部类用途资源竞争实验",
+    "tests": "外生资源/总投资固定；采购抢占、消费可得、耐用品等待、替代和地区分布；不钳内生实际产出"
+  },
+  {
+    "id": "H5F-F1",
+    "parent": "H5F",
+    "objective": "只做M9真实预测误差与信息×规则/算法实验",
+    "tests": "issued_at/available_at/horizon/realized/residual；未来实现只供事后评价，固定CPU/权限；capability分数不能当误差"
+  },
+  {
+    "id": "H5F-F2",
+    "parent": "H5F",
+    "objective": "只做M8危机条件下联盟/政策传导，不改为私营自主假说",
+    "tests": "同checkpoint的endogenous处理与replay负对照，候选→选择→有效政策→binding→流量；policy delta不自动支持经济因果"
+  },
+  {
+    "id": "H5G-G1",
+    "parent": "H5G",
+    "objective": "只做M6外币借款/期限与跨期消费平滑实验",
+    "tests": "外债额度/提款/利息/本金/储备→进口→家庭消费；国内credit_fraction不得代理外债；未传导是合法反证"
+  },
+  {
+    "id": "H5G-G2",
+    "parent": "H5G",
+    "objective": "只做M10共同外部冲击下补贴/借款/CMEA延迟与后期脆弱性",
+    "tests": "分别消融及实际合同滞后、跨币账与偿付；只能在合法观察范围评价成本，不为取结局打开封存目标"
+  }
+]

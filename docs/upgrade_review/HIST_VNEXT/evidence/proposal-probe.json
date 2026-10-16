@@ -1,0 +1,42 @@
+{
+  "grade": "VERIFIED_BY_RUN; technical synthetic controller probe only",
+  "scope": "existing TickControls target bridge; not a new ObservedState authority implementation",
+  "arms": {
+    "legacy_target": {
+      "autonomy": 0.0,
+      "proposed_service_target": 5.0,
+      "effective_target": 5.0,
+      "unchanged_service_capacity": 5.0,
+      "produced": 5.0,
+      "delivered": 10.0,
+      "used_service": 3.0,
+      "expired": 2.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    "proposed_target": {
+      "autonomy": 0.0,
+      "proposed_service_target": 3.0,
+      "effective_target": 3.0,
+      "unchanged_service_capacity": 5.0,
+      "produced": 3.0,
+      "delivered": 10.0,
+      "used_service": 3.0,
+      "expired": 0.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    "nonbinding_local": {
+      "autonomy": 1.0,
+      "proposed_service_target": 3.0,
+      "effective_target": 5.0,
+      "unchanged_service_capacity": 5.0,
+      "produced": 5.0,
+      "delivered": 10.0,
+      "used_service": 3.0,
+      "expired": 2.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    }
+  }
+}

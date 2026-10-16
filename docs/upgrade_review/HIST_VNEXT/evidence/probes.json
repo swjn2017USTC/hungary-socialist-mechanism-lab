@@ -1,0 +1,2428 @@
+{
+  "cards": [
+    {
+      "id": "M1",
+      "sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M1",
+        "hypothesis": "consecutive consumption improvement raises the political cost of a later welfare/real-income cut nonlinearly, so an equal cut provokes a larger response after a long improvement run than early in the window.",
+        "manipulated_variables": [
+          "policy.welfare_provision one-shot cut of equal size applied at 1961Q1 vs 1967Q1",
+          "policy.consumer_import_factor as a second real-income lever"
+        ],
+        "controlled_variables": [
+          "external history and the intervention files",
+          "seed",
+          "the remaining policy vector"
+        ],
+        "metrics": [
+          "household_consumption",
+          "household_budgets.spending",
+          "opposition_regions.weighted_grievance",
+          "political_quarters.policy_welfare_provision",
+          "forced_saving"
+        ],
+        "falsification_criterion": "the late cut's response in the grievance/consumption metrics is not larger than the early cut's by the declared margin.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": [
+          "p04_coalition_prior",
+          "p04_observation_prior"
+        ]
+      },
+      "study": {
+        "mechanism_id": "M01",
+        "intent": "social_contract_ratchet_verification",
+        "linked_cards": [
+          "M1"
+        ],
+        "v1_card_sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+        "status": "declared",
+        "declared_reason": "p04_coalition_prior and p04_observation_prior are identified; ratchet metric already wired via household_welfare adaptive expectations; paired checkpoint design ready",
+        "blocked_reason": null,
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "Experiment not yet executed. Status will be updated after paired checkpoint runs are completed."
+      },
+      "enriched": [
+        {
+          "metric_id": "m1.household_consumption",
+          "table_or_sidecar": "national_accounts",
+          "column": "household_consumption",
+          "commodity_axis": null,
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint (model currency)",
+          "fidelity": "F2_run",
+          "data_role": "target",
+          "validation_fidelity": "normalized_index",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'household_consumption' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m1.household_budgets_spending",
+          "table_or_sidecar": "household_budgets",
+          "column": "spending",
+          "commodity_axis": null,
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "M_forint",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "exposure",
+          "validation_fidelity": "proxy",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'household_budgets.spending' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m1.opposition_regions_weighted_grievance",
+          "table_or_sidecar": "opposition_regions",
+          "column": "weighted_grievance",
+          "commodity_axis": null,
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "dimensionless_index",
+            "aggregation": "mean"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "dimensionless_index",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'opposition_regions.weighted_grievance' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m1.political_quarters_policy_welfare_provision",
+          "table_or_sidecar": "political_quarters",
+          "column": "policy_welfare_provision",
+          "commodity_axis": null,
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "policy_scalar",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'political_quarters.policy_welfare_provision' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m1.forced_saving",
+          "table_or_sidecar": "household_budgets",
+          "column": "forced_saving",
+          "commodity_axis": null,
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "M_forint",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "exposure",
+          "validation_fidelity": "proxy",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'forced_saving' via P07A2 enricher"
+        }
+      ],
+      "unmapped": []
+    },
+    {
+      "id": "M2",
+      "sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M2",
+        "hypothesis": "soft budget plus investment hunger is sufficient to sustain systemic shortage independently of the demand regime.",
+        "manipulated_variables": [
+          "policy.budget_hardness",
+          "policy.credit_fraction",
+          "bailout_envelope_fraction",
+          "credit_envelope_fraction"
+        ],
+        "controlled_variables": [
+          "demand shocks",
+          "external history",
+          "seed"
+        ],
+        "metrics": [
+          "tick_diagnostics.bottleneck_demand_count",
+          "aggregates.undelivered share",
+          "organization_diagnostics.credit_drawn/shortage_expectation_mean",
+          "commodity_circuit.stock_close"
+        ],
+        "falsification_criterion": "with hardness raised and credit cut, the shortage metrics do not fall.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": []
+      },
+      "study": {
+        "mechanism_id": "M02",
+        "intent": "soft_budget_investment_shortage",
+        "linked_cards": [
+          "M2"
+        ],
+        "v1_card_sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+        "status": "blocked",
+        "declared_reason": null,
+        "blocked_reason": "F2 second economy commodity axes empty; bottleneck/investment metrics require non-empty commodity axis; pending F2 second economy wiring (P07B/P10A)",
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "F2 second economy must be wired before M2 experiment can be declared."
+      },
+      "enriched": [
+        {
+          "metric_id": "m2.tick_diagnostics_bottleneck_demand_count",
+          "table_or_sidecar": "tick_diagnostics",
+          "column": "bottleneck_demand_count",
+          "commodity_axis": null,
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "count",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "proxy",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'tick_diagnostics.bottleneck_demand_count' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m2.aggregates_undelivered_share",
+          "table_or_sidecar": "aggregates",
+          "column": "delivered",
+          "commodity_axis": {
+            "commodities": [
+              "g01_solid_fuels",
+              "g02_oil_gas_fuels",
+              "g03_electricity_heat",
+              "g04_basic_metals_materials",
+              "g05_chemicals_fertilizer",
+              "g06_machinery_capital",
+              "g07_construction",
+              "g08_agricultural_raw",
+              "g09_basic_food",
+              "g10_animal_food",
+              "g11_textiles_footwear",
+              "g12_household_nondurables",
+              "g13_household_durables",
+              "g14_vehicles_transport_equipment",
+              "g15_market_services",
+              "g16_housing_public_services"
+            ],
+            "unit": "share (0-1)",
+            "source_recipe": null
+          },
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "share (0-1)",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "share (0-1)",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'aggregates.undelivered share' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m2.organization_diagnostics_credit_drawn_shortage_expectation_mean",
+          "table_or_sidecar": "organization_diagnostics",
+          "column": "credit_drawn",
+          "commodity_axis": null,
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "M_forint",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "proxy",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'organization_diagnostics.credit_drawn/shortage_expectation_mean' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m2.commodity_circuit_stock_close",
+          "table_or_sidecar": "stage_balances",
+          "column": "closing",
+          "commodity_axis": {
+            "commodities": [
+              "g01_solid_fuels",
+              "g02_oil_gas_fuels",
+              "g03_electricity_heat",
+              "g04_basic_metals_materials",
+              "g05_chemicals_fertilizer",
+              "g06_machinery_capital",
+              "g07_construction",
+              "g08_agricultural_raw",
+              "g09_basic_food",
+              "g10_animal_food",
+              "g11_textiles_footwear",
+              "g12_household_nondurables",
+              "g13_household_durables",
+              "g14_vehicles_transport_equipment",
+              "g15_market_services",
+              "g16_housing_public_services"
+            ],
+            "unit": "M_forint",
+            "source_recipe": null
+          },
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "M_forint",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'commodity_circuit.stock_close' via P07A2 enricher"
+        }
+      ],
+      "unmapped": []
+    },
+    {
+      "id": "M3",
+      "sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M3",
+        "hypothesis": "full employment weakens enterprise discipline and feeds wage/hoarding feedback.",
+        "manipulated_variables": [
+          "policy.wage_factor",
+          "policy.plan_utilization"
+        ],
+        "controlled_variables": [
+          "output targets",
+          "external history",
+          "seed"
+        ],
+        "metrics": [
+          "organization_diagnostics.labor_mean/wage_arrears_sum",
+          "national_accounts.production per worker proxy",
+          "aggregates.household_desired vs delivered"
+        ],
+        "falsification_criterion": "a wage-factor raise does not increase labour hoarding/arrears or reduce discipline metrics.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": []
+      },
+      "study": {
+        "mechanism_id": "M03",
+        "intent": "full_employment_labor_hoarding",
+        "linked_cards": [
+          "M3"
+        ],
+        "v1_card_sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+        "status": "blocked",
+        "declared_reason": null,
+        "blocked_reason": "No independent labor hoarding state; wage factor is not a hoarding operation; labor headcount/effective hours/absence identity must be added first",
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "Labor hoarding experiment requires new independent state in the engine."
+      },
+      "enriched": [
+        {
+          "metric_id": "m3.organization_diagnostics_labor_mean_wage_arrears_sum",
+          "table_or_sidecar": "organization_diagnostics",
+          "column": "labor_mean",
+          "commodity_axis": null,
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "workers",
+            "aggregation": "mean"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "workers",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'organization_diagnostics.labor_mean/wage_arrears_sum' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m3.national_accounts_production_per_worker_proxy",
+          "table_or_sidecar": "national_accounts",
+          "column": "production",
+          "commodity_axis": {
+            "commodities": [
+              "g01_solid_fuels",
+              "g02_oil_gas_fuels",
+              "g03_electricity_heat",
+              "g04_basic_metals_materials",
+              "g05_chemicals_fertilizer",
+              "g06_machinery_capital",
+              "g07_construction",
+              "g08_agricultural_raw",
+              "g09_basic_food",
+              "g10_animal_food",
+              "g11_textiles_footwear",
+              "g12_household_nondurables",
+              "g13_household_durables",
+              "g14_vehicles_transport_equipment",
+              "g15_market_services",
+              "g16_housing_public_services"
+            ],
+            "unit": "M_forint",
+            "source_recipe": null
+          },
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'national_accounts.production per worker proxy' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m3.aggregates_household_desired_vs_delivered",
+          "table_or_sidecar": "aggregates",
+          "column": "delivered",
+          "commodity_axis": {
+            "commodities": [
+              "g01_solid_fuels",
+              "g02_oil_gas_fuels",
+              "g03_electricity_heat",
+              "g04_basic_metals_materials",
+              "g05_chemicals_fertilizer",
+              "g06_machinery_capital",
+              "g07_construction",
+              "g08_agricultural_raw",
+              "g09_basic_food",
+              "g10_animal_food",
+              "g11_textiles_footwear",
+              "g12_household_nondurables",
+              "g13_household_durables",
+              "g14_vehicles_transport_equipment",
+              "g15_market_services",
+              "g16_housing_public_services"
+            ],
+            "unit": "M_forint",
+            "source_recipe": null
+          },
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "M_forint",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'aggregates.household_desired vs delivered' via P07A2 enricher"
+        }
+      ],
+      "unmapped": []
+    },
+    {
+      "id": "M4",
+      "sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M4",
+        "hypothesis": "the second economy is net stabilising or net eroding for the formal system.",
+        "manipulated_variables": [
+          "policy.second_economy_tolerance",
+          "policy.private_autonomy"
+        ],
+        "controlled_variables": [
+          "formal-sector parameters",
+          "external history",
+          "seed"
+        ],
+        "metrics": [
+          "aggregates.plot_self_use/plot_market_sales",
+          "household_budgets.plot_income_formal/plot_income_direct",
+          "formal household_availability_unmet",
+          "departments.service_use_household"
+        ],
+        "falsification_criterion": "tolerance changes move neither the household availability gap nor the formal sector's delivery metrics.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": [
+          "p04_culture_prior"
+        ]
+      },
+      "study": {
+        "mechanism_id": "M04",
+        "intent": "second_economy_stabilization_erosion",
+        "linked_cards": [
+          "M4"
+        ],
+        "v1_card_sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+        "status": "blocked",
+        "declared_reason": null,
+        "blocked_reason": "F2 second economy recipe axes empty; second_input/output tuples = []; F2 wiring prerequisite (P07B)",
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "Second economy wiring required before M4 experiment."
+      },
+      "enriched": [
+        {
+          "metric_id": "m4.aggregates_plot_self_use_plot_market_sales",
+          "table_or_sidecar": "household_budgets",
+          "column": "self_use_imputed",
+          "commodity_axis": null,
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "M_forint",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'aggregates.plot_self_use/plot_market_sales' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m4.household_budgets_plot_income_formal_plot_income_direct",
+          "table_or_sidecar": "household_budgets",
+          "column": "plot_income_formal",
+          "commodity_axis": null,
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "M_forint",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'household_budgets.plot_income_formal/plot_income_direct' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m4.formal_household_availability_unmet",
+          "table_or_sidecar": "household_budgets",
+          "column": "budget_available",
+          "commodity_axis": null,
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "M_forint",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'formal household_availability_unmet' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m4.departments_service_use_household",
+          "table_or_sidecar": "departments",
+          "column": "service_use_household",
+          "commodity_axis": null,
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'departments.service_use_household' via P07A2 enricher"
+        }
+      ],
+      "unmapped": []
+    },
+    {
+      "id": "M5",
+      "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M5",
+        "hypothesis": "enterprise autonomy rising while soft-budget constraints persist produces efficiency gains and macro imbalance simultaneously.",
+        "manipulated_variables": [
+          "policy.enterprise_autonomy (the replayed 1968 patch is 0.7)",
+          "separately policy.budget_hardness"
+        ],
+        "controlled_variables": [
+          "external history",
+          "seed",
+          "the other coordinates"
+        ],
+        "metrics": [
+          "organization_diagnostics.investment_approved/credit_drawn",
+          "national_accounts.production/used",
+          "tick_diagnostics.bottleneck_demand_count",
+          "money_stock.money_total_close"
+        ],
+        "falsification_criterion": "autonomy raises do not change the efficiency proxy without also changing the imbalance proxy (or vice versa).",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": [
+          "p04_coalition_prior",
+          "p04_information_prior"
+        ]
+      },
+      "study": {
+        "mechanism_id": "M05",
+        "intent": "enterprise_autonomy_1968",
+        "linked_cards": [
+          "M5"
+        ],
+        "v1_card_sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879",
+        "status": "declared",
+        "declared_reason": "p04_coalition_prior and p04_information_prior are identified; PoliticalSession\u2192policy\u2192material targets path exists; autonomy\u00d7hardness 2\u00d72 design available",
+        "blocked_reason": null,
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "Experiment not yet executed. Paired checkpoint design at 1968Q1 checkpoint ready."
+      },
+      "enriched": [
+        {
+          "metric_id": "m5.organization_diagnostics_investment_approved_credit_drawn",
+          "table_or_sidecar": "organization_diagnostics",
+          "column": "investment_approved",
+          "commodity_axis": null,
+          "region_axis": {
+            "regions": [
+              "budapest",
+              "pest",
+              "borsod_abauj_zemplen",
+              "heves",
+              "nograd",
+              "fejer",
+              "komarom",
+              "veszprem",
+              "gyor_sopron",
+              "vas",
+              "zala",
+              "baranya",
+              "somogy",
+              "tolna",
+              "hajdu_bihar",
+              "szabolcs_szatmar",
+              "szolnok",
+              "bacs_kiskun",
+              "bekes",
+              "csongrad"
+            ],
+            "unit": "M_forint",
+            "aggregation": "sum"
+          },
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "proxy",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'organization_diagnostics.investment_approved/credit_drawn' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m5.national_accounts_production_used",
+          "table_or_sidecar": "national_accounts",
+          "column": "production",
+          "commodity_axis": {
+            "commodities": [
+              "g01_solid_fuels",
+              "g02_oil_gas_fuels",
+              "g03_electricity_heat",
+              "g04_basic_metals_materials",
+              "g05_chemicals_fertilizer",
+              "g06_machinery_capital",
+              "g07_construction",
+              "g08_agricultural_raw",
+              "g09_basic_food",
+              "g10_animal_food",
+              "g11_textiles_footwear",
+              "g12_household_nondurables",
+              "g13_household_durables",
+              "g14_vehicles_transport_equipment",
+              "g15_market_services",
+              "g16_housing_public_services"
+            ],
+            "unit": "M_forint",
+            "source_recipe": null
+          },
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "proxy",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'national_accounts.production/used' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m5.tick_diagnostics_bottleneck_demand_count",
+          "table_or_sidecar": "tick_diagnostics",
+          "column": "bottleneck_demand_count",
+          "commodity_axis": null,
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "count",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "proxy",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'tick_diagnostics.bottleneck_demand_count' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m5.money_stock_money_total_close",
+          "table_or_sidecar": "financial_accounts",
+          "column": "closing",
+          "commodity_axis": null,
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'money_stock.money_total_close' via P07A2 enricher"
+        }
+      ],
+      "unmapped": []
+    },
+    {
+      "id": "M6",
+      "sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M6",
+        "hypothesis": "external debt lengthens the social contract and shifts its cost forward.",
+        "manipulated_variables": [
+          "policy.borrowing_factor",
+          "convertible_loan_limit",
+          "convertible_credit_envelope"
+        ],
+        "controlled_variables": [
+          "external demand",
+          "seed",
+          "domestic policy"
+        ],
+        "metrics": [
+          "national_accounts.imports by channel",
+          "money_stock (credit/principal)",
+          "household_consumption",
+          "treasury_cash"
+        ],
+        "falsification_criterion": "additional borrowing does not defer the consumption/treasury deterioration.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": [
+          "p04_external_recipe_prior"
+        ]
+      },
+      "study": {
+        "mechanism_id": "M06",
+        "intent": "external_debt_social_contract",
+        "linked_cards": [
+          "M6"
+        ],
+        "v1_card_sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+        "status": "blocked",
+        "declared_reason": null,
+        "blocked_reason": "convertible_credit_envelope not a declared engine parameter; foreign counterparty\u8d26 and loan term\u5236\u5ea6 not yet specified; P08D export finance spec prerequisite",
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "External debt experiment requires new foreign counterparty\u8d26 and loan term\u5236\u5ea6."
+      },
+      "enriched": [
+        {
+          "metric_id": "m6.national_accounts_imports_by_channel",
+          "table_or_sidecar": "national_accounts",
+          "column": "imports",
+          "commodity_axis": {
+            "commodities": [
+              "g01_solid_fuels",
+              "g02_oil_gas_fuels",
+              "g03_electricity_heat",
+              "g04_basic_metals_materials",
+              "g05_chemicals_fertilizer",
+              "g06_machinery_capital",
+              "g07_construction",
+              "g08_agricultural_raw",
+              "g09_basic_food",
+              "g10_animal_food",
+              "g11_textiles_footwear",
+              "g12_household_nondurables",
+              "g13_household_durables",
+              "g14_vehicles_transport_equipment",
+              "g15_market_services",
+              "g16_housing_public_services"
+            ],
+            "unit": "M_forint (admin price)",
+            "source_recipe": null
+          },
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint (admin price)",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "proxy",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'national_accounts.imports by channel' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m6.money_stock_(credit_principal)",
+          "table_or_sidecar": "financial_accounts",
+          "column": "credit_drawn",
+          "commodity_axis": null,
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "no_counterpart",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'money_stock (credit/principal)' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m6.household_consumption",
+          "table_or_sidecar": "national_accounts",
+          "column": "household_consumption",
+          "commodity_axis": null,
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "target",
+          "validation_fidelity": "normalized_index",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'household_consumption' via P07A2 enricher"
+        },
+        {
+          "metric_id": "m6.treasury_cash",
+          "table_or_sidecar": "financial_accounts",
+          "column": "closing",
+          "commodity_axis": null,
+          "region_axis": null,
+          "time_window": {
+            "start_quarter": "1957Q1",
+            "end_quarter": "1985Q4",
+            "missing_policy": "abort"
+          },
+          "unit": "M_forint",
+          "fidelity": "F2_run",
+          "data_role": "candidate_linkage",
+          "validation_fidelity": "proxy",
+          "missing_policy": "abort",
+          "description": "Enriched from v1 card metric 'treasury_cash' via P07A2 enricher"
+        }
+      ],
+      "unmapped": []
+    },
+    {
+      "id": "M7",
+      "sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M7",
+        "hypothesis": "uneven distribution of social-contract gains across Budapest, the industrial belt and the agricultural counties creates different stability paths.",
+        "manipulated_variables": [
+          "regional allocation via policy.investment_intensity plus policy.housing_factor",
+          "the 20 historical regions are the observation axis"
+        ],
+        "controlled_variables": [
+          "national aggregates",
+          "external history",
+          "seed"
+        ],
+        "metrics": [
+          "aggregates and household_budgets by region_id",
+          "opposition_regions by region"
+        ],
+        "falsification_criterion": "regional dispersion of the delivery/consumption metrics does not respond to the regional allocation levers.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": [
+          "p04_opposition_prior",
+          "p04_coalition_prior"
+        ]
+      },
+      "study": {
+        "mechanism_id": "M07",
+        "intent": "regional_distribution_stability",
+        "linked_cards": [
+          "M7"
+        ],
+        "v1_card_sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+        "status": "blocked",
+        "declared_reason": null,
+        "blocked_reason": "investment_intensity and housing_factor are national scalars, not 20-region vectors; no regional budget/fact/flow adapter; national aggregate invariance not established",
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "Regional experiment requires new regional vector adapter and national invariance guarantee."
+      },
+      "enriched": [],
+      "unmapped": [
+        "aggregates and household_budgets by region_id",
+        "opposition_regions by region"
+      ]
+    },
+    {
+      "id": "M8",
+      "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M8",
+        "hypothesis": "economic deterioration strengthens administrative conservatism under some conditions and the reform coalition under others.",
+        "manipulated_variables": [
+          "the fork's coalition_weights and the reported feature path (via the 1968 arms)"
+        ],
+        "controlled_variables": [
+          "external history",
+          "seed"
+        ],
+        "metrics": [
+          "political_quarters mode weights and selected_candidate",
+          "policy_decisions.utility"
+        ],
+        "falsification_criterion": "coalition weights do not switch modes under the declared deterioration path.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": [
+          "p04_coalition_prior",
+          "p04_observation_prior",
+          "p04_information_prior"
+        ]
+      },
+      "study": {
+        "mechanism_id": "M08",
+        "intent": "political_coalition_crisis",
+        "linked_cards": [
+          "M8"
+        ],
+        "v1_card_sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1",
+        "status": "declared",
+        "declared_reason": "Political probe shows replay null (policy delta=0, digest changes) vs endogenous (autonomy delta=0.075, cultural=0.24); endogenous\u5b9e\u8d28 policy + replay negative control feasible",
+        "blocked_reason": null,
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "Experiment not yet executed. Negative control (replay) vs treatment (endogenous) design available."
+      },
+      "enriched": [],
+      "unmapped": [
+        "political_quarters mode weights and selected_candidate",
+        "policy_decisions.utility"
+      ]
+    },
+    {
+      "id": "M9",
+      "sha256": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M9",
+        "hypothesis": "stronger statistical/computational/feedback capacity removes a measurable share of shortage and planning error.",
+        "manipulated_variables": [
+          "technology.capability (one-shot)",
+          "policy.information_investment (the digital-nem arm)"
+        ],
+        "controlled_variables": [
+          "the replayed policy path",
+          "external history",
+          "seed"
+        ],
+        "metrics": [
+          "information_quarters.data_latency/measurement_error/forecast_accuracy/optimization_capacity",
+          "policy_decisions.binding_constraints",
+          "tick_diagnostics.bottleneck_demand_count"
+        ],
+        "falsification_criterion": "capability/investment raises do not reduce latency/error or the shortage metrics.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": [
+          "p04_information_prior"
+        ]
+      },
+      "study": {
+        "mechanism_id": "M09",
+        "intent": "information_optimization_failure",
+        "linked_cards": [
+          "M9"
+        ],
+        "v1_card_sha256": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c",
+        "status": "blocked",
+        "declared_reason": null,
+        "blocked_reason": "forecast_accuracy=cadability is a definition not an error measurement; pre-prediction/realized residual tracking not yet implemented; forecast error measurement design prerequisite",
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "Information experiment requires new forecast-issued/realized/residual tracking."
+      },
+      "enriched": [],
+      "unmapped": [
+        "information_quarters.data_latency/measurement_error/forecast_accuracy/optimization_capacity",
+        "policy_decisions.binding_constraints",
+        "tick_diagnostics.bottleneck_demand_count"
+      ]
+    },
+    {
+      "id": "M10",
+      "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M10",
+        "hypothesis": "subsidies, borrowing and CMEA terms postpone an external shock, and the postponement raises later fragility.",
+        "manipulated_variables": [
+          "the 1973 arms in Annex B"
+        ],
+        "controlled_variables": [
+          "seed",
+          "the pre-1973 path"
+        ],
+        "metrics": [
+          "national_accounts.imports/exports by channel",
+          "money_stock.money_total_close",
+          "treasury_cash",
+          "later-window aggregates.household_availability_unmet"
+        ],
+        "falsification_criterion": "the absorption arms do not differ in the size or timing of the postponement.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": [
+          "p04_external_recipe_prior"
+        ]
+      },
+      "study": {
+        "mechanism_id": "M10",
+        "intent": "external_buffer_shock_transmission",
+        "linked_cards": [
+          "M10"
+        ],
+        "v1_card_sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+        "status": "blocked",
+        "declared_reason": null,
+        "blocked_reason": "P06 old arms only REPORTED_ONLY; factor decomposition requires P08D trade\u8d26 and external finance\u8d26 closure first",
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "External buffer experiment requires closed trade and external finance\u8d26 (P08D prerequisite)."
+      },
+      "enriched": [],
+      "unmapped": [
+        "national_accounts.imports/exports by channel",
+        "money_stock.money_total_close",
+        "treasury_cash",
+        "later-window aggregates.household_availability_unmet"
+      ]
+    },
+    {
+      "id": "M11",
+      "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887",
+      "supersedes_match": true,
+      "decl_sha_match": true,
+      "legacy": {
+        "mechanism_id": "M11",
+        "hypothesis": "continued investment and input priority for Department I crowds out Department II through raw-material, capital-good and labour competition, raising assortment shortage, durable waiting, forced substitution and the social-contract gap even when aggregate output grows.",
+        "manipulated_variables": [
+          "policy.investment_intensity",
+          "policy.industrial_priority"
+        ],
+        "controlled_variables": [
+          "aggregate output path",
+          "external history",
+          "seed"
+        ],
+        "metrics": [
+          "aggregate consumer-goods volume (national_accounts.household_consumption)",
+          "assortment/availability (aggregates.household_availability_unmet, tick_diagnostics.bottleneck_demand_count)",
+          "regional distribution (by region_id)",
+          "durable waiting (aggregates.household_desired vs delivered for g13_household_durables)",
+          "household welfare loss (household_budgets saving/substitution columns)",
+          "departments.actual_use_value split by department"
+        ],
+        "falsification_criterion": "raising I-priority does not shift the department split or worsen the four consumer-side dimensions while output is held up.",
+        "minimum_replicates": 3,
+        "result_categories": [
+          "SUPPORTED",
+          "CONDITIONAL",
+          "WEAK",
+          "REJECTED",
+          "UNIDENTIFIED"
+        ],
+        "calibrated_parameter_dependencies": []
+      },
+      "study": {
+        "mechanism_id": "M11",
+        "intent": "departmental_i_ii_composition",
+        "linked_cards": [
+          "M11"
+        ],
+        "v1_card_sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887",
+        "status": "blocked",
+        "declared_reason": null,
+        "blocked_reason": "P06 report CONDITIONAL (structural); F1 g13 not valid for F2; I/II\u4ea7\u51fa endogenous, requires exogenously fixed resources not\u5f3a\u5236 same actual output; M2/M5 enterprise chain prerequisite",
+        "phase": "P07A1",
+        "research_package_complete": false,
+        "note": "Departmental competition requires M2/M5 enterprise chain resolution and exogenous resource control."
+      },
+      "enriched": [],
+      "unmapped": [
+        "aggregate consumer-goods volume (national_accounts.household_consumption)",
+        "assortment/availability (aggregates.household_availability_unmet, tick_diagnostics.bottleneck_demand_count)",
+        "regional distribution (by region_id)",
+        "durable waiting (aggregates.household_desired vs delivered for g13_household_durables)",
+        "household welfare loss (household_budgets saving/substitution columns)",
+        "departments.actual_use_value split by department"
+      ]
+    }
+  ],
+  "actual_tables": {
+    "opposition_regions": {
+      "rows": 0,
+      "columns": [
+        "tick",
+        "quarter",
+        "region_id",
+        "network_size",
+        "intellectual_density",
+        "worker_linkage",
+        "samizdat_capacity",
+        "foreign_linkage",
+        "repression_exposure",
+        "perceived_efficacy",
+        "capacity",
+        "weighted_grievance",
+        "weighted_voice",
+        "weighted_risk",
+        "weighted_exposure"
+      ]
+    },
+    "political_quarters": {
+      "rows": 0,
+      "columns": [
+        "tick",
+        "quarter",
+        "mode",
+        "policy_source",
+        "weight_reform_technocratic",
+        "weight_administrative_conservative",
+        "weight_social_contract_pragmatist",
+        "weight_sectoral_industrial",
+        "policy_plan_utilization",
+        "policy_enterprise_autonomy",
+        "policy_investment_intensity",
+        "policy_industrial_priority",
+        "policy_admin_price_factor",
+        "policy_wage_factor",
+        "policy_credit_fraction",
+        "policy_budget_hardness",
+        "policy_housing_factor",
+        "policy_borrowing_factor",
+        "policy_consumer_import_factor",
+        "policy_second_economy_tolerance",
+        "policy_welfare_provision",
+        "policy_private_autonomy",
+        "policy_cultural_openness",
+        "policy_supported_boundary",
+        "policy_tolerance_boundary",
+        "policy_repression",
+        "policy_information_investment",
+        "elite_cohesion",
+        "soviet_bound",
+        "soviet_violation",
+        "selected_candidate",
+        "information_capability",
+        "coalition_contributions_json"
+      ]
+    },
+    "tick_diagnostics": {
+      "rows": 116,
+      "columns": [
+        "tick",
+        "quarter",
+        "digest",
+        "max_material_abs_residual",
+        "max_material_tolerance_ratio",
+        "max_finance_abs_residual",
+        "max_finance_tolerance_ratio",
+        "checked_cells",
+        "bottleneck_demand_count",
+        "financial_blocked_total",
+        "forcing_segment",
+        "expired_services"
+      ]
+    },
+    "political_events": {
+      "rows": 0,
+      "columns": [
+        "tick",
+        "quarter",
+        "event_id",
+        "channel",
+        "message_id",
+        "recipient_id",
+        "source_id",
+        "delivery",
+        "classification",
+        "attribution"
+      ]
+    },
+    "aggregates": {
+      "rows": 37120,
+      "columns": [
+        "tick",
+        "quarter",
+        "region_id",
+        "commodity_id",
+        "desired",
+        "ordered",
+        "ordered_gross",
+        "unfunded",
+        "allocated",
+        "delivered",
+        "used",
+        "financial_delivery_blocked",
+        "physical_delivery_blocked",
+        "production",
+        "production_raw",
+        "production_ready",
+        "input_open",
+        "input_close",
+        "output_open",
+        "output_close",
+        "wholesale_open",
+        "wholesale_close",
+        "retail_open",
+        "retail_close",
+        "household_desired",
+        "household_budget_unmet",
+        "household_availability_unmet",
+        "plot_self_use",
+        "plot_market_sales"
+      ]
+    },
+    "events": {
+      "rows": 116,
+      "columns": [
+        "tick",
+        "quarter",
+        "event_type",
+        "details_json"
+      ]
+    },
+    "departments": {
+      "rows": 580,
+      "columns": [
+        "tick",
+        "quarter",
+        "department",
+        "actual_use_value",
+        "attributed_output_value",
+        "service_use_productive",
+        "service_use_household"
+      ]
+    },
+    "stage_balances": {
+      "rows": 38976,
+      "columns": [
+        "tick",
+        "quarter",
+        "region_id",
+        "commodity_id",
+        "stage",
+        "opening",
+        "closing",
+        "receipts",
+        "production",
+        "used",
+        "delivered_out",
+        "expiry",
+        "residual"
+      ]
+    },
+    "information_quarters": {
+      "rows": 0,
+      "columns": [
+        "tick",
+        "quarter",
+        "feature_id",
+        "capability",
+        "data_latency",
+        "measurement_error",
+        "forecast_accuracy",
+        "optimization_capacity",
+        "inventory_visibility",
+        "reporting_speed",
+        "computational_cost",
+        "total_lag",
+        "source_quarter",
+        "truth",
+        "noise",
+        "bias",
+        "published",
+        "valid"
+      ]
+    },
+    "organization_diagnostics": {
+      "rows": 20880,
+      "columns": [
+        "tick",
+        "quarter",
+        "region_id",
+        "organization_type",
+        "organization_count",
+        "capacity_sum",
+        "capacity_mean",
+        "labor_sum",
+        "labor_mean",
+        "target_sum",
+        "realized_sum",
+        "ordered_sum",
+        "delivered_sum",
+        "input_bottleneck_share",
+        "credit_requested",
+        "credit_approved",
+        "credit_drawn",
+        "investment_requested",
+        "investment_approved",
+        "investment_completed",
+        "bailout_requested",
+        "bailout_granted",
+        "principal_sum",
+        "wage_arrears_sum",
+        "interest_arrears_sum",
+        "cash_sum",
+        "shortage_expectation_mean",
+        "bailout_expectation_mean"
+      ]
+    },
+    "financial_accounts": {
+      "rows": 1508,
+      "columns": [
+        "tick",
+        "quarter",
+        "account_id",
+        "currency",
+        "account_label",
+        "opening",
+        "closing",
+        "credit_drawn",
+        "grant",
+        "interest_accrued",
+        "interest_paid",
+        "principal_repaid",
+        "residual"
+      ]
+    },
+    "national_accounts": {
+      "rows": 1856,
+      "columns": [
+        "tick",
+        "quarter",
+        "commodity_id",
+        "cmea_imports",
+        "convertible_imports",
+        "imports",
+        "cmea_exports",
+        "convertible_exports",
+        "exports",
+        "production",
+        "production_raw",
+        "production_ready",
+        "used",
+        "household_consumption",
+        "expiry",
+        "organization_input_open",
+        "organization_input_close",
+        "organization_output_open",
+        "organization_output_close",
+        "wholesale_open",
+        "wholesale_close",
+        "retail_open",
+        "retail_close",
+        "plot_open",
+        "plot_close",
+        "project_wip_open",
+        "project_wip_close",
+        "import_pool_open",
+        "import_pool_close",
+        "total_stock_open",
+        "total_stock_close",
+        "material_balance_residual",
+        "material_balance_tolerance_ratio"
+      ]
+    },
+    "policy_decisions": {
+      "rows": 0,
+      "columns": [
+        "tick",
+        "quarter",
+        "candidate_id",
+        "utility",
+        "binding_constraints",
+        "contributions_json"
+      ]
+    },
+    "household_budgets": {
+      "rows": 2320,
+      "columns": [
+        "tick",
+        "quarter",
+        "region_id",
+        "cash_open",
+        "cash_close",
+        "pre_purchase_wages",
+        "plot_income_formal",
+        "plot_income_direct",
+        "late_wage_payment",
+        "spending",
+        "self_use_imputed",
+        "plot_input_funding",
+        "budget_available",
+        "voluntary_saving",
+        "forced_saving",
+        "deferred_open",
+        "deferred_close"
+      ]
+    }
+  },
+  "registry_diff": {
+    "aggregates": {
+      "not_actual": [],
+      "omitted_actual": [
+        "household_availability_unmet",
+        "household_budget_unmet",
+        "household_desired",
+        "plot_market_sales",
+        "plot_self_use",
+        "retail_close",
+        "retail_open",
+        "wholesale_close",
+        "wholesale_open"
+      ],
+      "actual_rows": 37120
+    },
+    "national_accounts": {
+      "not_actual": [],
+      "omitted_actual": [
+        "import_pool_close",
+        "import_pool_open",
+        "material_balance_residual",
+        "material_balance_tolerance_ratio",
+        "plot_close",
+        "plot_open",
+        "project_wip_close",
+        "project_wip_open",
+        "retail_close",
+        "retail_open",
+        "total_stock_close",
+        "total_stock_open",
+        "wholesale_close"
+      ],
+      "actual_rows": 1856
+    },
+    "household_budgets": {
+      "not_actual": [],
+      "omitted_actual": [],
+      "actual_rows": 2320
+    },
+    "tick_diagnostics": {
+      "not_actual": [],
+      "omitted_actual": [],
+      "actual_rows": 116
+    },
+    "departments": {
+      "not_actual": [],
+      "omitted_actual": [],
+      "actual_rows": 580
+    },
+    "opposition_regions": {
+      "not_actual": [],
+      "omitted_actual": [],
+      "actual_rows": 0
+    },
+    "organization_diagnostics": {
+      "not_actual": [],
+      "omitted_actual": [
+        "bailout_expectation_mean",
+        "bailout_granted",
+        "bailout_requested",
+        "cash_sum",
+        "interest_arrears_sum",
+        "principal_sum",
+        "shortage_expectation_mean",
+        "wage_arrears_sum"
+      ],
+      "actual_rows": 20880
+    },
+    "financial_accounts": {
+      "not_actual": [],
+      "omitted_actual": [],
+      "actual_rows": 1508
+    },
+    "political_quarters": {
+      "not_actual": [
+        "soviet_relation_quality"
+      ],
+      "omitted_actual": [
+        "coalition_contributions_json",
+        "information_capability",
+        "selected_candidate",
+        "soviet_bound",
+        "soviet_violation"
+      ],
+      "actual_rows": 0
+    },
+    "information_quarters": {
+      "not_actual": [],
+      "omitted_actual": [],
+      "actual_rows": 0
+    },
+    "stage_balances": {
+      "not_actual": [],
+      "omitted_actual": [],
+      "actual_rows": 38976
+    },
+    "policy_decisions": {
+      "not_actual": [],
+      "omitted_actual": [],
+      "actual_rows": 0
+    },
+    "political_events": {
+      "not_actual": [],
+      "omitted_actual": [],
+      "actual_rows": 0
+    },
+    "events": {
+      "not_actual": [
+        "entity_id",
+        "entity_type",
+        "payload"
+      ],
+      "omitted_actual": [
+        "details_json"
+      ],
+      "actual_rows": 116
+    }
+  },
+  "ontology_metric_nodes": [
+    {
+      "mechanism": "M01",
+      "line": 132,
+      "table": "national_accounts",
+      "column": "household_consumption",
+      "actual_column": true,
+      "rows": 1856
+    },
+    {
+      "mechanism": "M01",
+      "line": 140,
+      "table": "household_budgets",
+      "column": "forced_saving",
+      "actual_column": true,
+      "rows": 2320
+    },
+    {
+      "mechanism": "M01",
+      "line": 146,
+      "table": "national_accounts",
+      "column": "imports",
+      "actual_column": true,
+      "rows": 1856
+    },
+    {
+      "mechanism": "M02",
+      "line": 174,
+      "table": "tick_diagnostics",
+      "column": "bottleneck_demand_count",
+      "actual_column": true,
+      "rows": 116
+    },
+    {
+      "mechanism": "M02",
+      "line": 180,
+      "table": "tick_diagnostics",
+      "column": "bottleneck_demand_count",
+      "actual_column": true,
+      "rows": 116
+    },
+    {
+      "mechanism": "M02",
+      "line": 186,
+      "table": "departments",
+      "column": "department_output",
+      "actual_column": false,
+      "rows": 580
+    },
+    {
+      "mechanism": "M02",
+      "line": 187,
+      "table": "tick_diagnostics",
+      "column": "bottleneck_demand_count",
+      "actual_column": true,
+      "rows": 116
+    },
+    {
+      "mechanism": "M03",
+      "line": 213,
+      "table": "national_accounts",
+      "column": "household_consumption",
+      "actual_column": true,
+      "rows": 1856
+    },
+    {
+      "mechanism": "M03",
+      "line": 219,
+      "table": "organization_diagnostics",
+      "column": "plan_fulfillment",
+      "actual_column": false,
+      "rows": 20880
+    },
+    {
+      "mechanism": "M03",
+      "line": 225,
+      "table": "national_accounts",
+      "column": "household_consumption",
+      "actual_column": true,
+      "rows": 1856
+    },
+    {
+      "mechanism": "M03",
+      "line": 226,
+      "table": "household_budgets",
+      "column": "spending",
+      "actual_column": true,
+      "rows": 2320
+    },
+    {
+      "mechanism": "M04",
+      "line": 248,
+      "table": "national_accounts",
+      "column": "imports",
+      "actual_column": true,
+      "rows": 1856
+    },
+    {
+      "mechanism": "M04",
+      "line": 254,
+      "table": "national_accounts",
+      "column": "production",
+      "actual_column": true,
+      "rows": 1856
+    },
+    {
+      "mechanism": "M04",
+      "line": 255,
+      "table": "national_accounts",
+      "column": "imports",
+      "actual_column": true,
+      "rows": 1856
+    },
+    {
+      "mechanism": "M04",
+      "line": 261,
+      "table": "household_budgets",
+      "column": "spending",
+      "actual_column": true,
+      "rows": 2320
+    },
+    {
+      "mechanism": "M05",
+      "line": 285,
+      "table": "tick_diagnostics",
+      "column": "bottleneck_demand_count",
+      "actual_column": true,
+      "rows": 116
+    },
+    {
+      "mechanism": "M05",
+      "line": 291,
+      "table": "tick_diagnostics",
+      "column": "bottleneck_demand_count",
+      "actual_column": true,
+      "rows": 116
+    },
+    {
+      "mechanism": "M05",
+      "line": 292,
+      "table": "organization_diagnostics",
+      "column": "labor_allocation",
+      "actual_column": false,
+      "rows": 20880
+    },
+    {
+      "mechanism": "M06",
+      "line": 327,
+      "table": "financial_accounts",
+      "column": "credit_flow",
+      "actual_column": false,
+      "rows": 1508
+    },
+    {
+      "mechanism": "M06",
+      "line": 333,
+      "table": "financial_accounts",
+      "column": "investment",
+      "actual_column": false,
+      "rows": 1508
+    },
+    {
+      "mechanism": "M06",
+      "line": 340,
+      "table": "stage_balances",
+      "column": "output",
+      "actual_column": false,
+      "rows": 38976
+    },
+    {
+      "mechanism": "M06",
+      "line": 341,
+      "table": "financial_accounts",
+      "column": "credit_flow",
+      "actual_column": false,
+      "rows": 1508
+    },
+    {
+      "mechanism": "M07",
+      "line": 368,
+      "table": "organization_diagnostics",
+      "column": "labor_allocation",
+      "actual_column": false,
+      "rows": 20880
+    },
+    {
+      "mechanism": "M07",
+      "line": 374,
+      "table": "departments",
+      "column": "department_output",
+      "actual_column": false,
+      "rows": 580
+    },
+    {
+      "mechanism": "M07",
+      "line": 375,
+      "table": "organization_diagnostics",
+      "column": "labor_allocation",
+      "actual_column": false,
+      "rows": 20880
+    },
+    {
+      "mechanism": "M08",
+      "line": 403,
+      "table": "organization_diagnostics",
+      "column": "productivity_index",
+      "actual_column": false,
+      "rows": 20880
+    },
+    {
+      "mechanism": "M08",
+      "line": 409,
+      "table": "financial_accounts",
+      "column": "enterprise_investment",
+      "actual_column": false,
+      "rows": 1508
+    },
+    {
+      "mechanism": "M09",
+      "line": 438,
+      "table": "information_quarters",
+      "column": "forecast_accuracy",
+      "actual_column": true,
+      "rows": 0
+    },
+    {
+      "mechanism": "M09",
+      "line": 444,
+      "table": "organization_diagnostics",
+      "column": "plan_fulfillment",
+      "actual_column": false,
+      "rows": 20880
+    },
+    {
+      "mechanism": "M09",
+      "line": 450,
+      "table": "national_accounts",
+      "column": "price_index",
+      "actual_column": false,
+      "rows": 1856
+    },
+    {
+      "mechanism": "M09",
+      "line": 451,
+      "table": "information_quarters",
+      "column": "forecast_accuracy",
+      "actual_column": true,
+      "rows": 0
+    },
+    {
+      "mechanism": "M10",
+      "line": 473,
+      "table": "departments",
+      "column": "department_output",
+      "actual_column": false,
+      "rows": 580
+    },
+    {
+      "mechanism": "M10",
+      "line": 474,
+      "table": "aggregates",
+      "column": "inter_department_variance",
+      "actual_column": false,
+      "rows": 37120
+    },
+    {
+      "mechanism": "M10",
+      "line": 486,
+      "table": "tick_diagnostics",
+      "column": "bottleneck_demand_count",
+      "actual_column": true,
+      "rows": 116
+    },
+    {
+      "mechanism": "M10",
+      "line": 487,
+      "table": "departments",
+      "column": "department_output",
+      "actual_column": false,
+      "rows": 580
+    },
+    {
+      "mechanism": "M11",
+      "line": 509,
+      "table": "stage_balances",
+      "column": "input_stage",
+      "actual_column": false,
+      "rows": 38976
+    },
+    {
+      "mechanism": "M11",
+      "line": 510,
+      "table": "stage_balances",
+      "column": "processing_stage",
+      "actual_column": false,
+      "rows": 38976
+    },
+    {
+      "mechanism": "M11",
+      "line": 511,
+      "table": "stage_balances",
+      "column": "output_stage",
+      "actual_column": false,
+      "rows": 38976
+    },
+    {
+      "mechanism": "M11",
+      "line": 523,
+      "table": "national_accounts",
+      "column": "gdp",
+      "actual_column": false,
+      "rows": 1856
+    },
+    {
+      "mechanism": "M11",
+      "line": 524,
+      "table": "stage_balances",
+      "column": "output_stage",
+      "actual_column": false,
+      "rows": 38976
+    }
+  ],
+  "adversarial_schemas": {
+    "TimeWindow_end_1988": {
+      "accepted": true,
+      "value": {
+        "start_quarter": "1985Q4",
+        "end_quarter": "1988Q4",
+        "missing_policy": "abort"
+      }
+    },
+    "TimeWindow_before_start": {
+      "accepted": true,
+      "value": {
+        "start_quarter": "1900Q1",
+        "end_quarter": "1957Q1",
+        "missing_policy": "abort"
+      }
+    },
+    "TimeWindow_zero": {
+      "accepted": true,
+      "value": {
+        "start_quarter": "1957Q1",
+        "end_quarter": "1958Q1",
+        "missing_policy": "0"
+      }
+    },
+    "Metric_zero_fill": {
+      "accepted": true,
+      "value": {
+        "metric_id": "m1.household_consumption",
+        "table_or_sidecar": "national_accounts",
+        "column": "household_consumption",
+        "commodity_axis": null,
+        "region_axis": null,
+        "time_window": {
+          "start_quarter": "1957Q1",
+          "end_quarter": "1985Q4",
+          "missing_policy": "abort"
+        },
+        "unit": "M_forint (model currency)",
+        "fidelity": "F2_run",
+        "data_role": "target",
+        "validation_fidelity": "normalized_index",
+        "missing_policy": "zero_fill",
+        "description": "Enriched from v1 card metric 'household_consumption' via P07A2 enricher"
+      }
+    },
+    "Metric_unknown_column": {
+      "accepted": true,
+      "value": {
+        "metric_id": "m1.household_consumption",
+        "table_or_sidecar": "national_accounts",
+        "column": "invented_column",
+        "commodity_axis": null,
+        "region_axis": null,
+        "time_window": {
+          "start_quarter": "1957Q1",
+          "end_quarter": "1985Q4",
+          "missing_policy": "abort"
+        },
+        "unit": "M_forint (model currency)",
+        "fidelity": "F2_run",
+        "data_role": "target",
+        "validation_fidelity": "normalized_index",
+        "missing_policy": "abort",
+        "description": "Enriched from v1 card metric 'household_consumption' via P07A2 enricher"
+      }
+    },
+    "Observed_future_snapshot": {
+      "accepted": true,
+      "value": {
+        "observed_state_id": "x",
+        "source_run_id": "x",
+        "source_scenario": "x",
+        "source_checkpoint_quarter": "1988Q4",
+        "source_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+        "captured_at": "2026-10-15T00:00:00Z"
+      }
+    },
+    "M01_stub_id": {
+      "accepted": false,
+      "error": "2 validation errors for EvidenceRecord\nmechanism_id\n  String should match pattern '^M(?:[1-9]|1[01])$' [type=string_pattern_mismatch, input_value='M01', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch\nmetric_specs\n  List should have at least 1 item after validation, not 0 [type=too_short, input_value=[], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_short"
+    },
+    "Unsupported_status_without_run": {
+      "accepted": true,
+      "value": {
+        "record_id": "false-support",
+        "mechanism_id": "M1",
+        "v1_card_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "supersedes_card_sha256": null,
+        "hypothesis": "synthetic",
+        "status": "supported",
+        "metric_specs": [
+          {
+            "metric_id": "m1.household_consumption",
+            "table_or_sidecar": "national_accounts",
+            "column": "household_consumption",
+            "commodity_axis": null,
+            "region_axis": null,
+            "time_window": {
+              "start_quarter": "1957Q1",
+              "end_quarter": "1985Q4",
+              "missing_policy": "abort"
+            },
+            "unit": "M_forint (model currency)",
+            "fidelity": "F2_run",
+            "data_role": "target",
+            "validation_fidelity": "normalized_index",
+            "missing_policy": "abort",
+            "description": "Enriched from v1 card metric 'household_consumption' via P07A2 enricher"
+          }
+        ],
+        "intervention_bindings": [],
+        "linked_observed_states": [],
+        "declared_reason": "test only",
+        "blocked_reason": null,
+        "minimum_replicates": 1,
+        "created_at": "2026-10-15T09:29:18.554509Z",
+        "created_by_phase": "audit"
+      }
+    }
+  },
+  "wrong_identity_digest_accepted": true,
+  "f2_second_economy_axes": {
+    "input": [],
+    "output": []
+  },
+  "service_tiny": {
+    "legacy": {
+      "capacity": 5.0,
+      "produced": 5.0,
+      "service_used": 3.0,
+      "expired": 2.0,
+      "delivered": 10.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    "exact_use": {
+      "capacity": 3.0,
+      "produced": 3.0,
+      "service_used": 3.0,
+      "expired": 0.0,
+      "delivered": 10.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    },
+    "zero_capacity": {
+      "capacity": 0.0,
+      "produced": 0.0,
+      "service_used": 0.0,
+      "expired": 0.0,
+      "delivered": 0.0,
+      "max_material_residual": 0.0,
+      "max_finance_residual": 0.0
+    }
+  },
+  "opening_inventory_tiny": {
+    "0.0": [
+      {
+        "tick": 0,
+        "activity_realized": [
+          0.0,
+          3.0,
+          0.0,
+          0.0
+        ],
+        "delivered": 3.0,
+        "max_material_residual": 0.0,
+        "max_finance_residual": 0.0
+      },
+      {
+        "tick": 1,
+        "activity_realized": [
+          0.0,
+          0.0,
+          3.0,
+          0.0
+        ],
+        "delivered": 3.0,
+        "max_material_residual": 0.0,
+        "max_finance_residual": 0.0
+      }
+    ],
+    "2.0": [
+      {
+        "tick": 0,
+        "activity_realized": [
+          0.0,
+          3.0,
+          2.0,
+          0.0
+        ],
+        "delivered": 3.0,
+        "max_material_residual": 0.0,
+        "max_finance_residual": 0.0
+      },
+      {
+        "tick": 1,
+        "activity_realized": [
+          8.0,
+          0.0,
+          3.0,
+          0.0
+        ],
+        "delivered": 3.08,
+        "max_material_residual": 0.0,
+        "max_finance_residual": 0.0
+      }
+    ]
+  }
+}

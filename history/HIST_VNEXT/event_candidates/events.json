@@ -1,0 +1,156 @@
+{
+  "schema_version": "hist_vnext_h1a_v1",
+  "events": [
+    {
+      "event_id": "E01",
+      "description": "1965 reform preparation committee",
+      "date": null,
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "date",
+        "document_number",
+        "archival_reference",
+        "rights"
+      ]
+    },
+    {
+      "event_id": "E02",
+      "description": "1966 reform resolution — May 25–27 NEM session (tentative date range)",
+      "date": null,
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "date",
+        "document_number",
+        "archival_reference",
+        "rights"
+      ]
+    },
+    {
+      "event_id": "E03",
+      "description": "1968-01-01 NEM implementation",
+      "date": "1968-01-01",
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "document_number",
+        "archival_reference",
+        "rights",
+        "sector_scope"
+      ]
+    },
+    {
+      "event_id": "E04",
+      "description": "1972-11 supervision adjustment and manager compensation",
+      "date": "1972-11-01",
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "document_number",
+        "archival_reference",
+        "rights"
+      ]
+    },
+    {
+      "event_id": "E05",
+      "description": "1973 external energy/trade shock",
+      "date": "1973-01-01",
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "document_number",
+        "archival_reference",
+        "rights",
+        "world_price_arrival"
+      ]
+    },
+    {
+      "event_id": "E06",
+      "description": "1975 CMEA price rule change",
+      "date": "1975-01-01",
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "document_number",
+        "archival_reference",
+        "rights",
+        "price_base_window",
+        "currency"
+      ]
+    },
+    {
+      "event_id": "E07",
+      "description": "1979–81 readjustment period",
+      "date": null,
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "date",
+        "document_number",
+        "archival_reference",
+        "rights"
+      ]
+    },
+    {
+      "event_id": "E08",
+      "description": "1982 financing pressure / IMF entry",
+      "date": null,
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "date",
+        "document_number",
+        "archival_reference",
+        "rights"
+      ]
+    },
+    {
+      "event_id": "E09",
+      "description": "Bank/foreign trade institution pre-export financing rules",
+      "date": null,
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "date",
+        "document_number",
+        "archival_reference",
+        "rights"
+      ]
+    },
+    {
+      "event_id": "E10",
+      "description": "Enterprise/local implementation and household response sample",
+      "date": null,
+      "document_number": null,
+      "archival_reference": null,
+      "rights": null,
+      "status": "candidate",
+      "missing_fields": [
+        "date",
+        "document_number",
+        "archival_reference",
+        "rights",
+        "plan_approval_chain"
+      ]
+    }
+  ]
+}

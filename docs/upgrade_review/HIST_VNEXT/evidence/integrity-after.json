@@ -1,0 +1,9 @@
+{
+  "head": "e48ba372e1fd714e49e60a7b16a5244aba38216c",
+  "tracked_count": 366,
+  "changed_tracked_paths": [],
+  "status": "?? CODEX_KICKOFF_PROMPT_HSM_VNEXT_2026-10-11.md\n?? HSM_Hungary_Project_Diagnostic_and_Upgrade_Recommendations_2026-10-15.md\n?? HSM_LAB_VNEXT_CODEX_AUDIT_BASELINE_2026-10-11.md\n?? docs/upgrade_review/HIST_VNEXT/\n",
+  "new_document_directory": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/docs/upgrade_review/HIST_VNEXT",
+  "new_run_directory": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/outputs/hist-vnext-audit-20261015",
+  "verification": "VERIFIED_BY_RUN; all original tracked SHA256 compared after final delivery; ignored old outputs were not snapshotted"
+}

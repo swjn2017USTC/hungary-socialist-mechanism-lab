@@ -1,0 +1,55 @@
+{
+  "authorities": [
+    {
+      "authority": "1965 preparation / 1966 approval of the New Economic Mechanism",
+      "period": "1965/1966",
+      "required_primary_ids": [
+        "E01",
+        "E02"
+      ],
+      "implementation_evidence_ids": [],
+      "status": "blocked",
+      "missing_evidence": "primary decree or government protocol with archival reference, document_number, and legal force"
+    },
+    {
+      "authority": "1968-01-01 NEM implementation: procurement/sales rights, price categories, profit/wage/investment rules",
+      "period": "1968-01-01",
+      "required_primary_ids": [
+        "E03"
+      ],
+      "implementation_evidence_ids": [],
+      "status": "blocked",
+      "missing_evidence": "original decree with sector_scope, institution IDs, and implementation date; no primary regulation obtained"
+    },
+    {
+      "authority": "1972-11 supervision and manager compensation adjustments",
+      "period": "1972-11",
+      "required_primary_ids": [
+        "E04"
+      ],
+      "implementation_evidence_ids": [],
+      "status": "blocked",
+      "missing_evidence": "original resolution with affected sectors, implementation lag, and exceptions"
+    },
+    {
+      "authority": "1975 CMEA price rule change (moving average mechanism)",
+      "period": "1975",
+      "required_primary_ids": [
+        "E06"
+      ],
+      "implementation_evidence_ids": [],
+      "status": "blocked",
+      "missing_evidence": "historical price base window, currency, quantity, and clearing balance agreements"
+    },
+    {
+      "authority": "Domestic/external trade financing and receivables",
+      "period": "1968-1985",
+      "required_primary_ids": [
+        "E09"
+      ],
+      "implementation_evidence_ids": [],
+      "status": "blocked",
+      "missing_evidence": "foreign trade enterprise permits, loan contracts, creditor lists, and clearing arrangements"
+    }
+  ]
+}

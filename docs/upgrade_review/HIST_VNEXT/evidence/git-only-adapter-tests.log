@@ -1,0 +1,47 @@
+.............FF                                                          [100%]
+=================================== FAILURES ===================================
+________________ test_negative_control_c0_digest_matches_audit _________________
+
+    def test_negative_control_c0_digest_matches_audit() -> None:
+        """The C0 digest from the audit run directory must match the frozen reference."""
+        c0_dir = ROOT / "outputs" / "codex-audit-vnext-20261011" / "C0"
+        result = verify_digest_unchanged(
+            scenario_id="historical_f2_replay",
+            seed=1729,
+            expected_digest=get_c0_digest(),
+            output_dir=c0_dir,
+            root=ROOT,
+        )
+>       assert result is True
+E       assert False is True
+
+tests/test_evidence_run_adapter.py:219: AssertionError
+________________ test_negative_control_c1_digest_matches_audit _________________
+
+    def test_negative_control_c1_digest_matches_audit() -> None:
+        """The C1 digest from the audit run directory must match the frozen reference."""
+        c1_dir = ROOT / "outputs" / "codex-audit-vnext-20261011" / "C1"
+        result = verify_digest_unchanged(
+            scenario_id="historical_f2_trade_scenario",
+            seed=1729,
+            expected_digest=get_c1_digest(),
+            output_dir=c1_dir,
+            root=ROOT,
+        )
+>       assert result is True
+E       assert False is True
+
+tests/test_evidence_run_adapter.py:232: AssertionError
+=============================== warnings summary ===============================
+tests/test_evidence_run_adapter.py::test_stub_record_has_no_experiment_results
+tests/test_evidence_run_adapter.py::test_stub_record_contains_m1_metrics
+tests/test_evidence_run_adapter.py::test_stub_record_multi_mechanism
+tests/test_evidence_run_adapter.py::test_stub_record_record_id_contains_phase_and_scenario
+  /private/tmp/hsm-hist-audit-20261015/git-only/src/hsm_lab/evidence/schemas.py:382: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    default_factory=lambda: datetime.utcnow().isoformat() + "Z"
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_evidence_run_adapter.py::test_negative_control_c0_digest_matches_audit
+FAILED tests/test_evidence_run_adapter.py::test_negative_control_c1_digest_matches_audit
+2 failed, 13 passed, 4 warnings in 0.08s

@@ -6,7 +6,7 @@
   ],
   "policy": "New subjects are registered as applications only: they create no formal card, reuse no legacy number, and remain candidates until an independent review rules on each. The legacy subject stays attached to its own number.",
   "preregistered_at": "2026-10-16",
-  "review_status": "pending_independent_review",
+  "review_status": "independently_reviewed_2026-10-16",
   "applications": [
     {
       "proposed_id": "M1-S1",

@@ -1,0 +1,112 @@
+[
+  {
+    "legacy_id": "M1",
+    "study_id": "M01",
+    "sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+    "legacy_hypothesis": "consecutive consumption improvement raises the political cost of a later welfare/real-income cut nonlinearly, so an equal cut provokes a larger response after a long improvement run than early in the window.",
+    "study_intent": "social_contract_ratchet_verification",
+    "ontology_hypothesis": "Welfare provision cuts force households to increase forced saving, reducing consumption. The mechanism operates through the household budget constraint, not through price channels.",
+    "decision": "主题替换",
+    "proposed_extension": "M1-S1（预算/短缺引发强制储蓄）"
+  },
+  {
+    "legacy_id": "M2",
+    "study_id": "M02",
+    "sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+    "legacy_hypothesis": "soft budget plus investment hunger is sufficient to sustain systemic shortage independently of the demand regime.",
+    "study_intent": "soft_budget_investment_shortage",
+    "ontology_hypothesis": "Hard budget constraints expose enterprise bottleneck constraints, generating tick diagnostics signals (queue buildup, demand overhang). The mechanism is activated when `policy.budget_hardness` increases.",
+    "decision": "方向和充分性被改写",
+    "proposed_extension": "M2-S1（硬预算暴露瓶颈）"
+  },
+  {
+    "legacy_id": "M3",
+    "study_id": "M03",
+    "sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+    "legacy_hypothesis": "full employment weakens enterprise discipline and feeds wage/hoarding feedback.",
+    "study_intent": "full_employment_labor_hoarding",
+    "ontology_hypothesis": "Enterprise autonomy increases wage drift, triggering a wage-price spiral. The mechanism operates through `policy.wage_factor` and `policy.plan_utilization`.",
+    "decision": "主题替换",
+    "proposed_extension": "X03（工资价格螺旋，DEFER）"
+  },
+  {
+    "legacy_id": "M4",
+    "study_id": "M04",
+    "sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+    "legacy_hypothesis": "the second economy is net stabilising or net eroding for the formal system.",
+    "study_intent": "second_economy_stabilization_erosion",
+    "ontology_hypothesis": "Consumer import factor caps force domestic substitution, reducing import volumes. The mechanism operates through `policy.consumer_import_factor`.",
+    "decision": "编号完全错配",
+    "proposed_extension": "X04（进口压缩，非M4）"
+  },
+  {
+    "legacy_id": "M5",
+    "study_id": "M05",
+    "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879",
+    "legacy_hypothesis": "enterprise autonomy rising while soft-budget constraints persist produces efficiency gains and macro imbalance simultaneously.",
+    "study_intent": "enterprise_autonomy_1968",
+    "ontology_hypothesis": "Enterprise autonomy amplifies bottleneck propagation: autonomous enterprises chase inputs more aggressively, worsening queue dynamics. Shares signals with M02 but the causal direction differs.",
+    "decision": "删去双结果与交互",
+    "proposed_extension": "M5-S1（autonomy与瓶颈）"
+  },
+  {
+    "legacy_id": "M6",
+    "study_id": "M06",
+    "sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+    "legacy_hypothesis": "external debt lengthens the social contract and shifts its cost forward.",
+    "study_intent": "external_debt_social_contract",
+    "ontology_hypothesis": "Credit envelope tightening tightens borrowing constraints, reducing investment and amplifying output drops. The mechanism operates through `policy.credit_fraction`.",
+    "decision": "外债被替换成国内信用",
+    "proposed_extension": "X06（国内借款约束）；M6另恢复"
+  },
+  {
+    "legacy_id": "M7",
+    "study_id": "M07",
+    "sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+    "legacy_hypothesis": "uneven distribution of social-contract gains across Budapest, the industrial belt and the agricultural counties creates different stability paths.",
+    "study_intent": "regional_distribution_stability",
+    "ontology_hypothesis": "Second economy tolerance policy (`policy.second_economy_tolerance`) shifts labor allocation between formal and informal sectors. The mechanism is detected through changes in `stage_balances` composition.",
+    "decision": "编号完全错配",
+    "proposed_extension": "M4-S1（副业劳动配置），不占M7"
+  },
+  {
+    "legacy_id": "M8",
+    "study_id": "M08",
+    "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1",
+    "legacy_hypothesis": "economic deterioration strengthens administrative conservatism under some conditions and the reform coalition under others.",
+    "study_intent": "political_coalition_crisis",
+    "ontology_hypothesis": "Private sector autonomy (`policy.private_autonomy`) drives productivity differences through competition dynamics. The mechanism operates through `organization_diagnostics` and `financial_accounts`.",
+    "decision": "编号完全错配",
+    "proposed_extension": "X08（私人自主与竞争，DEFER）"
+  },
+  {
+    "legacy_id": "M9",
+    "study_id": "M09",
+    "sha256": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c",
+    "legacy_hypothesis": "stronger statistical/computational/feedback capacity removes a measurable share of shortage and planning error.",
+    "study_intent": "information_optimization_failure",
+    "ontology_hypothesis": "Technology/forecast accuracy changes (`information_quarters.forecast_accuracy`) affect plan utilization and price stability. The mechanism operates through information asymmetry channels.",
+    "decision": "部分主题一致但测量循环",
+    "proposed_extension": "M9-S1（真实预测/计划误差），拒绝定义分数证据"
+  },
+  {
+    "legacy_id": "M10",
+    "study_id": "M10",
+    "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+    "legacy_hypothesis": "subsidies, borrowing and CMEA terms postpone an external shock, and the postponement raises later fragility.",
+    "study_intent": "external_buffer_shock_transmission",
+    "ontology_hypothesis": "Department-level planning friction (`departments.department_output`) generates systemic misallocation. The mechanism is detected through cross-department output variance.",
+    "decision": "编号完全错配",
+    "proposed_extension": "X10（部门计划摩擦），不占M10"
+  },
+  {
+    "legacy_id": "M11",
+    "study_id": "M11",
+    "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887",
+    "legacy_hypothesis": "continued investment and input priority for Department I crowds out Department II through raw-material, capital-good and labour competition, raising assortment shortage, durable waiting, forced substitution and the social-contract gap even when aggregate output grows.",
+    "study_intent": "departmental_i_ii_composition",
+    "ontology_hypothesis": "Policy interventions shift the composition of stage_balances (Inputs → Processing → Outputs). The mechanism operates through the material balance accounting system.",
+    "decision": "机制被缩成会计恒等变化",
+    "proposed_extension": "X11（stage composition诊断）；原M11恢复"
+  }
+]
