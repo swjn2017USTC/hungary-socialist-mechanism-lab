@@ -215,8 +215,17 @@ def _active_grants_at(
     for g in grants:
         if g.legal_force != "enactment":
             continue
-        # Track grants with unknown enactment as uncertain
+        # Track grants with unknown enactment as uncertain — but only if they could
+        # possibly be active at decision_at. If effective_from has definitely not
+        # started yet (decision_at < effective_from.earliest), the grant cannot affect
+        # the outcome at this date and is skipped entirely.
         if g.enactment_date.precision == "unknown":
+            if (
+                g.effective_from.precision != "unknown"
+                and g.effective_from.earliest is not None
+                and decision_at < g.effective_from.earliest
+            ):
+                continue  # definitely not yet active — skip
             uncertain.append(g)
             continue
         if g.enactment_date.latest is None:
@@ -268,10 +277,10 @@ def _active_grants_at(
                         else:
                             continue  # expired
                     else:  # normal range
-                        # Active from effective_from; expires after latest
-                        # decision < earliest → definitely active; decision > latest → expired
-                        # decision within [earliest, latest] → possibly expired (uncertain)
-                        if decision_at > d_end_latest:
+                        # Active from effective_from; expires at latest (half-open end)
+                        # decision < earliest → definitely active; decision >= latest → expired
+                        # decision within [earliest, latest) → possibly expired (uncertain)
+                        if decision_at >= d_end_latest:
                             continue  # definitely expired
                         elif decision_at < d_end_earliest:
                             pass  # definitely active
@@ -279,7 +288,7 @@ def _active_grants_at(
                             uncertain.append(g)  # within range — may have expired
                             continue
                 elif d_end_latest is not None:
-                    if decision_at > d_end_latest:
+                    if decision_at >= d_end_latest:
                         continue  # definitely expired
                     uncertain.append(g)  # within range — may have expired
                     continue
@@ -295,7 +304,7 @@ def _active_grants_at(
                 if g.effective_to.earliest is not None and g.effective_to.latest is not None:
                     if decision_at < g.effective_to.earliest:
                         pass  # definitely active
-                    elif decision_at > g.effective_to.latest:
+                    elif decision_at >= g.effective_to.latest:
                         continue  # definitely expired
                     else:
                         uncertain.append(g)  # within period → may have expired
@@ -308,7 +317,7 @@ def _active_grants_at(
                     # else: definitely active
                 elif g.effective_to.latest is not None:
                     # Only latest bound known (inclusive): within range → uncertain
-                    if decision_at > g.effective_to.latest:
+                    if decision_at >= g.effective_to.latest:
                         continue  # definitely expired
                     uncertain.append(g)  # within range → may have expired
                     continue
@@ -358,7 +367,7 @@ def _effective_revokes(
             if (
                 rev.effective_to is not None
                 and rev.effective_to.latest is not None
-                and decision_at > rev.effective_to.latest
+                and decision_at >= rev.effective_to.latest
             ):
                 continue  # definitely expired before decision date — skip
             # Also check effective_from: if definitely in future, definitely not effective
@@ -383,7 +392,7 @@ def _effective_revokes(
             if (
                 rev.effective_to is not None
                 and rev.effective_to.latest is not None
-                and decision_at > rev.effective_to.latest
+                and decision_at >= rev.effective_to.latest
             ):
                 continue  # definitely expired before decision date
             possible.append(rev)
@@ -425,16 +434,16 @@ def _effective_revokes(
                             definite.append(rev)  # definitely not expired
                         continue  # at or after exclusive end → expired
                     else:  # normal range
-                        # Active from earliest; expires after latest
+                        # Active from earliest; expires at latest (half-open end)
                         if decision_at < d_end_earliest:
                             definite.append(rev)  # definitely not expired
                             continue
-                        if decision_at > d_end_latest:
+                        if decision_at >= d_end_latest:
                             continue  # definitely expired
                         possible.append(rev)  # within range → possibly expired
                         continue
                 elif d_end_latest is not None:
-                    if decision_at <= d_end_latest:
+                    if decision_at < d_end_latest:
                         definite.append(rev)  # definitely not expired
                     continue
                 # else: no end bound → always active
@@ -446,7 +455,7 @@ def _effective_revokes(
                     if decision_at < rev.effective_to.earliest:
                         definite.append(rev)  # definitely not expired
                         continue
-                    elif decision_at > rev.effective_to.latest:
+                    elif decision_at >= rev.effective_to.latest:
                         continue  # definitely expired
                     else:
                         possible.append(rev)  # within period → possibly expired
@@ -461,7 +470,7 @@ def _effective_revokes(
                         continue
                 elif rev.effective_to.latest is not None:
                     # Only latest known (inclusive): within range → uncertain
-                    if decision_at > rev.effective_to.latest:
+                    if decision_at >= rev.effective_to.latest:
                         continue  # definitely expired
                     possible.append(rev)  # within range → possibly expired
                     continue

@@ -253,6 +253,12 @@ class InstitutionEvent(StrictModel):
                 f"event {self.event_id}: approval_date.earliest {appr_e} > "
                 f"enactment_date.latest {enact_l} — impossible chronology"
             )
+        # proposal → enactment (always): proposal must precede or overlap with enactment
+        if prop_e is not None and enact_l is not None and prop_e > enact_l:
+            raise ValueError(
+                f"event {self.event_id}: proposal_date.earliest {prop_e} > "
+                f"enactment_date.latest {enact_l} — proposal cannot precede enactment"
+            )
         # approval → effective_from (always)
         if appr_e is not None and eff_from_l is not None and appr_e > eff_from_l:
             raise ValueError(
@@ -302,23 +308,6 @@ class InstitutionEvent(StrictModel):
     # ---------------------------------------------------------------------------
     # Legal-effectiveness query
     # ---------------------------------------------------------------------------
-
-    def is_granted_at(self, d: date) -> bool | None:
-        """Return True only when legal_force == 'enactment' and effective window is active."""
-        if self.legal_force != "enactment":
-            return None
-        if self.effective_from.is_active_on(d) is False:
-            return False
-        active_from = self.effective_from.is_active_on(d)
-        if active_from is None:
-            return None
-        if self.effective_to is not None:
-            to_active = self.effective_to.is_active_on(d)
-            if to_active is False:
-                return False
-            if to_active is None:
-                return None
-        return True
 
 
 def _check_revoke_scope(revoke: InstitutionEvent, target: InstitutionEvent) -> None:
@@ -404,14 +393,18 @@ def _check_revoke_scope(revoke: InstitutionEvent, target: InstitutionEvent) -> N
                     f"are narrower than grant exclusions {gs.excluded_sector_ids}"
                 )
         else:
-            # Revoke: specific sectors → must be ⊆ grant effective
-            if not revoke_eff.issubset(
-                set(gs.sector_ids) - set(gs.excluded_sector_ids)
-            ):
+            # Revoke: specific sectors (rs.sector_ids non-empty). The grant is a
+            # wildcard minus its exclusions: it covers every sector except
+            # gs.excluded_sector_ids, so its sector_ids is empty and
+            # sector_ids - excluded_sector_ids is the empty set, which must NOT be
+            # used as the containment bound. The revoke is contained unless it
+            # targets a sector the grant excludes.
+            revoke_sectors = set(rs.sector_ids) - set(rs.excluded_sector_ids)
+            if revoke_sectors & set(gs.excluded_sector_ids):
                 raise ConfigError(
-                    f"revoke {revoke.event_id} effective sector scope {revoke_eff} "
+                    f"revoke {revoke.event_id} effective sector scope {revoke_sectors} "
                     f"exceeds grant {target.event_id} effective scope "
-                    f"{set(gs.sector_ids) - set(gs.excluded_sector_ids)}"
+                    f"(all sectors except {gs.excluded_sector_ids})"
                 )
     else:
         # Grant: specific sectors
@@ -462,9 +455,9 @@ class RegimeCalendar(StrictModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        # Reject empty calendar
-        if not self.events:
-            raise ConfigError("RegimeCalendar must have at least one event")
+        # An empty calendar is a legal artifact: it loads cleanly and every
+        # authority query against it returns "unknown" (no default rule is
+        # synthesized, see H1B plan §2).
         # Reject non-synthetic events if no historical source is present
         for ev in self.events:
             if not ev.synthetic_flag:
@@ -500,11 +493,28 @@ class RegimeCalendar(StrictModel):
                                     f"Event {ev.event_id} {field_name} precision=quarter "
                                     f"but earliest={di.earliest} is not on quarter boundary"
                                 )
-                        if di.precision == "year" and di.earliest.day != 1:
-                            raise ConfigError(
-                                f"Event {ev.event_id} {field_name} precision=year "
-                                f"but earliest={di.earliest} is not on year boundary"
-                            )
+                        if di.precision == "year":
+                            if di.earliest is not None and di.earliest.day != 1:
+                                raise ConfigError(
+                                    f"Event {ev.event_id} {field_name} precision=year "
+                                    f"but earliest={di.earliest} is not on year boundary"
+                                )
+                            if di.latest is not None and not (
+                                di.latest.month == 12 and di.latest.day == 31
+                            ):
+                                raise ConfigError(
+                                    f"Event {ev.event_id} {field_name} precision=year "
+                                    f"but latest={di.latest} is not on year boundary (Dec 31)"
+                                )
+                            if (
+                                di.earliest is not None
+                                and di.latest is not None
+                                and di.earliest.year != di.latest.year
+                            ):
+                                raise ConfigError(
+                                    f"Event {ev.event_id} {field_name} precision=year "
+                                    f"but spans years {di.earliest.year}–{di.latest.year}"
+                                )
         # No duplicate eventids
         ids = [ev.event_id for ev in self.events]
         if len(set(ids)) != len(ids):

@@ -679,11 +679,24 @@ class TestJSONLoading:
             load_calendar(path)
 
     def test_load_empty_events_array(self, tmp_path):
-        """Empty events array must be rejected — calendar requires at least one event."""
+        """A legal empty events array loads and queries as unknown (no default rule).
+
+        H1B plan §2: empty calendars are legal, must not synthesize an
+        all-period default policy, and every query against them is unknown.
+        """
         path = tmp_path / "empty.json"
         path.write_text('{"events": []}', encoding="utf-8")
-        with pytest.raises(ConfigError, match="must have at least one event"):
-            load_calendar(path)
+        cal = load_calendar(path)
+        assert cal.events == ()
+        result = authority_at(
+            cal,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            geographic_id="national",
+            permission="procurement",
+            decision_at=date(1970, 1, 1),
+        )
+        assert result.status == "unknown"
 
     def test_unknown_field_rejected(self, tmp_path):
         data = {
@@ -836,3 +849,171 @@ class TestJSONLoading:
         path.write_text(json.dumps({"events": [ev]}), encoding="utf-8")
         with pytest.raises(ConfigError, match="synthetic_flag=False"):
             load_calendar(path)
+
+
+# ---------------------------------------------------------------------------
+# Test 9 — review regressions
+#   Bug 1: effective_to uses half-open [from, to) → decision_at >= to.latest expires
+#   Bug 2: an empty (legal) calendar loads and queries as unknown
+#   Bug 3: a wildcard grant must still accept contained sector revokes
+# ---------------------------------------------------------------------------
+
+def _regression_event(**overrides) -> InstitutionEvent:
+    """Build a minimal valid synthetic event for the regression fixtures."""
+    base = {
+        "event_id": "EVT-REG-GRANT",
+        "permission": "procurement",
+        "scope": AuthorityScope(
+            organization_ids=("ORG-A",),
+            sector_ids=("industry",),
+            excluded_sector_ids=(),
+            geographic_ids=(),
+        ),
+        "action": "grant",
+        "proposal_date": _di(date(1969, 1, 1), date(1969, 1, 1), "day"),
+        "approval_date": _di(date(1969, 1, 1), date(1969, 1, 1), "day"),
+        "enactment_date": _di(date(1969, 12, 31), date(1969, 12, 31), "day"),
+        "effective_from": _di(date(1970, 1, 1), date(1970, 1, 1), "day"),
+        "effective_to": None,
+        "observed_implementation_at": None,
+        "source_available_at": _di(date(1957, 1, 1), date(1957, 1, 1), "day"),
+        "issuer": "synthetic regression fixture",
+        "legal_force": "enactment",
+        "source_ids": ("synthetic_h1b_design_note",),
+        "synthetic_flag": True,
+        "confidence_reason": "regression fixture",
+        "search_tags": (),
+    }
+    base.update(overrides)
+    return InstitutionEvent(**base)
+
+
+class TestEffectiveToBoundaryRegression:
+    """Bug 1: a revoke whose effective_to ends on the decision date is expired."""
+
+    @staticmethod
+    def _calendar(effective_to: DateInterval) -> RegimeCalendar:
+        grant = _regression_event(event_id="EVT-REG-GRANT")
+        revoke = _regression_event(
+            event_id="EVT-REG-REVOKE",
+            action="revoke",
+            revokes_event_id="EVT-REG-GRANT",
+            proposal_date=_di(date(1969, 12, 1), date(1969, 12, 1), "day"),
+            approval_date=_di(date(1969, 12, 1), date(1969, 12, 1), "day"),
+            enactment_date=_di(date(1969, 12, 31), date(1969, 12, 31), "day"),
+            effective_from=_di(date(1969, 12, 31), date(1969, 12, 31), "day"),
+            effective_to=effective_to,
+        )
+        return RegimeCalendar(events=(grant, revoke))
+
+    @staticmethod
+    def _status(calendar: RegimeCalendar, decision_at: date) -> str:
+        return authority_at(
+            calendar,
+            organization_id="ORG-A",
+            sector_id="industry",
+            geographic_id="national",
+            permission="procurement",
+            decision_at=decision_at,
+        ).status
+
+    def test_revoke_range_end_on_decision_date_is_expired(self):
+        """decision_at == effective_to.latest (range) → revoke definitely expired."""
+        cal = self._calendar(_di(date(1970, 1, 1), date(1970, 3, 31), "range"))
+        # Inside the end range → possibly expired → unknown
+        assert self._status(cal, date(1970, 3, 30)) == "unknown"
+        # On effective_to.latest → definitely expired → grant survives
+        assert self._status(cal, date(1970, 3, 31)) == "granted"
+
+    def test_revoke_month_end_on_decision_date_is_expired(self):
+        """decision_at == effective_to.latest (month period) → revoke expired."""
+        cal = self._calendar(_di(date(1970, 3, 1), date(1970, 3, 31), "month"))
+        # Before the end period → revoke definitely not expired
+        assert self._status(cal, date(1970, 2, 28)) == "revoked"
+        # Inside the end period → possibly expired → unknown
+        assert self._status(cal, date(1970, 3, 30)) == "unknown"
+        # On the last day of the end period → definitely expired → granted
+        assert self._status(cal, date(1970, 3, 31)) == "granted"
+
+
+class TestEmptyCalendarRegression:
+    """Bug 2: an empty calendar is legal and never yields a default policy."""
+
+    def test_empty_calendar_loads_and_returns_unknown(self):
+        cal = RegimeCalendar(events=())  # must not raise
+        assert cal.events == ()
+        result = authority_at(
+            cal,
+            organization_id="ORG-A",
+            sector_id="industry",
+            geographic_id="national",
+            permission="procurement",
+            decision_at=date(1970, 1, 1),
+        )
+        assert result.status == "unknown"
+        assert result.active_event_ids == ()
+
+
+class TestWildcardGrantRevokeScopeRegression:
+    """Bug 3: a wildcard-sector grant accepts revokes contained in its coverage."""
+
+    def test_wildcard_minus_exclusions_accepts_contained_revoke(self):
+        grant = _regression_event(
+            event_id="EVT-WILD-GRANT",
+            permission="price_setting",
+            scope=AuthorityScope(
+                organization_ids=(),
+                sector_ids=(),
+                excluded_sector_ids=("agri",),
+                geographic_ids=(),
+            ),
+        )
+        revoke = _regression_event(
+            event_id="EVT-WILD-REVOKE-INDUSTRY",
+            permission="price_setting",
+            scope=AuthorityScope(
+                organization_ids=(),
+                sector_ids=("industry",),
+                excluded_sector_ids=(),
+                geographic_ids=(),
+            ),
+            action="revoke",
+            revokes_event_id="EVT-WILD-GRANT",
+        )
+        cal = RegimeCalendar(events=(grant, revoke))  # must not raise
+        assert {ev.event_id for ev in cal.events} == {
+            "EVT-WILD-GRANT",
+            "EVT-WILD-REVOKE-INDUSTRY",
+        }
+
+    def test_unrestricted_wildcard_accepts_contained_revoke(self):
+        grant = _regression_event(
+            event_id="EVT-PURE-WILD-GRANT",
+            permission="price_setting",
+            scope=AuthorityScope(),
+        )
+        revoke = _regression_event(
+            event_id="EVT-PURE-WILD-REVOKE-INDUSTRY",
+            permission="price_setting",
+            scope=AuthorityScope(sector_ids=("industry",)),
+            action="revoke",
+            revokes_event_id="EVT-PURE-WILD-GRANT",
+        )
+        cal = RegimeCalendar(events=(grant, revoke))  # must not raise
+        assert len(cal.events) == 2
+
+    def test_wildcard_grant_excluded_sector_revoke_still_rejected(self):
+        grant = _regression_event(
+            event_id="EVT-WILD-GRANT-2",
+            permission="price_setting",
+            scope=AuthorityScope(sector_ids=(), excluded_sector_ids=("agri",)),
+        )
+        revoke = _regression_event(
+            event_id="EVT-WILD-REVOKE-AGRI",
+            permission="price_setting",
+            scope=AuthorityScope(sector_ids=("agri",)),
+            action="revoke",
+            revokes_event_id="EVT-WILD-GRANT-2",
+        )
+        with pytest.raises(ConfigError, match="exceeds grant"):
+            RegimeCalendar(events=(grant, revoke))
