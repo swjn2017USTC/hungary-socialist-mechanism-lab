@@ -804,6 +804,62 @@ class TestObservationBoundaryEnforcement:
                 ),
             )
 
+    def test_mixed_date_subclass_rejected(self):
+        """A date subclass carrying mutable state must be rejected."""
+        class MutableDate(date):
+            pass
+
+        d = MutableDate(1968, 1, 15)
+        with pytest.raises(TypeError, match="plain date"):
+            ActorObservation(
+                actor_role="procurement_organization",
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=d,
+                available_at=date(1968, 1, 10),
+                observed_fields=(),
+            )
+
+    def test_nested_prohibited_key_rejected(self):
+        """A nested dict containing prohibited keys must be rejected."""
+        builder = ObservationBuilder("procurement_organization")
+        with pytest.raises(TypeError, match="Prohibited key"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={
+                    "inventory_level": {  # "inventory_level" is in the whitelist
+                        "value": 999.0,
+                        "role": "calibration_target",  # prohibited key
+                    },
+                },
+            )
+
+    def test_nested_raw_truth_key_rejected(self):
+        """A nested dict containing raw_truth must be rejected."""
+        builder = ObservationBuilder("procurement_organization")
+        with pytest.raises(TypeError, match="raw_truth"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={
+                    "supply_quantity": {
+                        "value": 100.0,
+                        "raw_truth": 42.0,  # prohibited
+                    },
+                },
+            )
+
 
 # ---------------------------------------------------------------------------
 # Test 13 — P0 regression: authority binding
@@ -831,6 +887,42 @@ class TestAuthorityBindingEnforcement:
         # ORG-ENT-B's procurement is revoked — must be rejected
         assert result_b.authority_status == "revoked"
         assert not result_b.is_legal
+
+    def test_procurement_decision_with_approver_role_rejected(self, calendar):
+        """ProcurementDecision with APPROVER role must be rejected."""
+        decision = ProcurementDecision(
+            decision_id="wrong-role-proc",
+            actor_role=ActorRole.APPROVER,
+            organization_id="ORG-GOV",
+            sector_id="industry",
+            quarter="1968Q1",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        result = validate_proposal(decision, calendar)
+        assert not result.is_legal
+        assert "PROCUREMENT_ORGANIZATION" in result.reason
+
+    def test_price_decision_with_procurement_role_rejected(self, calendar):
+        """PriceProposalDecision with PROCUREMENT_ORGANIZATION role must be rejected."""
+        decision = PriceProposalDecision(
+            decision_id="wrong-role-price",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q1",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=PriceProposalKind.SET,
+            commodity_id="steel",
+            proposed_price=50.0,
+        )
+        result = validate_proposal(decision, calendar)
+        assert not result.is_legal
+        assert "APPROVER" in result.reason
 
     def test_nan_quantity_rejected(self):
         """NaN quantities must be rejected in legal validation."""

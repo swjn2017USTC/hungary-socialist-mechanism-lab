@@ -82,6 +82,11 @@ class ProcurementDecision(Decision):
 
     def validate_legality(self) -> tuple[bool, str]:
         import math
+        if self.actor_role != ActorRole.PROCUREMENT_ORGANIZATION:
+            return False, (
+                f"ProcurementDecision may only be issued by "
+                f"PROCUREMENT_ORGANIZATION, got {self.actor_role.value}"
+            )
         if self.requested_quantity < 0:
             return False, f"requested_quantity cannot be negative: {self.requested_quantity}"
         if not math.isfinite(self.requested_quantity):
@@ -116,6 +121,11 @@ class PriceProposalDecision(Decision):
 
     def validate_legality(self) -> tuple[bool, str]:
         import math
+        if self.actor_role != ActorRole.APPROVER:
+            return False, (
+                f"PriceProposalDecision may only be issued by "
+                f"APPROVER, got {self.actor_role.value}"
+            )
         if self.proposed_price < 0:
             return False, f"proposed_price cannot be negative: {self.proposed_price}"
         if not math.isfinite(self.proposed_price):
@@ -145,6 +155,11 @@ class InvestmentDecision(Decision):
 
     def validate_legality(self) -> tuple[bool, str]:
         import math
+        if self.actor_role not in (ActorRole.PROCUREMENT_ORGANIZATION, ActorRole.APPROVER):
+            return False, (
+                f"InvestmentDecision may only be issued by "
+                f"PROCUREMENT_ORGANIZATION or APPROVER, got {self.actor_role.value}"
+            )
         if self.requested_amount < 0:
             return False, f"requested_amount cannot be negative: {self.requested_amount}"
         if not math.isfinite(self.requested_amount):
@@ -181,6 +196,11 @@ class HouseholdNeedDecision(Decision):
 
     def validate_legality(self) -> tuple[bool, str]:
         import math
+        if self.actor_role != ActorRole.HOUSEHOLD_RECEIVER:
+            return False, (
+                f"HouseholdNeedDecision may only be issued by "
+                f"HOUSEHOLD_RECEIVER, got {self.actor_role.value}"
+            )
         if self.claimed_quantity < 0:
             return False, f"claimed_quantity cannot be negative: {self.claimed_quantity}"
         if not math.isfinite(self.claimed_quantity):

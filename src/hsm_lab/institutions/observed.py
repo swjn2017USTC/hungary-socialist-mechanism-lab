@@ -90,6 +90,14 @@ class ActorObservation(StrictModel):
                 f"available_at {self.available_at} cannot be after "
                 f"decision_at {self.decision_at}"
             )
+        # Reject date subclasses that may carry mutable state
+        for field_name in ("decision_at", "available_at"):
+            value = getattr(self, field_name)
+            if type(value) is not date:
+                raise TypeError(
+                    f"{field_name} must be a plain date, not {type(value).__name__}; "
+                    f"date subclasses may carry mutable state"
+                )
         # Enforce actor_role is registered
         if self.actor_role not in _ROLE_WHITELISTS:
             raise ValueError(
@@ -216,6 +224,41 @@ class ObservationBuilder:
         return self._whitelist
 
 
+# Prohibited keys that must never appear at any nesting level
+_PROHIBITED_KEYS: frozenset[str] = frozenset({
+    "raw_truth", "truth", "session", "callback", "closure",
+    "target", "calibration_target",
+    "role",  # indicates target-role perspective — not an allowed information source
+})
+
+
+def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
+    """Recursively check for prohibited keys; raise TypeError if found."""
+    t = type(value)
+    if t is dict:
+        for k, v in value.items():
+            key_str = str(k).lower()
+            for prohibited in _PROHIBITED_KEYS:
+                if prohibited in key_str:
+                    raise TypeError(
+                        f"Prohibited key {k!r} (contains '{prohibited}') "
+                        f"found in observation at {path}"
+                    )
+            _check_no_prohibited_keys(v, path=f"{path}.{k}")
+    elif t is tuple:
+        for i, v in enumerate(value):
+            if isinstance(v, (tuple, dict)):
+                _check_no_prohibited_keys(v, path=f"{path}[{i}]")
+    elif t is list:
+        for i, v in enumerate(value):
+            if isinstance(v, (tuple, dict)):
+                _check_no_prohibited_keys(v, path=f"{path}[{i}]")
+    elif t is frozenset:
+        for v in value:
+            if isinstance(v, (tuple, dict)):
+                _check_no_prohibited_keys(v, path=f"{path}[]")
+
+
 def _to_immutable(value: Any) -> Any:
     """Convert a value to a deep-immutable representation.
 
@@ -229,6 +272,8 @@ def _to_immutable(value: Any) -> Any:
 
     Rejected: callable, object with __dict__, subclasses of primitives
     carrying mutable state, or any type not in the above list.
+    Prohibited keys (raw_truth, session, callback, closure, target, etc.)
+    are rejected at any nesting level.
     """
     # Primitives — exact types only (not subclasses)
     if value is None or type(value) is type(None):  # noqa: E721
@@ -255,6 +300,8 @@ def _to_immutable(value: Any) -> Any:
     if type(value) is set:
         return frozenset(_to_immutable(v) for v in value)
     if type(value) is dict:
+        # Check for prohibited keys before converting
+        _check_no_prohibited_keys(value)
         return tuple(sorted(
             (str(k), _to_immutable(v)) for k, v in value.items()
         ))
@@ -276,9 +323,11 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
 
     Checks:
     - available_at <= decision_at
+    - decision_at and available_at are plain date (not subclasses)
+    - actor_role is a registered role
     - all observed field names are in the role whitelist
     - all values are deep-immutable (primitives, tuples, frozensets)
-    - no 'raw_truth', 'session', 'callback', 'closure' in field names or values
+    - no prohibited keys (raw_truth, session, callback, closure, target) at any nesting level
     """
     violations: list[str] = []
 
@@ -287,24 +336,40 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
             f"available_at {obs.available_at} > decision_at {obs.decision_at}"
         )
 
+    # Check date types are plain (not subclasses with mutable state)
+    for field_name in ("decision_at", "available_at"):
+        value = getattr(obs, field_name)
+        if type(value) is not date:
+            violations.append(
+                f"{field_name} must be plain date, not {type(value).__name__}"
+            )
+
     expected_whitelist = _ROLE_WHITELISTS.get(obs.actor_role, frozenset())
+    if obs.actor_role not in _ROLE_WHITELISTS:
+        violations.append(f"actor_role {obs.actor_role!r} not in registered roles")
+
     for name, _ in obs.observed_fields:
         if name not in expected_whitelist:
             violations.append(f"Field '{name}' not in whitelist for role {obs.actor_role}")
 
     # Check for prohibited names in field names
-    prohibited = {"raw_truth", "session", "callback", "closure", "truth"}
     for name, _ in obs.observed_fields:
-        for p in prohibited:
+        for p in _PROHIBITED_KEYS:
             if p in name.lower():
                 violations.append(f"Prohibited name '{p}' found in field '{name}'")
 
-    # Verify deep immutability of values
+    # Verify deep immutability of values and check for prohibited nested keys
     for name, value in obs.observed_fields:
         if not _is_deep_immutable(value):
             violations.append(
                 f"Value for '{name}' is not deep-immutable: {type(value).__name__}"
             )
+        # Check for prohibited keys in nested containers
+        if isinstance(value, (tuple, dict)):
+            try:
+                _check_no_prohibited_keys(value)
+            except TypeError as exc:
+                violations.append(f"Prohibited content in '{name}': {exc}")
 
     return violations
 
@@ -314,10 +379,40 @@ def _is_deep_immutable(value: Any) -> bool:
     t = type(value)
     if value is None or t is type(None):  # noqa: E721
         return True
-    if t in (bool, int, float, str):
+    if t is bool:
+        return True
+    if t is int:
+        return True
+    if t is float:
+        # Reject non-finite floats
+        if not (value == value) or abs(value) == float("inf"):
+            return False
+        return True
+    if t is str:
         return True
     if t is tuple:
         return all(_is_deep_immutable(v) for v in value)
     if t is frozenset:
         return all(_is_deep_immutable(v) for v in value)
+    return False
+
+
+def _dict_has_prohibited_keys(value: dict[Any, Any]) -> bool:
+    """Return True if any key in the dict or its nested values is prohibited."""
+    for k, v in value.items():
+        key_str = str(k).lower()
+        if any(p in key_str for p in _PROHIBITED_KEYS):
+            return True
+        t = type(v)
+        if t is dict:
+            if _dict_has_prohibited_keys(v):
+                return True
+        elif t is tuple:
+            for elem in v:
+                if isinstance(elem, dict) and _dict_has_prohibited_keys(elem):
+                    return True
+        elif t is list:
+            for elem in v:
+                if isinstance(elem, dict) and _dict_has_prohibited_keys(elem):
+                    return True
     return False
