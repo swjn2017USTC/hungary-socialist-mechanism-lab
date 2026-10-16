@@ -545,13 +545,14 @@ class TestDecisionRules:
 # ---------------------------------------------------------------------------
 
 class TestRolePermissionIsolation:
-    def test_same_quarter_different_roles(self, calendar):
-        """Procurement org and household receiver have different permissions.
+    def test_same_quarter_different_roles_different_outcomes(self, calendar):
+        """Same observation context, different roles → different authorization outcomes.
 
-        ORG-ENT-A has procurement authority (enacted 1968) but HH-001 has no
-        corresponding grant in the calendar — authorization differs by role+org.
+        PROCUREMENT_ORGANIZATION at ORG-ENT-A has procurement authority (granted).
+        HOUSEHOLD_RECEIVER at HH-001 has no procurement grant → unknown.
+        These exact outcomes are asserted, not just "different".
         """
-        # Procurement org: ORG-ENT-A has procurement authority (enacted 1968)
+        # ORG-ENT-A procurement → granted
         proc_decision = ProcurementDecision(
             decision_id="d12",
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
@@ -564,11 +565,9 @@ class TestRolePermissionIsolation:
             commodity_id="coal",
             requested_quantity=50.0,
         )
-        proc_result = validate_proposal(
-            proc_decision, calendar,
-        )
+        proc_result = validate_proposal(proc_decision, calendar)
 
-        # Household receiver: HH-001 has no procurement authority
+        # HH-001 has no consumption_allocation grant → unknown
         hh_decision = HouseholdNeedDecision(
             decision_id="d13",
             actor_role=ActorRole.HOUSEHOLD_RECEIVER,
@@ -582,17 +581,14 @@ class TestRolePermissionIsolation:
             commodity_id="coal",
             claimed_quantity=50.0,
         )
-        hh_result = validate_proposal(
-            hh_decision, calendar,
-        )
+        hh_result = validate_proposal(hh_decision, calendar)
 
-        # The results differ: org+role match determines outcome
+        # Exact outcomes asserted
+        assert proc_result.authority_status == "granted"
+        assert proc_result.is_legal
+        assert hh_result.authority_status == "unknown"
+        assert not hh_result.is_legal  # no grant = not legal
         assert proc_result.decision_id != hh_result.decision_id
-        proc_auth = proc_result.authority_status
-        hh_auth = hh_result.authority_status
-        # Both determinate
-        assert proc_auth in ("granted", "unknown", "revoked")
-        assert hh_auth in ("granted", "unknown", "revoked")
 
 
 # ---------------------------------------------------------------------------
@@ -908,7 +904,7 @@ class TestObservationBoundaryEnforcement:
             ("role", "calibration_target"),
             ("raw_truth", 999.0),
         )
-        with pytest.raises((ValueError, TypeError), match="Prohibited"):
+        with pytest.raises((ValueError, TypeError), match="[Pp]rohibited"):
             ActorObservation(
                 actor_role="procurement_organization",
                 organization_id="ORG-ENT-A",
@@ -926,7 +922,7 @@ class TestObservationBoundaryEnforcement:
             ("raw_truth", 999.0),
             ("role", "calibration_target"),
         })
-        with pytest.raises((ValueError, TypeError), match="Prohibited"):
+        with pytest.raises((ValueError, TypeError), match="[Pp]rohibited"):
             ActorObservation(
                 actor_role="procurement_organization",
                 organization_id="ORG-ENT-A",

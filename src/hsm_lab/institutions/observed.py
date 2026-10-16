@@ -117,21 +117,17 @@ class ActorObservation(StrictModel):
                     f"Field {name!r} is not in the whitelist for role "
                     f"{self.actor_role!r}; allowed: {sorted(role_whitelist)}"
                 )
-        # Enforce all values are deep-immutable
+        # Enforce all values are deep-immutable and contain no prohibited keys
         for name, value in self.observed_fields:
             if not _is_deep_immutable(value):
                 raise TypeError(
                     f"Value for field {name!r} is not deep-immutable: "
                     f"type={type(value).__name__}"
                 )
-            # Check for prohibited keys inside the value (tuple-of-pairs format)
-            if isinstance(value, (tuple, dict)):
-                try:
-                    _check_no_prohibited_keys(value)
-                except TypeError as exc:
-                    raise TypeError(
-                        f"Prohibited content in field {name!r}: {exc}"
-                    ) from exc
+            if _value_has_prohibited_keys(value):
+                raise TypeError(
+                    f"Value for field {name!r} contains a prohibited key"
+                )
 
     def get_field(self, field_name: str) -> Any:
         """Return the value for a whitelisted field, or raise KeyError."""
@@ -425,6 +421,41 @@ def _is_deep_immutable(value: Any) -> bool:
         return all(_is_deep_immutable(v) for v in value)
     if t is frozenset:
         return all(_is_deep_immutable(v) for v in value)
+    return False
+
+
+def _value_has_prohibited_keys(value: Any) -> bool:
+    """Return True if value (or any nested element) contains a prohibited key string."""
+    t = type(value)
+    if t is str:
+        for prohibited in _PROHIBITED_KEYS:
+            if prohibited in value:
+                return True
+        return False
+    if t is tuple:
+        for v in value:
+            if _value_has_prohibited_keys(v):
+                return True
+        return False
+    if t is frozenset:
+        for v in value:
+            if _value_has_prohibited_keys(v):
+                return True
+        return False
+    if t is list:
+        for v in value:
+            if _value_has_prohibited_keys(v):
+                return True
+        return False
+    if t is dict:
+        for k, v in value.items():
+            k_str = str(k)
+            for prohibited in _PROHIBITED_KEYS:
+                if prohibited in k_str:
+                    return True
+            if _value_has_prohibited_keys(v):
+                return True
+        return False
     return False
 
 
