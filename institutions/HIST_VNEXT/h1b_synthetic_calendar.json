@@ -1,0 +1,293 @@
+{
+  "events": [
+    {
+      "event_id": "EVT-1966-NEM-GRANT-PROCUREMENT",
+      "permission": "procurement",
+      "scope": {
+        "organization_ids": [],
+        "sector_ids": [],
+        "excluded_sector_ids": [],
+        "geographic_ids": []
+      },
+      "action": "grant",
+      "revokes_event_id": null,
+      "proposal_date": {
+        "earliest": "1966-05-01",
+        "latest": "1966-05-01",
+        "precision": "day"
+      },
+      "approval_date": {
+        "earliest": "1966-06-01",
+        "latest": "1966-06-01",
+        "precision": "day"
+      },
+      "enactment_date": {
+        "earliest": "1967-12-01",
+        "latest": "1967-12-01",
+        "precision": "day"
+      },
+      "effective_from": {
+        "earliest": "1968-01-01",
+        "latest": "1968-03-31",
+        "precision": "quarter"
+      },
+      "effective_to": null,
+      "observed_implementation_at": {
+        "earliest": "1968-03-15",
+        "latest": "1968-03-15",
+        "precision": "day"
+      },
+      "source_available_at": {
+        "earliest": "1957-01-01",
+        "latest": "1957-01-01",
+        "precision": "day"
+      },
+      "issuer": "Hungarian Socialist Workers Party / Government of Hungary",
+      "legal_force": "enactment",
+      "source_ids": ["synthetic_h1b_design_note"],
+      "implementation_evidence_ids": [],
+      "synthetic_flag": true,
+      "confidence_reason": "Synthetic test fixture for H1B regime calendar; no primary source admitted",
+      "search_tags": ["NEM", "1968", "procurement"],
+      "implementation_evidence_ids": []
+    },
+    {
+      "event_id": "EVT-1968-NEM-GRANT-INVESTMENT",
+      "permission": "investment_approval",
+      "scope": {
+        "organization_ids": ["ORG-ENT-A"],
+        "sector_ids": ["industry"],
+        "excluded_sector_ids": [],
+        "geographic_ids": []
+      },
+      "action": "grant",
+      "revokes_event_id": null,
+      "proposal_date": {
+        "earliest": "1966-05-01",
+        "latest": "1966-05-01",
+        "precision": "day"
+      },
+      "approval_date": {
+        "earliest": "1966-06-01",
+        "latest": "1966-06-01",
+        "precision": "day"
+      },
+      "enactment_date": {
+        "earliest": "1967-12-01",
+        "latest": "1967-12-01",
+        "precision": "day"
+      },
+      "effective_from": {
+        "earliest": "1968-01-01",
+        "latest": "1968-01-01",
+        "precision": "day"
+      },
+      "effective_to": null,
+      "observed_implementation_at": null,
+      "source_available_at": {
+        "earliest": "1957-01-01",
+        "latest": "1957-01-01",
+        "precision": "day"
+      },
+      "issuer": "Hungarian Socialist Workers Party / Government of Hungary",
+      "legal_force": "enactment",
+      "source_ids": ["synthetic_h1b_design_note"],
+      "implementation_evidence_ids": [],
+      "synthetic_flag": true,
+      "confidence_reason": "Synthetic test fixture for H1B regime calendar",
+      "search_tags": ["NEM", "1968", "investment_approval"]
+    },
+    {
+      "event_id": "EVT-1968-NEM-GRANT-PRICE-SETTING",
+      "permission": "price_setting",
+      "scope": {
+        "organization_ids": [],
+        "sector_ids": ["industry", "agriculture"],
+        "excluded_sector_ids": ["agriculture"],
+        "geographic_ids": []
+      },
+      "action": "grant",
+      "revokes_event_id": null,
+      "proposal_date": {
+        "earliest": "1966-05-01",
+        "latest": "1966-05-01",
+        "precision": "day"
+      },
+      "approval_date": {
+        "earliest": "1966-06-01",
+        "latest": "1966-06-01",
+        "precision": "day"
+      },
+      "enactment_date": {
+        "earliest": "1967-12-01",
+        "latest": "1967-12-01",
+        "precision": "day"
+      },
+      "effective_from": {
+        "earliest": "1968-01-01",
+        "latest": "1968-01-01",
+        "precision": "day"
+      },
+      "effective_to": null,
+      "observed_implementation_at": null,
+      "source_available_at": {
+        "earliest": "1957-01-01",
+        "latest": "1957-01-01",
+        "precision": "day"
+      },
+      "issuer": "Hungarian Socialist Workers Party / Government of Hungary",
+      "legal_force": "enactment",
+      "source_ids": ["synthetic_h1b_design_note"],
+      "implementation_evidence_ids": [],
+      "synthetic_flag": true,
+      "confidence_reason": "Synthetic test fixture: agriculture sector excluded from price_setting",
+      "search_tags": ["NEM", "1968", "price_setting"]
+    },
+    {
+      "event_id": "EVT-1968-NEM-REVOKE-PROCUREMENT-ENT-B",
+      "permission": "procurement",
+      "scope": {
+        "organization_ids": ["ORG-ENT-B"],
+        "sector_ids": [],
+        "excluded_sector_ids": [],
+        "geographic_ids": []
+      },
+      "action": "revoke",
+      "revokes_event_id": "EVT-1966-NEM-GRANT-PROCUREMENT",
+      "proposal_date": {
+        "earliest": "1972-11-01",
+        "latest": "1972-11-01",
+        "precision": "day"
+      },
+      "approval_date": {
+        "earliest": "1972-11-01",
+        "latest": "1972-11-01",
+        "precision": "day"
+      },
+      "enactment_date": {
+        "earliest": "1972-11-15",
+        "latest": "1972-11-15",
+        "precision": "day"
+      },
+      "effective_from": {
+        "earliest": "1972-11-15",
+        "latest": "1972-11-15",
+        "precision": "day"
+      },
+      "effective_to": null,
+      "observed_implementation_at": null,
+      "source_available_at": {
+        "earliest": "1957-01-01",
+        "latest": "1957-01-01",
+        "precision": "day"
+      },
+      "issuer": "Hungarian Socialist Workers Party / Government of Hungary",
+      "legal_force": "enactment",
+      "source_ids": ["synthetic_h1b_design_note"],
+      "implementation_evidence_ids": [],
+      "synthetic_flag": true,
+      "confidence_reason": "Synthetic fixture: revoke procurement for ORG-ENT-B only",
+      "search_tags": ["NEM", "revoke", "procurement"]
+    },
+    {
+      "event_id": "EVT-CMEA-PRE1975",
+      "permission": "cmea_price_rule_pre1975",
+      "scope": {
+        "organization_ids": [],
+        "sector_ids": [],
+        "excluded_sector_ids": [],
+        "geographic_ids": []
+      },
+      "action": "grant",
+      "revokes_event_id": null,
+      "proposal_date": {
+        "earliest": "1969-01-01",
+        "latest": "1969-01-01",
+        "precision": "day"
+      },
+      "approval_date": {
+        "earliest": "1970-01-01",
+        "latest": "1970-01-01",
+        "precision": "day"
+      },
+      "enactment_date": {
+        "earliest": "1970-01-01",
+        "latest": "1970-01-01",
+        "precision": "day"
+      },
+      "effective_from": {
+        "earliest": "1971-01-01",
+        "latest": "1971-01-01",
+        "precision": "day"
+      },
+      "effective_to": {
+        "earliest": "1975-01-01",
+        "latest": "1975-01-01",
+        "precision": "day"
+      },
+      "observed_implementation_at": null,
+      "source_available_at": {
+        "earliest": "1957-01-01",
+        "latest": "1957-01-01",
+        "precision": "day"
+      },
+      "issuer": "CMEA",
+      "legal_force": "enactment",
+      "source_ids": ["synthetic_h1b_design_note"],
+      "implementation_evidence_ids": [],
+      "synthetic_flag": true,
+      "confidence_reason": "Synthetic CMEA pre-1975 price rule fixture",
+      "search_tags": ["CMEA", "price_rule", "pre_1975"]
+    },
+    {
+      "event_id": "EVT-CMEA-POST1975",
+      "permission": "cmea_price_rule_post1975",
+      "scope": {
+        "organization_ids": [],
+        "sector_ids": [],
+        "excluded_sector_ids": [],
+        "geographic_ids": []
+      },
+      "action": "grant",
+      "revokes_event_id": null,
+      "proposal_date": {
+        "earliest": "1975-01-01",
+        "latest": "1975-01-01",
+        "precision": "day"
+      },
+      "approval_date": {
+        "earliest": "1975-01-01",
+        "latest": "1975-01-01",
+        "precision": "day"
+      },
+      "enactment_date": {
+        "earliest": "1975-01-01",
+        "latest": "1975-01-01",
+        "precision": "day"
+      },
+      "effective_from": {
+        "earliest": "1975-01-01",
+        "latest": "1975-01-01",
+        "precision": "day"
+      },
+      "effective_to": {
+        "earliest": "1980-01-01",
+        "latest": "1980-01-01",
+        "precision": "day"
+      },
+      "observed_implementation_at": null,
+      "source_available_at": {
+        "earliest": "1957-01-01",
+        "latest": "1957-01-01",
+        "precision": "day"
+      },
+      "issuer": "CMEA",
+      "legal_force": "enactment",
+      "source_ids": ["synthetic_h1b_design_note"],
+      "implementation_evidence_ids": [],
+      "synthetic_flag": true,
+      "confidence_reason": "Synthetic CMEA post-1975 price rule fixture",
+      "search_tags": ["CMEA", "price_rule", "post_1975"]
+    }
+  ]
+}
