@@ -920,6 +920,24 @@ class TestObservationBoundaryEnforcement:
                 observed_fields=(("inventory_level", payload),),
             )
 
+    def test_frozenset_with_prohibited_keys_rejected(self):
+        """A frozenset containing prohibited (key, value) pairs must be rejected."""
+        payload = frozenset({
+            ("raw_truth", 999.0),
+            ("role", "calibration_target"),
+        })
+        with pytest.raises((ValueError, TypeError), match="Prohibited"):
+            ActorObservation(
+                actor_role="procurement_organization",
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                observed_fields=(("inventory_level", payload),),
+            )
+
 
 # ---------------------------------------------------------------------------
 # Test 13 — P0 regression: authority binding

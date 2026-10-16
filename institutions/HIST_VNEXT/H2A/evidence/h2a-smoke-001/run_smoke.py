@@ -93,8 +93,26 @@ def check(name: str, condition: bool, detail: str = ""):
         print(f"  FAIL  {name}: {detail}")
 
 
-# S1: Observation — whitelist filtering
+# S1: Observation — prohibited key rejection + whitelist filtering
 builder = ObservationBuilder("procurement_organization")
+# S1a: raw_truth must raise
+try:
+    builder.build(
+        organization_id="ORG-ENT-A",
+        sector_id="industry",
+        geographic_id="national",
+        quarter="1968Q1",
+        decision_at=date(1968, 1, 15),
+        available_at=date(1968, 1, 10),
+        raw_data={
+            "raw_truth": 999.0,  # prohibited — must raise
+        },
+    )
+    check("S1: raw_truth raises TypeError", False, "no exception raised")
+except TypeError as exc:
+    check("S1: raw_truth raises TypeError", "Prohibited key" in str(exc))
+
+# S1b: whitelist filtering — supply_quantity retained, others dropped
 obs = builder.build(
     organization_id="ORG-ENT-A",
     sector_id="industry",
@@ -109,12 +127,11 @@ obs = builder.build(
         "inventory_level": 30.0,
         "capacity_utilization": 0.85,
         "shortage_indicator": 0.1,
-        "raw_truth": 999.0,  # should be dropped
+        "unrelated_field": 999.0,  # not whitelisted — silently dropped
     },
 )
-check("S1: whitelist filters raw_truth", "raw_truth" not in {n for n, _ in obs.observed_fields})
-supply_in_fields = "supply_quantity" in {n for n, _ in obs.observed_fields}
-check("S1: whitelist includes supply_quantity", supply_in_fields)
+check("S1: whitelist includes supply_quantity",
+      "supply_quantity" in {n for n, _ in obs.observed_fields})
 
 # S2: available_at constraint
 try:

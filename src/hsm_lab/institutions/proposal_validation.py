@@ -291,8 +291,10 @@ class BoundedPlanning(DecisionRule):
             )
         # Bounded planning: observation must be within decision's information horizon
         if observation is not None:
-            # observation may be an ActorObservation or a raw dict
+            # Try ActorObservation attribute first, then raw dict key
             obs_avail = getattr(observation, "available_at", None)
+            if obs_avail is None and isinstance(observation, dict):
+                obs_avail = observation.get("available_at")
             if obs_avail is not None and obs_avail > decision.decision_at:
                 return False, (
                     f"bounded_planning violated: observation available_at "

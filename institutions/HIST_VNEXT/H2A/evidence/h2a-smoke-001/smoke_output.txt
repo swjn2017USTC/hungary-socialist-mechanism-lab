@@ -1,4 +1,4 @@
-  PASS  S1: whitelist filters raw_truth
+  PASS  S1: raw_truth raises TypeError
   PASS  S1: whitelist includes supply_quantity
   PASS  S2: future available_at rejected
   PASS  S3: observation is frozen
