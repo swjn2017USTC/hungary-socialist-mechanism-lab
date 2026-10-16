@@ -250,7 +250,7 @@ _PROHIBITED_KEYS: frozenset[str] = frozenset({
 
 
 def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
-    """Recursively check for prohibited keys; raise TypeError if found."""
+    """Recursively check for prohibited keys (case-insensitive); raise TypeError if found."""
     t = type(value)
     if t is dict:
         for k, v in value.items():
@@ -268,7 +268,7 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
             if isinstance(v, (tuple, dict)):
                 _check_no_prohibited_keys(v, path=f"{path}[{i}]")
             elif isinstance(v, str):
-                # It's a key in a (key, value) pair
+                # It's a key in a (key, value) pair — check case-insensitively
                 v_lower = v.lower()
                 for prohibited in _PROHIBITED_KEYS:
                     if prohibited in v_lower:
@@ -276,6 +276,10 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
                             f"Prohibited key {v!r} (contains '{prohibited}') "
                             f"found in observation at {path}[{i}]"
                         )
+    elif t is frozenset:
+        for v in value:
+            if isinstance(v, (tuple, dict)):
+                _check_no_prohibited_keys(v, path=f"{path}[]")
     elif t is list:
         for i, v in enumerate(value):
             if isinstance(v, (tuple, dict)):
@@ -381,8 +385,9 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
 
     # Check for prohibited names in field names
     for name, _ in obs.observed_fields:
+        name_lower = name.lower()
         for p in _PROHIBITED_KEYS:
-            if p in name.lower():
+            if p in name_lower:
                 violations.append(f"Prohibited name '{p}' found in field '{name}'")
 
     # Verify deep immutability of values and check for prohibited nested keys
@@ -425,11 +430,12 @@ def _is_deep_immutable(value: Any) -> bool:
 
 
 def _value_has_prohibited_keys(value: Any) -> bool:
-    """Return True if value (or any nested element) contains a prohibited key string."""
+    """Return True if value contains a prohibited key string (case-insensitive)."""
     t = type(value)
     if t is str:
+        val_lower = value.lower()
         for prohibited in _PROHIBITED_KEYS:
-            if prohibited in value:
+            if prohibited in val_lower:
                 return True
         return False
     if t is tuple:
@@ -449,7 +455,7 @@ def _value_has_prohibited_keys(value: Any) -> bool:
         return False
     if t is dict:
         for k, v in value.items():
-            k_str = str(k)
+            k_str = str(k).lower()
             for prohibited in _PROHIBITED_KEYS:
                 if prohibited in k_str:
                     return True

@@ -934,6 +934,41 @@ class TestObservationBoundaryEnforcement:
                 observed_fields=(("inventory_level", payload),),
             )
 
+    def test_uppercase_prohibited_key_rejected(self):
+        """Prohibited keys must be caught case-insensitively (RAW_TRUTH, ROLE, etc.)."""
+        # Uppercase variant of raw_truth
+        payload = frozenset({("RAW_TRUTH", 999.0), ("ROLE", "CALIBRATION_TARGET")})
+        with pytest.raises((ValueError, TypeError), match="[Pp]rohibited"):
+            ActorObservation(
+                actor_role="procurement_organization",
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                observed_fields=(("inventory_level", payload),),
+            )
+
+    def test_mixed_case_prohibited_key_in_builder_rejected(self):
+        """Mixed-case prohibited keys must be caught in the builder path (case-insensitive)."""
+        builder = ObservationBuilder("procurement_organization")
+        with pytest.raises(TypeError, match="[Pp]rohibited"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={
+                    "inventory_level": {
+                        "value": 100.0,
+                        "RAW_TRUTH": 42.0,  # uppercase — still prohibited
+                    },
+                },
+            )
+
 
 # ---------------------------------------------------------------------------
 # Test 13 — P0 regression: authority binding
