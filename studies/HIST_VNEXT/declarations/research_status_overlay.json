@@ -1,0 +1,571 @@
+{
+  "overlay_version": "hist_vnext_h0b_v1",
+  "phase": "H0B",
+  "applies_to": [
+    "studies/manifest.json",
+    "studies/M01/study_decl.json",
+    "studies/M02/study_decl.json",
+    "studies/M03/study_decl.json",
+    "studies/M04/study_decl.json",
+    "studies/M05/study_decl.json",
+    "studies/M06/study_decl.json",
+    "studies/M07/study_decl.json",
+    "studies/M08/study_decl.json",
+    "studies/M09/study_decl.json",
+    "studies/M10/study_decl.json",
+    "studies/M11/study_decl.json"
+  ],
+  "description": "H0B research-status overlay. It keeps every M01–M11 intent and its declared source hash and revises the research status through an overlay, never by rewriting the old declarations.",
+  "policy": {
+    "historical_identification_default": "UNIDENTIFIED",
+    "structural_result_default": "NOT_RUN",
+    "research_package_complete": false,
+    "threshold_promotes_historical_status": false,
+    "prior_identification_note": "The P04 behavioural priors a legacy declaration references are UNIDENTIFIED model parameters (prior-constrained): no declared observable constrains them and they are recorded only as calibrated_parameter_dependencies, so a declaration may call its design 'declared' but never call its priors 'identified'. Any 'identified' sentence survives only as a revoked quotation.",
+    "promotion_note": "No r, .6/.7 or p threshold may raise a historical status, and SUPPORTED_MODEL_BEHAVIOR requires a complete pre-registered experiment with paired/first-stage/mediator/negative control/conservation evidence; HISTORICAL_SUPPORTED additionally requires admitted primary sources with an independent review of competing explanations.",
+    "verdicts_separated": [
+      "technical",
+      "structural",
+      "historical"
+    ]
+  },
+  "reference_run": {
+    "path": "outputs/hist-vnext-audit-20261015/C0-r1",
+    "run_id": "ebe44a8a7af2423e9de6eb85fd2ffb24",
+    "scenario_id": "historical_f2_replay",
+    "seed": 1729,
+    "ticks": 116,
+    "deterministic_replay_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+    "reference_run_manifest_sha256": "9f012c760cc4121a079a1914a06a049621a46e378bdf251742f7c23c22bd9821",
+    "registered_metrics": 41,
+    "observability": {
+      "observable": 10,
+      "semantics_blocked": 23,
+      "sidecar_absent": 4,
+      "table_empty": 4
+    }
+  },
+  "observability_note": "Every record's technical_registration.observability_in_reference_run is the genuine frequency of hsm_lab.evidence.adapter.observe_registry over this reference run, counted per legacy card; the per-card frequencies sum to metrics_total, the eleven cards sum to registered_metrics, and hsm_lab.evidence.adapter.observation_counts reports the identical global tally. The frequencies are an observability report, not a research status: they do not raise any record's structural or historical verdict.",
+  "records": [
+    {
+      "record_id": "H0B-M01",
+      "mechanism_id": "M01",
+      "legacy_card_id": "M1",
+      "intent": "social_contract_ratchet_verification",
+      "source_declaration": {
+        "path": "studies/M01/study_decl.json",
+        "sha256": "7b3fd2a710340ab69171cdf7d98d658d583313030a170c7c431f68d2ef780666",
+        "legacy_status": "declared"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M1.json",
+        "sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 5,
+        "mapped": 5,
+        "blocked": 0,
+        "observability_in_reference_run": {
+          "observable": 3,
+          "table_empty": 2
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "needs a matched-reference quarter with the same cash supply and external state, plus a measurable political response; neither the reference series nor the response measure is admitted"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "prior_identification": {
+        "referenced_priors": ["p04_coalition_prior", "p04_observation_prior"],
+        "status": "UNIDENTIFIED",
+        "basis": "config/calibration/p05.json identification_notes records the six P04 behavioural blocks, including these two, as UNIDENTIFIED; no declared observable constrains them, so they stay prior-constrained and are listed only as calibrated_parameter_dependencies."
+      },
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted primary series on the reference-consumption ratchet; the P07 'prior identified' claim is itself unsupported: p04_coalition_prior and p04_observation_prior are UNIDENTIFIED priors (prior-constrained), not identified parameters"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false,
+      "revoked_claims": [
+        {
+          "claim_source": "studies/M01/study_decl.json#declared_reason",
+          "verbatim_claim": "p04_coalition_prior and p04_observation_prior are identified; ratchet metric already wired via household_welfare adaptive expectations; paired checkpoint design ready",
+          "revoked_on": "2026-10-16",
+          "revoked_by_phase": "H0B",
+          "reason": "The referenced priors do not identify anything. config/calibration/p05.json records the six P04 behavioural blocks -- including p04_coalition_prior and p04_observation_prior -- as UNIDENTIFIED and prior-constrained: no declared observable constrains them, and they appear only as calibrated_parameter_dependencies. That is not identification of the historical ratchet mechanism. 05 §6 separates the technical, structural and historical verdicts, and the historical verdict here is UNIDENTIFIED until a matched-reference first-stage and a political response measure are admitted.",
+          "replacement_status": {
+            "declaration": "declared",
+            "structural_result": "NOT_RUN",
+            "historical_identification_status": "UNIDENTIFIED"
+          }
+        }
+      ]
+    },
+    {
+      "record_id": "H0B-M02",
+      "mechanism_id": "M02",
+      "legacy_card_id": "M2",
+      "intent": "soft_budget_investment_shortage",
+      "source_declaration": {
+        "path": "studies/M02/study_decl.json",
+        "sha256": "c8d1e91c4d84237be9d21e696b87437cba73e530ff537e67dfe46680b13aa538",
+        "legacy_status": "blocked"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M2.json",
+        "sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 4,
+        "mapped": 1,
+        "blocked": 3,
+        "observability_in_reference_run": {
+          "observable": 1,
+          "semantics_blocked": 2,
+          "sidecar_absent": 1
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "needs a first-stage on the soft-budget manipulation (policy.budget_hardness) before any shortage response can be read"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted shortage/queue series at the required commodity granularity"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false,
+      "blocked_reason_diff": {
+        "verbatim_previous_reason": "F2 second economy commodity axes empty; bottleneck/investment metrics require non-empty commodity axis; pending F2 second economy wiring (P07B/P10A)",
+        "h0b_reason": [
+          "H0B does not gate on an F2 second-economy commodity axis. M02's bottleneck count is observable in the reference run; its other three metrics are blocked on their own missing denominator, undeclared separator and absent sidecar."
+        ],
+        "note": "kept so the old wording is not silently rewritten (05 §1.1)"
+      }
+    },
+    {
+      "record_id": "H0B-M03",
+      "mechanism_id": "M03",
+      "legacy_card_id": "M3",
+      "intent": "full_employment_labor_hoarding",
+      "source_declaration": {
+        "path": "studies/M03/study_decl.json",
+        "sha256": "20d157baee8439665ed277846ba40d29bc037d450b9abf15810b1c4dda8a2ec7",
+        "legacy_status": "blocked"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M3.json",
+        "sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 3,
+        "mapped": 0,
+        "blocked": 3,
+        "observability_in_reference_run": {
+          "semantics_blocked": 3
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "no independent labour state (establishment, effective hours, absence) exists to hold discipline constant"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted labour-hours or absence series"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false
+    },
+    {
+      "record_id": "H0B-M04",
+      "mechanism_id": "M04",
+      "legacy_card_id": "M4",
+      "intent": "second_economy_stabilization_erosion",
+      "source_declaration": {
+        "path": "studies/M04/study_decl.json",
+        "sha256": "0cc1ba8f7990d825d5e1abb39fdf533371bcab570d09753453bc0bb83dff935f",
+        "legacy_status": "blocked"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M4.json",
+        "sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 4,
+        "mapped": 2,
+        "blocked": 2,
+        "observability_in_reference_run": {
+          "observable": 2,
+          "semantics_blocked": 2
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "the F2 plot/second-economy recipe axes are empty, so the formal-vs-informal comparison has no second sector to compare against"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted second-economy output series and no primary source for net stabilising/eroding"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false,
+      "blocked_reason_diff": {
+        "verbatim_previous_reason": "F2 second economy recipe axes empty; second_input/output tuples = []; F2 wiring prerequisite (P07B)",
+        "h0b_reason": [
+          "H0B does not gate on an F2 second-economy commodity axis. M04's service use is bound to a code-grounded value unit and its formal availability gap to the physical unmet quantity; both plot composites stay blocked on two declared flows and an F2 plot recipe."
+        ],
+        "note": "kept so the old wording is not silently rewritten (05 §1.1)"
+      }
+    },
+    {
+      "record_id": "H0B-M05",
+      "mechanism_id": "M05",
+      "legacy_card_id": "M5",
+      "intent": "enterprise_autonomy_1968",
+      "source_declaration": {
+        "path": "studies/M05/study_decl.json",
+        "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7",
+        "legacy_status": "declared"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M5.json",
+        "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 4,
+        "mapped": 1,
+        "blocked": 3,
+        "observability_in_reference_run": {
+          "observable": 1,
+          "semantics_blocked": 2,
+          "sidecar_absent": 1
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "the two-outcome design needs the enterprise chain (M2/M5) resolved and exogenous resources held fixed"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "prior_identification": {
+        "referenced_priors": ["p04_coalition_prior", "p04_information_prior"],
+        "status": "UNIDENTIFIED",
+        "basis": "config/calibration/p05.json identification_notes records the six P04 behavioural blocks, including these two, as UNIDENTIFIED; no declared observable constrains them, so they stay prior-constrained and are listed only as calibrated_parameter_dependencies."
+      },
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted 1968 autonomy measure at enterprise level; p04_coalition_prior and p04_information_prior are UNIDENTIFIED priors (prior-constrained), so the P07 'prior identified' claim was never an identification of the historical mechanism"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false,
+      "revoked_claims": [
+        {
+          "claim_source": "studies/M05/study_decl.json#declared_reason",
+          "verbatim_claim": "p04_coalition_prior and p04_information_prior are identified; PoliticalSession→policy→material targets path exists; autonomy×hardness 2×2 design available",
+          "revoked_on": "2026-10-16",
+          "revoked_by_phase": "H0B",
+          "reason": "The referenced priors identify nothing. config/calibration/p05.json records p04_coalition_prior and p04_information_prior as UNIDENTIFIED and prior-constrained (no declared observable constrains them), and an existing PoliticalSession→policy→material path is an implementation fact; neither identifies the historical 1968 autonomy mechanism. The declaration stays, the historical claim is withdrawn.",
+          "replacement_status": {
+            "declaration": "declared",
+            "structural_result": "NOT_RUN",
+            "historical_identification_status": "UNIDENTIFIED"
+          }
+        }
+      ]
+    },
+    {
+      "record_id": "H0B-M06",
+      "mechanism_id": "M06",
+      "legacy_card_id": "M6",
+      "intent": "external_debt_social_contract",
+      "source_declaration": {
+        "path": "studies/M06/study_decl.json",
+        "sha256": "cc9da04184ce45edc52f345ff4f9b75fbb4ccd3b3c5a76da8ce96ce028252028",
+        "legacy_status": "blocked"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M6.json",
+        "sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 4,
+        "mapped": 1,
+        "blocked": 3,
+        "observability_in_reference_run": {
+          "observable": 1,
+          "semantics_blocked": 2,
+          "sidecar_absent": 1
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "needs a foreign-currency credit envelope with a counterparty ledger; no such instrument is declared"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted debt stock/service series by currency or creditor"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false
+    },
+    {
+      "record_id": "H0B-M07",
+      "mechanism_id": "M07",
+      "legacy_card_id": "M7",
+      "intent": "regional_distribution_stability",
+      "source_declaration": {
+        "path": "studies/M07/study_decl.json",
+        "sha256": "4e3c9ac8159f00171b11d80cdd5c1a6bdd4676d05304fd0234e87dc26bd142de",
+        "legacy_status": "blocked"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M7.json",
+        "sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 2,
+        "mapped": 0,
+        "blocked": 2,
+        "observability_in_reference_run": {
+          "semantics_blocked": 2
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "regional allocation and local feedback need a declared 20-region budget vector; the policy factors are national scalars"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted regional consumption/investment series at 20-region granularity"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false
+    },
+    {
+      "record_id": "H0B-M08",
+      "mechanism_id": "M08",
+      "legacy_card_id": "M8",
+      "intent": "political_coalition_crisis",
+      "source_declaration": {
+        "path": "studies/M08/study_decl.json",
+        "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9",
+        "legacy_status": "declared"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M8.json",
+        "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 2,
+        "mapped": 1,
+        "blocked": 1,
+        "observability_in_reference_run": {
+          "semantics_blocked": 1,
+          "table_empty": 1
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "needs an endogenous political session with a real policy control and a replay negative control"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted coalition-composition series; administrative conservatism vs reform is not directly observed"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false
+    },
+    {
+      "record_id": "H0B-M09",
+      "mechanism_id": "M09",
+      "legacy_card_id": "M9",
+      "intent": "information_optimization_failure",
+      "source_declaration": {
+        "path": "studies/M09/study_decl.json",
+        "sha256": "110810c89adcce7d6995bf08357c588d3483ac01ed0f2e03b0dc90d17d487b1b",
+        "legacy_status": "blocked"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M9.json",
+        "sha256": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 3,
+        "mapped": 2,
+        "blocked": 1,
+        "observability_in_reference_run": {
+          "semantics_blocked": 1,
+          "table_empty": 1,
+          "observable": 1
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "needs issued-versus-realized forecast pairs; the current forecast column is a capability definition"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted planning-error series; official statistics do not publish plan-versus-realization residuals for this window"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false
+    },
+    {
+      "record_id": "H0B-M10",
+      "mechanism_id": "M10",
+      "legacy_card_id": "M10",
+      "intent": "external_buffer_shock_transmission",
+      "source_declaration": {
+        "path": "studies/M10/study_decl.json",
+        "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843",
+        "legacy_status": "blocked"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M10.json",
+        "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 4,
+        "mapped": 0,
+        "blocked": 4,
+        "observability_in_reference_run": {
+          "semantics_blocked": 3,
+          "sidecar_absent": 1
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "needs the external-finance and trade ledgers closed and a pre-registered later window"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted terms-of-trade/subsidy/credit decomposition, and the later window is closed"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false
+    },
+    {
+      "record_id": "H0B-M11",
+      "mechanism_id": "M11",
+      "legacy_card_id": "M11",
+      "intent": "departmental_i_ii_composition",
+      "source_declaration": {
+        "path": "studies/M11/study_decl.json",
+        "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540",
+        "legacy_status": "blocked"
+      },
+      "source_v1_card": {
+        "path": "config/p06/cards/M11.json",
+        "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887",
+        "frozen_identity_map_sha256_matches": true
+      },
+      "technical_registration": {
+        "level": "VERIFIED_BY_CODE",
+        "metrics_total": 6,
+        "mapped": 1,
+        "blocked": 5,
+        "observability_in_reference_run": {
+          "observable": 1,
+          "semantics_blocked": 5
+        }
+      },
+      "structural_result": {
+        "status": "NOT_RUN",
+        "level": "HYPOTHESIS",
+        "reason": "needs a Department I/II mapping with exogenously fixed resources, not a stage-balance identity"
+      },
+      "historical_identification_status": "UNIDENTIFIED",
+      "historical_support": {
+        "status": "UNIDENTIFIED",
+        "level": "NOT_RUN",
+        "reason": "no admitted Department I/II output split from primary sources for this window"
+      },
+      "research_package_complete": false,
+      "prior_identified_claim_present": false,
+      "promotion_rules_applied": [],
+      "historical_supported": false
+    }
+  ],
+  "summary": {
+    "records": 11,
+    "declared": 3,
+    "blocked": 8,
+    "research_package_complete_true": 0,
+    "historical_identification_identified": 0,
+    "historical_supported": 0,
+    "revoked_claims": 2,
+    "observability_in_reference_run": {
+      "observable": 10,
+      "semantics_blocked": 23,
+      "sidecar_absent": 4,
+      "table_empty": 4
+    }
+  }
+}

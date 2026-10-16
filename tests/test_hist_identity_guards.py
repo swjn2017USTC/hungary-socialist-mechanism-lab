@@ -45,6 +45,7 @@ from hsm_lab.evidence.schemas import (
     canonical_mechanism_id,
     study_mechanism_id,
 )
+from hsm_lab.evidence.table_registry import PHYSICAL_UNIT_TOKEN
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -2692,7 +2693,9 @@ class TestSupportedMetricContentBinding:
                 end_quarter="1985Q4",
                 missing_policy=MissingPolicy.ABORT,
             ),
-            unit="M_forint",
+            # ``aggregates.delivered`` is a physical flow: its unit is the
+            # commodity-specific ontology token, never model currency.
+            unit=PHYSICAL_UNIT_TOKEN,
             fidelity=FidelityLevel.F2_RUN,
             data_role=DataRole.TARGET,
             validation_fidelity=ValidationFidelity.EXACT,
@@ -3164,9 +3167,29 @@ class TestSupportedMetricContentBinding:
         with pytest.raises(ValueError, match="declared unit does not match"):
             verify_supported_record_runs(ROOT, record)
 
-    def test_metric_unit_is_bound_to_the_registry_unit(self, tmp_path: Path) -> None:
-        """Control: any unit the model declares for the pair is accepted."""
+    def test_a_physical_pair_accepts_only_the_physical_unit(
+        self, tmp_path: Path
+    ) -> None:
+        """A physical pair takes its ontology unit; a monetary unit is refused.
+
+        ``national_accounts.household_consumption`` is a physical flow, so the
+        only unit the model declares for it is the commodity-specific physical
+        token. The pre-H0B claim that it is ``M_forint (model currency)`` is
+        revoked, so a record declaring it is rejected.
+        """
         run_dir = self._run_dir(tmp_path)
+        verify_supported_record_runs(
+            ROOT,
+            self._record(
+                run_dir,
+                self._spec(
+                    metric_id="m1.household_consumption",
+                    table_or_sidecar="national_accounts",
+                    column="household_consumption",
+                    unit=PHYSICAL_UNIT_TOKEN,
+                ),
+            ),
+        )
         record = self._record(
             run_dir,
             self._spec(
@@ -3176,7 +3199,8 @@ class TestSupportedMetricContentBinding:
                 unit="M_forint (model currency)",
             ),
         )
-        verify_supported_record_runs(ROOT, record)
+        with pytest.raises(ValueError, match="declared unit does not match"):
+            verify_supported_record_runs(ROOT, record)
 
     def test_unit_of_an_unregistered_pair_is_not_bound(self, tmp_path: Path) -> None:
         """A sidecar column has no model-declared unit to contradict."""
@@ -3294,7 +3318,7 @@ class TestSupportedMetricContentBinding:
                 metric_id="m1.household_consumption",
                 table_or_sidecar="trajectory_tables/national_accounts.parquet",
                 column="household_consumption",
-                unit="M_forint",
+                unit=PHYSICAL_UNIT_TOKEN,
             ),
         )
         verify_supported_record_runs(ROOT, record)
@@ -3358,12 +3382,14 @@ class TestSupportedMetricContentBinding:
                 metric_id="m1.forced_saving",
                 table_or_sidecar="household_budgets",
                 column="forced_saving",
+                unit="M_forint",
                 region_axis=region_axis,
             ),
             self._spec(
                 metric_id="m2.credit_drawn",
                 table_or_sidecar="organization_diagnostics",
                 column="credit_drawn",
+                unit="M_forint",
                 region_axis=region_axis,
                 data_role=DataRole.CANDIDATE_LINKAGE,
                 validation_fidelity=ValidationFidelity.PROXY,
@@ -3372,6 +3398,7 @@ class TestSupportedMetricContentBinding:
                 metric_id="m6.treasury_cash",
                 table_or_sidecar="financial_accounts",
                 column="closing",
+                unit="M_forint",
                 data_role=DataRole.CANDIDATE_LINKAGE,
                 validation_fidelity=ValidationFidelity.PROXY,
             ),

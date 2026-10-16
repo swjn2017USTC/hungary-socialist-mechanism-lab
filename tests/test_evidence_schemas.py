@@ -403,7 +403,15 @@ def test_v1_sha_map_matches_supersedes_json() -> None:
 # ---------------------------------------------------------------------------
 
 def test_v2_registry_derives_metrics_from_v1_cards() -> None:
-    """load_v2_card_registry must produce metric specs for all v1 card metrics."""
+    """load_v2_card_registry must use the verified semantic registration.
+
+    The registry is no longer built by a second, weaker path that emitted
+    placeholder specs (``table_or_sidecar="unknown"``, ``unit="unknown"``): it
+    is the H0B registration, so every spec carries the real quantity and its
+    declared data role.
+    """
+    from hsm_lab.evidence.adapter import register_legacy_cards
+
     registry = load_v2_card_registry(ROOT, "P07A1")
 
     assert registry.phase == "P07A1"
@@ -412,11 +420,17 @@ def test_v2_registry_derives_metrics_from_v1_cards() -> None:
     assert sorted(registry.v1_cards_sha256.keys(), key=lambda x: int(x[1:])) == [
         f"M{i}" for i in range(1, 12)
     ]
-    # At least one metric spec per card
-    assert len(registry.metric_specs) >= 11
-    # All metric specs are CANDIDATE_LINKAGE (not yet confirmed)
+    # The verified registration holds them, byte for byte.
+    verified = register_legacy_cards(ROOT)
+    assert registry.v1_cards_sha256 == verified.identity_map_sha256()
+    # One spec per declared metric (41), never a placeholder.
+    assert len(registry.metric_specs) == 41
+    assert [spec.metric_id for spec in registry.metric_specs] == [
+        registration.spec.metric_id for registration in verified.registrations
+    ]
     for spec in registry.metric_specs:
-        assert spec.data_role == DataRole.CANDIDATE_LINKAGE
+        assert spec.table_or_sidecar != "unknown"
+        assert spec.unit != "unknown"
 
 
 # ---------------------------------------------------------------------------

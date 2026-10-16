@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from hsm_lab.evidence.adapter import (
     MetricSpecRegistry,
-    card_to_metric_specs,
     load_v2_card_registry,
 )
 from hsm_lab.evidence.intervention_validator import (
@@ -91,7 +90,6 @@ __all__ = [
     "build_card_provenance",
     # adapter
     "MetricSpecRegistry",
-    "card_to_metric_specs",
     "load_v2_card_registry",
     # metric enricher (P07A2)
     "enrich_card_metrics",

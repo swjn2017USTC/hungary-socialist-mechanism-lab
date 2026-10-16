@@ -1,13 +1,37 @@
-"""P07A2 §1: canonical table and column registry for F2 run output.
+"""P07A2 §1 / H0B §5: canonical table and column registry for F2 run output.
 
 This module maps table names to their columns, commodity axes, region axes,
-and quarter ranges. It is read-only: it does not read data files, run the
-model, or access historical targets.
+and quarter ranges, and resolves the commodity-specific physical unit the
+model declares for each commodity from the read-only ontology
+``config/ontology/f2_v1.json``.
+
+H0B: ``F2_TABLE_COLUMNS`` mirrors the schema the model itself declares for
+its output tables -- the ``*_COLUMNS`` lists in ``hsm_lab.storage.
+material_output`` / ``hsm_lab.storage.political_output`` that the writer uses
+to emit the Parquet files -- and was cross-checked against the Parquet schema
+of a real run. Columns a legacy card expected but the model never writes
+(``political_quarters.soviet_relation_quality``, ``events.entity_id`` /
+``entity_type`` / ``payload``) are gone; columns the model does write and the
+registry omitted (aggregates household/plot/retail/wholesale stocks,
+national_accounts inventory/residual, organization_diagnostics arrears and
+expectations) are present.
+
+The evidence package stays decoupled from the production engine: this module
+reads the frozen ontology JSON, never ``hsm_lab.storage`` or the engine.
+``tests/test_hist_semantic_registry.py`` is what binds the two by comparing
+these lists with the writer's own column constants.
+
+This module is read-only: it does not read run output, run the model, or
+access historical targets.
 """
 
 from __future__ import annotations
 
+import json
+from collections.abc import Mapping
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -124,6 +148,10 @@ F2_TABLE_COLUMNS: dict[str, list[str]] = {
         "financial_delivery_blocked", "physical_delivery_blocked",
         "production", "production_raw", "production_ready",
         "input_open", "input_close", "output_open", "output_close",
+        "wholesale_open", "wholesale_close", "retail_open", "retail_close",
+        "household_desired", "household_budget_unmet",
+        "household_availability_unmet",
+        "plot_self_use", "plot_market_sales",
     ],
     "national_accounts": [
         "tick", "quarter", "commodity_id",
@@ -133,7 +161,12 @@ F2_TABLE_COLUMNS: dict[str, list[str]] = {
         "household_consumption", "expiry",
         "organization_input_open", "organization_input_close",
         "organization_output_open", "organization_output_close",
-        "wholesale_open",
+        "wholesale_open", "wholesale_close", "retail_open", "retail_close",
+        "plot_open", "plot_close",
+        "project_wip_open", "project_wip_close",
+        "import_pool_open", "import_pool_close",
+        "total_stock_open", "total_stock_close",
+        "material_balance_residual", "material_balance_tolerance_ratio",
     ],
     "household_budgets": [
         "tick", "quarter", "region_id",
@@ -170,6 +203,9 @@ F2_TABLE_COLUMNS: dict[str, list[str]] = {
         "ordered_sum", "delivered_sum", "input_bottleneck_share",
         "credit_requested", "credit_approved", "credit_drawn",
         "investment_requested", "investment_approved", "investment_completed",
+        "bailout_requested", "bailout_granted", "principal_sum",
+        "wage_arrears_sum", "interest_arrears_sum", "cash_sum",
+        "shortage_expectation_mean", "bailout_expectation_mean",
     ],
     "financial_accounts": [
         "tick", "quarter", "account_id", "currency", "account_label",
@@ -190,7 +226,9 @@ F2_TABLE_COLUMNS: dict[str, list[str]] = {
         "policy_cultural_openness", "policy_supported_boundary",
         "policy_tolerance_boundary", "policy_repression",
         "policy_information_investment",
-        "elite_cohesion", "soviet_relation_quality",
+        "elite_cohesion", "soviet_bound", "soviet_violation",
+        "selected_candidate", "information_capability",
+        "coalition_contributions_json",
     ],
     "information_quarters": [
         "tick", "quarter", "feature_id", "capability", "data_latency",
@@ -214,10 +252,240 @@ F2_TABLE_COLUMNS: dict[str, list[str]] = {
         "attribution",
     ],
     "events": [
-        "tick", "quarter", "event_type", "entity_id",
-        "entity_type", "payload",
+        "tick", "quarter", "event_type", "details_json",
     ],
 }
+
+
+# ---------------------------------------------------------------------------
+# Optional sidecars named by legacy cards, produced by no F2 run
+# ---------------------------------------------------------------------------
+
+# The v1 cards name these sidecars as the home of quantities they measure. No
+# F2 run writes them: a run output tree holds the 14 Parquet tables above and
+# nothing else. A metric bound to one of them is BLOCKED rather than read from
+# a stand-in table, because summing ``financial_accounts.closing`` over every
+# account is not ``money_stock.money_total_close``, and
+# ``stage_balances.closing`` is not ``commodity_circuit.stock_close``.
+F2_OPTIONAL_SIDECARS: dict[str, str] = {
+    "money_stock": (
+        "no F2 run writes a money_stock table or sidecar, so money_total_close "
+        "has no producer to read"
+    ),
+    "commodity_circuit": (
+        "no F2 run writes a commodity_circuit table or sidecar, so stock_close "
+        "has no producer to read"
+    ),
+}
+
+
+def is_optional_sidecar(name: str) -> bool:
+    """True if ``name`` is a card-named sidecar that no F2 run produces."""
+    return name in F2_OPTIONAL_SIDECARS
+
+
+# ---------------------------------------------------------------------------
+# Commodity-specific physical units (read-only ontology)
+# ---------------------------------------------------------------------------
+
+# An F2 physical quantity is denominated in the commodity's own 1960 unit, not
+# in model currency and not in a base-year index. The units live in the frozen
+# ontology; they are read here, never invented, so a commodity whose unit the
+# ontology does not declare cannot be silently priced, normalised or summed
+# with another commodity.
+_ONTOLOGY_PATH = (
+    Path(__file__).resolve().parents[3] / "config" / "ontology" / "f2_v1.json"
+)
+
+# The token a MetricSpec declares when its quantity is a physical flow whose
+# unit is the commodity-specific ontology unit rather than a single scalar.
+# ``metric_commodity_units`` resolves it to one unit per commodity.
+PHYSICAL_UNIT_TOKEN = "f2_v1_commodity_physical_unit"
+
+
+@lru_cache(maxsize=1)
+def load_f2_commodity_units() -> dict[str, str]:
+    """Read commodity_id → physical unit from ``config/ontology/f2_v1.json``.
+
+    Returns
+    -------
+    dict[str, str]
+        One 1960 unit per F2 commodity, as declared by the ontology.
+
+    Raises
+    ------
+    RuntimeError
+        If the ontology is missing or does not declare a non-empty unit for
+        every F2 commodity. The gate fails closed: a commodity without a
+        declared unit must not be measured, priced or summarised.
+    """
+    try:
+        payload = json.loads(_ONTOLOGY_PATH.read_text(encoding="utf-8"))
+    except OSError as error:  # pragma: no cover - frozen repository file
+        raise RuntimeError(
+            f"F2 ontology {_ONTOLOGY_PATH} is unreadable: {error}"
+        ) from error
+    units = {
+        str(entry["id"]): str(entry["unit"])
+        for entry in payload.get("commodities", [])
+        if entry.get("id") and entry.get("unit")
+    }
+    missing = [c for c in F2_COMMODITY_IDS if c not in units]
+    if missing:
+        raise RuntimeError(
+            f"F2 ontology {_ONTOLOGY_PATH} declares no unit for {missing}"
+        )
+    unknown = sorted(set(units) - set(F2_COMMODITY_IDS))
+    if unknown:
+        raise RuntimeError(
+            f"F2 ontology {_ONTOLOGY_PATH} declares commodities the F2 axis "
+            f"does not hold: {unknown}"
+        )
+    return units
+
+
+F2_COMMODITY_UNITS: dict[str, str] = load_f2_commodity_units()
+
+
+def f2_commodity_unit(commodity_id: str) -> str:
+    """The ontology-declared physical unit of one F2 commodity.
+
+    Raises
+    ------
+    KeyError
+        If the ontology declares no unit for ``commodity_id``.
+    """
+    try:
+        return F2_COMMODITY_UNITS[commodity_id]
+    except KeyError as error:
+        raise KeyError(
+            f"the F2 ontology declares no physical unit for commodity "
+            f"{commodity_id!r}; the quantity cannot be denominated"
+        ) from error
+
+
+def f2_commodity_units_for(commodity_ids: list[str]) -> dict[str, str]:
+    """Resolve one ontology unit per commodity, refusing unknown commodities.
+
+    Raises
+    ------
+    KeyError
+        If any requested commodity has no ontology-declared unit.
+    """
+    resolved = {commodity: f2_commodity_unit(commodity) for commodity in commodity_ids}
+    validate_commodity_units(resolved)
+    return resolved
+
+
+def validate_commodity_units(claims: Mapping[str, str]) -> None:
+    """Refuse any commodity→unit claim the ontology does not make.
+
+    A unit claim is the one place a physical quantity can silently become a
+    different one: a food quantity denominated in solid-fuel units is not the
+    quantity the table holds, even though both columns are physical. Every
+    producer of such a claim is checked here rather than trusted.
+
+    Raises
+    ------
+    ValueError
+        If a claimed commodity is unknown, or its claimed unit is not the
+        ontology-declared unit for that commodity.
+    """
+    for commodity, claimed in claims.items():
+        try:
+            declared = f2_commodity_unit(commodity)
+        except KeyError as error:
+            raise ValueError(str(error)) from error
+        if claimed != declared:
+            raise ValueError(
+                f"commodity {commodity!r} is declared in unit {declared!r} by the "
+                f"F2 ontology, not {claimed!r}: the claimed unit belongs to a "
+                "different quantity"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Pre-H0B unit declarations: revoked, kept only as a record
+# ---------------------------------------------------------------------------
+
+# H0B re-declares the unit of a physical F2 quantity as the commodity-specific
+# ontology unit (05 §H0B), and a physical quantity is never denominated in
+# model currency or a share. A few ``(table, column)`` pairs carried a monetary
+# or share declaration in the pre-H0B P07A2 registry; those declarations were
+# wrong about the quantity the model holds, so H0B **revokes** them.
+#
+# 05 §1.1 forbids silently rewriting past declarations, so the revoked claims
+# stay on disk here as a record of what was asserted -- but they are NOT part
+# of the live accepted-unit set. ``metric_enricher.metric_table_units`` builds
+# that set from the model's own declarations only, so a monetary or share unit
+# for one of these physical pairs is refused rather than accepted.
+P07A2_HISTORICAL_PAIR_UNITS: dict[tuple[str, str], tuple[str, ...]] = {
+    ("aggregates", "delivered"): ("M_forint", "share (0-1)"),
+    ("national_accounts", "household_consumption"): (
+        "M_forint",
+        "M_forint (model currency)",
+    ),
+    ("financial_accounts", "closing"): ("M_forint",),
+}
+"""Pre-H0B unit claims, revoked. Kept as evidence, never merged into the live set."""
+
+
+#: Tokens that mark a unit as a value denomination rather than a physical
+#: quantity: a physical flow cannot be denominated in model currency, in a
+#: share of something else, or in a dimensionless index/ratio of itself.
+_MONETARY_OR_SHARE_UNIT_TOKENS: tuple[str, ...] = (
+    "forint",
+    "currency",
+    "share",
+    "index",
+    "ratio",
+)
+
+
+def is_monetary_or_share_unit(unit: str) -> bool:
+    """True for a unit token that denominates a value, not a physical quantity.
+
+    A physical F2 quantity carries the commodity-specific ontology unit (the
+    token :data:`PHYSICAL_UNIT_TOKEN`, resolved per commodity). A monetary,
+    share or index/ratio token is a different quantity's unit; treating it as
+    the physical pair's unit silently restates the quantity.
+    """
+    normalized = unit.casefold()
+    return any(token in normalized for token in _MONETARY_OR_SHARE_UNIT_TOKENS)
+
+
+def validate_physical_unit_claims(
+    units: Mapping[tuple[str, str], frozenset[str] | set[str]],
+) -> None:
+    """Refuse a physical pair that also accepts a monetary or share unit.
+
+    The accepted-unit set of a physical ``(table, column)`` pair must be
+    exactly the physical token: if the pair claims the physical unit and a
+    monetary/share unit at once, the model would accept a value denomination
+    for a physical quantity, and the union is a silent unit bypass. Fails
+    closed rather than trusting any producer of such a set.
+
+    Raises
+    ------
+    ValueError
+        If a pair declares :data:`PHYSICAL_UNIT_TOKEN` together with a
+        monetary/share unit.
+    """
+    for (table, column), declared in units.items():
+        if PHYSICAL_UNIT_TOKEN not in declared:
+            continue
+        conflicting = sorted(
+            unit
+            for unit in declared
+            if unit != PHYSICAL_UNIT_TOKEN and is_monetary_or_share_unit(unit)
+        )
+        if conflicting:
+            raise ValueError(
+                f"physical pair {table}.{column} declares both "
+                f"{PHYSICAL_UNIT_TOKEN!r} and the monetary/share unit(s) "
+                f"{conflicting}: a physical quantity cannot be denominated in "
+                "model currency, a share or an index"
+            )
 
 
 # ---------------------------------------------------------------------------

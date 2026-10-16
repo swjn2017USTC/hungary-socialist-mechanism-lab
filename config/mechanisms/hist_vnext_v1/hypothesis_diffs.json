@@ -1,0 +1,362 @@
+{
+  "schema_version": "hist_vnext_v1",
+  "document": "H0B hypothesis diff: original sentence, P07 ontology drift, 02 verdict, H0B revision",
+  "phase": "H0B",
+  "policy": "05 §1.1 and §H0B: the original hypothesis, manipulations, controls, falsification criterion, result categories, replicate count and parameter dependencies are preserved verbatim beside their frozen card SHA-256; the revision is recorded as a new overlay entry, never by rewriting the card.",
+  "source": {
+    "identity_map": "docs/upgrade_review/HIST_VNEXT/evidence/MECHANISM_IDENTITY_MAP.json",
+    "reconciliation": "docs/upgrade_review/HIST_VNEXT/02_MECHANISM_IDENTITY_RECONCILIATION.md"
+  },
+  "cards": [
+    {
+      "legacy_card_id": "M1",
+      "study_id": "M01",
+      "legacy_card_path": "config/p06/cards/M1.json",
+      "legacy_card_sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+      "original_hypothesis": "consecutive consumption improvement raises the political cost of a later welfare/real-income cut nonlinearly, so an equal cut provokes a larger response after a long improvement run than early in the window.",
+      "p07_ontology_drift": "Welfare provision cuts force households to increase forced saving, reducing consumption. The mechanism operates through the household budget constraint, not through price channels.",
+      "reconciliation_decision": "主题替换",
+      "h0b_revision": "H0B keeps the card's dependent variable as the physical consumption volume per commodity (national_accounts.household_consumption, commodity 1960 unit) and marks the two 0-row columns (opposition grievance, policy welfare provision) as empty-table observations. The ratchet itself is NOT_RUN: it needs a matched-reference design, and no first-stage or political measurability exists yet.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "policy.welfare_provision one-shot cut of equal size applied at 1961Q1 vs 1967Q1",
+        "policy.consumer_import_factor as a second real-income lever"
+      ],
+      "original_controlled_variables": [
+        "external history and the intervention files",
+        "seed",
+        "the remaining policy vector"
+      ],
+      "original_falsification_criterion": "the late cut's response in the grievance/consumption metrics is not larger than the early cut's by the declared margin.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": [
+        "p04_coalition_prior",
+        "p04_observation_prior"
+      ]
+    },
+    {
+      "legacy_card_id": "M2",
+      "study_id": "M02",
+      "legacy_card_path": "config/p06/cards/M2.json",
+      "legacy_card_sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+      "original_hypothesis": "soft budget plus investment hunger is sufficient to sustain systemic shortage independently of the demand regime.",
+      "p07_ontology_drift": "Hard budget constraints expose enterprise bottleneck constraints, generating tick diagnostics signals (queue buildup, demand overhang). The mechanism is activated when `policy.budget_hardness` increases.",
+      "reconciliation_decision": "方向和充分性被改写",
+      "h0b_revision": "H0B keeps the shortage counters (bottleneck_demand_count) and BLOCKS the undelivered *share* (no declared denominator), the credit_drawn/shortage_expectation composite (separator undeclared) and commodity_circuit.stock_close (no producer). The card's sufficiency claim ('independently of the demand regime') is not tested by H0B.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "policy.budget_hardness",
+        "policy.credit_fraction",
+        "bailout_envelope_fraction",
+        "credit_envelope_fraction"
+      ],
+      "original_controlled_variables": [
+        "demand shocks",
+        "external history",
+        "seed"
+      ],
+      "original_falsification_criterion": "with hardness raised and credit cut, the shortage metrics do not fall.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": []
+    },
+    {
+      "legacy_card_id": "M3",
+      "study_id": "M03",
+      "legacy_card_path": "config/p06/cards/M3.json",
+      "legacy_card_sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+      "original_hypothesis": "full employment weakens enterprise discipline and feeds wage/hoarding feedback.",
+      "p07_ontology_drift": "Enterprise autonomy increases wage drift, triggering a wage-price spiral. The mechanism operates through `policy.wage_factor` and `policy.plan_utilization`.",
+      "reconciliation_decision": "主题替换",
+      "h0b_revision": "All three card metrics are BLOCKED: the labour_mean/wage_arrears_sum composite cannot be truncated, production per worker has no comparable worker denominator, and household desired has no household-specific delivered counterpart. Historical support is BLOCKED until an independent labour hours/absence state exists.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "policy.wage_factor",
+        "policy.plan_utilization"
+      ],
+      "original_controlled_variables": [
+        "output targets",
+        "external history",
+        "seed"
+      ],
+      "original_falsification_criterion": "a wage-factor raise does not increase labour hoarding/arrears or reduce discipline metrics.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": []
+    },
+    {
+      "legacy_card_id": "M4",
+      "study_id": "M04",
+      "legacy_card_path": "config/p06/cards/M4.json",
+      "legacy_card_sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+      "original_hypothesis": "the second economy is net stabilising or net eroding for the formal system.",
+      "p07_ontology_drift": "Consumer import factor caps force domestic substitution, reducing import volumes. The mechanism operates through `policy.consumer_import_factor`.",
+      "reconciliation_decision": "编号完全错配",
+      "h0b_revision": "H0B keeps the card's subject (second economy) and refuses the import-compression reframing: the formal availability gap is bound to the physical unmet quantity, not to a monetary budget, service use is bound to a code-grounded value unit, and both plot composites stay BLOCKED until the F2 second-economy axes are declared.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "policy.second_economy_tolerance",
+        "policy.private_autonomy"
+      ],
+      "original_controlled_variables": [
+        "formal-sector parameters",
+        "external history",
+        "seed"
+      ],
+      "original_falsification_criterion": "tolerance changes move neither the household availability gap nor the formal sector's delivery metrics.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": [
+        "p04_culture_prior"
+      ]
+    },
+    {
+      "legacy_card_id": "M5",
+      "study_id": "M05",
+      "legacy_card_path": "config/p06/cards/M5.json",
+      "legacy_card_sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879",
+      "original_hypothesis": "enterprise autonomy rising while soft-budget constraints persist produces efficiency gains and macro imbalance simultaneously.",
+      "p07_ontology_drift": "Enterprise autonomy amplifies bottleneck propagation: autonomous enterprises chase inputs more aggressively, worsening queue dynamics. Shares signals with M02 but the causal direction differs.",
+      "reconciliation_decision": "删去双结果与交互",
+      "h0b_revision": "H0B keeps the shared bottleneck counter and BLOCKS both two-outcome composites (investment_approved/credit_drawn, production/used), and blocks money_stock.money_total_close (no sidecar; account consolidation undeclared). A counter shared with M2 is not an independent identification of M5.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "policy.enterprise_autonomy (the replayed 1968 patch is 0.7)",
+        "separately policy.budget_hardness"
+      ],
+      "original_controlled_variables": [
+        "external history",
+        "seed",
+        "the other coordinates"
+      ],
+      "original_falsification_criterion": "autonomy raises do not change the efficiency proxy without also changing the imbalance proxy (or vice versa).",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": [
+        "p04_coalition_prior",
+        "p04_information_prior"
+      ]
+    },
+    {
+      "legacy_card_id": "M6",
+      "study_id": "M06",
+      "legacy_card_path": "config/p06/cards/M6.json",
+      "legacy_card_sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+      "original_hypothesis": "external debt lengthens the social contract and shifts its cost forward.",
+      "p07_ontology_drift": "Credit envelope tightening tightens borrowing constraints, reducing investment and amplifying output drops. The mechanism operates through `policy.credit_fraction`.",
+      "reconciliation_decision": "外债被替换成国内信用",
+      "h0b_revision": "H0B keeps the physical household consumption volume and BLOCKS the channel-split imports composite, the money_stock credit/principal composite and treasury_cash (no account_label/currency selector). Domestic credit is not external debt, so X06 is registered as a new subject rather than as M6.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "policy.borrowing_factor",
+        "convertible_loan_limit",
+        "convertible_credit_envelope"
+      ],
+      "original_controlled_variables": [
+        "external demand",
+        "seed",
+        "domestic policy"
+      ],
+      "original_falsification_criterion": "additional borrowing does not defer the consumption/treasury deterioration.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": [
+        "p04_external_recipe_prior"
+      ]
+    },
+    {
+      "legacy_card_id": "M7",
+      "study_id": "M07",
+      "legacy_card_path": "config/p06/cards/M7.json",
+      "legacy_card_sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+      "original_hypothesis": "uneven distribution of social-contract gains across Budapest, the industrial belt and the agricultural counties creates different stability paths.",
+      "p07_ontology_drift": "Second economy tolerance policy (`policy.second_economy_tolerance`) shifts labor allocation between formal and informal sectors. The mechanism is detected through changes in `stage_balances` composition.",
+      "reconciliation_decision": "编号完全错配",
+      "h0b_revision": "Both card metrics are BLOCKED: they name region axes, not measures, and opposition_regions carries 0 rows in a C0-style run. A national policy scalar is not a 20-region vector, and the plot-labour subject is registered as M4-S1 instead of taking the M7 number.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "regional allocation via policy.investment_intensity plus policy.housing_factor",
+        "the 20 historical regions are the observation axis"
+      ],
+      "original_controlled_variables": [
+        "national aggregates",
+        "external history",
+        "seed"
+      ],
+      "original_falsification_criterion": "regional dispersion of the delivery/consumption metrics does not respond to the regional allocation levers.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": [
+        "p04_opposition_prior",
+        "p04_coalition_prior"
+      ]
+    },
+    {
+      "legacy_card_id": "M8",
+      "study_id": "M08",
+      "legacy_card_path": "config/p06/cards/M8.json",
+      "legacy_card_sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1",
+      "original_hypothesis": "economic deterioration strengthens administrative conservatism under some conditions and the reform coalition under others.",
+      "p07_ontology_drift": "Private sector autonomy (`policy.private_autonomy`) drives productivity differences through competition dynamics. The mechanism operates through `organization_diagnostics` and `financial_accounts`.",
+      "reconciliation_decision": "编号完全错配",
+      "h0b_revision": "H0B keeps policy_decisions.utility (0 rows in a C0-style run) and BLOCKS the mode-weights plus selected_candidate composite. Private-autonomy competition is registered as X08, a new subject.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "the fork's coalition_weights and the reported feature path (via the 1968 arms)"
+      ],
+      "original_controlled_variables": [
+        "external history",
+        "seed"
+      ],
+      "original_falsification_criterion": "coalition weights do not switch modes under the declared deterioration path.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": [
+        "p04_coalition_prior",
+        "p04_observation_prior",
+        "p04_information_prior"
+      ]
+    },
+    {
+      "legacy_card_id": "M9",
+      "study_id": "M09",
+      "legacy_card_path": "config/p06/cards/M9.json",
+      "legacy_card_sha256": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c",
+      "original_hypothesis": "stronger statistical/computational/feedback capacity removes a measurable share of shortage and planning error.",
+      "p07_ontology_drift": "Technology/forecast accuracy changes (`information_quarters.forecast_accuracy`) affect plan utilization and price stability. The mechanism operates through information asymmetry channels.",
+      "reconciliation_decision": "部分主题一致但测量循环",
+      "h0b_revision": "H0B keeps policy_decisions.binding_constraints and the shortage count, and BLOCKS the four-column information composite: information_quarters.forecast_accuracy is a capability definition in the engine, not a realized forecast residual, so the research question needs issued/realized pairs before it can be answered.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "technology.capability (one-shot)",
+        "policy.information_investment (the digital-nem arm)"
+      ],
+      "original_controlled_variables": [
+        "the replayed policy path",
+        "external history",
+        "seed"
+      ],
+      "original_falsification_criterion": "capability/investment raises do not reduce latency/error or the shortage metrics.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": [
+        "p04_information_prior"
+      ]
+    },
+    {
+      "legacy_card_id": "M10",
+      "study_id": "M10",
+      "legacy_card_path": "config/p06/cards/M10.json",
+      "legacy_card_sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+      "original_hypothesis": "subsidies, borrowing and CMEA terms postpone an external shock, and the postponement raises later fragility.",
+      "p07_ontology_drift": "Department-level planning friction (`departments.department_output`) generates systemic misallocation. The mechanism is detected through cross-department output variance.",
+      "reconciliation_decision": "编号完全错配",
+      "h0b_revision": "All four card metrics are BLOCKED: the channel-split trade composite needs six columns, money_stock.money_total_close has no producer, treasury_cash has no account/currency selector, and the later window was never pre-registered. Departmental planning friction is registered as X10.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "the 1973 arms in Annex B"
+      ],
+      "original_controlled_variables": [
+        "seed",
+        "the pre-1973 path"
+      ],
+      "original_falsification_criterion": "the absorption arms do not differ in the size or timing of the postponement.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": [
+        "p04_external_recipe_prior"
+      ]
+    },
+    {
+      "legacy_card_id": "M11",
+      "study_id": "M11",
+      "legacy_card_path": "config/p06/cards/M11.json",
+      "legacy_card_sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887",
+      "original_hypothesis": "continued investment and input priority for Department I crowds out Department II through raw-material, capital-good and labour competition, raising assortment shortage, durable waiting, forced substitution and the social-contract gap even when aggregate output grows.",
+      "p07_ontology_drift": "Policy interventions shift the composition of stage_balances (Inputs → Processing → Outputs). The mechanism operates through the material balance accounting system.",
+      "reconciliation_decision": "机制被缩成会计恒等变化",
+      "h0b_revision": "H0B keeps the physical consumer-goods volume per commodity and BLOCKS the five composite/axis-only items; stage_balances is a per-stage long table and cannot be read as a Department I/II split without a two-department mapping the model does not declare.",
+      "original_number_reused_for_new_subject": false,
+      "original_manipulated_variables": [
+        "policy.investment_intensity",
+        "policy.industrial_priority"
+      ],
+      "original_controlled_variables": [
+        "aggregate output path",
+        "external history",
+        "seed"
+      ],
+      "original_falsification_criterion": "raising I-priority does not shift the department split or worsen the four consumer-side dimensions while output is held up.",
+      "original_result_categories": [
+        "SUPPORTED",
+        "CONDITIONAL",
+        "WEAK",
+        "REJECTED",
+        "UNIDENTIFIED"
+      ],
+      "original_minimum_replicates": 3,
+      "original_calibrated_parameter_dependencies": []
+    }
+  ]
+}

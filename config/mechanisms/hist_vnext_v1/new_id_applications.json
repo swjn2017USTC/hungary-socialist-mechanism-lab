@@ -1,0 +1,133 @@
+{
+  "schema_version": "hist_vnext_v1",
+  "phase": "H0B",
+  "status_vocabulary": [
+    "candidate"
+  ],
+  "policy": "New subjects are registered as applications only: they create no formal card, reuse no legacy number, and remain candidates until an independent review rules on each. The legacy subject stays attached to its own number.",
+  "preregistered_at": "2026-10-16",
+  "review_status": "pending_independent_review",
+  "applications": [
+    {
+      "proposed_id": "M1-S1",
+      "parent_legacy_card_id": "M1",
+      "change_reason": "subject replacement recorded in 02",
+      "subject": "budget/shortage-induced forced saving: does a welfare-provision cut raise forced saving through the household budget constraint?",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "M2-S1",
+      "parent_legacy_card_id": "M2",
+      "change_reason": "direction and sufficiency rewritten in 02",
+      "subject": "hard budget exposes enterprise bottlenecks: does a budget_hardness increase surface queue/demand-overhang signals?",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "X03",
+      "parent_legacy_card_id": "M3",
+      "change_reason": "subject replacement recorded in 02",
+      "subject": "wage-price spiral under enterprise autonomy (DEFER)",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "X04",
+      "parent_legacy_card_id": "M4",
+      "change_reason": "number mismatch: not M4's subject",
+      "subject": "import compression via policy.consumer_import_factor",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "M5-S1",
+      "parent_legacy_card_id": "M5",
+      "change_reason": "two-outcome/interaction removed in 02",
+      "subject": "autonomy vs bottleneck propagation: does autonomy amplify queue dynamics?",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "X06",
+      "parent_legacy_card_id": "M6",
+      "change_reason": "external debt replaced by domestic credit",
+      "subject": "domestic borrowing constraints via policy.credit_fraction",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "M4-S1",
+      "parent_legacy_card_id": "M7",
+      "change_reason": "number mismatch: not M7's subject",
+      "subject": "second-economy plot labour allocation between formal and informal sectors",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "X08",
+      "parent_legacy_card_id": "M8",
+      "change_reason": "number mismatch: not M8's subject",
+      "subject": "private autonomy and competition",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "M9-S1",
+      "parent_legacy_card_id": "M9",
+      "change_reason": "definition-score evidence rejected",
+      "subject": "real forecast/planning error from issued-vs-realized residuals",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "X10",
+      "parent_legacy_card_id": "M10",
+      "change_reason": "number mismatch: not M10's subject",
+      "subject": "department-level planning friction and cross-department output variance",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    },
+    {
+      "proposed_id": "X11",
+      "parent_legacy_card_id": "M11",
+      "change_reason": "mechanism reduced to an accounting identity change",
+      "subject": "stage composition diagnostics from the material balance accounts",
+      "status": "candidate",
+      "creates_formal_card": false,
+      "reuses_legacy_number": false,
+      "preregistered_at": "2026-10-16",
+      "schema_version": "hist_vnext_v1"
+    }
+  ]
+}
