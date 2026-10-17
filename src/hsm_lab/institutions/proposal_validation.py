@@ -491,8 +491,21 @@ def validate_proposal(
                     authority_status="not_applicable",
                     reason="Dict observation observed_fields must be a tuple, not None",
                 )
-            if type(obs_fields) is not tuple:
-                # Reject tuple subclasses (could carry __slots__ with raw_truth/session)
+            if type(obs_fields) is tuple:
+                pass  # OK, already a plain tuple
+            elif isinstance(obs_fields, tuple):
+                # Tuple subclass: reject (could carry __slots__ with raw_truth/session)
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Dict observation observed_fields must be exactly tuple, "
+                        f"got {type(obs_fields).__name__}"
+                    ),
+                )
+            else:
+                # Non-tuple: convert list or other plain iterable to tuple
                 if not hasattr(obs_fields, "__iter__"):
                     return ValidationResult(
                         decision_id=decision.decision_id,
@@ -500,7 +513,7 @@ def validate_proposal(
                         authority_status="not_applicable",
                         reason=(
                             f"Dict observation observed_fields must be exactly tuple, "
-                            f"got {type(obs_fields).__name__}"
+                            f"got non-iterable {type(obs_fields).__name__}"
                         ),
                     )
                 try:
