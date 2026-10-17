@@ -666,21 +666,9 @@ def validate_proposal(
                                 f"got {type(value).__name__}"
                             ),
                         )
-
-                # Reject int subclasses via type() is check (avoids .__bases__ metaclass callback)
-                if type(value) is not int:
-                    return ValidationResult(
-                        decision_id=decision.decision_id,
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Observation field {field_name} is an int subclass; "
-                            f"primitive subclasses may carry mutable state"
-                        ),
-                    )
             # NOTE: model_dump() removed — it triggers __getattribute__ on all fields,
             # including any smuggled Payload objects in observed_fields.
-            # Field-level checks above (extra_attrs, str/int subclass guards,
+            # Field-level checks above (extra_attrs, str subclass guards,
             # and _is_deep_immutable check in verify_observation_invariants)
             # provide sufficient validation without triggering callbacks.
             # We no longer call observation.model_dump() here.
