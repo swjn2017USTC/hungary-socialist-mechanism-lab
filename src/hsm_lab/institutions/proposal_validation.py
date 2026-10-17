@@ -178,8 +178,8 @@ def validate_proposal(
                     authority_status="not_applicable",
                     reason="Dict observation missing required actor_role field",
                 )
-            # Reject dict observations with top-level prohibited keys (case-insensitive exact match;
-            # _role suffix for role-variant fields, excluding actor_role)
+            # Reject dict observations with top-level prohibited keys (case-insensitive)
+            # and enforce exact-case known field names (reject case variants of known fields)
             _TOP_LEVEL_PROHIBITED = frozenset({
                 "raw_truth", "session", "callback", "closure", "target",
                 "truth", "calibration_target", "role",
@@ -188,8 +188,10 @@ def validate_proposal(
                 "actor_role", "organization_id", "sector_id", "geographic_id",
                 "quarter", "decision_at", "available_at", "observed_fields",
             })
+            _KNOWN_LOWERCASE = {k.lower() for k in _KNOWN_OBSERVATION_FIELDS}
             for key in observation:
                 key_lower = key.lower()
+                # Case-insensitive prohibited key check
                 if key_lower in _TOP_LEVEL_PROHIBITED:
                     return ValidationResult(
                         decision_id=decision.decision_id,
@@ -207,7 +209,8 @@ def validate_proposal(
                         reason=f"Dict observation contains prohibited key {key!r}",
                     )
                 # Reject unknown top-level fields (not in known observation schema)
-                if key_lower not in _KNOWN_OBSERVATION_FIELDS:
+                # AND reject case variants of known fields (must be exact case)
+                if key_lower not in _KNOWN_LOWERCASE or key not in _KNOWN_OBSERVATION_FIELDS:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -351,6 +354,18 @@ def validate_proposal(
             if not isinstance(obs_fields, tuple):
                 observation = dict(observation)
                 observation["observed_fields"] = tuple(obs_fields)
+
+        # Re-validate ActorObservation at boundary (catches model_copy bypass of __init__)
+        if isinstance(observation, ActorObservation):
+            try:
+                ActorObservation.model_validate(observation)
+            except Exception as exc:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=f"observation re-validation failed: {exc}",
+                )
 
         # Bounded planning: reject future information in observation
         bp_passed, bp_reason = BoundedPlanning().evaluate(decision, observation)
