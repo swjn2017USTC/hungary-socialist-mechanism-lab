@@ -102,6 +102,19 @@ def validate_proposal(
         Frozen result with is_legal, authority_status, and reason.
         No state is modified.
     """
+    # Step 0: full decision reconstruction via model_validate (catches Literal enum
+    # mismatches, primitive subclasses, and any field type violations from model_copy)
+    try:
+        decision_dump = decision.model_dump()
+        decision = type(decision).model_validate(decision_dump)
+    except Exception as exc:
+        return ValidationResult(
+            decision_id=getattr(decision, "decision_id", "<unknown>"),
+            is_legal=False,
+            authority_status="not_applicable",
+            reason=f"Decision re-validation failed: {exc}",
+        )
+
     # Step 0: decision date subclass recheck (catches model_copy bypass of model_validator)
     for field_name in ("decision_at", "available_at"):
         value = getattr(decision, field_name, None)
@@ -115,86 +128,6 @@ def validate_proposal(
                     f"({type(value).__name__}); date subclasses may carry mutable state"
                 ),
             )
-
-    # Step 0b: reject decisions with prohibited state-assignment fields or extra attrs
-    # H2A decisions are frozen and must not carry stock/cash fields;
-    # any presence (including zero) is prohibited since model_copy bypasses frozen=True
-    for prohibited_field in ("stock", "cash"):
-        if hasattr(decision, prohibited_field):
-            # Reject any presence (stock/cash fields must not exist in H2A decisions)
-            return ValidationResult(
-                decision_id=decision.decision_id,
-                is_legal=False,
-                authority_status="not_applicable",
-                reason=f"Decision contains prohibited field {prohibited_field}",
-            )
-
-    # Reject decisions with extra attributes (model_copy bypasses frozen=True)
-    decision_type = type(decision)
-    decision_declared = set(decision_type.model_fields.keys())
-    decision_instance = set(decision.__dict__.keys())
-    decision_extra = decision_instance - decision_declared
-    if decision_extra:
-        return ValidationResult(
-            decision_id=decision.decision_id,
-            is_legal=False,
-            authority_status="not_applicable",
-            reason=f"Decision has extra attributes: {decision_extra}",
-        )
-
-    # Reject primitive value subclasses in decision fields (model_copy can substitute subclasses)
-    from enum import Enum as PyEnum
-    for field_name in decision_instance:
-        value = decision.__dict__[field_name]
-        if isinstance(value, str) and type(value) is not str:
-            return ValidationResult(
-                decision_id=decision.decision_id,
-                is_legal=False,
-                authority_status="not_applicable",
-                reason=(
-                    f"Decision field {field_name} is a str subclass "
-                    f"({type(value).__name__}); "
-                    f"primitive subclasses may carry mutable state"
-                ),
-            )
-        if isinstance(value, float) and type(value) is not float:
-            return ValidationResult(
-                decision_id=decision.decision_id,
-                is_legal=False,
-                authority_status="not_applicable",
-                reason=(
-                    f"Decision field {field_name} is a float subclass "
-                    f"({type(value).__name__}); "
-                    f"primitive subclasses may carry mutable state"
-                ),
-            )
-        if isinstance(value, int) and type(value) is not int:
-            return ValidationResult(
-                decision_id=decision.decision_id,
-                is_legal=False,
-                authority_status="not_applicable",
-                reason=(
-                    f"Decision field {field_name} is an int subclass "
-                    f"({type(value).__name__}); "
-                    f"primitive subclasses may carry mutable state"
-                ),
-            )
-        # Reject non-enum values for enum-typed fields (model_copy can substitute strings)
-        field_info = decision_type.model_fields.get(field_name)
-        if field_info is not None:
-            annotation = field_info.annotation
-            # Check if the field type is an enum
-            if isinstance(annotation, type) and issubclass(annotation, PyEnum):
-                if not isinstance(value, annotation):
-                    return ValidationResult(
-                        decision_id=decision.decision_id,
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Decision field {field_name} has invalid type "
-                            f"{type(value).__name__}; expected {annotation.__name__}"
-                        ),
-                    )
 
     # Step 0: single-clock — quarter must be consistent with decision_at
     quarter_year = decision.decision_at.year
