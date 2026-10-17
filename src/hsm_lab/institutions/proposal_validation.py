@@ -493,42 +493,22 @@ def validate_proposal(
                 )
             if type(obs_fields) is tuple:
                 pass  # OK, already a plain tuple
-            elif isinstance(obs_fields, tuple):
-                # Tuple subclass: reject (could carry __slots__ with raw_truth/session)
+            elif type(obs_fields) is list:
+                # Convert plain list to tuple
+                observation = dict(observation)
+                observation["observed_fields"] = tuple(obs_fields)
+            else:
+                # Reject tuple subclasses, list subclasses, and all other iterables
+                # (arbitrary __iter__ may execute callbacks with side effects)
                 return ValidationResult(
                     decision_id=decision.decision_id,
                     is_legal=False,
                     authority_status="not_applicable",
                     reason=(
-                        f"Dict observation observed_fields must be exactly tuple, "
+                        f"Dict observation observed_fields must be a plain list or tuple, "
                         f"got {type(obs_fields).__name__}"
                     ),
                 )
-            else:
-                # Non-tuple: convert list or other plain iterable to tuple
-                if not hasattr(obs_fields, "__iter__"):
-                    return ValidationResult(
-                        decision_id=decision.decision_id,
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Dict observation observed_fields must be exactly tuple, "
-                            f"got non-iterable {type(obs_fields).__name__}"
-                        ),
-                    )
-                try:
-                    observation = dict(observation)
-                    observation["observed_fields"] = tuple(obs_fields)
-                except TypeError:
-                    return ValidationResult(
-                        decision_id=decision.decision_id,
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Dict observation observed_fields must be exactly tuple, "
-                            f"got non-iterable {type(obs_fields).__name__}"
-                        ),
-                    )
 
         # Re-validate ActorObservation at boundary (catches model_copy bypass of __init__)
         # Check __dict__ for extra attributes AND __slots__ BEFORE model_dump
