@@ -165,57 +165,51 @@ def validate_proposal(
                     f"primitive subclasses may carry mutable state"
                 ),
             )
-        # Access type-direct to avoid triggering instance __getattribute__
-        # (hasattr triggers __getattribute__ on the instance, which may execute callbacks)
+        # Use getattr to detect inherited methods (searches MRO), not object.__getattribute__
+        # which only checks the type's own __dict__ and misses inherited methods.
+        # getattr(class, attr) uses the class's __getattribute__ (usually type's slot),
+        # which does NOT trigger custom __getattribute__ on regular class instances.
         value_type = type(value)
-        # __float__: reject if type is not float and has custom __float__
+        # __float__: reject if type is not float and has custom __float__ (including inherited)
         if value_type is not float:
-            try:
-                value_float_method = object.__getattribute__(value_type, "__float__")
-                if value_float_method is not float.__float__:
-                    return ValidationResult(
-                        decision_id=getattr(decision, "decision_id", "<unknown>"),
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Decision field {field_name} has __float__ method; "
-                            f"objects with coercion methods may carry mutable state"
-                        ),
-                    )
-            except AttributeError:
-                pass
-        # __int__: reject if type is not int/float and has custom __int__
+            value_float_method = getattr(value_type, "__float__", None)
+            if value_float_method is not None and value_float_method is not float.__float__:
+                return ValidationResult(
+                    decision_id=getattr(decision, "decision_id", "<unknown>"),
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Decision field {field_name} has __float__ method; "
+                        f"objects with coercion methods may carry mutable state"
+                    ),
+                )
+        # __int__: reject if type is not int/float and has custom __int__ (including inherited)
         if value_type not in (int, float):
-            try:
-                value_int_method = object.__getattribute__(value_type, "__int__")
-                if value_int_method not in (int.__int__, float.__int__):
-                    return ValidationResult(
-                        decision_id=getattr(decision, "decision_id", "<unknown>"),
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Decision field {field_name} has __int__ method; "
-                            f"objects with coercion methods may carry mutable state"
-                        ),
-                    )
-            except AttributeError:
-                pass
-        # __index__: reject if type is not int and has custom __index__
+            value_int_method = getattr(value_type, "__int__", None)
+            if (value_int_method is not None
+                    and value_int_method not in (int.__int__, float.__int__)):
+                return ValidationResult(
+                    decision_id=getattr(decision, "decision_id", "<unknown>"),
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Decision field {field_name} has __int__ method; "
+                        f"objects with coercion methods may carry mutable state"
+                    ),
+                )
+        # __index__: reject if type is not int and has custom __index__ (including inherited)
         if value_type is not int:
-            try:
-                value_index_method = object.__getattribute__(value_type, "__index__")
-                if value_index_method is not int.__index__:
-                    return ValidationResult(
-                        decision_id=getattr(decision, "decision_id", "<unknown>"),
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Decision field {field_name} has __index__ method; "
-                            f"objects with coercion methods may carry mutable state"
-                        ),
-                    )
-            except AttributeError:
-                pass
+            value_index_method = getattr(value_type, "__index__", None)
+            if value_index_method is not None and value_index_method is not int.__index__:
+                return ValidationResult(
+                    decision_id=getattr(decision, "decision_id", "<unknown>"),
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Decision field {field_name} has __index__ method; "
+                        f"objects with coercion methods may carry mutable state"
+                    ),
+                )
     try:
         decision_dump = decision.model_dump()
         decision = decision_type.model_validate(decision_dump)
@@ -288,11 +282,30 @@ def validate_proposal(
     if observation is not None:
         from hsm_lab.institutions.observed import ActorObservation
         if isinstance(observation, ActorObservation):
-            obs_org = observation.organization_id
-            obs_sector = observation.sector_id
-            obs_quarter = observation.quarter
-            obs_geo = observation.geographic_id
-            obs_role = observation.actor_role
+            # Access via __dict__ to avoid triggering descriptor protocol on field access
+            # Check type before any comparison to prevent __eq__/__ne__ callback execution
+            obs_org = observation.__dict__["organization_id"]
+            obs_sector = observation.__dict__["sector_id"]
+            obs_quarter = observation.__dict__["quarter"]
+            obs_geo = observation.__dict__["geographic_id"]
+            obs_role = observation.__dict__["actor_role"]
+            # Type validation BEFORE any comparison or string formatting
+            for field_name, field_val in [
+                ("organization_id", obs_org),
+                ("sector_id", obs_sector),
+                ("quarter", obs_quarter),
+                ("geographic_id", obs_geo),
+            ]:
+                if type(field_val) is not str:
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Observation field {field_name} must be exactly str, "
+                            f"got {type(field_val).__name__}"
+                        ),
+                    )
         elif isinstance(observation, dict):
             # Reject dict subclasses (could carry __slots__ with raw_truth/session)
             if type(observation) is not dict:

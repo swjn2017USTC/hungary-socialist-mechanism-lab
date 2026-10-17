@@ -362,6 +362,13 @@ def _to_immutable(value: Any) -> Any:
     if type(value) is set:
         return frozenset(_to_immutable(v) for v in value)
     if type(value) is dict:
+        # Reject non-string keys BEFORE str(k) conversion to prevent __str__ callbacks
+        for k in value.keys():
+            if type(k) is not str:
+                raise TypeError(
+                    f"Dict key {k!r} is {type(k).__name__}, not str; "
+                    f"non-string dict keys cannot be safely converted"
+                )
         # Check for prohibited keys before converting
         _check_no_prohibited_keys(value)
         return tuple(sorted(
