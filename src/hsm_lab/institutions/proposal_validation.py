@@ -116,6 +116,19 @@ def validate_proposal(
                 ),
             )
 
+    # Step 0b: reject decisions with prohibited state-assignment fields
+    # H2A decisions are frozen and must not carry stock/cash fields
+    for prohibited_field in ("stock", "cash"):
+        if hasattr(decision, prohibited_field):
+            val = getattr(decision, prohibited_field, None)
+            if val is not None and val != 0:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=f"Decision contains prohibited field {prohibited_field}={val!r}",
+                )
+
     # Step 0: single-clock — quarter must be consistent with decision_at
     quarter_year = decision.decision_at.year
     quarter_month = (decision.decision_at.month - 1) // 3 + 1
@@ -356,9 +369,11 @@ def validate_proposal(
                 observation["observed_fields"] = tuple(obs_fields)
 
         # Re-validate ActorObservation at boundary (catches model_copy bypass of __init__)
+        # Use model_dump + model_validate to force full re-validation
         if isinstance(observation, ActorObservation):
             try:
-                ActorObservation.model_validate(observation)
+                dump = observation.model_dump()
+                ActorObservation.model_validate(dump)
             except Exception as exc:
                 return ValidationResult(
                     decision_id=decision.decision_id,
