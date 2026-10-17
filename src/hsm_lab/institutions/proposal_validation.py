@@ -142,6 +142,60 @@ def validate_proposal(
             reason=f"Decision has extra attributes: {decision_extra}",
         )
 
+    # Reject primitive value subclasses in decision fields (model_copy can substitute subclasses)
+    from enum import Enum as PyEnum
+    for field_name in decision_instance:
+        value = decision.__dict__[field_name]
+        if isinstance(value, str) and type(value) is not str:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Decision field {field_name} is a str subclass "
+                    f"({type(value).__name__}); "
+                    f"primitive subclasses may carry mutable state"
+                ),
+            )
+        if isinstance(value, float) and type(value) is not float:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Decision field {field_name} is a float subclass "
+                    f"({type(value).__name__}); "
+                    f"primitive subclasses may carry mutable state"
+                ),
+            )
+        if isinstance(value, int) and type(value) is not int:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Decision field {field_name} is an int subclass "
+                    f"({type(value).__name__}); "
+                    f"primitive subclasses may carry mutable state"
+                ),
+            )
+        # Reject non-enum values for enum-typed fields (model_copy can substitute strings)
+        field_info = decision_type.model_fields.get(field_name)
+        if field_info is not None:
+            annotation = field_info.annotation
+            # Check if the field type is an enum
+            if isinstance(annotation, type) and issubclass(annotation, PyEnum):
+                if not isinstance(value, annotation):
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Decision field {field_name} has invalid type "
+                            f"{type(value).__name__}; expected {annotation.__name__}"
+                        ),
+                    )
+
     # Step 0: single-clock — quarter must be consistent with decision_at
     quarter_year = decision.decision_at.year
     quarter_month = (decision.decision_at.month - 1) // 3 + 1
