@@ -104,21 +104,23 @@ def validate_proposal(
     """
     # Step 0: validate against concrete registered decision types only
     # Reject arbitrary subclasses that may declare stock/cash or other assignment fields
-    _KNOWN_DECISION_TYPE_NAMES = frozenset({
-        "HouseholdNeedDecision",
-        "InvestmentDecision",
-        "PriceProposalDecision",
-        "ProcurementDecision",
-    })
-    # Use type name string comparison to avoid triggering __eq__ callbacks
-    # via the `in` operator on a tuple of types
-    decision_type_name = type(decision).__name__
-    if decision_type_name not in _KNOWN_DECISION_TYPE_NAMES:
+    # Use type identity checks to avoid string comparison and .__name__ callback.
+    # type() is a C-level op; chained `is` comparisons never trigger __eq__.
+    # Reject all types except the four concrete registered types.
+    from hsm_lab.institutions.decisions import (
+        HouseholdNeedDecision,
+        InvestmentDecision,
+        PriceProposalDecision,
+        ProcurementDecision,
+    )
+    dt = type(decision)
+    if not (dt is HouseholdNeedDecision or dt is InvestmentDecision
+            or dt is PriceProposalDecision or dt is ProcurementDecision):
         return ValidationResult(
             decision_id=getattr(decision, "decision_id", "<unknown>"),
             is_legal=False,
             authority_status="not_applicable",
-            reason=f"Decision type {decision_type_name} is not a registered H2A type",
+            reason="Decision type is not a registered H2A type",
         )
 
     # Step 0: full decision reconstruction via model_validate (catches Literal enum
@@ -227,8 +229,8 @@ def validate_proposal(
                 is_legal=False,
                 authority_status="not_applicable",
                 reason=(
-                    f"Decision.{field_name} is a date subclass "
-                    f"({type(value).__name__}); date subclasses may carry mutable state"
+                    f"Decision.{field_name} is a date subclass; "
+                    "date subclasses may carry mutable state"
                 ),
             )
 
@@ -290,8 +292,8 @@ def validate_proposal(
                     is_legal=False,
                     authority_status="not_applicable",
                     reason=(
-                        f"Observation is a {type(observation).__name__} subclass; "
-                        f"only concrete ActorObservation allowed"
+                        "Observation is a subclass; "
+                        "only concrete ActorObservation allowed"
                     ),
                 )
             # Access via __dict__ to avoid triggering descriptor protocol on field access
@@ -338,10 +340,7 @@ def validate_proposal(
                         decision_id=decision.decision_id,
                         is_legal=False,
                         authority_status="not_applicable",
-                        reason=(
-                            f"Dict observation key must be exactly str, "
-                            f"got {type(key).__name__}"
-                        ),
+                        reason="Dict observation key must be exactly str; str subclasses rejected",
                     )
             obs_role = observation.get("actor_role")
             if obs_role is None:
@@ -359,8 +358,8 @@ def validate_proposal(
                     is_legal=False,
                     authority_status="not_applicable",
                     reason=(
-                        f"Observation field actor_role must be exactly str, "
-                        f"got {type(obs_role).__name__}"
+                        "Observation field actor_role must be exactly str; "
+                        "str subclasses rejected"
                     ),
                 )
             # Reject dict observations with top-level prohibited keys (case-insensitive)
@@ -381,10 +380,7 @@ def validate_proposal(
                         decision_id=decision.decision_id,
                         is_legal=False,
                         authority_status="not_applicable",
-                        reason=(
-                            f"Dict observation key must be exactly str, "
-                            f"got {type(key).__name__}"
-                        ),
+                        reason="Dict observation key must be exactly str; str subclasses rejected",
                     )
                 key_lower = key.lower()
                 # Case-insensitive prohibited key check
@@ -429,8 +425,8 @@ def validate_proposal(
                     is_legal=False,
                     authority_status="not_applicable",
                     reason=(
-                        f"Dict observation actor_role must be exactly str, "
-                        f"got {type(obs_actor_role).__name__}"
+                        "Dict observation actor_role must be exactly str; "
+                        "str subclasses rejected"
                     ),
                 )
             for field_name, field_val in [
@@ -456,8 +452,8 @@ def validate_proposal(
                             is_legal=False,
                             authority_status="not_applicable",
                             reason=(
-                                f"Dict observation field {field_name} must be exactly str, "
-                                f"got {type(field_val).__name__}"
+                                "Dict observation field must be exactly str; "
+                                "str subclasses may carry mutable state"
                             ),
                         )
             obs_org = observation.get("organization_id")
@@ -560,10 +556,7 @@ def validate_proposal(
                     decision_id=decision.decision_id,
                     is_legal=False,
                     authority_status="not_applicable",
-                    reason=(
-                        f"Observation decision_at must be a plain date, "
-                        f"got {type(obs_decision_at).__name__}"
-                    ),
+                    reason="Observation decision_at must be a plain date; date subclasses rejected",
                 )
         elif obs_type is dict:
             obs_decision_at = observation.get("decision_at")
@@ -572,10 +565,7 @@ def validate_proposal(
                     decision_id=decision.decision_id,
                     is_legal=False,
                     authority_status="not_applicable",
-                    reason=(
-                        f"Observation decision_at must be a plain date, "
-                        f"got {type(obs_decision_at).__name__}"
-                    ),
+                    reason="Observation decision_at must be a plain date; date subclasses rejected",
                 )
         else:
             obs_decision_at = None
@@ -616,8 +606,8 @@ def validate_proposal(
                     is_legal=False,
                     authority_status="not_applicable",
                     reason=(
-                        f"Dict observation observed_fields must be a plain list or tuple, "
-                        f"got {type(obs_fields).__name__}"
+                        "Dict observation observed_fields must be a plain list "
+                        "or tuple; other types rejected"
                     ),
                 )
 
@@ -632,8 +622,8 @@ def validate_proposal(
                     is_legal=False,
                     authority_status="not_applicable",
                     reason=(
-                        f"Observation is a {type(observation).__name__} subclass; "
-                        f"only concrete ActorObservation allowed"
+                        "Observation is a subclass; "
+                        "only concrete ActorObservation allowed"
                     ),
                 )
             declared_fields = set(ActorObservation.model_fields.keys())
