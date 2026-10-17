@@ -18,53 +18,58 @@ All events in `institutions/HIST_VNEXT/h1b_synthetic_calendar.json` have `synthe
 ## Key Design Decisions
 
 ### DateInterval
-- `precision="unknown"`: both earliest and latest may be None
+- `precision="unknown"`: both earliest and latest are None
 - `precision="day"`: requires earliest == latest (single day)
-- `precision="range"`: allows inverted bounds (earliest > latest) to represent exclusive upper bounds (e.g., `effective_to = [1975-01-01, 1974-12-31]` means "active until just before 1975-01-01")
-- `precision="month"/"quarter"/"year"`: requires earliest <= latest; no natural-period-boundary enforcement
+- `precision="month"/"quarter"/"year"`: these name a natural calendar period. Bounds must be exactly the first/last day of one month, quarter, or year; the check lives in `DateInterval` so it applies to every interval field.
+- `precision="range"`: any bounded interval with `earliest <= latest`. Use `range` for uncertainty that does not coincide with a named natural period. Inverted ranges (`earliest > latest`) are rejected.
+- Bounded `effective_to` uses half-open `[effective_from, effective_to)` semantics. A window is accepted iff at least one feasible chronology exists: the latest of the earliest possible proposal/approval/enactment/effective-start dates is strictly before `effective_to.latest`; overlapping uncertainty remains legal, zero-length/impossible windows are rejected. `effective_to=None` is the only spelling of an unbounded window; `precision="unknown"` ends are rejected.
 
 ### Authority Resolution
+- Definite nonactivity is applied before residual uncertainty: a grant or revoke whose `effective_to` has definitely expired, or whose `effective_from`/enactment is definitely in the future, does not affect the result even if another date is unknown.
+- A decision date inside an enactment or effective-start interval is *uncertain*, not treated as future: it may already have elapsed. Such grants make the result unknown; such revokes are possibly effective.
 - Grants with unknown enactment → uncertain (contribute to "unknown" result)
 - Grants with effective_from in future → not yet active
 - Grants with effective_to expired at decision date → not active
 - Revokes with unknown enactment → possibly effective (not definitely)
 - Revokes with effective_from range precision: within range → possibly effective
-- Revokes with effective_to range precision (normal): before range → not expired; within range → possibly expired
-- Revokes with effective_to range precision (inverted, earliest > latest): active while decision_date < earliest; at/after earliest → expired
-- plan §4: nonexistent revoke targets → silently ignored (unknown at query time), NOT error at load
+- Revokes with effective_to range precision: before range → not expired; within range → possibly expired; at/after latest → definitely expired
+- Revoke targets must exist in the same calendar. A dangling `revokes_event_id` is a malformed declaration rejected at load time.
+
+### Actual-Implementation Evidence
+- A non-unknown `observed_implementation_at` is an evidence claim and requires non-empty `implementation_evidence_ids`.
+- Because all admitted events are synthetic, those evidence ids must be explicitly `synthetic:`-prefixed. Otherwise the observation must be marked unknown (`precision="unknown"` or `None`).
 
 ### Sector/Org/Geography Scope Containment
 - Revoke scope must be contained within grant scope
 - Effective sector set = sector_ids − excluded_sector_ids
 - Wildcard (empty sector_ids) covers all sectors
-- Expanding scope (revoke has specific sectors but grant has wildcard) is rejected
+- A specific-sector revoke of a wildcard grant is permissible narrowing; only a revoke that expands beyond the grant's effective coverage (including exclusions) is rejected
+
+### Calendar Declarations
+- `events` is a required declaration. `RegimeCalendar.model_validate({})` is rejected; an explicit `{"events": []}` is a legal empty calendar and every query against it is unknown.
 
 ## Deliverables
 1. `src/hsm_lab/institutions/schemas.py`: DateInterval, AuthorityScope, InstitutionEvent, RegimeCalendar, AuthorityResult
 2. `src/hsm_lab/institutions/calendar.py`: load_calendar(), event_as_of()
 3. `src/hsm_lab/institutions/authority.py`: authority_at()
 4. `institutions/HIST_VNEXT/h1b_synthetic_calendar.json`: 6 synthetic events
-5. `tests/test_hist_regime_calendar.py`: 33 tests across 8 verification categories
-6. `institutions/HIST_VNEXT/H1B/evidence/h1b-smoke-001/run_smoke.py`: 14 smoke checks
+5. `tests/test_hist_regime_calendar.py`: 67 tests
+6. `institutions/HIST_VNEXT/H1B/evidence/h1b-smoke-001/run_smoke.py`: 14 smoke checks plus revision-bound manifest and per-query inputs/results
 
-## Verification
-- 33 H1B tests: PASS
-- Full suite 849: PASS
-- Ruff: clean
-- Smoke 14/14: PASS
+## Verification (round 2 repair)
+- H1B tests: 67 PASS
+- Downstream institution tests (`test_hist_observation_authority.py` + `test_hist_tiny_execution.py`): 151 PASS
+- Ruff: clean on changed files
+- Smoke: 14/14 PASS
+- Full repository suite: NOT_RUN this round
+- C0/C1 replay: NOT_RUN; no replay result is claimed
 
-## File Hashes (Final)
-```
-institutions/HIST_VNEXT/h1b_synthetic_calendar.json  cb80aea13bd255dc89d0c53b8404f2111e78a988dae58f899c98f5385d68acdb
-src/hsm_lab/institutions/schemas.py               acd07357b9d7dd85050f49f060917aa7a0d250d23884fc7a8d63231762fbf0ea
-src/hsm_lab/institutions/calendar.py               a9cb6cca74d5898dfbcd11536f9ba6c78b56ebd0c577e05fd9464525d8030e44
-src/hsm_lab/institutions/authority.py              17ad1f521aa262e1f531c882b72c5e124ebe002f9215d193123099287039d8c9
-tests/test_hist_regime_calendar.py                  498270fa54c54761f3cfcd0c48a757c672c4eeadc65ba10e023c13a506d47163
-institutions/HIST_VNEXT/H1B/evidence/h1b-smoke-001/run_smoke.py  8492e7cb0c5f71780c6fed5b661fb6aa05ec0019c545fd8e3faa41ed41301af3
-```
+## File Hashes
+Static hashes are intentionally not duplicated here because they go stale. The smoke
+manifest (`institutions/HIST_VNEXT/H1B/evidence/h1b-smoke-001/smoke_output.json`)
+records the git revision plus SHA-256 hashes of the calendar, schemas, calendar
+loader, authority module, and smoke script for the run that produced it.
 
 ## Open Issues (Known Limitations)
-1. `InstitutionEvent.is_granted_at()` may return False for grants that `authority_at()` returns granted — this helper is not used by the authority API
-2. Proposal/approval/enactment lifecycle ordering uses latest-vs-latest comparison; overlapping intervals (proposal range ending after approval date) are rejected even if a valid chronology exists within the ranges
-3. Natural-period boundary enforcement for month/quarter/year precision is not implemented
-4. No path authorization: PLAN.md, REPORT.md, REVIEW.md not yet written
+1. Proposal/approval/enactment lifecycle ordering checks adjacent interval feasibility (earliest vs latest) but does not solve a joint chronology across all five lifecycle intervals.
+2. `authority_at()` resolves per (org, sector, geo, permission); it does not aggregate across permissions or infer a default rule when no grant matches.

@@ -9,12 +9,17 @@ without running the model or touching production engine state.
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
+from hsm_lab.contract.guards import load_research_contract
 from hsm_lab.contract.schemas import Quarter
+from hsm_lab.data.material import build_synthetic_material_fixtures
+from hsm_lab.data.registry import DataRegistry
+from hsm_lab.engine.material import run_material
 from hsm_lab.evidence.loader import (
     load_all_evidence_records,
     load_evidence_manifest,
@@ -59,12 +64,11 @@ class TestCanonicalMechanismId:
         "input_id, expected",
         [
             ("M1", "M01"),
-            ("m1", "M01"),
             ("M01", "M01"),
             ("M9", "M09"),
+            ("M09", "M09"),
             ("M10", "M10"),
             ("M11", "M11"),
-            ("m11", "M11"),
         ],
     )
     def test_round_trip_canonical(self, input_id: str, expected: str) -> None:
@@ -74,9 +78,15 @@ class TestCanonicalMechanismId:
     @pytest.mark.parametrize(
         "invalid_id",
         [
+            "m1",
+            "m01",
+            "m11",
+            " m1 ",
+            "M1 ",
+            " M1",
             "M00",
-            "m00",
             "M12",
+            "M010",
             "M001",
             "M0",
             "M",
@@ -87,8 +97,17 @@ class TestCanonicalMechanismId:
         ],
     )
     def test_rejects_invalid(self, invalid_id: str) -> None:
-        with pytest.raises(ValueError, match="Invalid mechanism ID"):
+        with pytest.raises(ValueError):
             canonical_mechanism_id(invalid_id)
+
+    @pytest.mark.parametrize("number", range(1, 12))
+    def test_all_eleven_round_trip(self, number: int) -> None:
+        study = f"M{number}"
+        canonical = f"M{number:02d}"
+        assert canonical_mechanism_id(study) == canonical
+        assert study_mechanism_id(canonical) == study
+        assert canonical_mechanism_id(canonical) == canonical
+        assert study_mechanism_id(study) == study
 
 
 class TestStudyMechanismId:
@@ -96,9 +115,11 @@ class TestStudyMechanismId:
         "input_id, expected",
         [
             ("M1", "M1"),
-            ("m1", "M1"),
             ("M01", "M1"),
             ("M9", "M9"),
+            ("M09", "M9"),
+            ("M10", "M10"),
+            ("M11", "M11"),
         ],
     )
     def test_round_trip_study(self, input_id: str, expected: str) -> None:
@@ -106,12 +127,12 @@ class TestStudyMechanismId:
         assert result == expected
 
     @pytest.mark.parametrize(
-        "out_of_range",
-        ["M10", "M11", "m10", "m11"],
+        "invalid_id",
+        ["m1", "m10", "m11", "M010", "M00", "M12", "M001"],
     )
-    def test_rejects_m10_m11(self, out_of_range: str) -> None:
-        with pytest.raises(ValueError, match="Study mechanism ID must be M1-M9"):
-            study_mechanism_id(out_of_range)
+    def test_rejects_invalid(self, invalid_id: str) -> None:
+        with pytest.raises(ValueError):
+            study_mechanism_id(invalid_id)
 
 
 # ---------------------------------------------------------------------------
@@ -1403,6 +1424,9 @@ def _write_self_consistent_material_run(
     parameters_path = run_dir / "parameters.json"
     parameters_path.write_text(
         json.dumps({
+            "schema_version": "1",
+            "scenario_id": spec.scenario_id,
+            "declaration": spec.material_parameters.model_dump(mode="json"),
             "parameter_vector": material_parameter_vector(spec),
             "parameter_hash": parameter_hash,
         }),
@@ -1421,6 +1445,10 @@ def _write_self_consistent_material_run(
     manifest["commodity_ids"] = commodities
     manifest["region_ids"] = regions
     manifest["households"] = spec.households
+    manifest.setdefault("rng_scheme_version", "pcg64-sha256-module-v1")
+    manifest.setdefault("rng_draws_count", 0)
+    manifest.setdefault("rng_draws_by_module", {})
+    manifest.setdefault("stochastic_modules_active", [])
     # The layer the run executed, as the real material runs declare it
     # (``outputs/codex-audit-vnext-20261011/C0``: ``fidelity="f2"``,
     # ``ontology_id="f2_v1"``): the metric-content gate binds a metric's
@@ -1456,6 +1484,10 @@ def _write_self_consistent_material_run(
         "initial_recipe_hash": manifest["initial_recipe_hash"],
         "deterministic_replay_digest": expected_digest,
         "input_artifact_hashes": manifest["input_artifact_hashes"],
+        "rng_scheme_version": manifest["rng_scheme_version"],
+        "rng_draws_count": manifest["rng_draws_count"],
+        "rng_draws_by_module": manifest["rng_draws_by_module"],
+        "stochastic_modules_active": manifest["stochastic_modules_active"],
         "row_counts": row_counts,
         # The accounting certification the material runner writes: the
         # residual/tolerance fields ``check_material_invariants`` returned for
@@ -2431,6 +2463,21 @@ class TestVerifyRunIdentityFabricatedArtefacts:
             output_dir=run_dir,
         )
 
+    def test_material_scenario_cannot_declare_smoke_run_kind(
+        self, tmp_path: Path
+    ) -> None:
+        """A material scenario cannot be downgraded to a smoke run to skip checks."""
+        run_dir = self._run_dir(tmp_path)
+        manifest = _read_json(run_dir / "manifest.json")
+        manifest["run_kind"] = "synthetic_engine_smoke"
+        _write_json(run_dir / "manifest.json", manifest)
+        summary = _read_json(run_dir / "summary.json")
+        summary["run_kind"] = "synthetic_engine_smoke"
+        _write_json(run_dir / "summary.json", summary)
+        _rehash_run_outputs(run_dir)
+        with pytest.raises(ValueError, match="incompatible with scenario kind"):
+            self._verify(run_dir)
+
     def test_tick_value_only_table_is_rejected(self, tmp_path: Path) -> None:
         """A ``tick,value`` Parquet file is not a material trajectory table."""
         run_dir = self._run_dir(tmp_path)
@@ -2643,24 +2690,9 @@ class TestVerifyRunIdentityFabricatedArtefacts:
         assert self._verify(run_dir).run_id == "test-run"
 
 
-@pytest.mark.parametrize("run_name", ["C0", "C1"])
-def test_real_audit_run_still_verifies(run_name: str) -> None:
-    """The real audit runs must still pass the hardened identity checks."""
-    run_dir = ROOT / "outputs" / "codex-audit-vnext-20261011" / run_name
-    if not (run_dir / "manifest.json").is_file():
-        pytest.skip(f"real audit run {run_name} not present in this checkout")
-
-    manifest = _read_json(run_dir / "manifest.json")
-    summary = _read_json(run_dir / "summary.json")
-    verified = verify_run_identity(
-        root=ROOT,
-        scenario_id=summary["scenario_id"],
-        seed=manifest["seed"],
-        expected_digest=manifest["deterministic_replay_digest"],
-        output_dir=run_dir,
-    )
-    assert verified.run_id == manifest["run_id"]
-    assert verified.run_kind == "material_household_simulation"
+# The former legacy-output positive controls are replaced by
+# ``test_four_quarter_git_only_run_verifies`` below, which builds a real run
+# from tracked files and never skips.
 
 
 # ---------------------------------------------------------------------------
@@ -2760,9 +2792,105 @@ class TestSupportedMetricContentBinding:
         return declared.model_copy(update={"status": EvidenceStatus.SUPPORTED})
 
     def _write_sidecar(self, run_dir: Path, payload: dict) -> None:
-        """Write a JSON sidecar next to the run's tables and re-pin the tree."""
-        _write_json(run_dir / "run_metrics.json", payload)
+        """Write a typed JSON sidecar next to the run's tables and re-pin the tree."""
+        bindings = {
+            key: {
+                "unit": PHYSICAL_UNIT_TOKEN,
+                "value_type": "number",
+                "temporal": {
+                    "start_quarter": "1957Q1",
+                    "end_quarter": "1985Q4",
+                },
+                "selectors": [],
+            }
+            for key in payload
+        }
+        _write_json(
+            run_dir / "run_metrics.json",
+            {**payload, "__metric_bindings__": bindings},
+        )
         _rehash_run_outputs(run_dir)
+
+    def test_non_numeric_quantitative_cell_is_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        """A string cannot be a physical/monetary/count measurement."""
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        run_dir = self._run_dir(tmp_path)
+        path = run_dir / "trajectory_tables" / "aggregates.parquet"
+        frame = pq.read_table(path)
+        frame = frame.set_column(
+            frame.schema.get_field_index("delivered"),
+            "delivered",
+            pa.array(["not-a-number"] * frame.num_rows, type=pa.string()),
+        )
+        pq.write_table(frame, path)
+        _rehash_run_outputs(run_dir)
+        record = self._record(run_dir, self._spec())
+        with pytest.raises(ValueError, match="non-numeric"):
+            verify_supported_record_runs(ROOT, record)
+
+    def test_missing_policy_mismatch_is_rejected(self) -> None:
+        """The metric and its window cannot disagree about missing data."""
+        with pytest.raises(ValidationError, match="disagrees"):
+            self._spec(
+                time_window=TimeWindow(
+                    start_quarter="1957Q1",
+                    end_quarter="1985Q4",
+                    missing_policy=MissingPolicy.ABORT,
+                ),
+                missing_policy=MissingPolicy.SKIP,
+            )
+
+    def test_forcing_role_cannot_bypass_missing_data(
+        self, tmp_path: Path
+    ) -> None:
+        """Changing data_role to FORCING must not bypass the data check."""
+        run_dir = self._run_dir(tmp_path)
+        rows = _read_row_counts(run_dir)["tick_diagnostics"]
+        _write_parquet(
+            run_dir / "trajectory_tables" / "tick_diagnostics.parquet",
+            {
+                "tick": list(range(rows)),
+                "quarter": [
+                    str(Quarter.parse("1957Q1").advance(tick))
+                    for tick in range(rows)
+                ],
+                "bottleneck_demand_count": [None] * rows,
+            },
+        )
+        _rehash_run_outputs(run_dir)
+        record = self._record(
+            run_dir,
+            self._spec(
+                metric_id="m2.bottleneck_demand_count",
+                table_or_sidecar="tick_diagnostics",
+                column="bottleneck_demand_count",
+                data_role=DataRole.FORCING,
+                validation_fidelity=ValidationFidelity.PROXY,
+                unit="count",
+            ),
+        )
+        with pytest.raises(ValueError, match="must carry actual data"):
+            verify_supported_record_runs(ROOT, record)
+
+    def test_untyped_sidecar_is_rejected(self, tmp_path: Path) -> None:
+        """A sidecar without a typed binding cannot support a metric."""
+        run_dir = self._run_dir(tmp_path)
+        _write_json(run_dir / "run_metrics.json", {"delivered_total": 12.5})
+        _rehash_run_outputs(run_dir)
+        record = self._record(
+            run_dir,
+            self._spec(
+                metric_id="m1.delivered_total",
+                table_or_sidecar="run_metrics",
+                column="delivered_total",
+            ),
+        )
+        with pytest.raises(ValueError, match="no typed"):
+            verify_supported_record_runs(ROOT, record)
 
     def test_bound_metrics_pass(self, tmp_path: Path) -> None:
         """Metrics that the referenced run really produced are accepted."""
@@ -3202,8 +3330,8 @@ class TestSupportedMetricContentBinding:
         with pytest.raises(ValueError, match="declared unit does not match"):
             verify_supported_record_runs(ROOT, record)
 
-    def test_unit_of_an_unregistered_pair_is_not_bound(self, tmp_path: Path) -> None:
-        """A sidecar column has no model-declared unit to contradict."""
+    def test_sidecar_unit_must_match_typed_binding(self, tmp_path: Path) -> None:
+        """A sidecar binding is a declared unit; a different unit is rejected."""
         run_dir = self._run_dir(tmp_path)
         self._write_sidecar(run_dir, {"delivered_total": 12.5})
         record = self._record(
@@ -3215,7 +3343,8 @@ class TestSupportedMetricContentBinding:
                 unit="synthetic_probe_units",
             ),
         )
-        verify_supported_record_runs(ROOT, record)
+        with pytest.raises(ValueError, match="does not match the sidecar binding"):
+            verify_supported_record_runs(ROOT, record)
 
     @pytest.mark.parametrize("nonfinite", [float("inf"), float("-inf")])
     def test_sidecar_nonfinite_value_is_rejected(
@@ -3256,8 +3385,17 @@ class TestSupportedMetricContentBinding:
     def test_sidecar_overflowing_literal_is_rejected(self, tmp_path: Path) -> None:
         """``1e999`` is standard JSON and parses to ``inf``: checked, not trusted."""
         run_dir = self._run_dir(tmp_path)
+        binding = {
+            "unit": PHYSICAL_UNIT_TOKEN,
+            "value_type": "number",
+            "temporal": {"start_quarter": "1957Q1", "end_quarter": "1985Q4"},
+            "selectors": [],
+        }
         (run_dir / "run_metrics.json").write_text(
-            '{"delivered_total": 1e999}', encoding="utf-8"
+            '{"delivered_total": 1e999, "__metric_bindings__": '
+            + json.dumps({"delivered_total": binding})
+            + "}",
+            encoding="utf-8",
         )
         _rehash_run_outputs(run_dir)
         record = self._record(
@@ -3344,70 +3482,8 @@ class TestSupportedMetricContentBinding:
         with pytest.raises(ValueError, match="cannot be established"):
             verify_supported_record_runs(ROOT, record)
 
-    def test_real_audit_run_metric_bindings_pass(self) -> None:
-        """The real C0 run satisfies the whole gate, metric content included."""
-        from hsm_lab.evidence.table_registry import F2_COMMODITY_IDS, F2_REGION_IDS
-
-        c0_dir = ROOT / "outputs" / "codex-audit-vnext-20261011" / "C0"
-        if not (c0_dir / "manifest.json").is_file():
-            pytest.skip("real C0 audit run not present in this checkout")
-
-        manifest = _read_json(c0_dir / "manifest.json")
-        summary = _read_json(c0_dir / "summary.json")
-        region_axis = RegionAxis(
-            regions=list(F2_REGION_IDS), unit="M_forint", aggregation="sum"
-        )
-        record = self._record(
-            c0_dir,
-            self._spec(
-                metric_id="m1.household_consumption",
-                table_or_sidecar="national_accounts",
-                column="household_consumption",
-            ),
-            self._spec(
-                commodity_axis=CommodityAxis(
-                    commodities=list(F2_COMMODITY_IDS), unit="M_forint"
-                ),
-                region_axis=region_axis,
-            ),
-            self._spec(
-                metric_id="m2.bottleneck_demand_count",
-                table_or_sidecar="tick_diagnostics",
-                column="bottleneck_demand_count",
-                data_role=DataRole.CANDIDATE_LINKAGE,
-                validation_fidelity=ValidationFidelity.PROXY,
-                unit="count",
-            ),
-            self._spec(
-                metric_id="m1.forced_saving",
-                table_or_sidecar="household_budgets",
-                column="forced_saving",
-                unit="M_forint",
-                region_axis=region_axis,
-            ),
-            self._spec(
-                metric_id="m2.credit_drawn",
-                table_or_sidecar="organization_diagnostics",
-                column="credit_drawn",
-                unit="M_forint",
-                region_axis=region_axis,
-                data_role=DataRole.CANDIDATE_LINKAGE,
-                validation_fidelity=ValidationFidelity.PROXY,
-            ),
-            self._spec(
-                metric_id="m6.treasury_cash",
-                table_or_sidecar="financial_accounts",
-                column="closing",
-                unit="M_forint",
-                data_role=DataRole.CANDIDATE_LINKAGE,
-                validation_fidelity=ValidationFidelity.PROXY,
-            ),
-            run_id=manifest["run_id"],
-            digest=manifest["deterministic_replay_digest"],
-            seed=manifest["seed"],
-            scenario_id=summary["scenario_id"],
-        )
-        verify_supported_record_runs(ROOT, record)
+    # Legacy-output positive control removed: the fabricated-run tests above
+    # and the Git-only four-quarter fixture cover this gate without skipping.
 
 
 # ---------------------------------------------------------------------------
@@ -3818,14 +3894,21 @@ class TestSupportedLinkedObservedStates:
         kwargs.update(overrides)
         return ObservedState(**kwargs)
 
-    def _record(self, run_dir: Path, **overrides) -> EvidenceRecord:
+    def _record(
+        self,
+        run_dir: Path,
+        *,
+        fidelity: FidelityLevel = FidelityLevel.F2_RUN,
+        **overrides,
+    ) -> EvidenceRecord:
         helper = TestSupportedMetricContentBinding()
         spec = helper._spec(
             time_window=TimeWindow(
                 start_quarter="1957Q1",
                 end_quarter="1957Q4",
                 missing_policy=MissingPolicy.ABORT,
-            )
+            ),
+            fidelity=fidelity,
         )
         return helper._record(run_dir, spec, **overrides)
 
@@ -3915,29 +3998,593 @@ class TestSupportedLinkedObservedStates:
         with pytest.raises(ValueError, match="is not in the output"):
             verify_supported_record_runs(ROOT, record)
 
-    def test_real_audit_run_linked_observed_state_passes(self) -> None:
-        """The real C0 run's final quarter is an admissible checkpoint."""
-        c0_dir = ROOT / "outputs" / "codex-audit-vnext-20261011" / "C0"
-        if not (c0_dir / "manifest.json").is_file():
-            pytest.skip("real C0 audit run not present in this checkout")
-
-        manifest = _read_json(c0_dir / "manifest.json")
-        summary = _read_json(c0_dir / "summary.json")
+    def test_four_quarter_run_linked_observed_state_passes(
+        self, four_quarter_material_run
+    ) -> None:
+        """The Git-only run's final quarter is an admissible checkpoint."""
+        root, run_dir, manifest = four_quarter_material_run
         record = self._record(
-            c0_dir,
-            run_id=manifest["run_id"],
-            digest=manifest["deterministic_replay_digest"],
-            seed=manifest["seed"],
-            scenario_id=summary["scenario_id"],
+            run_dir,
+            fidelity=FidelityLevel.F1_INTERMEDIATE,
+            run_id=manifest.run_id,
+            digest=manifest.deterministic_replay_digest,
+            seed=manifest.seed,
+            scenario_id="intermediate8",
             linked_observed_states=[
                 self._state(
-                    source_run_id=manifest["run_id"],
-                    source_scenario=summary["scenario_id"],
-                    source_checkpoint_quarter="1985Q4",
-                    source_digest=manifest["deterministic_replay_digest"],
-                    available_at="1985Q4",
-                    decision_at="1985Q4",
+                    source_run_id=manifest.run_id,
+                    source_scenario="intermediate8",
+                    source_checkpoint_quarter="1957Q4",
+                    source_digest=manifest.deterministic_replay_digest,
+                    available_at="1957Q4",
+                    decision_at="1957Q4",
                 )
             ],
         )
-        verify_supported_record_runs(ROOT, record)
+        verify_supported_record_runs(root, record)
+
+
+# ---------------------------------------------------------------------------
+# H0A round-2 boundary regressions
+# ---------------------------------------------------------------------------
+
+
+class TestH0ARound2Boundaries:
+    def test_run_reference_seed_must_be_exact_int(self) -> None:
+        for bad in ("1729", 1729.0, True):
+            with pytest.raises(ValidationError):
+                EvidenceRunReference(
+                    run_id="r",
+                    scenario_id="historical_f2_replay",
+                    seed=bad,  # type: ignore[arg-type]
+                    output_dir=Path("/tmp/run"),
+                    digest="a" * 64,
+                )
+
+    def test_raw_manifest_bool_seed_is_rejected(self, tmp_path: Path) -> None:
+        run_dir = _write_self_consistent_material_run(
+            tmp_path / "run",
+            parameter_hash=_material_parameter_hash(),
+            seed=1,
+        )
+        manifest = _read_json(run_dir / "manifest.json")
+        manifest["seed"] = True
+        _write_json(run_dir / "manifest.json", manifest)
+        _rehash_run_outputs(run_dir)
+        with pytest.raises(ValueError, match="raw manifest"):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id="historical_f2_replay",
+                seed=1,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )
+
+    def test_sidecar_binding_type_must_match_quantitative_unit(
+        self, tmp_path: Path
+    ) -> None:
+        helper = TestSupportedMetricContentBinding()
+        run_dir = helper._run_dir(tmp_path)
+        _write_json(
+            run_dir / "run_metrics.json",
+            {
+                "delivered_total": "not-a-number",
+                "__metric_bindings__": {
+                    "delivered_total": {
+                        "unit": "M_forint",
+                        "value_type": "string",
+                        "temporal": {
+                            "start_quarter": "1957Q1",
+                            "end_quarter": "1985Q4",
+                        },
+                        "selectors": [],
+                    }
+                },
+            },
+        )
+        _rehash_run_outputs(run_dir)
+        record = helper._record(
+            run_dir,
+            helper._spec(
+                table_or_sidecar="run_metrics",
+                column="delivered_total",
+                unit="M_forint",
+            ),
+        )
+        with pytest.raises(ValueError, match="requires value_type='number'"):
+            verify_supported_record_runs(ROOT, record)
+
+    def test_sidecar_binding_type_must_match_label_unit(
+        self, tmp_path: Path
+    ) -> None:
+        helper = TestSupportedMetricContentBinding()
+        run_dir = helper._run_dir(tmp_path)
+        _write_json(
+            run_dir / "run_metrics.json",
+            {
+                "delivered_total": 3,
+                "__metric_bindings__": {
+                    "delivered_total": {
+                        "unit": "binding_constraint_label",
+                        "value_type": "number",
+                        "temporal": {
+                            "start_quarter": "1957Q1",
+                            "end_quarter": "1985Q4",
+                        },
+                        "selectors": [],
+                    }
+                },
+            },
+        )
+        _rehash_run_outputs(run_dir)
+        record = helper._record(
+            run_dir,
+            helper._spec(
+                table_or_sidecar="run_metrics",
+                column="delivered_total",
+                unit="binding_constraint_label",
+            ),
+        )
+        with pytest.raises(ValueError, match="requires value_type='string'"):
+            verify_supported_record_runs(ROOT, record)
+
+    def test_zero_draw_distinct_seeds_are_not_stochastic_replicates(
+        self, tmp_path: Path
+    ) -> None:
+        helper = TestSupportedMetricContentBinding()
+        run_a = _write_self_consistent_material_run(
+            tmp_path / "run-a",
+            parameter_hash=_material_parameter_hash(),
+            seed=1729,
+        )
+        run_b = _write_self_consistent_material_run(
+            tmp_path / "run-b",
+            parameter_hash=_material_parameter_hash(),
+            seed=1730,
+        )
+        for run_dir, run_id in ((run_a, "run-a"), (run_b, "run-b")):
+            for name in ("manifest.json", "summary.json"):
+                payload = _read_json(run_dir / name)
+                payload["run_id"] = run_id
+                payload["rng_draws_count"] = 0
+                payload["rng_draws_by_module"] = {}
+                payload["stochastic_modules_active"] = []
+                _write_json(run_dir / name, payload)
+            _rehash_run_outputs(run_dir)
+        base = helper._record(
+            run_a,
+            helper._spec(),
+            run_id="run-a",
+            digest="a" * 64,
+            seed=1729,
+        )
+        second_ref = EvidenceRunReference(
+            run_id="run-b",
+            scenario_id=_PARAMETER_SCENARIO,
+            seed=1730,
+            output_dir=run_b,
+            digest="a" * 64,
+        )
+        record = base.model_copy(
+            update={
+                "minimum_replicates": 2,
+                "run_references": [base.run_references[0], second_ref],
+            }
+        )
+        with pytest.raises(
+            ValueError, match="not independent stochastic replicates"
+        ):
+            EvidenceRecord.model_validate_json(
+                record.model_dump_json(), context={"root": ROOT}
+            )
+
+    def test_study_manifest_rejects_canonical_duplicate(self) -> None:
+        declarations = [
+            StudyDeclaration(
+                record_id="decl-1",
+                mechanism_id="M1",
+                intent="one identity, two spellings",
+                linked_cards=["M1"],
+                status="declared",
+                declared_reason="test",
+            ),
+            StudyDeclaration(
+                record_id="decl-2",
+                mechanism_id="M01",
+                intent="same identity",
+                linked_cards=["M01"],
+                status="declared",
+                declared_reason="test",
+            ),
+        ]
+        with pytest.raises(ValidationError, match="duplicate canonical"):
+            StudyManifest(
+                manifest_version="1.0.0",
+                phase="H0A",
+                created_by_phase="H0A",
+                records=declarations,
+            )
+
+
+# ---------------------------------------------------------------------------
+# Git-only four-quarter runner fixture (H0A R2-7)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def four_quarter_material_run(tmp_path_factory):
+    """Build a Git-only temp repo and run the real material engine for 4 ticks."""
+    from hsm_lab.contract.guards import load_scenario
+
+    root = tmp_path_factory.mktemp("h0a_fourq")
+    (root / "config" / "scenarios").mkdir(parents=True)
+    (root / "data" / "manifests").mkdir(parents=True)
+    shutil.copy(ROOT / "config" / "research_contract.json", root / "config")
+    shutil.copy(ROOT / "BASELINE.md", root / "BASELINE.md")
+    shutil.copy(ROOT / "uv.lock", root / "uv.lock")
+    shutil.copy(
+        ROOT / "config" / "scenarios" / "intermediate8.json",
+        root / "config" / "scenarios",
+    )
+    for name in ("sources.yml", "variables.yml", "artifacts.yml"):
+        shutil.copy(
+            ROOT / "data" / "manifests" / name,
+            root / "data" / "manifests" / name,
+        )
+    shutil.copytree(
+        ROOT / "config" / "p06" / "cards",
+        root / "config" / "p06" / "cards",
+    )
+    build_synthetic_material_fixtures(root)
+
+    base_spec = load_scenario(root, "intermediate8")
+    spec = base_spec.model_copy(
+        update={
+            "ticks": 4,
+            "households": 1000,
+            "organizations": 100,
+            "organization_recipe": base_spec.organization_recipe.model_copy(
+                update={"profile": "p02_100"}
+            ),
+        }
+    )
+    # ``AVAILABLE_SCENARIOS`` is a fixed registry; rewrite the temp copy of
+    # the supported scenario rather than inventing a new id.
+    (root / "config" / "scenarios" / "intermediate8.json").write_text(
+        spec.model_dump_json(), encoding="utf-8"
+    )
+    spec = load_scenario(root, "intermediate8")
+    contract = load_research_contract(root)
+    registry = DataRegistry.load(
+        root, allowed_commodities=list(spec.commodities)
+    )
+    run_dir = root / "run-four-q"
+    manifest = run_material(spec, run_dir, contract, registry)
+    return root, run_dir, manifest
+
+
+def test_four_quarter_git_only_run_verifies(four_quarter_material_run) -> None:
+    """A real 4-quarter run built from tracked files passes identity checks."""
+    root, run_dir, manifest = four_quarter_material_run
+    verified = verify_run_identity(
+        root=root,
+        scenario_id="intermediate8",
+        seed=manifest.seed,
+        expected_digest=manifest.deterministic_replay_digest,
+        output_dir=run_dir,
+    )
+    assert verified.status == "completed"
+    assert verified.completed_ticks == 4
+    assert verified.run_kind == "material_household_simulation"
+
+
+# ---------------------------------------------------------------------------
+# H0A round-4 custody regressions
+# ---------------------------------------------------------------------------
+
+
+class TestH0ARound4Custody:
+    def _run(self, tmp_path: Path, name: str, seed: int) -> Path:
+        return _write_self_consistent_material_run(
+            tmp_path / name,
+            parameter_hash=_material_parameter_hash(),
+            seed=seed,
+        )
+
+    def _patch_json(self, run_dir: Path, name: str, mutate) -> None:
+        payload = _read_json(run_dir / name)
+        mutate(payload)
+        _write_json(run_dir / name, payload)
+
+    def _set_rng(self, payload: dict, count: int, module: str | None) -> None:
+        payload["rng_draws_count"] = count
+        payload["rng_draws_by_module"] = (
+            {} if module is None else {module: count}
+        )
+        payload["stochastic_modules_active"] = (
+            [] if module is None else [module]
+        )
+
+    def test_duplicate_stochastic_seeds_do_not_satisfy_replicates(
+        self, tmp_path: Path
+    ) -> None:
+        helper = TestSupportedMetricContentBinding()
+        runs = []
+        for name, seed, count in (
+            ("a", 1729, 1),
+            ("b", 1729, 1),
+            ("c", 1730, 0),
+        ):
+            run_dir = self._run(tmp_path, name, seed)
+            run_id = f"run-{name}"
+            for file_name in ("manifest.json", "summary.json"):
+                self._patch_json(
+                    run_dir,
+                    file_name,
+                    lambda payload, rid=run_id, c=count: (
+                        payload.__setitem__("run_id", rid),
+                        self._set_rng(payload, c, "m" if c else None),
+                    ),
+                )
+            _rehash_run_outputs(run_dir)
+            runs.append((run_dir, run_id, seed))
+        base = helper._record(
+            runs[0][0],
+            helper._spec(),
+            run_id=runs[0][1],
+            digest="a" * 64,
+            seed=runs[0][2],
+        )
+        refs = [
+            EvidenceRunReference(
+                run_id=run_id,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=seed,
+                output_dir=run_dir,
+                digest="a" * 64,
+            )
+            for run_dir, run_id, seed in runs
+        ]
+        record = base.model_copy(
+            update={"minimum_replicates": 2, "run_references": refs}
+        )
+        with pytest.raises(
+            ValueError, match=r"distinct seed\(s\) among verified runs"
+        ):
+            EvidenceRecord.model_validate_json(
+                record.model_dump_json(), context={"root": ROOT}
+            )
+
+    def test_summary_rng_contradiction_is_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        run_dir = self._run(tmp_path, "rng", 1729)
+        for file_name in ("manifest.json", "summary.json"):
+            self._patch_json(
+                run_dir, file_name, lambda p: self._set_rng(p, 1, "m")
+            )
+        self._patch_json(
+            run_dir,
+            "summary.json",
+            lambda p: self._set_rng(p, 0, None),
+        )
+        _rehash_run_outputs(run_dir)
+        with pytest.raises(ValueError, match="contradicts manifest"):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=1729,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )
+
+    def test_mismatched_active_modules_are_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        helper = TestSupportedMetricContentBinding()
+        run_dir = self._run(tmp_path, "modules", 1729)
+        for file_name in ("manifest.json", "summary.json"):
+            def mutate(payload: dict) -> None:
+                payload["rng_draws_count"] = 1
+                payload["rng_draws_by_module"] = {"invented.module": 1}
+                payload["stochastic_modules_active"] = ["unrelated.module"]
+            self._patch_json(run_dir, file_name, mutate)
+        self._patch_json(
+            run_dir,
+            "manifest.json",
+            lambda p: p.__setitem__("run_id", "run-modules"),
+        )
+        self._patch_json(
+            run_dir,
+            "summary.json",
+            lambda p: p.__setitem__("run_id", "run-modules"),
+        )
+        _rehash_run_outputs(run_dir)
+        record = helper._record(
+            run_dir,
+            helper._spec(),
+            run_id="run-modules",
+            digest="a" * 64,
+            seed=1729,
+        )
+        with pytest.raises(ValueError, match="does not match the modules"):
+            verify_supported_record_runs(ROOT, record)
+
+    def test_scenario_universe_downgrade_is_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        run_dir = self._run(tmp_path, "universe", 1729)
+        for file_name in ("manifest.json", "summary.json"):
+            self._patch_json(
+                run_dir,
+                file_name,
+                lambda p: p.__setitem__(
+                    "commodity_ids", ["g01_solid_fuels"]
+                ),
+            )
+        _rehash_run_outputs(run_dir)
+        with pytest.raises(ValueError, match="commodity universe"):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=1729,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )
+
+    def test_changed_parameter_declaration_is_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        run_dir = self._run(tmp_path, "declaration", 1729)
+        self._patch_json(
+            run_dir,
+            "parameters.json",
+            lambda p: p["declaration"].__setitem__("wage_rate", 999.0),
+        )
+        _rehash_run_outputs(run_dir)
+        with pytest.raises(ValueError, match="declaration does not match"):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=1729,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )
+
+    def test_outward_output_symlink_is_rejected(self, tmp_path: Path) -> None:
+        run_dir = self._run(tmp_path, "symlink", 1729)
+        outside = tmp_path / "outside-parameters.json"
+        outside.write_bytes((run_dir / "parameters.json").read_bytes())
+        (run_dir / "parameters.json").unlink()
+        (run_dir / "parameters.json").symlink_to(outside)
+        with pytest.raises(ValueError, match="symlink escaping"):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=1729,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )
+
+    def test_unhashed_staging_artifact_cannot_support_metric(
+        self, tmp_path: Path
+    ) -> None:
+        import shutil
+
+        helper = TestSupportedMetricContentBinding()
+        run_dir = helper._run_dir(tmp_path)
+        staging = run_dir / ".tmp-forged"
+        staging.mkdir()
+        shutil.copy(
+            run_dir / "trajectory_tables" / "aggregates.parquet",
+            staging / "aggregates.parquet",
+        )
+        record = helper._record(
+            run_dir,
+            helper._spec(
+                table_or_sidecar=".tmp-forged/aggregates",
+                column="delivered",
+            ),
+        )
+        with pytest.raises(
+            ValueError, match="not covered by the run's verified output hashes"
+        ):
+            verify_supported_record_runs(ROOT, record)
+
+    def test_missing_summary_rng_evidence_is_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        run_dir = self._run(tmp_path, "missing-rng", 1729)
+        self._patch_json(
+            run_dir,
+            "summary.json",
+            lambda p: [
+                p.pop(field, None)
+                for field in (
+                    "rng_scheme_version",
+                    "rng_draws_count",
+                    "rng_draws_by_module",
+                    "stochastic_modules_active",
+                )
+            ],
+        )
+        _rehash_run_outputs(run_dir)
+        with pytest.raises(ValueError, match="missing required RNG field"):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=1729,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )
+
+    def test_trajectory_table_traversal_is_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        run_dir = self._run(tmp_path, "traversal", 1729)
+        self._patch_json(
+            run_dir,
+            "summary.json",
+            lambda p: p.__setitem__("row_counts", {"../outside": 116}),
+        )
+        _rehash_run_outputs(run_dir)
+        with pytest.raises(ValueError, match="invalid trajectory table name"):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=1729,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )
+
+    def test_boolean_rng_counters_are_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        run_dir = self._run(tmp_path, "bool-rng", 1729)
+        for file_name in ("manifest.json", "summary.json"):
+            self._patch_json(
+                run_dir,
+                file_name,
+                lambda p: (
+                    p.__setitem__("rng_draws_count", True),
+                    p.__setitem__("rng_draws_by_module", {"m": True}),
+                    p.__setitem__("stochastic_modules_active", ["m"]),
+                ),
+            )
+        _rehash_run_outputs(run_dir)
+        with pytest.raises(
+            ValueError, match="strict non-negative integer"
+        ):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=1729,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )
+
+    def test_jointly_wrong_scenario_labels_are_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        run_dir = self._run(tmp_path, "labels", 1729)
+        for file_name in (
+            "summary.json",
+            "parameters.json",
+            "initial_recipe.json",
+        ):
+            self._patch_json(
+                run_dir,
+                file_name,
+                lambda p: p.__setitem__(
+                    "scenario_id", "historical_f2_trade_scenario"
+                ),
+            )
+        _rehash_run_outputs(run_dir)
+        with pytest.raises(ValueError, match="does not match"):
+            verify_run_identity(
+                root=ROOT,
+                scenario_id=_PARAMETER_SCENARIO,
+                seed=1729,
+                expected_digest="a" * 64,
+                output_dir=run_dir,
+            )

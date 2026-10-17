@@ -277,3 +277,71 @@ runs still verify.
 
 Full suite: 722 passed, 0 failed; `ruff check src tests` clean;
 real C0/C1 runs still verify.
+
+---
+
+## Round-2 independent-audit repairs (2026-10-18)
+
+The prior PASS was re-audited on the current revision; the following defects
+were reproduced and repaired. Independent re-review is pending.
+
+| ID | Finding | Repair |
+|---|---|---|
+| R2-1 (P0) | A material scenario could self-declare `run_kind=synthetic_engine_smoke` and skip material tick-data checks | `verify_run_identity` binds `run_kind` to the loaded scenario kind; material checks key off the scenario, not the manifest |
+| R2-2 (P0) | Quantitative Parquet metrics accepted arbitrary strings | Quantitative units reject non-numeric cells; categorical units (`binding_constraint_label`) require strings |
+| R2-3 (P0) | JSON sidecars bypassed unit/type/temporal/selector semantics | Sidecars must declare `__metric_bindings__` with exact unit, value type, temporal extent and empty selectors; untyped sidecars cannot support a record |
+| R2-4 (P1) | `MetricSpec` and its `TimeWindow` could declare different missing policies; `data_role` bypassed data checks | Policy equality enforced in the schema; data checks run for every role |
+| R2-5 (P1) | Seeds `"1729"`/`1729.0`/`true` were coerced | `EvidenceRunReference` and raw manifest seeds require exact non-negative ints before coercion |
+| R2-6 (P1) | ID normalisation accepted lowercase/whitespace/M010 and could not round-trip M10/M11; canonical duplicates and DAG joins were inconsistent | Exact M1–M11/M01–M11 forms only, all eleven round-trip, canonical uniqueness on manifests, canonical DAG lookup |
+| R2-7 (P1) | Git-only/fresh-run evidence depended on legacy outputs and skipped when absent | Added a real Git-only 4-quarter runner fixture path and fresh C0/C1 replay evidence (see `evidence/h0a-fresh-20261018/`); no skip-based positive control |
+| R2-8 (P1) | Delivered H0A diff included files outside the frozen whitelist | Reconciliation recorded: `src/hsm_lab/evidence/__init__.py`, `tests/test_evidence_schemas.py` and `tests/test_hist_identity_guards.py` were subsequently authorized under H0B N1; `metric_enricher.py` belongs to H0B, not H0A. Historical attribution corrected without reverting later work |
+
+### Round-2 verification
+```sh
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q -p no:cacheprovider \
+  tests/test_hist_identity_guards.py tests/test_evidence_schemas.py \
+  tests/test_evidence_run_adapter.py tests/test_evidence_manifest_verification.py
+# → 310 passed
+.venv/bin/ruff check --no-cache src tests
+# → all checks passed
+```
+
+Fresh-run evidence and the Git-only snapshot are recorded in
+`docs/phases/HIST_VNEXT/H0A/evidence/h0a-fresh-20261018/`.
+
+### Round-3 re-audit repairs
+| ID | Finding | Repair |
+|---|---|---|
+| R3-1 (P0) | A sidecar could declare `value_type` contradicting its unit (string under a monetary unit; number under a label unit) | Sidecar `value_type` must agree with unit semantics: quantitative units require `number`, categorical units require `string` |
+| R3-2 (P1) | Distinct seeds over deterministic zero-draw runs counted as stochastic replicates | Replicate gate inspects verified manifests' `rng_draws_count`/`rng_draws_by_module`/`stochastic_modules_active`; `minimum_replicates > 1` requires that many stochastic runs |
+
+Round-3 verification: H0A four-file subset **309 passed**; Git-only snapshot
+**309 passed, 0 skipped**; ruff clean.
+
+### Round-4 custody repairs
+| ID | Finding | Repair |
+|---|---|---|
+| R4-1 (P0) | Replicate count used distinct seeds across all refs while counting stochastic runs separately | Count distinct seeds among verified stochastic runs; duplicate seeds among active runs do not satisfy `minimum_replicates` |
+| R4-2 (P0) | RNG fields were not bound to the hashed summary; active modules could contradict module counts | Manifest/summary RNG fields are mirrored; active modules must equal modules with positive draw counts |
+| R4-3 (P0) | Manifest could shrink the commodity/region universe | Material manifests must match the loaded scenario's universes; table checks use that universe |
+| R4-4 (P1) | `parameters.json.declaration` content was not validated | Declaration must validate against `MaterialParameters` and equal the scenario declaration |
+| R4-5 (P1) | Output symlinks could escape the run directory | Every output entry must resolve inside the run; outward symlinks reject |
+| R4-6 (P1) | Output scenario labels were only checked against each other | Summary/parameters/recipe labels must equal the requested scenario |
+
+Round-4 verification: H0A four-file subset **316 passed**; ruff clean.
+
+### Round-5 custody repairs
+| ID | Finding | Repair |
+|---|---|---|
+| R5-1 (P0) | Missing summary RNG fields bypassed RNG/summary binding | Material summaries must contain all four RNG fields with exact types |
+| R5-2 (P0) | `row_counts` table names could traverse outside the run or name unhashed files | Table names must be `[A-Za-z0-9_]+`, resolve inside the run, and appear in `manifest.output_hashes` |
+| R5-3 (P1) | Raw boolean RNG counters became integers before validation | Raw manifest and summary RNG counters are exact-type checked before Pydantic/coercion |
+
+Round-5 verification: H0A four-file subset **316 passed**; ruff clean.
+
+### Round-6 artefact-custody repair
+| ID | Finding | Repair |
+|---|---|---|
+| R6-1 (P0) | Metric artifacts were not required to be covered by the verified run's output hashes; unhashed `.tmp-*` staging files could support SUPPORTED evidence | Every consumed Parquet/sidecar artifact must resolve inside the run and appear in `manifest.output_hashes`; staging paths are rejected |
+
+Round-6 verification: H0A four-file subset **320 passed**; ruff clean.

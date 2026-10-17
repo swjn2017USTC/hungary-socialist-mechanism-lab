@@ -275,37 +275,7 @@ def test_verify_digest_unchanged_invalid_json(tmp_path: Path) -> None:
     assert result is False
 
 
-# ---------------------------------------------------------------------------
-# Negative-control: C0/C1 from real audit run directories (if present)
-# ---------------------------------------------------------------------------
-
-def test_negative_control_c0_digest_matches_audit() -> None:
-    """The C0 digest from the audit run directory must match the frozen reference."""
-    c0_dir = ROOT / "outputs" / "codex-audit-vnext-20261011" / "C0"
-    if not c0_dir.exists():
-        # Real audit run output not present; skip
-        return
-    result = verify_digest_unchanged(
-        scenario_id="historical_f2_replay",
-        seed=1729,
-        expected_digest=get_c0_digest(),
-        output_dir=c0_dir,
-        root=ROOT,
-    )
-    assert result is True
-
-
-def test_negative_control_c1_digest_matches_audit() -> None:
-    """The C1 digest from the audit run directory must match the frozen reference."""
-    c1_dir = ROOT / "outputs" / "codex-audit-vnext-20261011" / "C1"
-    if not c1_dir.exists():
-        # Real audit run output not present; skip
-        return
-    result = verify_digest_unchanged(
-        scenario_id="historical_f2_trade_scenario",
-        seed=1729,
-        expected_digest=get_c1_digest(),
-        output_dir=c1_dir,
-        root=ROOT,
-    )
-    assert result is True
+# Real C0/C1 verification is recorded as fresh-run evidence under
+# ``docs/phases/HIST_VNEXT/H0A/evidence/h0a-fresh-20261018/``.  The former
+# controls silently returned when the ignored legacy outputs were absent, so
+# they are not kept as tests.

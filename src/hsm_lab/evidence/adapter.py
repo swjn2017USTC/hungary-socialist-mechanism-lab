@@ -19,7 +19,10 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from hsm_lab.contract.schemas import Quarter
 from hsm_lab.evidence.loader import (
+    _SIDECAR_BINDING_KEYS,
+    _SIDECAR_BINDINGS_KEY,
     _is_missing_value,
     _is_nonfinite_value,
     _metric_artifact_path,
@@ -378,11 +381,13 @@ class ObservationStatus(StrEnum):
     """Why a registered metric can or cannot be read from one run.
 
     The statuses are deliberately distinct. A missing file, a missing column,
-    a wrongly typed column, an empty table, a window with no rows, an
-    unmatched selector, an absent sidecar and a genuine zero are different
-    observations, and only the last one is a measurement: an empty table or an
-    absent artifact MUST NOT be reported as zero, and a column whose datatype
-    contradicts the metric's declared semantics MUST NOT be read as data.
+    a wrongly typed column, a non-tabular artifact that declares no metric
+    semantics, an empty table, a window with no rows, an unmatched selector,
+    an absent sidecar and a genuine zero are different observations, and only
+    the last one is a measurement: an empty table or an absent artifact MUST
+    NOT be reported as zero, a column whose datatype contradicts the metric's
+    declared semantics MUST NOT be read as data, and a bare JSON scalar MUST
+    NOT be substituted for a registered table quantity.
     """
 
     SEMANTICS_BLOCKED = "semantics_blocked"
@@ -391,6 +396,7 @@ class ObservationStatus(StrEnum):
     TABLE_EMPTY = "table_empty"
     COLUMN_ABSENT = "column_absent"
     DATATYPE_MISMATCH = "datatype_mismatch"
+    ARTIFACT_UNBOUND = "artifact_unbound"
     WINDOW_EMPTY = "window_empty"
     SELECTOR_UNMATCHED = "selector_unmatched"
     NULL_VALUES = "null_values"
@@ -535,11 +541,31 @@ def _observe_parquet(
             rows=rows,
         )
     quarters = table.column("quarter").to_pylist()
+
+    def _in_declared_window(quarter: object) -> bool:
+        # Only an exact YYYYQ[1-4] label denotes a quarter.  Annual values,
+        # integers and malformed labels (e.g. "1957Q10") must not become
+        # in-window observations through string coercion.
+        if type(quarter) is not str or not quarter.isascii():
+            return False
+        try:
+            parsed = Quarter.parse(quarter)
+        except Exception:
+            return False
+        # No normalization: the original label must already be the canonical
+        # ASCII form (rejects "1957Q1\n" and Unicode-digit lookalikes).
+        if str(parsed) != quarter:
+            return False
+        return (
+            Quarter.parse(window.start_quarter).to_ordinal()
+            <= parsed.to_ordinal()
+            <= Quarter.parse(window.end_quarter).to_ordinal()
+        )
+
     in_window = [
         index
         for index, quarter in enumerate(quarters)
-        if quarter is not None
-        and window.start_quarter <= str(quarter) <= window.end_quarter
+        if _in_declared_window(quarter)
     ]
     if not in_window:
         return _observation(
@@ -578,6 +604,51 @@ def _observe_parquet(
                 window_rows=window_rows,
             )
         axes.append((axis_values, frozenset(declared)))
+
+    # Covering the window and each selector separately is not covering their
+    # intersection.  A metric is only measured if every declared quarter
+    # carries rows for every declared commodity/region combination; otherwise
+    # absent cells would be silently read as zero/complete.
+    declared_quarters: list[str] = []
+    quarter_cursor = Quarter.parse(window.start_quarter)
+    quarter_last = Quarter.parse(window.end_quarter)
+    while quarter_cursor.to_ordinal() <= quarter_last.to_ordinal():
+        declared_quarters.append(str(quarter_cursor))
+        quarter_cursor = quarter_cursor.advance(1)
+
+    observed_keys: set[tuple[str, ...]] = set()
+    for index in in_window:
+        key: tuple[str, ...] = (str(Quarter.parse(quarters[index])),)
+        if axes:
+            key = key + tuple(
+                str(axis_values[index]) for axis_values, _ in axes
+            )
+        observed_keys.add(key)
+
+    combinations: list[tuple[str, ...]] = [()]
+    for _, declared in axes:
+        combinations = [
+            prefix + (value,) for prefix in combinations for value in declared
+        ]
+    missing_combinations: list[tuple[str, ...]] = []
+    for quarter_label in declared_quarters:
+        for combination in combinations:
+            key = (quarter_label,) + combination
+            if key not in observed_keys:
+                missing_combinations.append(key)
+    if missing_combinations:
+        return _observation(
+            registration,
+            ObservationStatus.WINDOW_EMPTY,
+            f"{len(missing_combinations)} declared quarter×selector "
+            f"combination(s) have no rows (e.g. "
+            f"{missing_combinations[:3]}); the metric's window is not fully "
+            "covered",
+            artifact=artifact,
+            rows=rows,
+            window_rows=window_rows,
+        )
+
     # Every declared selector is applied to the row set before a single value
     # is read -- a one-axis metric exactly as a joint one. A row whose axis
     # value the spec does not declare is not an observation of this metric,
@@ -711,14 +782,33 @@ def _observe_categorical(
     ``abort`` a null label in the declared window means the metric is not
     measured there.
     """
-    labels = [str(value) for value in values if value is not None]
-    missing = len(values) - len(labels)
-    if not labels:
+    labels: list[str] = []
+    missing = 0
+    nonfinite = 0
+    wrong_type = 0
+    for value in values:
+        # A numeric label column can carry NaN or inf. Neither is a category:
+        # ``str(float('nan'))`` would otherwise become the label "nan" and
+        # bypass the metric's own ``missing_policy``.
+        if _is_missing_value(value):
+            missing += 1
+            continue
+        if _is_nonfinite_value(value):
+            nonfinite += 1
+            continue
+        # The shared evidence gate and the real writer both define a label as
+        # an exact string.  Numbers, booleans, lists and structs are not
+        # categories; stringifying them would invent a label.
+        if type(value) is not str:
+            wrong_type += 1
+            continue
+        labels.append(value)
+    if missing == len(values):
         return _observation(
             registration,
             ObservationStatus.NULL_VALUES,
-            f"all {len(values)} labels in the declared window are null: a "
-            "placeholder is not a measurement",
+            f"all {len(values)} labels in the declared window are null or NaN: "
+            "a placeholder is not a measurement",
             artifact=artifact,
             rows=rows,
             window_rows=window_rows,
@@ -728,8 +818,29 @@ def _observe_categorical(
             registration,
             ObservationStatus.NULL_VALUES,
             f"{missing} of {len(values)} labels in the declared window are null "
-            f"and the metric declares missing_policy="
+            f"or NaN and the metric declares missing_policy="
             f"{registration.spec.missing_policy.value}",
+            artifact=artifact,
+            rows=rows,
+            window_rows=window_rows,
+        )
+    if nonfinite:
+        return _observation(
+            registration,
+            ObservationStatus.NONFINITE_VALUES,
+            f"{nonfinite} of {len(values)} labels in the declared window are "
+            "non-finite",
+            artifact=artifact,
+            rows=rows,
+            window_rows=window_rows,
+        )
+    if wrong_type:
+        return _observation(
+            registration,
+            ObservationStatus.DATATYPE_MISMATCH,
+            f"{wrong_type} of {len(values)} categorical values in the declared "
+            "window are not strings; a label is an exact string, not a "
+            "number, boolean, list or struct",
             artifact=artifact,
             rows=rows,
             window_rows=window_rows,
@@ -751,14 +862,38 @@ def _observe_sidecar(
     registration: RegisteredMetric,
     artifact: Path,
 ) -> MetricObservation:
+    """Observe a non-Parquet artifact only when it declares its semantics.
+
+    A JSON scalar is not a substitute for a registered table. The evidence
+    gate already refuses an unbound sidecar for a SUPPORTED record, and this
+    report must not be laxer: a bare ``{"household_consumption": 0.0}`` carries
+    no unit, no temporal extent and no selector declaration, so it cannot show
+    that the value is the quantity the metric names. The same typed
+    ``__metric_bindings__`` declaration the gate requires is checked here; an
+    artifact that does not establish the declared unit, window and selectors
+    is reported :attr:`ObservationStatus.ARTIFACT_UNBOUND`, never as a
+    measurement. A declared label unit is observed as a label, never coerced
+    to a number.
+    """
     spec = registration.spec
-    try:
-        payload = json.loads(artifact.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as error:
+    rows: int | None = None
+    if artifact.suffix == ".json":
+        try:
+            payload = json.loads(artifact.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as error:
+            return _observation(
+                registration,
+                ObservationStatus.ARTIFACT_ABSENT,
+                f"sidecar {artifact.name} is unreadable: {error}",
+                artifact=artifact,
+            )
+    else:
         return _observation(
             registration,
-            ObservationStatus.ARTIFACT_ABSENT,
-            f"sidecar {artifact.name} is unreadable: {error}",
+            ObservationStatus.ARTIFACT_UNBOUND,
+            f"{artifact.name} is not the declared Parquet table "
+            f"'{spec.table_or_sidecar}' and declares no metric binding; a bare "
+            "file cannot establish the declared unit, window or selectors",
             artifact=artifact,
         )
     if not isinstance(payload, dict):
@@ -768,48 +903,147 @@ def _observe_sidecar(
             f"sidecar {artifact.name} is not a key/value object",
             artifact=artifact,
         )
+    rows = len(payload)
     if spec.column not in payload:
         return _observation(
             registration,
             ObservationStatus.COLUMN_ABSENT,
             f"sidecar {artifact.name} has no '{spec.column}' key",
             artifact=artifact,
-            rows=len(payload),
+            rows=rows,
+        )
+    bindings = payload.get(_SIDECAR_BINDINGS_KEY)
+    binding = (
+        bindings.get(spec.column) if isinstance(bindings, dict) else None
+    )
+    if not isinstance(binding, dict) or set(binding) != _SIDECAR_BINDING_KEYS:
+        return _observation(
+            registration,
+            ObservationStatus.ARTIFACT_UNBOUND,
+            f"sidecar {artifact.name} supplies '{spec.column}' without the "
+            f"typed {_SIDECAR_BINDINGS_KEY!r} declaration (unit, value_type, "
+            "temporal and selectors); a bare JSON value cannot stand in for "
+            f"table '{spec.table_or_sidecar}'",
+            artifact=artifact,
+            rows=rows,
+        )
+    if binding["unit"] != spec.unit:
+        return _observation(
+            registration,
+            ObservationStatus.DATATYPE_MISMATCH,
+            f"sidecar binding for '{spec.column}' declares unit "
+            f"{binding['unit']!r}, not the metric's {spec.unit!r}",
+            artifact=artifact,
+            rows=rows,
+        )
+    temporal = binding["temporal"]
+    if (
+        not isinstance(temporal, dict)
+        or set(temporal) != {"start_quarter", "end_quarter"}
+        or temporal["start_quarter"] != spec.time_window.start_quarter
+        or temporal["end_quarter"] != spec.time_window.end_quarter
+    ):
+        return _observation(
+            registration,
+            ObservationStatus.ARTIFACT_UNBOUND,
+            f"sidecar binding for '{spec.column}' does not establish the "
+            f"declared window {spec.time_window.start_quarter}–"
+            f"{spec.time_window.end_quarter}",
+            artifact=artifact,
+            rows=rows,
+        )
+    selectors = binding["selectors"]
+    declared_axes = _selector_columns(spec)
+    if type(selectors) is not list or selectors or declared_axes:
+        return _observation(
+            registration,
+            ObservationStatus.ARTIFACT_UNBOUND,
+            f"sidecar binding for '{spec.column}' declares selectors "
+            f"{selectors!r}, which cannot satisfy the metric's declared "
+            f"{[column for column, _ in declared_axes]} selector(s)",
+            artifact=artifact,
+            rows=rows,
         )
     value = payload[spec.column]
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
+    if _is_missing_value(value):
         return _observation(
             registration,
             ObservationStatus.NULL_VALUES,
-            f"sidecar key '{spec.column}' is not a number",
+            f"sidecar key '{spec.column}' is null or NaN: a placeholder is "
+            "not a measurement",
             artifact=artifact,
-            rows=len(payload),
+            rows=rows,
         )
-    number = float(value)
-    if number != number or number in (float("inf"), float("-inf")):
+    if _is_nonfinite_value(value):
         return _observation(
             registration,
             ObservationStatus.NONFINITE_VALUES,
-            f"sidecar key '{spec.column}' is null or non-finite",
+            f"sidecar key '{spec.column}' is non-finite ({value!r})",
             artifact=artifact,
-            rows=len(payload),
+            rows=rows,
         )
+    value_type = binding["value_type"]
+    if value_type not in ("number", "string"):
+        return _observation(
+            registration,
+            ObservationStatus.ARTIFACT_UNBOUND,
+            f"sidecar binding value_type {value_type!r} is neither 'number' "
+            "nor 'string'",
+            artifact=artifact,
+            rows=rows,
+        )
+    if spec.unit in CATEGORICAL_UNITS:
+        if value_type != "string" or not isinstance(value, str):
+            return _observation(
+                registration,
+                ObservationStatus.DATATYPE_MISMATCH,
+                f"metric declares the label unit '{spec.unit}' but sidecar "
+                f"key '{spec.column}' is bound as {value_type!r} ({value!r}): "
+                "a declared label is not a quantity",
+                artifact=artifact,
+                rows=rows,
+            )
+        return _observation(
+            registration,
+            ObservationStatus.OBSERVABLE,
+            f"sidecar key '{spec.column}' is the label {value!r} over the "
+            "declared window",
+            artifact=artifact,
+            rows=rows,
+            labels=(value,),
+        )
+    if (
+        value_type != "number"
+        or isinstance(value, bool)
+        or not isinstance(value, (int, float))
+    ):
+        return _observation(
+            registration,
+            ObservationStatus.DATATYPE_MISMATCH,
+            f"metric declares the numeric unit '{spec.unit}' but sidecar key "
+            f"'{spec.column}' is {type(value).__name__} under "
+            f"value_type={value_type!r}: a declared quantity is not a label",
+            artifact=artifact,
+            rows=rows,
+        )
+    number = float(value)
     if number == 0.0:
         return _observation(
             registration,
             ObservationStatus.OBSERVABLE_ZERO,
-            f"sidecar key '{spec.column}' is exactly 0 (a sidecar carries no "
-            "window, so the declared window is not applied)",
+            f"sidecar key '{spec.column}' is exactly 0 within the declared "
+            f"window {spec.time_window.start_quarter}–"
+            f"{spec.time_window.end_quarter}",
             artifact=artifact,
-            rows=len(payload),
+            rows=rows,
             values=(0.0,),
         )
     return _observation(
         registration,
         ObservationStatus.OBSERVABLE,
-        f"sidecar key '{spec.column}' = {number!r}",
+        f"sidecar key '{spec.column}' = {number!r} within the declared window",
         artifact=artifact,
-        rows=len(payload),
+        rows=rows,
         values=(number,),
     )
 
@@ -830,10 +1064,24 @@ def observe_metric(
         )
         declared = None if blocked is None else blocked.declared_artifact
         if declared is not None and is_optional_sidecar(declared):
+            # A run may actually carry the declared sidecar even though the
+            # metric has no producer/semantics.  Resolve it before claiming
+            # absence: a present-but-unsupported artifact is a semantic block,
+            # not evidence that the run lacks the file.
+            present = resolve_run_artifact(run_dir, declared)
+            if present is not None:
+                return _observation(
+                    registration,
+                    ObservationStatus.SEMANTICS_BLOCKED,
+                    f"sidecar '{declared}' is present in this run, but the "
+                    "metric has no established producer/semantics",
+                    artifact=present,
+                )
             return _observation(
                 registration,
                 ObservationStatus.SIDECAR_ABSENT,
-                f"the card names sidecar '{declared}', which no F2 run writes",
+                f"the card names sidecar '{declared}', and this run does not "
+                "write it",
             )
         return _observation(
             registration,

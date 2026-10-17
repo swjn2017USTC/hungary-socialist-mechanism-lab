@@ -6,11 +6,13 @@ Run from repo root:
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import date
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from hsm_lab.contract.base import ConfigError
 from hsm_lab.institutions.authority import authority_at
@@ -51,6 +53,12 @@ def calendar(tmp_path) -> RegimeCalendar:
     return _build_synthetic_calendar()
 
 
+def test_in_memory_fallback_calendar_is_valid() -> None:
+    """The fallback branch must construct a schema-valid calendar."""
+    fallback = _build_synthetic_calendar()
+    assert fallback.events
+
+
 def _build_synthetic_calendar() -> RegimeCalendar:
     """Build the standard synthetic calendar used in all tests."""
     def _di(earliest: date, latest: date, precision: str) -> DateInterval:
@@ -71,6 +79,7 @@ def _build_synthetic_calendar() -> RegimeCalendar:
         issuer="Hungarian Socialist Workers Party",
         legal_force="enactment",
         source_ids=("synthetic_h1b_design_note",),
+        implementation_evidence_ids=("synthetic:h1b-fixture-observation-procurement",),
         synthetic_flag=True,
         confidence_reason="Synthetic fixture",
         search_tags=("NEM", "1968", "procurement"),
@@ -157,7 +166,8 @@ def _build_synthetic_calendar() -> RegimeCalendar:
         approval_date=_di(date(1970, 1, 1), date(1970, 1, 1), "day"),
         enactment_date=_di(date(1970, 1, 1), date(1970, 1, 1), "day"),
         effective_from=_di(date(1971, 1, 1), date(1971, 1, 1), "day"),
-        effective_to=_di(date(1975, 1, 1), date(1974, 12, 31), "range"),
+        # Half-open effective_to at 1975-01-01: valid through 1974.
+        effective_to=_di(date(1975, 1, 1), date(1975, 1, 1), "day"),
         observed_implementation_at=None,
         source_available_at=_di(date(1957, 1, 1), date(1957, 1, 1), "day"),
         issuer="CMEA",
@@ -444,18 +454,10 @@ class TestRevokeIsolation:
             confidence_reason="",
             search_tags=(),
         )
-        # The revoke targets a nonexistent grant — the authority query should
-        # return unknown (the target grant doesn't exist)
-        cal = RegimeCalendar(events=(ev,))
-        result = authority_at(
-            cal,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
-            geographic_id="national",
-            permission="procurement",
-            decision_at=date(1973, 1, 1),
-        )
-        assert result.status == "unknown"
+        # A dangling revoke is a malformed declaration, not a query-time
+        # unknown: it must be rejected when the calendar is validated.
+        with pytest.raises(ConfigError, match="nonexistent event"):
+            RegimeCalendar(events=(ev,))
 
 
 # ---------------------------------------------------------------------------
@@ -858,6 +860,155 @@ class TestJSONLoading:
 #   Bug 3: a wildcard grant must still accept contained sector revokes
 # ---------------------------------------------------------------------------
 
+def test_expired_revoke_trace_is_order_independent() -> None:
+    grant = _regression_event(
+        event_id="G",
+        effective_to=_di(date(1972, 1, 1), date(1972, 1, 1), "day"),
+    )
+    revokes = [
+        _regression_event(
+            event_id=event_id,
+            action="revoke",
+            revokes_event_id="G",
+            enactment_date=_di(date(1971, 1, 1), date(1971, 1, 1), "day"),
+            effective_from=_di(date(1971, 1, 1), date(1971, 1, 1), "day"),
+        )
+        for event_id in ("R-Z", "R-A")
+    ]
+
+    def ids(events):
+        return authority_at(
+            RegimeCalendar(events=tuple(events)),
+            organization_id="ORG-A",
+            sector_id="industry",
+            geographic_id="national",
+            permission="procurement",
+            decision_at=date(1973, 1, 1),
+        ).active_event_ids
+
+    assert ids([grant, *revokes]) == ids([grant, *reversed(revokes)])
+    assert ids([grant, *revokes]) == ("R-A", "R-Z")
+
+
+def test_smoke_manifest_hashes_match_current_files() -> None:
+    """Persisted smoke provenance must describe the reviewed implementation."""
+    smoke_path = (
+        Path(__file__).parents[1]
+        / "institutions"
+        / "HIST_VNEXT"
+        / "H1B"
+        / "evidence"
+        / "h1b-smoke-001"
+        / "smoke_output.json"
+    )
+    payload = json.loads(smoke_path.read_text(encoding="utf-8"))
+    recorded = payload["manifest"]["file_sha256"]
+    repo_root = Path(__file__).parents[1]
+    for relative, expected in recorded.items():
+        actual = hashlib.sha256(
+            (repo_root / relative).read_bytes()
+        ).hexdigest()
+        assert actual == expected, f"stale smoke hash for {relative}"
+
+
+def test_definite_revoke_of_expired_grant_is_revoked() -> None:
+    """A definite revoke survives its target grant's later expiry."""
+    grant = _regression_event(
+        event_id="G",
+        effective_to=_di(date(1972, 1, 1), date(1972, 1, 1), "day"),
+    )
+    revoke = _regression_event(
+        event_id="R",
+        action="revoke",
+        revokes_event_id="G",
+        enactment_date=_di(date(1971, 1, 1), date(1971, 1, 1), "day"),
+        effective_from=_di(date(1971, 1, 1), date(1971, 1, 1), "day"),
+    )
+    assert (
+        _authority_status(
+            RegimeCalendar(events=(grant, revoke)), date(1973, 1, 1)
+        )
+        == "revoked"
+    )
+
+
+def test_expired_revoke_of_expired_grant_stays_unknown() -> None:
+    grant = _regression_event(
+        event_id="G",
+        effective_to=_di(date(1972, 1, 1), date(1972, 1, 1), "day"),
+    )
+    revoke = _regression_event(
+        event_id="R",
+        action="revoke",
+        revokes_event_id="G",
+        enactment_date=_di(date(1971, 1, 1), date(1971, 1, 1), "day"),
+        effective_from=_di(date(1971, 1, 1), date(1971, 1, 1), "day"),
+        effective_to=_di(date(1972, 1, 1), date(1972, 1, 1), "day"),
+    )
+    assert (
+        _authority_status(
+            RegimeCalendar(events=(grant, revoke)), date(1973, 1, 1)
+        )
+        == "unknown"
+    )
+
+
+def test_uncertain_revoke_of_expired_grant_is_unknown() -> None:
+    grant = _regression_event(
+        event_id="G",
+        effective_to=_di(date(1972, 1, 1), date(1972, 1, 1), "day"),
+    )
+    revoke = _regression_event(
+        event_id="R",
+        action="revoke",
+        revokes_event_id="G",
+        enactment_date=_di(date(1971, 1, 1), date(1974, 1, 1), "range"),
+        effective_from=_di(date(1971, 1, 1), date(1974, 1, 1), "range"),
+    )
+    assert (
+        _authority_status(
+            RegimeCalendar(events=(grant, revoke)), date(1973, 1, 1)
+        )
+        == "unknown"
+    )
+
+
+def test_independent_surviving_grant_beats_expired_revoke() -> None:
+    expired = _regression_event(
+        event_id="G-OLD",
+        effective_to=_di(date(1972, 1, 1), date(1972, 1, 1), "day"),
+    )
+    revoke = _regression_event(
+        event_id="R",
+        action="revoke",
+        revokes_event_id="G-OLD",
+        enactment_date=_di(date(1971, 1, 1), date(1971, 1, 1), "day"),
+        effective_from=_di(date(1971, 1, 1), date(1971, 1, 1), "day"),
+    )
+    surviving = _regression_event(event_id="G-NEW")
+    assert (
+        _authority_status(
+            RegimeCalendar(events=(expired, revoke, surviving)),
+            date(1973, 1, 1),
+        )
+        == "granted"
+    )
+
+
+def test_enactment_after_every_possible_end_is_rejected() -> None:
+    """A window whose end precedes certain enactment is impossible."""
+    with pytest.raises(ValueError, match="no feasible effective window"):
+        _regression_event(
+            proposal_date=_di(date(1967, 1, 1), date(1967, 1, 1), "day"),
+            approval_date=_di(date(1967, 6, 1), date(1967, 6, 1), "day"),
+            enactment_date=_di(date(1968, 3, 1), date(1968, 3, 1), "day"),
+            effective_from=_di(
+                date(1968, 1, 1), date(1968, 3, 31), "range"
+            ),
+            effective_to=_di(date(1968, 2, 1), date(1968, 2, 1), "day"),
+        )
+
+
 def _regression_event(**overrides) -> InstitutionEvent:
     """Build a minimal valid synthetic event for the regression fixtures."""
     base = {
@@ -1017,3 +1168,262 @@ class TestWildcardGrantRevokeScopeRegression:
         )
         with pytest.raises(ConfigError, match="exceeds grant"):
             RegimeCalendar(events=(grant, revoke))
+
+
+# ---------------------------------------------------------------------------
+# Test 10 — round-2 repairs: interval semantics, evidence, declarations,
+# and authority behaviour at uncertain enactment/expiration boundaries.
+# ---------------------------------------------------------------------------
+
+def _authority_status(
+    cal: RegimeCalendar,
+    decision_at: date,
+    *,
+    permission: str = "procurement",
+    organization_id: str = "ORG-A",
+    sector_id: str = "industry",
+) -> str:
+    return authority_at(
+        cal,
+        organization_id=organization_id,
+        sector_id=sector_id,
+        geographic_id="national",
+        permission=permission,
+        decision_at=decision_at,
+    ).status
+
+
+class TestNaturalPeriodBounds:
+    """month/quarter/year precision names a natural period, not a range."""
+
+    @pytest.mark.parametrize(
+        ("precision", "earliest", "latest"),
+        [
+            ("month", date(1968, 1, 1), date(1968, 1, 15)),
+            ("quarter", date(1968, 1, 1), date(1968, 12, 31)),
+            ("year", date(1968, 2, 1), date(1968, 12, 31)),
+        ],
+    )
+    def test_non_natural_period_bounds_rejected(self, precision, earliest, latest):
+        with pytest.raises(ValueError, match="natural-period bounds"):
+            DateInterval(earliest=earliest, latest=latest, precision=precision)
+
+    def test_natural_month_and_arbitrary_range_accepted(self):
+        month = DateInterval(
+            earliest=date(1968, 2, 1),
+            latest=date(1968, 2, 29),
+            precision="month",
+        )
+        assert month.earliest == date(1968, 2, 1)
+        rng = DateInterval(
+            earliest=date(1968, 2, 1),
+            latest=date(1968, 2, 15),
+            precision="range",
+        )
+        assert rng.latest == date(1968, 2, 15)
+
+
+class TestEffectiveWindowFeasibility:
+    """A window is valid iff some start < end chronology exists."""
+
+    @staticmethod
+    def _window_grant(
+        effective_from: DateInterval,
+        effective_to: DateInterval | None,
+    ) -> InstitutionEvent:
+        return _regression_event(
+            event_id="EVT-WINDOW",
+            proposal_date=_di(date(1967, 1, 1), date(1967, 1, 1), "day"),
+            approval_date=_di(date(1967, 6, 1), date(1967, 6, 1), "day"),
+            enactment_date=_di(date(1967, 12, 1), date(1967, 12, 1), "day"),
+            effective_from=effective_from,
+            effective_to=effective_to,
+        )
+
+    def test_overlapping_uncertain_window_is_feasible(self):
+        ev = self._window_grant(
+            _di(date(1968, 1, 1), date(1968, 3, 31), "range"),
+            _di(date(1968, 2, 1), date(1968, 2, 1), "day"),
+        )
+        # A start on 1968-01-01 precedes the exclusive end on 1968-02-01.
+        assert ev.effective_from.earliest < ev.effective_to.latest
+        cal = RegimeCalendar(events=(ev,))
+        # Both start and end are uncertain at mid-January.
+        assert _authority_status(cal, date(1968, 1, 15)) == "unknown"
+
+    def test_impossible_window_rejected(self):
+        with pytest.raises(ValueError, match="no feasible effective window"):
+            self._window_grant(
+                _di(date(1968, 3, 1), date(1968, 3, 31), "range"),
+                _di(date(1968, 2, 1), date(1968, 2, 1), "day"),
+            )
+
+    def test_zero_length_window_rejected(self):
+        with pytest.raises(ValueError, match="no feasible effective window"):
+            self._window_grant(
+                _di(date(1968, 2, 1), date(1968, 2, 1), "day"),
+                _di(date(1968, 2, 1), date(1968, 2, 1), "day"),
+            )
+
+
+class TestCalendarDeclarationIntegrity:
+    """A missing declaration is not the same as an explicit empty calendar."""
+
+    def test_missing_events_declaration_rejected(self):
+        with pytest.raises(ValidationError):
+            RegimeCalendar.model_validate({})
+
+    def test_explicit_empty_events_accepted(self):
+        cal = RegimeCalendar.model_validate({"events": []})
+        assert cal.events == ()
+
+    def test_dangling_revoke_target_rejected(self):
+        grant = _regression_event(event_id="EVT-EXISTS")
+        revoke = _regression_event(
+            event_id="EVT-DANGLING",
+            action="revoke",
+            revokes_event_id="MISSING",
+        )
+        with pytest.raises(ConfigError, match="nonexistent event"):
+            RegimeCalendar(events=(grant, revoke))
+
+
+class TestObservationEvidenceGuard:
+    """A known actual-implementation observation requires synthetic evidence."""
+
+    @staticmethod
+    def _calendar_with_observation(evidence_ids: tuple[str, ...]) -> RegimeCalendar:
+        ev = _regression_event(
+            event_id="EVT-OBSERVED",
+            observed_implementation_at=_di(date(1970, 6, 1), date(1970, 6, 1), "day"),
+            implementation_evidence_ids=evidence_ids,
+        )
+        return RegimeCalendar(events=(ev,))
+
+    def test_observation_without_evidence_rejected(self):
+        with pytest.raises(ConfigError, match="implementation_evidence_ids"):
+            self._calendar_with_observation(())
+
+    def test_observation_with_non_synthetic_evidence_rejected(self):
+        with pytest.raises(ConfigError, match="non-synthetic evidence id"):
+            self._calendar_with_observation(("archive-box-7",))
+
+    def test_non_synthetic_source_rejected_without_an_observation(self):
+        ev = _regression_event(
+            event_id="EVT-SOURCE-LEAK",
+            source_ids=("archive/1972-decree.pdf",),
+        )
+        with pytest.raises(ConfigError, match="non-synthetic evidence id"):
+            RegimeCalendar(events=(ev,))
+
+    def test_unknown_effective_to_is_rejected(self):
+        with pytest.raises(ValidationError, match="effective_to must be None"):
+            _regression_event(
+                event_id="EVT-UNKNOWN-END",
+                effective_to=DateInterval(
+                    earliest=None, latest=None, precision="unknown"
+                ),
+            )
+
+    def test_observation_with_synthetic_evidence_accepted(self):
+        cal = self._calendar_with_observation(
+            ("synthetic:h1b-observation-fixture",)
+        )
+        assert cal.events[0].implementation_evidence_ids == (
+            "synthetic:h1b-observation-fixture",
+        )
+
+    def test_unknown_observation_needs_no_evidence(self):
+        ev = _regression_event(
+            event_id="EVT-OBSERVATION-UNKNOWN",
+            observed_implementation_at=DateInterval(
+                earliest=None, latest=None, precision="unknown"
+            ),
+        )
+        cal = RegimeCalendar(events=(ev,))
+        assert cal.events[0].observed_implementation_at.precision == "unknown"
+
+
+class TestUncertainEnactmentIntervals:
+    """Decision dates inside an enactment window are uncertain, not skipped."""
+
+    def test_uncertain_revoke_enactment_and_start_yield_unknown(self):
+        grant = _regression_event(event_id="EVT-ESTABLISHED-GRANT")
+        revoke = _regression_event(
+            event_id="EVT-UNCERTAIN-REVOKE",
+            action="revoke",
+            revokes_event_id="EVT-ESTABLISHED-GRANT",
+            proposal_date=_di(date(1967, 1, 1), date(1967, 1, 1), "day"),
+            approval_date=_di(date(1967, 6, 1), date(1967, 6, 1), "day"),
+            enactment_date=_di(date(1968, 1, 1), date(1972, 12, 31), "range"),
+            effective_from=_di(date(1968, 1, 1), date(1973, 12, 31), "range"),
+        )
+        cal = RegimeCalendar(events=(grant, revoke))
+
+        # At 1970 both an already-effective and a not-yet-effective revoke are
+        # consistent with the declared windows, so the status must be unknown.
+        assert _authority_status(cal, date(1970, 1, 1)) == "unknown"
+        # Once every window bound has elapsed the revoke is definite.
+        assert _authority_status(cal, date(1975, 1, 1)) == "revoked"
+
+    def test_uncertain_independent_grant_prevents_revoked_verdict(self):
+        old_grant = _regression_event(event_id="EVT-OLD-GRANT")
+        uncertain_grant = _regression_event(
+            event_id="EVT-UNCERTAIN-GRANT",
+            proposal_date=_di(date(1967, 1, 1), date(1967, 1, 1), "day"),
+            approval_date=_di(date(1967, 6, 1), date(1967, 6, 1), "day"),
+            enactment_date=_di(date(1968, 1, 1), date(1972, 12, 31), "range"),
+            effective_from=_di(date(1968, 1, 1), date(1973, 12, 31), "range"),
+        )
+        revoke = _regression_event(
+            event_id="EVT-DEFINITE-REVOKE",
+            action="revoke",
+            revokes_event_id="EVT-OLD-GRANT",
+        )
+        cal = RegimeCalendar(events=(old_grant, uncertain_grant, revoke))
+
+        # The old grant is definitely revoked, but the independent grant might
+        # already be active, so "revoked" would be overconfident.
+        assert _authority_status(cal, date(1970, 1, 1)) == "unknown"
+
+
+class TestDefiniteExpirationBeforeUncertainty:
+    """Definite expiration wins over unknown enactment/start uncertainty."""
+
+    @staticmethod
+    def _base_calendar(expired_grant: InstitutionEvent) -> RegimeCalendar:
+        established = _regression_event(event_id="EVT-ESTABLISHED")
+        revoke = _regression_event(
+            event_id="EVT-REVOKE-ESTABLISHED",
+            action="revoke",
+            revokes_event_id="EVT-ESTABLISHED",
+        )
+        return RegimeCalendar(events=(established, expired_grant, revoke))
+
+    def test_unknown_enactment_grant_expired(self):
+        expired = _regression_event(
+            event_id="EVT-EXPIRED-UNKNOWN-ENACTMENT",
+            proposal_date=_di(date(1967, 1, 1), date(1967, 1, 1), "day"),
+            approval_date=_di(date(1967, 6, 1), date(1967, 6, 1), "day"),
+            enactment_date=DateInterval(
+                earliest=None, latest=None, precision="unknown"
+            ),
+            effective_from=_di(date(1968, 1, 1), date(1968, 1, 1), "day"),
+            effective_to=_di(date(1969, 1, 1), date(1969, 1, 1), "day"),
+        )
+        cal = self._base_calendar(expired)
+        assert _authority_status(cal, date(1970, 1, 1)) == "revoked"
+
+    def test_unknown_effective_start_grant_expired(self):
+        expired = _regression_event(
+            event_id="EVT-EXPIRED-UNKNOWN-START",
+            proposal_date=_di(date(1967, 1, 1), date(1967, 1, 1), "day"),
+            approval_date=_di(date(1967, 6, 1), date(1967, 6, 1), "day"),
+            enactment_date=_di(date(1967, 12, 1), date(1967, 12, 1), "day"),
+            effective_from=DateInterval(
+                earliest=None, latest=None, precision="unknown"
+            ),
+            effective_to=_di(date(1969, 1, 1), date(1969, 1, 1), "day"),
+        )
+        cal = self._base_calendar(expired)
+        assert _authority_status(cal, date(1970, 1, 1)) == "revoked"

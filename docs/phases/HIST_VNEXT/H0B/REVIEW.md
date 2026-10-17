@@ -181,3 +181,13 @@ Post-repair gate (`REPORT.md` §Test results): `796 passed`, ruff clean,
 PATCH above stands until an independent re-review of the repaired version returns
 PASS; no successful regression run is a research approval, and no structural or
 historical status is raised by this phase.
+
+## Independent re-audit (2026-10-18) — PASS
+An independent reviewer re-probed the repaired H0B slice read-only: card
+identity, 41-metric granularity, real table schema, units, scalar sidecar
+typed binding, selector filtering, datatype/label handling, out-of-window
+rows, overlay frequencies, blocked sidecars, and gate parity. Full suite
+1096 passed at audit time; semantic registry 87 passed; ruff clean. Two
+non-blocking residuals (historical count wording and the gate-shared scalar
+sidecar path) are recorded in REPORT.md; neither is an H0B defect.
+Verdict: **PASS**.

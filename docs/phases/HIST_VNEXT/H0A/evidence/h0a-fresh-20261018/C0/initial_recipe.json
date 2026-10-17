@@ -1,0 +1,22 @@
+{
+  "declaration": {
+    "bank_equity_quarters": 1.0,
+    "bank_initial_bailout_prior": 0.0,
+    "credit_fund_quarters": 0.0,
+    "distribution_working_capital_quarters": 1.0,
+    "dwelling_per_person": 0.4,
+    "evidence_status": "structural_assumption",
+    "grade": "S",
+    "household_cash": 0.0,
+    "initial_bailout_prior": 0.5,
+    "input_stock_quarters": 1.0,
+    "observation_at": null,
+    "organization_deposit_quarters": 2.0,
+    "output_stock_quarters": 1.0,
+    "role": "initial_state",
+    "treasury_deposit_quarters": 10.0
+  },
+  "initial_recipe_hash": "10655b0706fae7960a6a7b6dec660d160b9c6670186bec7adf82743870432b82",
+  "scenario_id": "historical_f2_replay",
+  "schema_version": "1"
+}

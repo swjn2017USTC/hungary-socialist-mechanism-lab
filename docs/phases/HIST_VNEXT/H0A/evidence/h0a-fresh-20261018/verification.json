@@ -1,0 +1,22 @@
+[
+  {
+    "arm": "C0",
+    "scenario": "historical_f2_replay",
+    "run_id": "4ed5d1c1e4a44f8bada5f78cdd8da0ae",
+    "seed": 1729,
+    "completed_ticks": 116,
+    "digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+    "verified": true,
+    "baseline_hash": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f"
+  },
+  {
+    "arm": "C1",
+    "scenario": "historical_f2_trade_scenario",
+    "run_id": "5f54ccc08c854037b95a5e6eb603b319",
+    "seed": 1729,
+    "completed_ticks": 116,
+    "digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+    "verified": true,
+    "baseline_hash": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f"
+  }
+]

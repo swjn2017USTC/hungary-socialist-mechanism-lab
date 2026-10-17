@@ -6,6 +6,7 @@ Uses tuple for immutable collections; None for unknown endpoints.
 
 from __future__ import annotations
 
+import calendar as _calendar
 from datetime import date
 from typing import Literal
 
@@ -25,10 +26,11 @@ class DateInterval(StrictModel):
 
     - ``unknown``: both earliest and latest are None.
     - ``day``: earliest == latest (a single calendar day).
-    - ``month``: bounds are first/last day of the same calendar month.
-    - ``quarter``: bounds are first/last day of the same calendar quarter.
-    - ``year``: bounds are first/last day of the same calendar year.
-    - ``range``: preserves the original inclusive interval.
+    - ``month``: bounds are exactly the first/last day of one calendar month.
+    - ``quarter``: bounds are exactly the first/last day of one calendar quarter.
+    - ``year``: bounds are exactly 1 January/31 December of one calendar year.
+    - ``range``: any bounded interval with earliest <= latest; use this for
+      uncertainty that does not coincide with a named natural period.
     """
 
     earliest: date | None = Field(default=None)
@@ -60,13 +62,43 @@ class DateInterval(StrictModel):
                     f"got {self.earliest} != {self.latest}"
                 )
             return self
-        # All precisions except "unknown" require earliest <= latest
-        if p != "unknown" and self.earliest is not None and self.latest is not None:
-            if self.earliest > self.latest:
-                raise ValueError(
-                    f"DateInterval precision='{p}' requires earliest <= latest, "
-                    f"got earliest={self.earliest}, latest={self.latest}"
-                )
+        # All bounded precisions require earliest <= latest.
+        if self.earliest > self.latest:
+            raise ValueError(
+                f"DateInterval precision='{p}' requires earliest <= latest, "
+                f"got earliest={self.earliest}, latest={self.latest}"
+            )
+        # Natural-period precisions name a calendar period, so their bounds
+        # must coincide with that period exactly. Arbitrary bounded
+        # uncertainty must use precision='range'.
+        if p == "month":
+            expected_earliest = self.earliest.replace(day=1)
+            expected_latest = date(
+                self.earliest.year,
+                self.earliest.month,
+                _calendar.monthrange(self.earliest.year, self.earliest.month)[1],
+            )
+        elif p == "quarter":
+            quarter_month = ((self.earliest.month - 1) // 3) * 3 + 1
+            expected_earliest = date(self.earliest.year, quarter_month, 1)
+            end_month = quarter_month + 2
+            expected_latest = date(
+                self.earliest.year,
+                end_month,
+                _calendar.monthrange(self.earliest.year, end_month)[1],
+            )
+        elif p == "year":
+            expected_earliest = date(self.earliest.year, 1, 1)
+            expected_latest = date(self.earliest.year, 12, 31)
+        else:  # "range"
+            return self
+        if self.earliest != expected_earliest or self.latest != expected_latest:
+            raise ValueError(
+                f"DateInterval precision='{p}' requires natural-period bounds "
+                f"[{expected_earliest}, {expected_latest}], got "
+                f"[{self.earliest}, {self.latest}]; use precision='range' for "
+                "an arbitrary bounded interval"
+            )
         return self
 
     # ---------------------------------------------------------------------------
@@ -83,8 +115,6 @@ class DateInterval(StrictModel):
         - For broader precision (quarter, month, etc.), a date strictly between
           earliest and latest returns None (uncertain) to avoid false certainty
           about when within the interval the event actually became effective.
-        - For range precision with inverted bounds (earliest > latest), the
-          effective_to is an exclusive upper bound; d < earliest means active.
         """
         if self.precision == "unknown":
             return None
@@ -272,36 +302,46 @@ class InstitutionEvent(StrictModel):
                 f"effective_from.latest {eff_from_l} — impossible chronology"
             )
 
-        # effective_to must be strictly after effective_from's range begins.
-        # For exclusive bounds: effective_from.latest < effective_to.earliest
-        # For inclusive bounds: effective_from.latest <= effective_to.latest
-        # A valid window requires at least one feasible (start, end) pair.
+        # ``None`` is the only spelling of "no end". An explicit
+        # precision="unknown" end is ambiguous (unknown end vs no end) and
+        # would pin the event to uncertainty forever; reject it loudly.
+        if (
+            self.effective_to is not None
+            and self.effective_to.precision == "unknown"
+        ):
+            raise ValueError(
+                f"event {self.event_id}: effective_to must be None for an "
+                "unbounded window, not precision='unknown'"
+            )
+
+        # A bounded effective window must permit at least one feasible
+        # chronology under half-open [effective_from, effective_to) semantics:
+        # some actual start (>= the latest of proposal/approval/enactment/
+        # effective-start lower bounds) precedes the latest possible end.
+        # Overlapping uncertainty remains legal as long as that pair exists.
         if self.effective_to is not None and self.effective_to.precision != "unknown":
-            from_latest = _latest(self.effective_from)
-            if self.effective_to.precision == "day":
-                # Inclusive upper bound: window valid if effective_from.latest <= effective_to
-                to_eff = _latest(self.effective_to)
-                if (
-                    to_eff is not None
-                    and from_latest is not None
-                    and to_eff < from_latest
-                ):
-                    raise ValueError(
-                        f"event {self.event_id}: effective_to {to_eff} (inclusive) must be "
-                        f">= effective_from latest {from_latest}"
-                    )
-            else:
-                # Exclusive upper bound: window valid if effective_from.latest < to.earliest
-                to_eff_e = _earliest(self.effective_to)
-                if (
-                    to_eff_e is not None
-                    and from_latest is not None
-                    and to_eff_e <= from_latest
-                ):
-                    raise ValueError(
-                        f"event {self.event_id}: effective_to {to_eff_e} (exclusive) must be "
-                        f"after effective_from latest {from_latest}"
-                    )
+            from_earliest = _earliest(self.effective_from)
+            to_latest = _latest(self.effective_to)
+            # The actual start cannot precede the lifecycle events.  A window
+            # is feasible only if the latest of the earliest possible
+            # proposal/approval/enactment/effective-start dates is strictly
+            # before the latest possible end.
+            lower_candidates = [
+                value
+                for value in (from_earliest, enact_e, appr_e, prop_e)
+                if value is not None
+            ]
+            lower_bound = max(lower_candidates) if lower_candidates else None
+            if (
+                lower_bound is not None
+                and to_latest is not None
+                and lower_bound >= to_latest
+            ):
+                raise ValueError(
+                    f"event {self.event_id}: no feasible effective window under "
+                    f"half-open [from, to): lifecycle lower bound {lower_bound} "
+                    f">= effective_to.latest {to_latest}"
+                )
 
         return self
 
@@ -449,7 +489,9 @@ def _check_revoke_scope(revoke: InstitutionEvent, target: InstitutionEvent) -> N
 class RegimeCalendar(StrictModel):
     """Read-only institutional calendar containing all institution events."""
 
-    events: tuple[InstitutionEvent, ...] = Field(default_factory=tuple)
+    # Required: a missing "events" declaration must not silently become an
+    # empty calendar. An explicitly declared empty tuple is still legal.
+    events: tuple[InstitutionEvent, ...]
 
     model_config = ConfigDict(extra="forbid")
 
@@ -465,65 +507,38 @@ class RegimeCalendar(StrictModel):
                     f"Event {ev.event_id} has synthetic_flag=False — "
                     "historical sources not admitted for this phase"
                 )
-            # Check implementation_evidence_ids for synthetic known-true events
-            # A known-true synthetic event must have evidence backing it up
-            if ev.synthetic_flag and ev.implementation_evidence_ids is not None:
-                # If known_true_for is set, the event is "known true" and needs evidence
-                if getattr(ev, 'known_true_for', None) and not ev.implementation_evidence_ids:
+            # A synthetic event may carry only explicitly synthetic source and
+            # implementation evidence ids. Apply the check unconditionally:
+            # hiding a historical source behind a missing observation is the
+            # same leak as asserting the observation with it.
+            def _is_synthetic_id(evidence_id: str) -> bool:
+                return evidence_id.startswith(("synthetic:", "synthetic_"))
+
+            for evidence_id in (*ev.source_ids, *ev.implementation_evidence_ids):
+                if not _is_synthetic_id(evidence_id):
                     raise ConfigError(
-                        f"Event {ev.event_id} is known-true but has no implementation_evidence_ids"
+                        f"Event {ev.event_id} is synthetic but carries a "
+                        f"non-synthetic evidence id: {evidence_id}"
                     )
-            # Check precision alignment: natural periods must align with period boundaries
-            for field_name in ("effective_from", "effective_to"):
-                di = getattr(ev, field_name, None)
-                if di is None:
-                    continue
-                if di.precision in ("month", "quarter", "year"):
-                    # Must align to first day of period (month=01, quarter=Q1=01, year=01)
-                    if di.earliest is not None:
-                        if di.precision == "month" and di.earliest.day != 1:
-                            raise ConfigError(
-                                f"Event {ev.event_id} {field_name} precision={di.precision} "
-                                f"but earliest={di.earliest} is not on month boundary"
-                            )
-                        if di.precision == "quarter":
-                            m = di.earliest.month
-                            if m not in (1, 4, 7, 10) or di.earliest.day != 1:
-                                raise ConfigError(
-                                    f"Event {ev.event_id} {field_name} precision=quarter "
-                                    f"but earliest={di.earliest} is not on quarter boundary"
-                                )
-                        if di.precision == "year":
-                            if di.earliest is not None and di.earliest.day != 1:
-                                raise ConfigError(
-                                    f"Event {ev.event_id} {field_name} precision=year "
-                                    f"but earliest={di.earliest} is not on year boundary"
-                                )
-                            if di.latest is not None and not (
-                                di.latest.month == 12 and di.latest.day == 31
-                            ):
-                                raise ConfigError(
-                                    f"Event {ev.event_id} {field_name} precision=year "
-                                    f"but latest={di.latest} is not on year boundary (Dec 31)"
-                                )
-                            if (
-                                di.earliest is not None
-                                and di.latest is not None
-                                and di.earliest.year != di.latest.year
-                            ):
-                                raise ConfigError(
-                                    f"Event {ev.event_id} {field_name} precision=year "
-                                    f"but spans years {di.earliest.year}–{di.latest.year}"
-                                )
+
+            # An actual-implementation observation is an evidence claim.
+            observed = ev.observed_implementation_at
+            if observed is not None and observed.precision != "unknown":
+                if not ev.implementation_evidence_ids:
+                    raise ConfigError(
+                        f"Event {ev.event_id} declares observed_implementation_at "
+                        f"{observed.earliest} but has no implementation_evidence_ids"
+                    )
+            # Natural-period precision bounds are enforced by DateInterval
+            # itself, so they apply to every interval field without duplication.
         # No duplicate eventids
         ids = [ev.event_id for ev in self.events]
         if len(set(ids)) != len(ids):
             raise ConfigError(f"Duplicate event_id in calendar: {ids}")
 
-        # Calendar-level revocation integrity: validate well-formed revoke targets
-        # Plan §4: nonexistent targets → silently ignored at query time (unknown result)
-        # Here we validate that IF the target exists, it is a grant with matching permission
-        # and proper scope containment
+        # Calendar-level revocation integrity: a revoke must target an event
+        # declared in the same calendar, and that target must be a grant with
+        # matching permission and contained scope.
         all_events = {ev.event_id: ev for ev in self.events}
         for ev in self.events:
             if ev.action == "revoke":
@@ -533,7 +548,10 @@ class RegimeCalendar(StrictModel):
                         f"revoke event {ev.event_id} has no revokes_event_id"
                     )
                 if target_id not in all_events:
-                    continue  # plan §4: nonexistent targets → unknown at query time
+                    raise ConfigError(
+                        f"revoke event {ev.event_id} targets nonexistent event "
+                        f"'{target_id}'"
+                    )
                 target = all_events[target_id]
                 if target.action != "grant":
                     raise ConfigError(

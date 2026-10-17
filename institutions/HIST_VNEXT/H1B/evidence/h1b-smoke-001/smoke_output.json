@@ -1,0 +1,266 @@
+{
+  "manifest": {
+    "smoke_id": "h1b-smoke-001",
+    "revision": "e315b1ef8a70b45ca26ac97004197fbae9a1654a",
+    "calendar_path": "institutions/HIST_VNEXT/h1b_synthetic_calendar.json",
+    "calendar_sha256": "5eeeff6e99556d4576c564cccc7bb7ffa2434c0a633fe5ee9c39bc35782964a9",
+    "file_sha256": {
+      "institutions/HIST_VNEXT/h1b_synthetic_calendar.json": "5eeeff6e99556d4576c564cccc7bb7ffa2434c0a633fe5ee9c39bc35782964a9",
+      "src/hsm_lab/institutions/schemas.py": "3b876acb86369bbc0e562fb9c444304802557d85f421ca2cbf5529b24df48dfc",
+      "src/hsm_lab/institutions/calendar.py": "a9cb6cca74d5898dfbcd11536f9ba6c78b56ebd0c577e05fd9464525d8030e44",
+      "src/hsm_lab/institutions/authority.py": "87df332165a4ebac4df88ee5413235a9d45e00c87c9f5000ceeba3e5e28c5bec",
+      "institutions/HIST_VNEXT/H1B/evidence/h1b-smoke-001/run_smoke.py": "5d4756e8519c8854485ba8a2608ef0dfe12b1c7140fcbe78ccefaa305ddb8570"
+    },
+    "check_count": 14,
+    "c0_c1_replay": "NOT_RUN"
+  },
+  "calendar_events": 6,
+  "queries": [
+    {
+      "label": "T1:approval_only",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "procurement",
+        "decision_at": "1966-06-01"
+      },
+      "result": {
+        "status": "unknown",
+        "active_event_ids": [],
+        "reason": "no active grant at 1966-06-01"
+      },
+      "expected": "unknown"
+    },
+    {
+      "label": "T1:enactment_before_effective",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "procurement",
+        "decision_at": "1967-12-01"
+      },
+      "result": {
+        "status": "unknown",
+        "active_event_ids": [],
+        "reason": "no active grant at 1967-12-01"
+      },
+      "expected": "unknown"
+    },
+    {
+      "label": "T1:effective_latest",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "procurement",
+        "decision_at": "1968-03-31"
+      },
+      "result": {
+        "status": "granted",
+        "active_event_ids": [
+          "EVT-1966-NEM-GRANT-PROCUREMENT"
+        ],
+        "reason": "1 surviving grant(s) at 1968-03-31"
+      },
+      "expected": "granted"
+    },
+    {
+      "label": "T2:wildcard_org",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "procurement",
+        "decision_at": "1968-06-01"
+      },
+      "result": {
+        "status": "granted",
+        "active_event_ids": [
+          "EVT-1966-NEM-GRANT-PROCUREMENT"
+        ],
+        "reason": "1 surviving grant(s) at 1968-06-01"
+      },
+      "expected": "granted"
+    },
+    {
+      "label": "T2:excluded_sector",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "agriculture",
+        "geographic_id": "national",
+        "permission": "price_setting",
+        "decision_at": "1968-06-01"
+      },
+      "result": {
+        "status": "unknown",
+        "active_event_ids": [],
+        "reason": "no active grant at 1968-06-01"
+      },
+      "expected": "unknown"
+    },
+    {
+      "label": "T2:included_sector",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "price_setting",
+        "decision_at": "1968-06-01"
+      },
+      "result": {
+        "status": "granted",
+        "active_event_ids": [
+          "EVT-1968-NEM-GRANT-PRICE-SETTING"
+        ],
+        "reason": "1 surviving grant(s) at 1968-06-01"
+      },
+      "expected": "granted"
+    },
+    {
+      "label": "T2:wrong_org",
+      "inputs": {
+        "organization_id": "ORG-ENT-B",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "investment_approval",
+        "decision_at": "1968-06-01"
+      },
+      "result": {
+        "status": "unknown",
+        "active_event_ids": [],
+        "reason": "no active grant at 1968-06-01"
+      },
+      "expected": "unknown"
+    },
+    {
+      "label": "T3:ent_a_still_granted",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "procurement",
+        "decision_at": "1973-01-01"
+      },
+      "result": {
+        "status": "granted",
+        "active_event_ids": [
+          "EVT-1966-NEM-GRANT-PROCUREMENT"
+        ],
+        "reason": "1 surviving grant(s) at 1973-01-01"
+      },
+      "expected": "granted"
+    },
+    {
+      "label": "T3:ent_b_revoked",
+      "inputs": {
+        "organization_id": "ORG-ENT-B",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "procurement",
+        "decision_at": "1973-01-01"
+      },
+      "result": {
+        "status": "revoked",
+        "active_event_ids": [],
+        "reason": "1 grant(s) definitely revoked at 1973-01-01"
+      },
+      "expected": "revoked"
+    },
+    {
+      "label": "T4:pre1975_active",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "cmea_price_rule_pre1975",
+        "decision_at": "1974-12-31"
+      },
+      "result": {
+        "status": "granted",
+        "active_event_ids": [
+          "EVT-CMEA-PRE1975"
+        ],
+        "reason": "1 surviving grant(s) at 1974-12-31"
+      },
+      "expected": "granted"
+    },
+    {
+      "label": "T4:pre1975_inactive",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "cmea_price_rule_pre1975",
+        "decision_at": "1975-01-01"
+      },
+      "result": {
+        "status": "unknown",
+        "active_event_ids": [],
+        "reason": "no active grant at 1975-01-01"
+      },
+      "expected": "unknown"
+    },
+    {
+      "label": "T4:post1975_active",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "cmea_price_rule_post1975",
+        "decision_at": "1975-01-01"
+      },
+      "result": {
+        "status": "granted",
+        "active_event_ids": [
+          "EVT-CMEA-POST1975"
+        ],
+        "reason": "1 surviving grant(s) at 1975-01-01"
+      },
+      "expected": "granted"
+    },
+    {
+      "label": "T4:pre_inactive_1957",
+      "inputs": {
+        "organization_id": "ORG-ENT-A",
+        "sector_id": "industry",
+        "geographic_id": "national",
+        "permission": "cmea_price_rule_pre1975",
+        "decision_at": "1957-01-01"
+      },
+      "result": {
+        "status": "unknown",
+        "active_event_ids": [],
+        "reason": "no active grant at 1957-01-01"
+      },
+      "expected": "unknown"
+    },
+    {
+      "label": "T5",
+      "event_id": "EVT-FUTURE-SMOKE",
+      "decision_at": "1968-01-01",
+      "source_available_at": "1991-01-01",
+      "observed": "ConfigError: event_as_of: decision_at 1968-01-01 is before source available at 1991-01-01; knowledge not accessible at that date"
+    }
+  ],
+  "results": {
+    "passed": [
+      "T1:approval_only",
+      "T1:enactment_before_effective",
+      "T1:effective_latest",
+      "T2:wildcard_org",
+      "T2:excluded_sector",
+      "T2:included_sector",
+      "T2:wrong_org",
+      "T3:ent_a_still_granted",
+      "T3:ent_b_revoked",
+      "T4:pre1975_active",
+      "T4:pre1975_inactive",
+      "T4:post1975_active",
+      "T4:pre_inactive_1957",
+      "T5:future_source_correctly_rejected"
+    ],
+    "failed": []
+  }
+}

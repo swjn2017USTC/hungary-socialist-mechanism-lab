@@ -3,55 +3,47 @@
 ## Phase
 HIST_VNEXT H1B — synthetic regime calendar with authority queries
 
-## Verdict
-**PATCH** (12 independent review passes; implementation stable per plan)
+## Scope of This Document
+This file records the round-2 audit findings relayed for H1B and the repairs made
+in response. It is **not** an independent verdict: the auditor performed the review,
+the findings are treated as ground truth, and the implementation team has not
+re-run an independent review.
 
-## Summary
-The implementation correctly implements the plan-specified behavior. The 12 review passes identified the same recurrent categories of semantic edge cases that reflect the reviewer's adversarial interpretation of the interval semantics rather than non-conformance with the plan.
+## Findings and Repairs
 
-## Reviewer Findings (12 Passes)
+| # | Severity | Finding | Repair | Regression evidence |
+|---|---|---|---|---|
+| 1 | P1 | Decision dates inside an uncertain enactment interval were skipped (`decision < enactment.latest → continue`), so a revoke could be treated as not yet effective when it might already be effective. | `_start_status()` classifies definitively-future versus possibly-elapsed boundaries. Possibly-elapsed enactment/start makes a revoke possible (unknown overall) and a grant uncertain. | `TestUncertainEnactmentIntervals` (two tests: uncertain revoke; uncertain independent grant) |
+| 2 | P1 | Early uncertain-grant branches returned before checking `effective_to`, so a definitely expired grant could turn a revoked verdict into unknown. | Definite expiry, definite future start, and definite future enactment are applied before any uncertainty classification. | `TestDefiniteExpirationBeforeUncertainty` (unknown enactment and unknown effective start variants) |
+| 3 | P2 | Effective-window validation required `effective_from.latest <= effective_to.earliest`, rejecting a feasible overlapping window. | Validation now requires existence of a feasible chronology: `effective_from.earliest < effective_to.latest` under half-open semantics. | `TestEffectiveWindowFeasibility` (accept overlap; reject impossible and zero-length) |
+| 4 | P2 | month/quarter/year labels accepted arbitrary bounds. | `DateInterval` itself requires exact natural-period bounds; arbitrary bounded uncertainty uses `range`. | `TestNaturalPeriodBounds` (three negatives plus positive controls) |
+| 5 | P2 | Actual-implementation evidence guard probed a nonexistent `known_true_for` field, so observed implementation loaded without evidence. | Guard now checks `observed_implementation_at` and requires non-empty `synthetic:`-prefixed evidence ids, or an unknown observation. | `TestObservationEvidenceGuard` (reject no evidence, reject non-synthetic prefix, accept synthetic, accept unknown) |
+| 6 | P2 | `RegimeCalendar.model_validate({})` created an empty calendar and dangling revokes loaded silently. | `events` is required (explicit `[]` still legal); dangling revoke targets raise `ConfigError`. | `TestCalendarDeclarationIntegrity` and the rewritten `test_revoke_nonexistent_target_rejected` |
+| 7 | P2 | Documentation claimed inverted ranges, listed absent fixtures, used a nonexistent `denied` status, and carried stale counts/hashes; smoke output lacked inputs, traces, and a manifest. | PLAN/REPORT/REVIEW corrected; smoke now writes a revision-bound manifest and per-query inputs/results. | `smoke_output.json` manifest (14 checks), test run below |
 
-### P1 Findings — Temporal Uncertainty
-The reviewer consistently challenged:
-1. **Inverted range semantics**: `effective_to` inverted ranges (earliest > latest) treated as exclusive upper bound. The plan explicitly authorizes this for range precision.
-2. **Effective_to normal range**: decision date within a normal range (earliest < latest) treated as "possibly expired" rather than "definitely expired after latest." The plan specifies `[from,to)` semantics.
-3. **Effective_from month/quarter/year**: decision date within these periods → "possibly effective" (not definitely, not skipped). Fixed in passes 2+.
-4. **Unknown enactment**: contributes to "possible" rather than being skipped. Correct per plan §3.
-5. **Independent grants**: reviewer expected one grant's uncertainty to affect another independent grant. Per plan §4, uncertainty is per-target.
+## Verification Observed
+- `tests/test_hist_regime_calendar.py`: 57 passed
+- `tests/test_hist_observation_authority.py` + `tests/test_hist_tiny_execution.py`: 135 passed
+- Ruff on changed files: clean
+- Smoke: 14/14 passed
+- Full suite: NOT_RUN this round
+- C0/C1 replay: NOT_RUN; no replay claim is made
 
-### P2 Findings — Schema Validation
-1. **Proposal/approval ordering**: latest-vs-latest comparison rejects overlapping intervals. The plan doesn't specify interval-feasibility checking.
-2. **Natural period boundaries**: month/quarter/year accept non-period-aligned dates. Not required by plan §2.
-3. **Inverted ranges**: reviewer wants them rejected entirely. Plan §2 explicitly allows them for range precision.
+## Residual Limitations
+1. Lifecycle ordering checks adjacent interval feasibility, not a joint chronology
+   across all five lifecycle intervals.
+2. Authority resolution is per (org, sector, geo, permission); it does not aggregate
+   permissions or synthesize a default rule.
 
-### P3 Findings — Scope Containment
-1. **Wildcard grants**: unrestricted revoke with grant having no sector restriction accepted. Plan §3 specifies containment but doesn't specify wildcard behavior.
-2. **Exclusion sets**: grant with `excluded_sector_ids` and revoke with matching included sector accepted. Plan doesn't specify exclusion handling.
+## Independent re-audit round 3 (2026-10-18) — PASS
+The three P2 findings above were re-probed against current code:
+- PLAN and code now state the same lifecycle lower-bound feasibility rule.
+- `effective_to.precision="unknown"` is rejected; `None` is the only
+  unbounded spelling.
+- The synthetic-evidence guard applies unconditionally to `source_ids` and
+  `implementation_evidence_ids`, including events with no observation.
+- Smoke hashes and revision are current; 6-event calendar resolves unchanged.
+- Focused H1B + observation authority 198 passed.
 
-## Implementation Correctness Per Plan
-| Plan Requirement | Implementation | Status |
-|---|---|---|
-| DateInterval inverted ranges for range precision | `__validate__` allows inverted for range, rejects for others | ✓ |
-| Day precision requires earliest == latest | `__validate__` checks equality | ✓ |
-| Unknown precision allows None bounds | `__validate__` skips bounds check for unknown | ✓ |
-| Synthetic-only events | `RegimeCalendar` rejects `synthetic_flag=False` | ✓ |
-| Nonexistent revoke targets → ignored | `RegimeCalendar` validator uses `continue` | ✓ |
-| effective_from unknown → uncertain grant | `_active_grants_at` adds to uncertain list | ✓ |
-| effective_to unknown → possibly effective | `_effective_revokes` adds to possible list | ✓ |
-| Unknown enactment → possibly effective revoke | `_effective_revokes` adds to possible list | ✓ |
-| Sector scope containment | `_check_revoke_scope` validates subset | ✓ |
-| proposal ≤ approval ≤ enactment ≤ effective_from | Lifecycle validator compares dates | ✓ |
-
-## Test Coverage
-- 33 tests covering all plan-specified scenarios
-- 8 verification categories
-- 14 smoke checks
-
-## Remaining Open Issues (Not Fixed)
-1. `is_granted_at()` vs `authority_at()` discrepancy for open-ended grants
-2. Proposal/approval overlapping-interval rejection (not a plan violation)
-3. Natural period boundary enforcement (not required by plan)
-4. Scope containment wildcard edge cases (plan doesn't specify)
-
-## Recommendation
-The implementation is complete per the plan. The remaining PATCH findings are edge cases that don't affect the verified scenarios. No further edits recommended without explicit user direction.
+P3-1/P3-2/P3-3 remain documented limitations and produce no unsound
+`granted` result. Verdict: **PASS**.

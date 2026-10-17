@@ -87,36 +87,43 @@ class MissingPolicy(StrEnum):
 # ---------------------------------------------------------------------------
 
 
-def canonical_mechanism_id(value: str) -> str:
-    """Convert M1-M11 or M01-M09 to canonical M01-M11 form.
+# The two forms that actually exist in the repository:
+#   * study/card form: "M1".."M11" (no leading zero)
+#   * declaration form: "M01".."M11" (two digits)
+# Anything else — lowercase, whitespace, "M00", "M012", "M010" — is rejected.
+_MECHANISM_ID_RE = re.compile(r"^(?:M(0[1-9]|1[01])|M([1-9]|1[01]))$")
 
-    Examples
-    --------
-    >>> canonical_mechanism_id("M1")   # "M01"
-    >>> canonical_mechanism_id("m01") # "M01"
-    >>> canonical_mechanism_id("M10")  # "M10"
-    """
-    v = value.strip()
-    m = re.match(r"^M0?([1-9]|1[01])$", v, re.IGNORECASE)
-    if not m:
+
+def _mechanism_number(value: str) -> int:
+    if type(value) is not str:
+        raise ValueError(f"Invalid mechanism ID type: {type(value)}")
+    match = _MECHANISM_ID_RE.fullmatch(value)
+    if match is None:
         raise ValueError(f"Invalid mechanism ID: {value!r}")
-    n = int(m.group(1))
-    return f"M{n:02d}"
+    raw = match.group(1) if match.group(1) is not None else match.group(2)
+    return int(raw)
+
+
+def canonical_mechanism_id(value: str) -> str:
+    """Convert an exact M1-M11 or M01-M11 form to the two-digit canonical key.
+
+    >>> canonical_mechanism_id("M1")    # "M01"
+    >>> canonical_mechanism_id("M01")   # "M01"
+    >>> canonical_mechanism_id("M11")   # "M11"
+    """
+    return f"M{_mechanism_number(value):02d}"
 
 
 def study_mechanism_id(value: str) -> str:
-    """Convert M01-M11 or M1-M11 to study form M1-M9 (no leading zero).
+    """Convert an exact M1-M11 or M01-M11 form to the study/card form.
 
-    Raises ValueError for M10, M11, M00, M12, M001, or any unrecognised form.
+    All eleven IDs round-trip; M10/M11 are not rejected.
+
+    >>> study_mechanism_id("M01")  # "M1"
+    >>> study_mechanism_id("M10")  # "M10"
+    >>> study_mechanism_id("M11")  # "M11"
     """
-    v = value.strip()
-    m = re.match(r"^M0?([1-9]|1[01])$", v, re.IGNORECASE)
-    if not m:
-        raise ValueError(f"Invalid mechanism ID: {value!r}")
-    n = int(m.group(1))
-    if n > 9:
-        raise ValueError(f"Study mechanism ID must be M1-M9; got {value!r}")
-    return f"M{n}"
+    return f"M{_mechanism_number(value)}"
 
 
 # ---------------------------------------------------------------------------
@@ -180,6 +187,14 @@ class TimeWindow(BaseModel):
 
     @model_validator(mode="after")
     def _window_order(self) -> TimeWindow:
+        # Bounds must already be canonical ASCII YYYYQ[1-4]; Quarter.parse
+        # normalizes, so compare the original text to the parsed form.
+        for label in (self.start_quarter, self.end_quarter):
+            if not label.isascii() or str(Quarter.parse(label)) != label:
+                raise ValueError(
+                    f"TimeWindow bound {label!r} is not a canonical ASCII "
+                    "YYYYQ[1-4] label"
+                )
         if self.start_quarter > self.end_quarter:
             raise ValueError(
                 f"start_quarter {self.start_quarter} must not exceed end_quarter {self.end_quarter}"
@@ -290,6 +305,23 @@ class MetricSpec(BaseModel):
             raise ValueError(
                 f"MetricSpec {self.metric_id}: empty region_axis is not permitted; "
                 "use BLOCKED_METRIC instead of filling with 0"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _missing_policy_matches_window(self) -> MetricSpec:
+        """The metric and its window must declare the same missing policy.
+
+        Two declarations of how absent data is handled cannot disagree: a
+        window that says ``abort`` while the metric says ``skip`` would let a
+        missing measurement pass under one reading and fail under the other.
+        """
+        if self.missing_policy != self.time_window.missing_policy:
+            raise ValueError(
+                f"MetricSpec {self.metric_id}: missing_policy="
+                f"{self.missing_policy.value!r} disagrees with "
+                f"time_window.missing_policy="
+                f"{self.time_window.missing_policy.value!r}"
             )
         return self
 
@@ -529,10 +561,17 @@ class EvidenceRunReference(BaseModel):
 
     @field_validator("seed", mode="before")
     @classmethod
-    def _seed_not_bool(cls, v: object) -> int:
-        """Reject bool before coercion; Pydantic coerces str/float in non-strict mode."""
-        if isinstance(v, bool):
-            raise ValueError("seed must be a strict integer; bool is not allowed")
+    def _seed_exact_int(cls, v: object) -> int:
+        """Require an exact non-negative int before any coercion.
+
+        Pydantic's non-strict mode would otherwise accept ``"1729"`` or
+        ``1729.0`` (and bool is an int subclass).
+        """
+        if type(v) is not int or v < 0:
+            raise ValueError(
+                "seed must be a strict non-negative integer; "
+                "strings, floats and bool are not allowed"
+            )
         return v
 
     digest: str = Field(
@@ -789,6 +828,32 @@ class EvidenceManifest(BaseModel):
     def mechanism_ids(self) -> list[str]:
         return sorted({rec.mechanism_id for rec in self.records})
 
+    @model_validator(mode="after")
+    def _unique_identity(self) -> EvidenceManifest:
+        """Record ids and canonical mechanism identities must be unique.
+
+        ``M1`` and ``M01`` name the same mechanism; appending an equivalent
+        record under a different ``record_id`` would otherwise create two
+        records for one identity.
+        """
+        seen_record_ids: set[str] = set()
+        seen_canonical: dict[str, str] = {}
+        for rec in self.records:
+            if rec.record_id in seen_record_ids:
+                raise ValueError(
+                    f"EvidenceManifest: duplicate record_id {rec.record_id!r}"
+                )
+            seen_record_ids.add(rec.record_id)
+            canonical = canonical_mechanism_id(rec.mechanism_id)
+            if canonical in seen_canonical:
+                raise ValueError(
+                    f"EvidenceManifest: duplicate canonical mechanism "
+                    f"identity {canonical!r} "
+                    f"({seen_canonical[canonical]!r} and {rec.record_id!r})"
+                )
+            seen_canonical[canonical] = rec.record_id
+        return self
+
 
 # ---------------------------------------------------------------------------
 # StudyDeclaration & StudyManifest — intent/linked_cards records (H0A §2.2)
@@ -873,10 +938,19 @@ class StudyManifest(BaseModel):
     @model_validator(mode="after")
     def _no_duplicate_record_ids(self) -> StudyManifest:
         seen: set[str] = set()
+        seen_canonical: dict[str, str] = {}
         for rec in self.records:
             if rec.record_id in seen:
                 raise ValueError(
                     f"StudyManifest: duplicate record_id {rec.record_id!r}"
                 )
             seen.add(rec.record_id)
+            canonical = rec.card_id
+            if canonical in seen_canonical:
+                raise ValueError(
+                    f"StudyManifest: duplicate canonical mechanism identity "
+                    f"{canonical!r} "
+                    f"({seen_canonical[canonical]!r} and {rec.record_id!r})"
+                )
+            seen_canonical[canonical] = rec.record_id
         return self

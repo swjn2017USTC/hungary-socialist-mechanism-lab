@@ -28,6 +28,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from hsm_lab.contract.schemas import Quarter
 from hsm_lab.evidence.adapter import (
     FROZEN_V1_CARD_SHA256,
     LEGACY_CARD_IDS,
@@ -56,7 +57,7 @@ from hsm_lab.evidence.metric_enricher import (
     metric_table_units,
     physical_aggregate_unit,
 )
-from hsm_lab.evidence.schemas import DataRole, ValidationFidelity
+from hsm_lab.evidence.schemas import DataRole, MissingPolicy, TimeWindow, ValidationFidelity
 from hsm_lab.evidence.table_registry import (
     F2_COMMODITY_IDS,
     F2_COMMODITY_UNITS,
@@ -106,21 +107,63 @@ def _write_parquet(path: Path, columns: dict[str, list]) -> None:
     pq.write_table(pa.table(tables), path)
 
 
+def _typed_binding(
+    spec,
+    *,
+    value_type: str = "number",
+    unit: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    selectors: list | None = None,
+) -> dict:
+    """The typed sidecar declaration the evidence gate requires."""
+    return {
+        "unit": spec.unit if unit is None else unit,
+        "value_type": value_type,
+        "temporal": {
+            "start_quarter": (
+                spec.time_window.start_quarter if start is None else start
+            ),
+            "end_quarter": spec.time_window.end_quarter if end is None else end,
+        },
+        "selectors": [] if selectors is None else selectors,
+    }
+
+
+def _write_sidecar(
+    run_dir: Path,
+    name: str,
+    column: str,
+    value,
+    binding: dict | None,
+) -> None:
+    run_dir.mkdir(parents=True, exist_ok=True)
+    payload: dict = {column: value}
+    if binding is not None:
+        payload["__metric_bindings__"] = {column: binding}
+    (run_dir / f"{name}.json").write_text(json.dumps(payload), encoding="utf-8")
+
+
 def _household_consumption_run(
     tmp_path: Path,
     *,
     values: list[float],
     commodities: list[str] | None = None,
+    quarters: list[object] | None = None,
 ) -> Path:
     """A minimal run tree carrying national_accounts.household_consumption."""
     run_dir = tmp_path / "run"
     goods = commodities if commodities is not None else list(F2_COMMODITY_IDS)
+    labels = (
+        quarters if quarters is not None else ["1957Q1"] * len(goods)
+    )
+    assert len(labels) == len(goods)
     run_dir.mkdir(parents=True, exist_ok=True)
     _write_parquet(
         run_dir / "national_accounts.parquet",
         {
             "tick": list(range(len(goods))),
-            "quarter": ["1957Q1"] * len(goods),
+            "quarter": labels,
             "commodity_id": goods,
             "household_consumption": values,
         },
@@ -130,6 +173,17 @@ def _household_consumption_run(
 
 def _m1_consumption_registration(registry):
     return registry.for_card("M1")[0]
+
+
+def _narrow_window(registration, start: str = "1957Q1", end: str = "1957Q1"):
+    """Bind a registration to the window a one-quarter fixture exercises."""
+    from dataclasses import replace
+
+    time_window = registration.spec.time_window.model_copy(
+        update={"start_quarter": start, "end_quarter": end}
+    )
+    spec = registration.spec.model_copy(update={"time_window": time_window})
+    return replace(registration, spec=spec)
 
 
 # ---------------------------------------------------------------------------
@@ -425,7 +479,9 @@ class TestRunObservability:
         # keep the real schema but drop every row
         table = pq.read_table(run_dir / "national_accounts.parquet")
         pq.write_table(table.slice(0, 0), run_dir / "national_accounts.parquet")
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.TABLE_EMPTY
         assert observation.rows == 0
         assert not observation.observable
@@ -435,7 +491,9 @@ class TestRunObservability:
         self, tmp_path: Path, registry
     ) -> None:
         run_dir = _household_consumption_run(tmp_path, values=[0.0] * 16)
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.OBSERVABLE_ZERO
         assert observation.observable
         assert observation.values == (0.0,)
@@ -443,7 +501,9 @@ class TestRunObservability:
 
     def test_a_nonzero_column_is_observable(self, tmp_path: Path, registry) -> None:
         run_dir = _household_consumption_run(tmp_path, values=[1.5] * 16)
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.OBSERVABLE
         assert observation.values == (1.5,)
 
@@ -452,7 +512,9 @@ class TestRunObservability:
     ) -> None:
         run_dir = tmp_path / "empty-run"
         run_dir.mkdir()
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.ARTIFACT_ABSENT
         assert observation.rows is None
 
@@ -464,7 +526,9 @@ class TestRunObservability:
             run_dir / "national_accounts.parquet",
             {"tick": [0], "quarter": ["1957Q1"], "commodity_id": ["g01_solid_fuels"]},
         )
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.COLUMN_ABSENT
         assert observation.rows == 1
 
@@ -474,7 +538,9 @@ class TestRunObservability:
         run_dir = _household_consumption_run(
             tmp_path, values=[1.0], commodities=["g01_solid_fuels"]
         )
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.SELECTOR_UNMATCHED
         assert "commodity_id" in observation.detail
 
@@ -504,7 +570,9 @@ class TestRunObservability:
         run_dir = _household_consumption_run(
             tmp_path, values=[float("inf")] + [1.0] * 15
         )
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.NONFINITE_VALUES
 
     def test_a_null_inside_the_declared_window_is_not_a_measured_zero(
@@ -520,7 +588,9 @@ class TestRunObservability:
         run_dir = _household_consumption_run(
             tmp_path, values=[0.0] * 15 + [None]
         )
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.NULL_VALUES
         assert observation.values is None
         assert not observation.observable
@@ -529,7 +599,9 @@ class TestRunObservability:
         self, tmp_path: Path, registry
     ) -> None:
         run_dir = _household_consumption_run(tmp_path, values=[None] * 16)
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.NULL_VALUES
         assert observation.values is None
         assert not observation.observable
@@ -543,10 +615,13 @@ class TestRunObservability:
         through ``float`` would crash or invent a number, so its distinct labels
         are reported and ``values`` stays ``None``.
         """
-        registration = next(
-            r
-            for r in registry.for_card("M9")
-            if r.exact_original_metric == "policy_decisions.binding_constraints"
+        registration = _narrow_window(
+            next(
+                r
+                for r in registry.for_card("M9")
+                if r.exact_original_metric
+                == "policy_decisions.binding_constraints"
+            )
         )
         run_dir = tmp_path / "run"
         _write_parquet(
@@ -566,10 +641,13 @@ class TestRunObservability:
     def test_a_categorical_null_in_the_window_is_not_measured(
         self, tmp_path: Path, registry
     ) -> None:
-        registration = next(
-            r
-            for r in registry.for_card("M9")
-            if r.exact_original_metric == "policy_decisions.binding_constraints"
+        registration = _narrow_window(
+            next(
+                r
+                for r in registry.for_card("M9")
+                if r.exact_original_metric
+                == "policy_decisions.binding_constraints"
+            )
         )
         run_dir = tmp_path / "run"
         _write_parquet(
@@ -645,7 +723,7 @@ class TestSelectorAndDatatypeBinding:
         region at 999.0, the declared window is a measured zero, not an
         observation carrying 999.0.
         """
-        registration = registry.for_card("M1")[1]
+        registration = _narrow_window(registry.for_card("M1")[1])
         declared = list(registration.spec.region_axis.regions)
         run_dir = tmp_path / "run"
         _write_parquet(
@@ -670,7 +748,7 @@ class TestSelectorAndDatatypeBinding:
         the selector already excluded is not in that window, so it must not
         turn a measured zero into an unmeasured one.
         """
-        registration = registry.for_card("M1")[1]
+        registration = _narrow_window(registry.for_card("M1")[1])
         declared = list(registration.spec.region_axis.regions)
         run_dir = tmp_path / "run"
         _write_parquet(
@@ -699,21 +777,127 @@ class TestSelectorAndDatatypeBinding:
         run_dir = _household_consumption_run(
             tmp_path, values=["not_a_quantity"] * 16
         )
-        observation = observe_metric(run_dir, _m1_consumption_registration(registry))
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
         assert observation.status == ObservationStatus.DATATYPE_MISMATCH
         assert observation.values is None
         assert observation.labels is None
         assert not observation.observable
 
-    def test_a_label_metric_with_a_numeric_column_is_still_read_as_labels(
+    def test_time_window_bounds_must_be_canonical_ascii(self) -> None:
+        with pytest.raises(ValueError, match="canonical ASCII"):
+            TimeWindow(
+                start_quarter="1957Q1",
+                end_quarter="１９５７Q1",
+                missing_policy=MissingPolicy.ABORT,
+            )
+
+    def test_out_of_window_rows_cannot_change_values(
         self, tmp_path: Path, registry
     ) -> None:
-        """A declared label metric is never a quantity, whatever the dtype.
+        registration = _narrow_window(
+            _m1_consumption_registration(registry),
+            start="1957Q1",
+            end="1957Q1",
+        )
+        rows = [
+            ("1957Q1", commodity, 0.0)
+            for commodity in F2_COMMODITY_IDS
+        ] + [
+            ("1986Q1", commodity, 999.0)
+            for commodity in F2_COMMODITY_IDS
+        ]
+        run_dir = tmp_path / "run"
+        _write_parquet(
+            run_dir / "national_accounts.parquet",
+            {
+                "tick": list(range(len(rows))),
+                "quarter": [row[0] for row in rows],
+                "commodity_id": [row[1] for row in rows],
+                "household_consumption": [row[2] for row in rows],
+            },
+        )
+        observation = observe_metric(run_dir, registration)
+        assert observation.status == ObservationStatus.OBSERVABLE_ZERO
+        assert observation.values == (0.0,)
+        assert observation.window_rows == len(F2_COMMODITY_IDS)
 
-        The declared semantics decide: M9's binding-constraint metric keeps
-        its categories even if a producer wrote codes instead of strings, and
-        it is never coerced to ``float``.
-        """
+    def test_missing_quarter_selector_combination_is_not_a_zero(
+        self, tmp_path: Path, registry
+    ) -> None:
+        """Every declared quarter × commodity cell must carry a row."""
+        quarters = [
+            str(Quarter.parse("1957Q1").advance(index))
+            for index in range(116)
+        ]
+        rows = [
+            (quarter_label, commodity)
+            for quarter_label in quarters
+            for commodity in F2_COMMODITY_IDS
+            if not (
+                quarter_label == "1957Q1"
+                and commodity == "g09_basic_food"
+            )
+        ]
+        run_dir = tmp_path / "run"
+        _write_parquet(
+            run_dir / "national_accounts.parquet",
+            {
+                "tick": list(range(len(rows))),
+                "quarter": [row[0] for row in rows],
+                "commodity_id": [row[1] for row in rows],
+                "household_consumption": [0.0] * len(rows),
+            },
+        )
+        observation = observe_metric(
+            run_dir, _m1_consumption_registration(registry)
+        )
+        assert observation.status == ObservationStatus.WINDOW_EMPTY
+        assert "not fully covered" in observation.detail
+        assert not observation.observable
+
+    def test_present_blocked_sidecar_is_semantics_blocked_not_absent(
+        self, tmp_path: Path, registry
+    ) -> None:
+        """A present but unsupported sidecar is not evidence of absence."""
+        registration = next(
+            r
+            for r in registry.for_card("M5")
+            if r.exact_original_metric == "money_stock.money_total_close"
+        )
+        run_dir = tmp_path / "run"
+        run_dir.mkdir()
+        (run_dir / "money_stock.json").write_text(
+            '{"money_total_close": 123.0}', encoding="utf-8"
+        )
+        observation = observe_metric(run_dir, registration)
+        assert observation.status == ObservationStatus.SEMANTICS_BLOCKED
+        assert observation.artifact is not None
+
+    @pytest.mark.parametrize(
+        "bad_quarter",
+        ["1958", 1958, "1957Q10", "1960Q9", "1957Q1\n", "１９５７Q1"],
+    )
+    def test_annual_or_malformed_quarters_are_not_observations(
+        self, tmp_path: Path, registry, bad_quarter
+    ) -> None:
+        """Only exact YYYYQ[1-4] labels denote in-window quarters."""
+        run_dir = _household_consumption_run(
+            tmp_path,
+            values=[0.0] * len(F2_COMMODITY_IDS),
+            quarters=[bad_quarter] * len(F2_COMMODITY_IDS),
+        )
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
+        assert observation.status == ObservationStatus.WINDOW_EMPTY
+        assert not observation.observable
+
+    def test_a_label_metric_rejects_a_numeric_column(
+        self, tmp_path: Path, registry
+    ) -> None:
+        """A label is an exact string; numeric codes are a datatype mismatch."""
         registration = next(
             r
             for r in registry.for_card("M9")
@@ -728,10 +912,283 @@ class TestSelectorAndDatatypeBinding:
                 "binding_constraints": [1, 2, 1],
             },
         )
+        observation = observe_metric(run_dir, _narrow_window(registration))
+        assert observation.status == ObservationStatus.DATATYPE_MISMATCH
+        assert observation.values is None
+        assert observation.labels is None
+        assert not observation.observable
+
+
+# ---------------------------------------------------------------------------
+# Non-tabular artifacts must declare the metric's semantics
+# ---------------------------------------------------------------------------
+
+
+class TestSidecarSubstitution:
+    """A bare JSON scalar is not a substitute for a registered table quantity."""
+
+    def test_a_scalar_zero_cannot_stand_in_for_physical_consumption(
+        self, tmp_path: Path, registry
+    ) -> None:
+        """``{"household_consumption": 0.0}`` is not a measured zero.
+
+        ``national_accounts`` is a registered core table whose consumption
+        metric declares a commodity selector, a 1957Q1–1985Q4 window and a
+        physical unit. A JSON scalar establishes none of them, so the run has
+        not measured the metric -- however convenient its 0.0 looks.
+        """
+        run_dir = tmp_path / "run"
+        _write_sidecar(
+            run_dir, "national_accounts", "household_consumption", 0.0, None
+        )
+        observation = observe_metric(
+            run_dir, _narrow_window(_m1_consumption_registration(registry))
+        )
+        assert observation.status == ObservationStatus.ARTIFACT_UNBOUND
+        assert observation.status != ObservationStatus.OBSERVABLE_ZERO
+        assert not observation.observable
+        assert observation.values is None
+        assert observation.labels is None
+        assert "__metric_bindings__" in observation.detail
+
+    def test_a_scalar_cannot_stand_in_for_a_regional_table_quantity(
+        self, tmp_path: Path, registry
+    ) -> None:
+        """``{"spending": 999.0}`` is not the 20-region household budget.
+
+        The declared region selector and quarter window are not applied to a
+        scalar sidecar, so the scalar cannot be reported as an observation of
+        ``household_budgets.spending``.
+        """
+        registration = _narrow_window(registry.for_card("M1")[1])
+        run_dir = tmp_path / "run"
+        _write_sidecar(run_dir, "household_budgets", "spending", 999.0, None)
+        observation = observe_metric(run_dir, registration)
+        assert observation.status == ObservationStatus.ARTIFACT_UNBOUND
+        assert not observation.observable
+        assert observation.values is None
+
+    def test_a_scalar_number_cannot_stand_in_for_a_label_metric(
+        self, tmp_path: Path, registry
+    ) -> None:
+        """``{"binding_constraints": 7}`` is not a label observation.
+
+        ``policy_decisions.binding_constraints`` declares the
+        ``binding_constraint_label`` unit. A bare number is neither a label
+        nor a bound quantity, and the observation must not report it as
+        observable with ``labels=None``.
+        """
+        registration = next(
+            r
+            for r in registry.for_card("M9")
+            if r.exact_original_metric == "policy_decisions.binding_constraints"
+        )
+        run_dir = tmp_path / "run"
+        _write_sidecar(
+            run_dir, "policy_decisions", "binding_constraints", 7, None
+        )
+        observation = observe_metric(run_dir, registration)
+        assert observation.status == ObservationStatus.ARTIFACT_UNBOUND
+        assert not observation.observable
+        assert observation.values is None
+        assert observation.labels is None
+
+    def test_a_typed_sidecar_binding_establishes_a_quantity(
+        self, tmp_path: Path, registry
+    ) -> None:
+        """The refusal is not blanket: a declared binding is measurable.
+
+        The same ``__metric_bindings__`` declaration the evidence gate
+        requires names the unit, value type, whole declared window and empty
+        selector list, so the scalar is shown to be the quantity the metric
+        names.
+        """
+        registration = next(
+            r
+            for r in registry.for_card("M8")
+            if r.exact_original_metric == "policy_decisions.utility"
+        )
+        run_dir = tmp_path / "run"
+        _write_sidecar(
+            run_dir,
+            "policy_decisions",
+            "utility",
+            0.75,
+            _typed_binding(registration.spec),
+        )
         observation = observe_metric(run_dir, registration)
         assert observation.status == ObservationStatus.OBSERVABLE
+        assert observation.observable
+        assert observation.values == (0.75,)
+        assert observation.labels is None
+
+    def test_a_typed_binding_cannot_satisfy_a_declared_selector(
+        self, tmp_path: Path, registry
+    ) -> None:
+        """A scalar sidecar has no region axis, however it is declared."""
+        registration = _narrow_window(registry.for_card("M1")[1])
+        run_dir = tmp_path / "run"
+        _write_sidecar(
+            run_dir,
+            "household_budgets",
+            "spending",
+            999.0,
+            _typed_binding(registration.spec),
+        )
+        observation = observe_metric(run_dir, registration)
+        assert observation.status == ObservationStatus.ARTIFACT_UNBOUND
+        assert not observation.observable
         assert observation.values is None
-        assert observation.labels == ("1", "2")
+
+    def test_a_typed_binding_must_cover_the_declared_window(
+        self, tmp_path: Path, registry
+    ) -> None:
+        registration = _narrow_window(registry.for_card("M1")[1])
+        run_dir = tmp_path / "run"
+        _write_sidecar(
+            run_dir,
+            "household_budgets",
+            "spending",
+            1.0,
+            _typed_binding(registration.spec, start="1958Q1"),
+        )
+        observation = observe_metric(run_dir, registration)
+        assert observation.status == ObservationStatus.ARTIFACT_UNBOUND
+        assert not observation.observable
+
+    def test_a_typed_label_binding_is_reported_as_a_label(
+        self, tmp_path: Path, registry
+    ) -> None:
+        registration = next(
+            r
+            for r in registry.for_card("M9")
+            if r.exact_original_metric == "policy_decisions.binding_constraints"
+        )
+        run_dir = tmp_path / "run"
+        _write_sidecar(
+            run_dir,
+            "policy_decisions",
+            "binding_constraints",
+            "supply",
+            _typed_binding(registration.spec, value_type="string"),
+        )
+        observation = observe_metric(run_dir, registration)
+        assert observation.status == ObservationStatus.OBSERVABLE
+        assert observation.labels == ("supply",)
+        assert observation.values is None
+
+    def test_a_typed_numeric_binding_does_not_make_a_label_a_quantity(
+        self, tmp_path: Path, registry
+    ) -> None:
+        registration = next(
+            r
+            for r in registry.for_card("M9")
+            if r.exact_original_metric == "policy_decisions.binding_constraints"
+        )
+        run_dir = tmp_path / "run"
+        _write_sidecar(
+            run_dir,
+            "policy_decisions",
+            "binding_constraints",
+            7,
+            _typed_binding(registration.spec, value_type="number"),
+        )
+        observation = observe_metric(run_dir, registration)
+        assert observation.status == ObservationStatus.DATATYPE_MISMATCH
+        assert not observation.observable
+        assert observation.values is None
+        assert observation.labels is None
+
+
+# ---------------------------------------------------------------------------
+# Categorical missing data: NaN/inf are not labels
+# ---------------------------------------------------------------------------
+
+
+class TestCategoricalMissingValues:
+    """A numeric label column's NaN/inf are missing data, not categories."""
+
+    @staticmethod
+    def _label_registration(registry):
+        return next(
+            r
+            for r in registry.for_card("M9")
+            if r.exact_original_metric == "policy_decisions.binding_constraints"
+        )
+
+    def _observe_labels(
+        self, tmp_path: Path, registration, values: list
+    ):
+        run_dir = tmp_path / "run"
+        _write_parquet(
+            run_dir / "policy_decisions.parquet",
+            {
+                "tick": list(range(len(values))),
+                "quarter": ["1957Q1"] * len(values),
+                "binding_constraints": values,
+            },
+        )
+        return observe_metric(run_dir, _narrow_window(registration))
+
+    def test_a_nan_label_is_missing_not_the_label_nan(
+        self, tmp_path: Path, registry
+    ) -> None:
+        registration = self._label_registration(registry)
+        observation = self._observe_labels(
+            tmp_path, registration, [1.0, float("nan"), 2.0]
+        )
+        assert observation.status == ObservationStatus.NULL_VALUES
+        assert observation.labels is None
+        assert observation.values is None
+        assert not observation.observable
+
+    def test_an_all_nan_label_window_is_not_measured(
+        self, tmp_path: Path, registry
+    ) -> None:
+        registration = self._label_registration(registry)
+        observation = self._observe_labels(
+            tmp_path, registration, [float("nan")] * 3
+        )
+        assert observation.status == ObservationStatus.NULL_VALUES
+        assert observation.labels is None
+        assert not observation.observable
+
+    def test_an_infinite_label_is_nonfinite_not_a_label(
+        self, tmp_path: Path, registry
+    ) -> None:
+        registration = self._label_registration(registry)
+        observation = self._observe_labels(
+            tmp_path, registration, [1.0, float("inf")]
+        )
+        assert observation.status == ObservationStatus.NONFINITE_VALUES
+        assert observation.labels is None
+        assert not observation.observable
+
+    def test_finite_float_labels_are_datatype_mismatch(
+        self, tmp_path: Path, registry
+    ) -> None:
+        """Finite numerics are still not string labels."""
+        registration = self._label_registration(registry)
+        observation = self._observe_labels(
+            tmp_path, registration, [1.0, 2.0, 1.0]
+        )
+        assert observation.status == ObservationStatus.DATATYPE_MISMATCH
+        assert observation.labels is None
+        assert observation.values is None
+        assert not observation.observable
+
+    @pytest.mark.parametrize(
+        "bad_value", [True, [None], [float("nan")], {"missing": None}, 1]
+    )
+    def test_non_string_label_cells_are_datatype_mismatch(
+        self, tmp_path: Path, registry, bad_value
+    ) -> None:
+        registration = self._label_registration(registry)
+        observation = self._observe_labels(
+            tmp_path, registration, [bad_value]
+        )
+        assert observation.status == ObservationStatus.DATATYPE_MISMATCH
+        assert not observation.observable
 
 
 # ---------------------------------------------------------------------------

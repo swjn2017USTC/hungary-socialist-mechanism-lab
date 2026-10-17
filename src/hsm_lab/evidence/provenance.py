@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
@@ -17,7 +18,10 @@ from typing import TYPE_CHECKING, Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from hsm_lab.evidence.schemas import EvidenceStatus  # noqa: F401
+from hsm_lab.evidence.schemas import (
+    EvidenceStatus,  # noqa: F401
+    canonical_mechanism_id,
+)
 from hsm_lab.evidence.table_registry import F2_TABLES
 from hsm_lab.provenance.manifest import (  # noqa: F401
     MANIFEST_FILENAME,
@@ -135,19 +139,25 @@ class EvidenceDAG(BaseModel):
         return None
 
     def v1_node_for_card(self, mechanism_id: str) -> EvidenceDAGNode | None:
+        target = canonical_mechanism_id(mechanism_id)
         for node in self.nodes:
+            if node.node_type != DAGNodeType.V1_CARD:
+                continue
             if (
-                node.node_type == DAGNodeType.V1_CARD
-                and node.card_mechanism_id == mechanism_id
+                node.card_mechanism_id is not None
+                and canonical_mechanism_id(node.card_mechanism_id) == target
             ):
                 return node
         return None
 
     def v2_node_for_card(self, mechanism_id: str) -> EvidenceDAGNode | None:
+        target = canonical_mechanism_id(mechanism_id)
         for node in self.nodes:
+            if node.node_type != DAGNodeType.V2_CARD:
+                continue
             if (
-                node.node_type == DAGNodeType.V2_CARD
-                and node.card_mechanism_id == mechanism_id
+                node.card_mechanism_id is not None
+                and canonical_mechanism_id(node.card_mechanism_id) == target
             ):
                 return node
         return None
@@ -295,9 +305,16 @@ def build_card_provenance(
 
 _ALLOWED_RUN_KINDS = frozenset({
     "synthetic_engine_smoke",
-    "toy4_f0_simulation",
     "material_household_simulation",
 })
+
+# The manifest's self-declared run_kind must match the loaded scenario's kind.
+# A hand-written manifest cannot downgrade a material scenario to a smoke run
+# to skip material content verification.
+_SCENARIO_KIND_TO_RUN_KIND = {
+    "smoke": "synthetic_engine_smoke",
+    "material": "material_household_simulation",
+}
 
 
 def _resolve_output_dir(output_dir: Path, root: Path) -> Path:
@@ -324,6 +341,12 @@ _SUMMARY_MIRRORED_MANIFEST_FIELDS = (
     "parameter_hash",
     "initial_recipe_hash",
     "deterministic_replay_digest",
+    "commodity_ids",
+    "region_ids",
+    "rng_scheme_version",
+    "rng_draws_count",
+    "rng_draws_by_module",
+    "stochastic_modules_active",
     "input_artifact_hashes",
 )
 
@@ -487,6 +510,47 @@ def _verify_material_tick_data(
             "fields a completed run records: "
             f"{missing_summary_fields}; a placeholder summary is not a run"
         )
+    for field_name in (
+        "rng_scheme_version",
+        "rng_draws_count",
+        "rng_draws_by_module",
+        "stochastic_modules_active",
+    ):
+        if field_name not in summary:
+            raise ValueError(
+                "verify_run_identity: material summary.json is missing "
+                f"required RNG field {field_name!r}"
+            )
+    summary_count = summary["rng_draws_count"]
+    summary_by_module = summary["rng_draws_by_module"]
+    summary_active = summary["stochastic_modules_active"]
+    if type(summary_count) is not int or summary_count < 0:
+        raise ValueError(
+            "verify_run_identity: summary.rng_draws_count must be a strict "
+            "non-negative integer"
+        )
+    if type(summary_by_module) is not dict:
+        raise ValueError(
+            "verify_run_identity: summary.rng_draws_by_module must be an object"
+        )
+    for key, value in summary_by_module.items():
+        if type(key) is not str or type(value) is not int or value < 0:
+            raise ValueError(
+                "verify_run_identity: summary.rng_draws_by_module must map "
+                "exact strings to strict non-negative integers"
+            )
+    if type(summary_active) is not list or any(
+        type(value) is not str for value in summary_active
+    ):
+        raise ValueError(
+            "verify_run_identity: summary.stochastic_modules_active must be "
+            "a list of exact strings"
+        )
+    if type(summary["rng_scheme_version"]) is not str:
+        raise ValueError(
+            "verify_run_identity: summary.rng_scheme_version must be an exact "
+            "string"
+        )
     for field_name in ("run_kind", "scenario_id"):
         field_value = summary[field_name]
         if not isinstance(field_value, str) or not field_value:
@@ -604,6 +668,14 @@ def _verify_material_tick_data(
             f"{_MATERIAL_RECIPE_FILENAME} must be a non-empty JSON object "
             "declaring the scenario's recipe"
         )
+    if (
+        scenario_spec.kind == "material"
+        and recipe_raw.get("scenario_id") != scenario_spec.scenario_id
+    ):
+        raise ValueError(
+            "verify_run_identity: initial_recipe.json declares another "
+            f"scenario than the loaded scenario {scenario_spec.scenario_id!r}"
+        )
     declaration = recipe_raw.get("declaration")
     if not isinstance(declaration, dict) or not declaration:
         raise ValueError(
@@ -697,6 +769,11 @@ def _verify_material_tick_data(
                 "verify_run_identity: summary.json 'row_counts' has a non-string "
                 f"table name: {table_name!r}"
             )
+        if re.fullmatch(r"[A-Za-z0-9_]+", table_name) is None:
+            raise ValueError(
+                "verify_run_identity: summary.json declares an invalid "
+                f"trajectory table name {table_name!r}"
+            )
         if not isinstance(declared_rows, int) or isinstance(declared_rows, bool):
             raise ValueError(
                 f"verify_run_identity: summary.json 'row_counts[{table_name}]' "
@@ -707,6 +784,21 @@ def _verify_material_tick_data(
             raise ValueError(
                 f"verify_run_identity: summary.json declares trajectory table "
                 f"{table_name!r} but no such Parquet file exists for this run"
+            )
+        resolved_table = table_path.resolve()
+        if (
+            resolved_table != resolved.resolve()
+            and resolved.resolve() not in resolved_table.parents
+        ):
+            raise ValueError(
+                "verify_run_identity: trajectory table "
+                f"{table_name!r} resolves outside the run directory"
+            )
+        relative_table = table_path.relative_to(resolved).as_posix()
+        if relative_table not in (manifest.output_hashes or {}):
+            raise ValueError(
+                "verify_run_identity: trajectory table "
+                f"{relative_table!r} is not covered by the run's output hashes"
             )
         if table_path.stat().st_size == 0:
             raise ValueError(
@@ -883,6 +975,11 @@ def verify_run_identity(
 
     from hsm_lab.contract.guards import load_scenario
 
+    if type(seed) is not int or seed < 0:
+        raise ValueError(
+            "verify_run_identity: expected seed must be a strict "
+            "non-negative integer"
+        )
     resolved = _resolve_output_dir(output_dir, root)
 
     # 1. Read and parse manifest
@@ -898,6 +995,46 @@ def verify_run_identity(
         raise ValueError(
             f"verify_run_identity: manifest.json is not valid JSON: {exc}"
         ) from exc
+
+    # Seed custody must happen before Pydantic coercion: JSON ``true`` or
+    # ``"1"`` would otherwise become integer 1 and pass the later check.
+    raw_seed = raw.get("seed") if isinstance(raw, dict) else None
+    if type(raw_seed) is not int or raw_seed < 0:
+        raise ValueError(
+            "verify_run_identity: manifest.seed must be a strict "
+            "non-negative integer in the raw manifest"
+        )
+
+    # RNG counters must be exact before Pydantic coerces ``true``/``"1"``.
+    if "rng_draws_count" in raw:
+        raw_count = raw["rng_draws_count"]
+        if type(raw_count) is not int or raw_count < 0:
+            raise ValueError(
+                "verify_run_identity: manifest.rng_draws_count must be a "
+                "strict non-negative integer"
+            )
+    if "rng_draws_by_module" in raw:
+        raw_by_module = raw["rng_draws_by_module"]
+        if type(raw_by_module) is not dict:
+            raise ValueError(
+                "verify_run_identity: manifest.rng_draws_by_module must be "
+                "an object"
+            )
+        for key, value in raw_by_module.items():
+            if type(key) is not str or type(value) is not int or value < 0:
+                raise ValueError(
+                    "verify_run_identity: manifest.rng_draws_by_module "
+                    "must map exact strings to strict non-negative integers"
+                )
+    if "stochastic_modules_active" in raw:
+        raw_active = raw["stochastic_modules_active"]
+        if type(raw_active) is not list or any(
+            type(value) is not str for value in raw_active
+        ):
+            raise ValueError(
+                "verify_run_identity: manifest.stochastic_modules_active "
+                "must be a list of exact strings"
+            )
 
     manifest: RunManifest
     try:
@@ -965,6 +1102,23 @@ def verify_run_identity(
             f"verify_run_identity: scenario_id={scenario_id!r} is not "
             f"a known scenario: {exc}"
         ) from exc
+    # 7-identity. The manifest's run kind must be the kind this scenario
+    # actually produces.  Otherwise a material run could self-declare as a
+    # smoke run and bypass the material content checks below.
+    expected_run_kind = _SCENARIO_KIND_TO_RUN_KIND.get(
+        getattr(scenario_spec, "kind", None)
+    )
+    if expected_run_kind is None:
+        raise ValueError(
+            "verify_run_identity: scenario kind is not admissible for "
+            "evidence verification"
+        )
+    if manifest.run_kind != expected_run_kind:
+        raise ValueError(
+            f"verify_run_identity: manifest.run_kind={manifest.run_kind!r} "
+            f"is incompatible with scenario kind {scenario_spec.kind!r} "
+            f"(expected {expected_run_kind!r})"
+        )
     scenario_with_seed = scenario_spec.model_copy(update={"seed": seed})
     try:
         from hsm_lab.provenance.manifest import compute_scenario_hash
@@ -1002,6 +1156,21 @@ def verify_run_identity(
                 "run is not a complete formal run"
             )
 
+    # 8b. Output-file custody: every output entry must resolve inside the run
+    # directory.  An outward symlink would let "hashed" bytes live elsewhere
+    # while the run directory still appears self-consistent.
+    resolved_root = resolved.resolve()
+    for entry in resolved.rglob("*"):
+        if not entry.is_symlink():
+            continue
+        target = entry.resolve()
+        if target != resolved_root and resolved_root not in target.parents:
+            raise ValueError(
+                f"verify_run_identity: output entry "
+                f"{entry.relative_to(resolved).as_posix()!r} is a symlink "
+                "escaping the run directory"
+            )
+
     # 9. Output tree hash integrity: recompute from disk and compare
     try:
         disk_hashes = hash_output_tree(resolved)
@@ -1035,6 +1204,21 @@ def verify_run_identity(
                 f"verify_run_identity: required output file {fname} is missing"
             )
 
+    # The commodity/region universe of a material run is declared by the
+    # scenario, not by the manifest.  A downgraded manifest must not shrink the
+    # universe the run claims to cover.
+    if scenario_spec.kind == "material":
+        if list(manifest.commodity_ids) != list(scenario_spec.commodities):
+            raise ValueError(
+                "verify_run_identity: manifest.commodity_ids does not match "
+                f"the scenario {scenario_id!r} commodity universe"
+            )
+        if list(manifest.region_ids) != list(scenario_spec.region_ids):
+            raise ValueError(
+                "verify_run_identity: manifest.region_ids does not match the "
+                f"scenario {scenario_id!r} region universe"
+            )
+
     # 10a. summary.json must be the run's own record, not a placeholder: it must
     # be a non-empty object that declares this run's id and whose identity fields
     # agree with the manifest the directory is filed under.
@@ -1060,6 +1244,13 @@ def verify_run_identity(
             f"verify_run_identity: summary.json run_id {recorded_run_id!r} does "
             f"not match manifest.run_id {manifest.run_id!r}"
         )
+    recorded_scenario = summary_raw.get("scenario_id")
+    if recorded_scenario is not None and recorded_scenario != scenario_id:
+        raise ValueError(
+            f"verify_run_identity: summary.json scenario_id "
+            f"{recorded_scenario!r} does not match the requested scenario "
+            f"{scenario_id!r}"
+        )
     for field_name in _SUMMARY_MIRRORED_MANIFEST_FIELDS:
         if field_name not in summary_raw:
             continue
@@ -1082,7 +1273,7 @@ def verify_run_identity(
     # runner writes. Steps 9–10 only prove that the JSON artefacts agree with
     # each other, which a hand-written directory can satisfy; the trajectory
     # tables are what make it an actual run.
-    if manifest.run_kind == _MATERIAL_RUN_KIND:
+    if scenario_spec.kind == "material":
         _verify_material_tick_data(resolved, manifest, summary_raw, scenario_spec)
 
     # 11. Verify lock hash against root
@@ -1134,6 +1325,14 @@ def verify_run_identity(
         raise ValueError(
             "verify_run_identity: parameters.json must be a JSON object"
         )
+    if (
+        scenario_spec.kind == "material"
+        and parameters_raw.get("scenario_id") != scenario_id
+    ):
+        raise ValueError(
+            "verify_run_identity: parameters.json scenario_id does not match "
+            f"the requested scenario {scenario_id!r}"
+        )
     recorded_parameter_hash = parameters_raw.get("parameter_hash")
     if not isinstance(recorded_parameter_hash, str) or not recorded_parameter_hash:
         raise ValueError(
@@ -1145,6 +1344,34 @@ def verify_run_identity(
             f"{recorded_parameter_hash[:16]}... does not match "
             f"manifest.parameter_hash {manifest.parameter_hash[:16]}..."
         )
+
+    # A hash string binds nothing if the declaration beside it can be edited
+    # without detection.  Validate the declared material parameters against
+    # the schema and against the loaded scenario's own declaration.
+    if scenario_spec.material_parameters is not None:
+        declaration = parameters_raw.get("declaration")
+        if not isinstance(declaration, dict):
+            raise ValueError(
+                "verify_run_identity: parameters.json has no declaration object"
+            )
+        from hsm_lab.contract.material import MaterialParameters
+
+        try:
+            MaterialParameters.model_validate(declaration)
+        except Exception as exc:
+            raise ValueError(
+                "verify_run_identity: parameters.json declaration is not a "
+                f"valid material parameter declaration: {exc}"
+            ) from exc
+        expected_declaration = scenario_spec.material_parameters.model_dump(
+            mode="json"
+        )
+        if declaration != expected_declaration:
+            raise ValueError(
+                "verify_run_identity: parameters.json declaration does not "
+                f"match the material parameters declared by scenario "
+                f"{scenario_id!r}"
+            )
 
     # 15. Parameter identity must match the scenario specification. Steps 13–14
     # only bind parameters.json to the run manifest, so a fabricated run could

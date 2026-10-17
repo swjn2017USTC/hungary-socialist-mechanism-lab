@@ -353,6 +353,9 @@ def test_v1_card_sha_preserved_in_dag() -> None:
     assert m1_node is not None
     assert m1_node.card_sha256 == "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d"
     assert m1_node.card_mechanism_id == "M1"
+    # Declaration form and study form name the same card.
+    assert dag.v1_node_for_card("M01") is not None
+    assert dag.v1_node_for_card("M01").node_id == m1_node.node_id
 
     # All 11 cards present
     v1_nodes = [dag.v1_node_for_card(f"M{i}") for i in range(1, 12)]

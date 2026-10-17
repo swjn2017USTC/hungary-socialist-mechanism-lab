@@ -9,6 +9,7 @@ from datetime import date
 
 from hsm_lab.institutions.schemas import (
     AuthorityResult,
+    DateInterval,
     InstitutionEvent,
     RegimeCalendar,
     _check_revoke_scope,
@@ -78,6 +79,55 @@ def _matching_events(
 
 
 # ---------------------------------------------------------------------------
+# Temporal boundary classification
+# ---------------------------------------------------------------------------
+
+# Start boundaries (enactment_date, effective_from):
+#   "definitely_future"  — the boundary cannot have occurred by decision_at
+#   "definitely_elapsed" — the boundary has certainly occurred
+#   "uncertain"          — the boundary may or may not have occurred
+#
+# End boundaries (effective_to, half-open [from, to)):
+#   "no_end"             — no declared end
+#   "definitely_expired" — decision_at is on/after the last possible end
+#   "definitely_active"  — decision_at is before the first possible end
+#   "uncertain"          — the end may already have passed
+
+_START_FUTURE = "definitely_future"
+_START_ELAPSED = "definitely_elapsed"
+_START_UNCERTAIN = "uncertain"
+
+_END_NONE = "no_end"
+_END_EXPIRED = "definitely_expired"
+_END_ACTIVE = "definitely_active"
+_END_UNCERTAIN = "uncertain"
+
+
+def _start_status(interval: DateInterval, decision_at: date) -> str:
+    """Classify whether a start boundary has definitely elapsed by decision_at."""
+    if interval.precision == "unknown":
+        return _START_UNCERTAIN
+    if interval.earliest is not None and decision_at < interval.earliest:
+        return _START_FUTURE
+    if interval.latest is not None and decision_at >= interval.latest:
+        return _START_ELAPSED
+    return _START_UNCERTAIN
+
+
+def _end_status(interval: DateInterval | None, decision_at: date) -> str:
+    """Classify whether an exclusive end boundary has definitely expired."""
+    if interval is None:
+        return _END_NONE
+    if interval.precision == "unknown":
+        return _END_UNCERTAIN
+    if interval.latest is not None and decision_at >= interval.latest:
+        return _END_EXPIRED
+    if interval.earliest is not None and decision_at < interval.earliest:
+        return _END_ACTIVE
+    return _END_UNCERTAIN
+
+
+# ---------------------------------------------------------------------------
 # Phase 3: resolve grants / revokes
 # ---------------------------------------------------------------------------
 
@@ -90,7 +140,8 @@ def _resolve_authority(
 
     Per-grant revocation tracking with full uncertainty propagation:
     - A grant is 'definitely_active' if all its temporal conditions are definitely met.
-    - A grant is 'uncertain' if its enactment date is unknown (cannot be established).
+    - A grant is 'uncertain' if its enactment date or effective dates leave open
+      whether it is active (but it is not definitely inactive).
     - A grant is 'definitely_revoked' if targeted by a definitely-effective revoke.
     - A grant is 'possibly_revoked' if targeted by a possibly-effective revoke.
 
@@ -112,12 +163,41 @@ def _resolve_authority(
             _validate_revoke_scope(rev, target_ev)
 
     # Separate definitely-active and uncertain grants
-    # Uncertain grants: enactment_date.precision == "unknown" OR
-    # effective_from.precision == "unknown" OR decision within effective_from range
     definite_grants, uncertain_grants = _active_grants_at(grants, decision_at)
 
     all_active = definite_grants + uncertain_grants
     if not all_active:
+        # No grant is temporally active, but a definitely applicable revoke
+        # of an expired grant still establishes revocation.  Evaluate revoke
+        # evidence against every declared grant before falling back to
+        # "unknown".
+        definite_revokes_all, possible_revokes_all = _effective_revokes(
+            revokes, grants, decision_at
+        )
+        if definite_revokes_all:
+            return AuthorityResult(
+                status="revoked",
+                permission=permission,
+                active_event_ids=tuple(
+                    sorted(rev.event_id for rev in definite_revokes_all)
+                ),
+                reason=(
+                    f"no active grant at {decision_at}, but a definitely "
+                    "applicable revocation targets a declared grant"
+                ),
+            )
+        if possible_revokes_all:
+            return AuthorityResult(
+                status="unknown",
+                permission=permission,
+                active_event_ids=tuple(
+                    sorted(rev.event_id for rev in possible_revokes_all)
+                ),
+                reason=(
+                    f"no active grant at {decision_at}, but a possibly "
+                    "applicable revocation targets a declared grant"
+                ),
+            )
         return AuthorityResult(
             status="unknown",
             permission=permission,
@@ -200,130 +280,43 @@ def _active_grants_at(
 ) -> tuple[list[InstitutionEvent], list[InstitutionEvent]]:
     """Return (definitely_active, uncertain) grants at decision_at.
 
-    - definitely_active: grants whose authority is definitively established at decision_at
-    - uncertain: grants whose enactment date or effective_from date has unknown precision;
-      conservatively treated as uncertain (caller returns 'unknown' if any exist)
+    Definite nonactivity is applied before residual uncertainty:
+    - effective_to definitely expired → inactive (even if enactment/start unknown)
+    - effective_from definitely in the future → inactive
+    - enactment definitely in the future → inactive
 
-    A grant is definitely_active only when all conditions are met:
-    - legal_force == 'enactment'
-    - enactment_date is known and definitely passed (enactment_date.latest ≤ decision_at)
-    - effective_from is known and definitely started (effective_from.latest ≤ decision_at)
-    - decision_at is before effective_to (exclusive/inclusive upper bound)
+    A grant is definitely_active only when its enactment and effective_from
+    boundaries have definitely elapsed and its half-open effective_to has not
+    expired. Any residual uncertainty makes it uncertain; it is never treated
+    as definitely active by default.
     """
     definite = []
     uncertain = []
     for g in grants:
         if g.legal_force != "enactment":
             continue
-        # Track grants with unknown enactment as uncertain — but only if they could
-        # possibly be active at decision_at. If effective_from has definitely not
-        # started yet (decision_at < effective_from.earliest), the grant cannot affect
-        # the outcome at this date and is skipped entirely.
-        if g.enactment_date.precision == "unknown":
-            if (
-                g.effective_from.precision != "unknown"
-                and g.effective_from.earliest is not None
-                and decision_at < g.effective_from.earliest
-            ):
-                continue  # definitely not yet active — skip
-            uncertain.append(g)
-            continue
-        if g.enactment_date.latest is None:
-            uncertain.append(g)
-            continue
-        if decision_at < g.enactment_date.latest:
-            continue  # enacted after decision date
 
-        # effective_from must be definitely active: effective_from.latest ≤ decision_at
-        if g.effective_from.precision == "unknown":
-            uncertain.append(g)
+        enactment = _start_status(g.enactment_date, decision_at)
+        effective_from = _start_status(g.effective_from, decision_at)
+        effective_to = _end_status(g.effective_to, decision_at)
+
+        # Definite nonactivity constraints hold regardless of any other
+        # uncertainty, so they take precedence over uncertainty classification.
+        if effective_to == _END_EXPIRED:
             continue
-        if g.effective_from.earliest is None:
-            uncertain.append(g)
+        if effective_from == _START_FUTURE:
+            continue
+        if enactment == _START_FUTURE:
             continue
 
-        # Handle range/month/quarter/year precision: the start is uncertain but before latest.
-        # If decision date is within the period → possibly active (not definitely).
-        if g.effective_from.precision in ("range", "month", "quarter", "year"):
-            if decision_at < g.effective_from.earliest:
-                continue  # definitely not yet active
-            if decision_at >= g.effective_from.latest:
-                pass  # definitely started (end of range has passed)
-            else:
-                uncertain.append(g)  # within range → possibly active
-                continue
-        # For day/month/quarter/year precision:
-        if g.effective_from.latest is not None and g.effective_from.latest <= decision_at:
-            pass  # definitely started so far
-        elif decision_at < g.effective_from.earliest:
-            continue  # definitely not yet active
+        if (
+            enactment == _START_ELAPSED
+            and effective_from == _START_ELAPSED
+            and effective_to in (_END_NONE, _END_ACTIVE)
+        ):
+            definite.append(g)
         else:
             uncertain.append(g)
-            continue  # uncertain — decision within effective_from range
-
-        # effective_to check: half-open [effective_from, effective_to)
-        if g.effective_to is not None:
-            if g.effective_to.precision == "unknown":
-                uncertain.append(g)
-                continue
-            if g.effective_to.precision == "range":
-                d_end_earliest = g.effective_to.earliest
-                d_end_latest = g.effective_to.latest
-                if d_end_earliest is not None and d_end_latest is not None:
-                    if d_end_earliest > d_end_latest:  # inverted range
-                        # Exclusive upper bound: active while decision_date < earliest
-                        if decision_at < d_end_earliest:
-                            pass  # definitely active
-                        else:
-                            continue  # expired
-                    else:  # normal range
-                        # Active from effective_from; expires at latest (half-open end)
-                        # decision < earliest → definitely active; decision >= latest → expired
-                        # decision within [earliest, latest) → possibly expired (uncertain)
-                        if decision_at >= d_end_latest:
-                            continue  # definitely expired
-                        elif decision_at < d_end_earliest:
-                            pass  # definitely active
-                        else:
-                            uncertain.append(g)  # within range — may have expired
-                            continue
-                elif d_end_latest is not None:
-                    if decision_at >= d_end_latest:
-                        continue  # definitely expired
-                    uncertain.append(g)  # within range — may have expired
-                    continue
-                elif d_end_earliest is not None:
-                    if decision_at >= d_end_earliest:
-                        continue  # at or after exclusive end → expired
-                    # else: definitely active
-                # else: no bounds → always active
-            else:
-                # Month/quarter/year precision: the end could be anywhere in the period.
-                # Within the period → uncertain (may have expired); after period → expired.
-                # Decision < earliest → definitely active; earliest ≤ decision < latest → uncertain
-                if g.effective_to.earliest is not None and g.effective_to.latest is not None:
-                    if decision_at < g.effective_to.earliest:
-                        pass  # definitely active
-                    elif decision_at >= g.effective_to.latest:
-                        continue  # definitely expired
-                    else:
-                        uncertain.append(g)  # within period → may have expired
-                        continue
-                elif g.effective_to.earliest is not None:
-                    # Only earliest bound known (exclusive): within range → uncertain
-                    if decision_at >= g.effective_to.earliest:
-                        uncertain.append(g)  # within period → may have expired
-                        continue
-                    # else: definitely active
-                elif g.effective_to.latest is not None:
-                    # Only latest bound known (inclusive): within range → uncertain
-                    if decision_at >= g.effective_to.latest:
-                        continue  # definitely expired
-                    uncertain.append(g)  # within range → may have expired
-                    continue
-                # else: no bounds → always active
-
-        definite.append(g)
     return definite, uncertain
 
 
@@ -336,18 +329,14 @@ def _effective_revokes(
 
     A revoke is definitely effective only when:
     1. legal_force is 'enactment'
-    2. Its enactment date is known and definitely passed
-    3. Its start period has definitely begun (effective_from known and passed)
-    4. The decision date is before the end period
+    2. Its enactment and effective_from boundaries have definitely elapsed
+    3. Its effective_to has definitely not expired (or is absent)
 
-    A revoke is possibly effective when:
-    - Enactment date is unknown (may never have been enacted)
-    - OR effective_from is uncertain (unknown precision, or decision within range)
-    - OR effective_to is uncertain (unknown precision, or decision within range)
-    - OR effective_to is definite but before decision date (expired)
-
-    Unknown enactment = possibly effective (not skipped), because we cannot confirm
-    the revoke was ever legally established.
+    A revoke is possibly effective when it is not definitely inactive but one
+    of those conditions remains uncertain (unknown/overlapping enactment,
+    unknown/overlapping start, unknown/overlapping end). Definite nonactivity —
+    enactment or start definitely in the future, or end definitely expired —
+    removes the revoke entirely.
     """
     definite = []
     possible = []
@@ -358,129 +347,27 @@ def _effective_revokes(
         if rev.legal_force != "enactment":
             continue  # proposal/approval revoke has no established legal force
 
-        # Enactment date: check first — unknown enactment means possibly not enacted
-        # (possibly effective, not definitely). Known enactment: check if passed.
-        if rev.enactment_date.precision == "unknown":
-            # Uncertain enactment — might never have been established.
-            # BUT: check effective_to first. If definitely expired before decision date,
-            # skip (expired revoke cannot be possibly effective even if enacted).
-            if (
-                rev.effective_to is not None
-                and rev.effective_to.latest is not None
-                and decision_at >= rev.effective_to.latest
-            ):
-                continue  # definitely expired before decision date — skip
-            # Also check effective_from: if definitely in future, definitely not effective
-            ef = rev.effective_from
-            ef_definitely_future = (
-                ef.precision != "unknown"
-                and ef.earliest is not None
-                and decision_at < ef.earliest
-            )
-            if ef_definitely_future:
-                continue  # definitely not effective yet
-            # Otherwise: possibly effective (enactment unknown but revoke may have started)
-            possible.append(rev)
-            continue
-        if rev.enactment_date.latest is not None and decision_at < rev.enactment_date.latest:
-            continue  # not enacted yet at decision date
+        enactment = _start_status(rev.enactment_date, decision_at)
+        effective_from = _start_status(rev.effective_from, decision_at)
+        effective_to = _end_status(rev.effective_to, decision_at)
 
-        # effective_from must be checked for start of effectiveness
-        if rev.effective_from.precision == "unknown":
-            # Unknown start: possibly effective if enacted (and possibly expired)
-            # Check effective_to: if definitely expired, not even possibly effective
-            if (
-                rev.effective_to is not None
-                and rev.effective_to.latest is not None
-                and decision_at >= rev.effective_to.latest
-            ):
-                continue  # definitely expired before decision date
-            possible.append(rev)
+        # Definite nonactivity constraints take precedence over uncertainty.
+        if effective_to == _END_EXPIRED:
             continue
-        if rev.effective_from.earliest is None:
-            possible.append(rev)
+        if effective_from == _START_FUTURE:
+            continue
+        if enactment == _START_FUTURE:
             continue
 
-        # Handle range precision: the range means start is uncertain but before latest.
-        # Decision within range → possibly effective (not definitely).
-        # Same for month/quarter/year precision where the date could be anywhere in the period.
-        if rev.effective_from.precision in ("range", "month", "quarter", "year"):
-            if decision_at < rev.effective_from.earliest:
-                continue  # not yet started
-            if decision_at >= rev.effective_from.latest:
-                pass  # definitely started (end of range has passed)
-            else:
-                possible.append(rev)  # within range → possibly effective
-                continue
-
-        # effective_from must be definitely active: effective_from.latest ≤ decision_at
-        if rev.effective_from.latest is not None and decision_at >= rev.effective_from.latest:
-            pass  # definitely started
+        if (
+            enactment == _START_ELAPSED
+            and effective_from == _START_ELAPSED
+            and effective_to in (_END_NONE, _END_ACTIVE)
+        ):
+            definite.append(rev)
         else:
-            continue  # not yet started at decision date
-
-        # effective_to: check if revoke has ended before decision date
-        if rev.effective_to is not None:
-            if rev.effective_to.precision == "unknown":
-                possible.append(rev)
-                continue
-            if rev.effective_to.precision == "range":
-                d_end_earliest = rev.effective_to.earliest
-                d_end_latest = rev.effective_to.latest
-                if d_end_earliest is not None and d_end_latest is not None:
-                    if d_end_earliest > d_end_latest:  # inverted range
-                        # Exclusive upper bound: active only while decision_date < earliest
-                        if decision_at < d_end_earliest:
-                            definite.append(rev)  # definitely not expired
-                        continue  # at or after exclusive end → expired
-                    else:  # normal range
-                        # Active from earliest; expires at latest (half-open end)
-                        if decision_at < d_end_earliest:
-                            definite.append(rev)  # definitely not expired
-                            continue
-                        if decision_at >= d_end_latest:
-                            continue  # definitely expired
-                        possible.append(rev)  # within range → possibly expired
-                        continue
-                elif d_end_latest is not None:
-                    if decision_at < d_end_latest:
-                        definite.append(rev)  # definitely not expired
-                    continue
-                # else: no end bound → always active
-            else:
-                # Month/quarter/year precision: within period → possibly expired (uncertain)
-                # Decision < earliest → definitely not expired;
-                # earliest ≤ decision < latest → uncertain
-                if rev.effective_to.earliest is not None and rev.effective_to.latest is not None:
-                    if decision_at < rev.effective_to.earliest:
-                        definite.append(rev)  # definitely not expired
-                        continue
-                    elif decision_at >= rev.effective_to.latest:
-                        continue  # definitely expired
-                    else:
-                        possible.append(rev)  # within period → possibly expired
-                        continue
-                elif rev.effective_to.earliest is not None:
-                    # Only earliest known (exclusive): within range → uncertain
-                    if decision_at >= rev.effective_to.earliest:
-                        possible.append(rev)  # within period → possibly expired
-                        continue
-                    else:
-                        definite.append(rev)  # before period → definitely not expired
-                        continue
-                elif rev.effective_to.latest is not None:
-                    # Only latest known (inclusive): within range → uncertain
-                    if decision_at >= rev.effective_to.latest:
-                        continue  # definitely expired
-                    possible.append(rev)  # within range → possibly expired
-                    continue
-                # else: no end bound → always active
-
-        definite.append(rev)
+            possible.append(rev)
     return definite, possible
-
-
-
 
 
 def _validate_revoke_scope(revoke: InstitutionEvent, target: InstitutionEvent) -> None:

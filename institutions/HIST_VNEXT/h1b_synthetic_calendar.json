@@ -45,11 +45,10 @@
       "issuer": "Hungarian Socialist Workers Party / Government of Hungary",
       "legal_force": "enactment",
       "source_ids": ["synthetic_h1b_design_note"],
-      "implementation_evidence_ids": [],
+      "implementation_evidence_ids": ["synthetic:h1b-observation-procurement-1968-03-15"],
       "synthetic_flag": true,
       "confidence_reason": "Synthetic test fixture for H1B regime calendar; no primary source admitted",
-      "search_tags": ["NEM", "1968", "procurement"],
-      "implementation_evidence_ids": []
+      "search_tags": ["NEM", "1968", "procurement"]
     },
     {
       "event_id": "EVT-1968-NEM-GRANT-INVESTMENT",

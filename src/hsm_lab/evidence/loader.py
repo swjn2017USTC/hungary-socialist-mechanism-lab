@@ -594,6 +594,24 @@ def _is_missing_value(value: object) -> bool:
     return isinstance(value, float) and math.isnan(value)
 
 
+# Declared categorical units.  Everything else is a quantitative measurement:
+# physical, monetary, count or probability quantities must carry numbers, and
+# an arbitrary string cannot become an observable value.
+_CATEGORICAL_UNITS = frozenset({"binding_constraint_label"})
+
+# JSON sidecars must declare a typed binding for every metric they supply.
+_SIDECAR_BINDINGS_KEY = "__metric_bindings__"
+_SIDECAR_BINDING_KEYS = frozenset({
+    "unit", "value_type", "temporal", "selectors",
+})
+
+
+def _is_numeric_measurement(value: object) -> bool:
+    """True for an exact int/float measurement (booleans excluded)."""
+    actual = type(value)
+    return actual is int or actual is float
+
+
 def _is_nonfinite_value(value: object) -> bool:
     """True for an infinite cell — nonsense rather than a measurement.
 
@@ -605,6 +623,73 @@ def _is_nonfinite_value(value: object) -> bool:
         and not math.isnan(value)
         and not math.isfinite(value)
     )
+
+
+def _run_has_stochastic_activity(manifest: object) -> bool:
+    """Return True only for a manifest with consistent, nonzero RNG activity.
+
+    A distinct seed or output directory is not, by itself, an independent
+    stochastic replicate: a deterministic run reports zero draws and no active
+    modules.  The manifest's RNG fields must also agree with each other.
+    """
+    count = getattr(manifest, "rng_draws_count", None)
+    by_module = getattr(manifest, "rng_draws_by_module", None)
+    active = getattr(manifest, "stochastic_modules_active", None)
+    if type(count) is not int or count < 0:
+        raise ValueError(
+            "verified run manifest declares an invalid rng_draws_count"
+        )
+    if type(by_module) is not dict:
+        raise ValueError(
+            "verified run manifest declares an invalid rng_draws_by_module"
+        )
+    total = 0
+    for key, value in by_module.items():
+        if type(key) is not str or type(value) is not int or value < 0:
+            raise ValueError(
+                "verified run manifest declares an invalid rng module draw count"
+            )
+        total += value
+    if total != count:
+        raise ValueError(
+            "verified run manifest rng_draws_by_module does not sum to "
+            "rng_draws_count"
+        )
+    if type(active) is not list:
+        raise ValueError(
+            "verified run manifest declares an invalid "
+            "stochastic_modules_active"
+        )
+    for module in active:
+        if type(module) is not str:
+            raise ValueError(
+                "verified run manifest declares a non-string active module"
+            )
+    positive_modules = {
+        key for key, value in by_module.items() if value > 0
+    }
+    if set(active) != positive_modules:
+        raise ValueError(
+            "verified run manifest stochastic_modules_active does not match "
+            "the modules with positive rng_draws_by_module counts"
+        )
+    if count > 0 and not active:
+        raise ValueError(
+            "verified run manifest reports RNG draws but no active "
+            "stochastic module"
+        )
+    return count > 0
+
+
+def _hashed_output_paths(run_dir: Path) -> set[str]:
+    """Paths covered by a verified run's own output-hash map."""
+    payload = json.loads((run_dir / MANIFEST_FILENAME).read_text(encoding="utf-8"))
+    hashes = payload.get("output_hashes")
+    if not isinstance(hashes, dict):
+        raise ValueError(
+            f"run {run_dir} has no output_hashes to bind metric artefacts"
+        )
+    return {str(key) for key in hashes}
 
 
 def _metric_label(record: EvidenceRecord, spec: MetricSpec) -> str:
@@ -975,15 +1060,17 @@ def _verify_metric_parquet_content(
         # intersection — not the whole column — is what must carry data: a
         # column that is null throughout the declared window while other
         # quarters or selectors hold values supports nothing.
-        if spec.data_role in _DATA_ROLES_REQUIRING_DATA:
-            _verify_metric_window_data(
-                spec=spec,
-                run_dir=run_dir,
-                artifact=artifact,
-                label=label,
-                declared_commodities=declared_commodities,
-                declared_regions=declared_regions,
-            )
+        # Data semantics do not depend on the role label: changing a metric
+        # from TARGET to FORCING must not bypass missing/nonfinite/datatype
+        # checks.  The metric's own missing_policy governs tolerance.
+        _verify_metric_window_data(
+            spec=spec,
+            run_dir=run_dir,
+            artifact=artifact,
+            label=label,
+            declared_commodities=declared_commodities,
+            declared_regions=declared_regions,
+        )
 
 
 def _verify_joint_coverage(
@@ -1203,6 +1290,37 @@ def _verify_metric_window_data(
             f"a measurement, so a {spec.data_role.value} metric must not rest "
             "on it"
         )
+    if spec.unit in _CATEGORICAL_UNITS:
+        malformed = [
+            value
+            for value in values
+            if not _is_missing_value(value) and type(value) is not str
+        ]
+        if malformed:
+            raise ValueError(
+                f"{label}: column {spec.column!r} in {artifact.name} of run "
+                f"{run_dir} declares categorical unit {spec.unit!r} but carries "
+                f"{len(malformed)} non-string value(s) (e.g. "
+                f"{malformed[0]!r}) among {len(values)} row(s) of the declared "
+                f"window {window}"
+            )
+    else:
+        # Physical, monetary, count and probability metrics are quantitative:
+        # a string cell is not a number and cannot support the declaration.
+        nonnumeric = [
+            value
+            for value in values
+            if not _is_missing_value(value)
+            and not _is_numeric_measurement(value)
+        ]
+        if nonnumeric:
+            raise ValueError(
+                f"{label}: column {spec.column!r} in {artifact.name} of run "
+                f"{run_dir} declares quantitative unit {spec.unit!r} but "
+                f"carries {len(nonnumeric)} non-numeric value(s) (e.g. "
+                f"{nonnumeric[0]!r}) among {len(values)} row(s) of the "
+                f"declared window {window}"
+            )
 
 
 def _verify_metric_sidecar_content(
@@ -1233,12 +1351,71 @@ def _verify_metric_sidecar_content(
             f"{artifact.name} in run {run_dir} must be a non-empty JSON object"
         )
 
+    # A JSON sidecar must declare the semantics of every metric it supplies.
+    # Without an explicit unit, value type, temporal extent and selector
+    # declaration, a dictionary entry cannot be shown to be the quantity the
+    # metric claims, so unknown semantics block promotion.
+    bindings = payload.get(_SIDECAR_BINDINGS_KEY)
+    if not isinstance(bindings, dict) or not bindings:
+        first_spec = specs[0]
+        raise ValueError(
+            f"{_metric_label(record, first_spec)}: JSON sidecar "
+            f"{artifact.name!r} in run {run_dir} has no typed "
+            f"{_SIDECAR_BINDINGS_KEY!r} declaration; an unbound sidecar "
+            "cannot support a SUPPORTED record"
+        )
     for spec in specs:
         label = _metric_label(record, spec)
         if spec.column not in payload:
             raise ValueError(
                 f"{label}: column {spec.column!r} is not declared in sidecar "
-                f"{artifact.name} of run {run_dir} (keys: {sorted(payload)})"
+                f"{artifact.name} of run {run_dir}"
+            )
+        binding = bindings.get(spec.column)
+        if not isinstance(binding, dict):
+            raise ValueError(
+                f"{label}: sidecar {artifact.name} of run {run_dir} declares "
+                f"no established typed binding for column {spec.column!r}"
+            )
+        if set(binding) != _SIDECAR_BINDING_KEYS:
+            raise ValueError(
+                f"{label}: sidecar binding for {spec.column!r} must declare "
+                "exactly unit, value_type, temporal and selectors"
+            )
+        if binding["unit"] != spec.unit:
+            raise ValueError(
+                f"{label}: declared unit {spec.unit!r} does not match the "
+                f"sidecar binding unit {binding['unit']!r}"
+            )
+        temporal = binding["temporal"]
+        if (
+            not isinstance(temporal, dict)
+            or set(temporal) != {"start_quarter", "end_quarter"}
+        ):
+            raise ValueError(
+                f"{label}: sidecar binding temporal extent must declare "
+                "exactly start_quarter and end_quarter"
+            )
+        if (
+            temporal["start_quarter"] != spec.time_window.start_quarter
+            or temporal["end_quarter"] != spec.time_window.end_quarter
+        ):
+            raise ValueError(
+                f"{label}: sidecar binding temporal extent "
+                f"{temporal['start_quarter']}..{temporal['end_quarter']} does "
+                f"not match the metric window "
+                f"{spec.time_window.start_quarter}..{spec.time_window.end_quarter}"
+            )
+        selectors = binding["selectors"]
+        if type(selectors) is not list or selectors:
+            raise ValueError(
+                f"{label}: sidecar binding must declare an empty selector list; "
+                "sidecar scalars cannot support commodity/region selectors"
+            )
+        if spec.commodity_axis is not None or spec.region_axis is not None:
+            raise ValueError(
+                f"{label}: sidecar scalar binding cannot satisfy a declared "
+                "commodity/region selector"
             )
         value = payload[spec.column]
         if _is_missing_value(value):
@@ -1246,16 +1423,42 @@ def _verify_metric_sidecar_content(
                 f"{label}: sidecar {artifact.name} of run {run_dir} declares "
                 f"{spec.column!r} as null or NaN, so the metric has no value"
             )
-        # JSON admits ``Infinity``/``-Infinity``/``NaN`` (and an overflowing
-        # literal such as ``1e999`` parses to ``inf``), so a sidecar can carry a
-        # value no aggregation can use. Like a Parquet cell, it is not a
-        # measurement.
         if _is_nonfinite_value(value):
             raise ValueError(
                 f"{label}: sidecar {artifact.name} of run {run_dir} declares "
                 f"{spec.column!r} as a non-finite value ({value!r}); inf/-inf "
                 "propagates through every aggregation, so the metric has no "
                 "value"
+            )
+        value_type = binding["value_type"]
+        if value_type not in ("number", "string"):
+            raise ValueError(
+                f"{label}: sidecar binding value_type must be 'number' or "
+                "'string'"
+            )
+        # The declared datatype must agree with the unit's semantics: a
+        # quantitative unit is a number and a categorical unit is a string.
+        if spec.unit in _CATEGORICAL_UNITS:
+            if value_type != "string":
+                raise ValueError(
+                    f"{label}: categorical unit {spec.unit!r} requires "
+                    "value_type='string'"
+                )
+        elif value_type != "number":
+            raise ValueError(
+                f"{label}: quantitative unit {spec.unit!r} requires "
+                "value_type='number'"
+            )
+        if value_type == "number":
+            if not _is_numeric_measurement(value):
+                raise ValueError(
+                    f"{label}: sidecar binding declares value_type='number' "
+                    f"but {spec.column!r} is {type(value).__name__}"
+                )
+        elif type(value) is not str:
+            raise ValueError(
+                f"{label}: sidecar binding declares value_type='string' "
+                f"but {spec.column!r} is {type(value).__name__}"
             )
 
 
@@ -1357,6 +1560,31 @@ def verify_supported_metric_content(root: Path, record: EvidenceRecord) -> None:
                     f"{metric_ids} declare "
                     f"table_or_sidecar={table_or_sidecar!r}, but run "
                     f"{ref.run_id!r} ({run_dir}) holds no such table or sidecar"
+                )
+            # A metric may only rest on bytes the verified run hashed.  A
+            # staging path (``.tmp-*``) or any other unhashed file could change
+            # after verification without invalidating the run digest.
+            hashed_paths = _hashed_output_paths(run_dir)
+            try:
+                relative_artifact = (
+                    artifact.resolve()
+                    .relative_to(run_dir.resolve())
+                    .as_posix()
+                )
+            except ValueError:
+                relative_artifact = None
+            if (
+                relative_artifact is None
+                or any(
+                    part.startswith(".tmp-")
+                    for part in Path(relative_artifact).parts
+                )
+                or relative_artifact not in hashed_paths
+            ):
+                raise ValueError(
+                    f"EvidenceRecord {record.record_id}: metric artefact "
+                    f"{table_or_sidecar!r} in run {ref.run_id!r} is not "
+                    "covered by the run's verified output hashes"
                 )
             _verify_metric_artifact_content(
                 record=record, run_dir=run_dir, artifact=artifact, specs=specs
@@ -1612,6 +1840,9 @@ def verify_supported_record_runs(root: Path, record: EvidenceRecord) -> None:
 
     # Track distinct actual runs by (resolved_output_dir, digest)
     seen_actual_runs: set[tuple[Path, str]] = set()
+    # Only runs with consistent, nonzero RNG activity can be independent
+    # stochastic replicates.
+    stochastic_seeds: set[int] = set()
     # Verified runs, for binding the record's linked observed states to them.
     verified_runs: list[_VerifiedRun] = []
 
@@ -1656,6 +1887,8 @@ def verify_supported_record_runs(root: Path, record: EvidenceRecord) -> None:
                 f"can only be counted once toward minimum_replicates"
             )
         seen_actual_runs.add(actual_run_key)
+        if _run_has_stochastic_activity(actual_manifest):
+            stochastic_seeds.add(ref.seed)
 
     # Verify we have enough distinct actual runs
     if len(seen_actual_runs) < record.minimum_replicates:
@@ -1664,7 +1897,6 @@ def verify_supported_record_runs(root: Path, record: EvidenceRecord) -> None:
             f"{len(seen_actual_runs)} distinct actual runs verified, "
             f"but minimum_replicates={record.minimum_replicates}"
         )
-
     # The runs are real; the snapshots the record links must be theirs. A
     # linked observed state claims a specific model-output snapshot of a
     # specific run at a specific quarter, so it is bound to the verified run
@@ -1676,6 +1908,22 @@ def verify_supported_record_runs(root: Path, record: EvidenceRecord) -> None:
     # window/selector exists in its output, so each metric is checked against
     # every referenced run's artefacts (H0A P0-2).
     verify_supported_metric_content(root, record)
+
+    # Independent stochastic replicates require actual RNG activity.  A
+    # minimum_replicates=1 record makes no replication claim and may rest on a
+    # deterministic run; two or more require that many stochastic runs.
+    if (
+        record.minimum_replicates > 1
+        and len(stochastic_seeds) < record.minimum_replicates
+    ):
+        raise ValueError(
+            f"EvidenceRecord {record.record_id}: only "
+            f"{len(stochastic_seeds)} distinct seed(s) among verified runs "
+            f"report stochastic RNG activity, but "
+            f"minimum_replicates={record.minimum_replicates}; distinct seeds "
+            "over deterministic zero-draw runs (or duplicate seeds among "
+            "active runs) are not independent stochastic replicates"
+        )
 
 
 def verify_evidence_manifest_runs(
