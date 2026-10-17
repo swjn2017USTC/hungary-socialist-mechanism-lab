@@ -102,6 +102,28 @@ def validate_proposal(
         Frozen result with is_legal, authority_status, and reason.
         No state is modified.
     """
+    # Step 0: validate against concrete registered decision types only
+    # Reject arbitrary subclasses that may declare stock/cash or other assignment fields
+    from hsm_lab.institutions.decisions import (
+        HouseholdNeedDecision,
+        InvestmentDecision,
+        PriceProposalDecision,
+        ProcurementDecision,
+    )
+    _ALLOWED_DECISION_TYPES = (
+        HouseholdNeedDecision,
+        InvestmentDecision,
+        PriceProposalDecision,
+        ProcurementDecision,
+    )
+    if type(decision) not in _ALLOWED_DECISION_TYPES:
+        return ValidationResult(
+            decision_id=getattr(decision, "decision_id", "<unknown>"),
+            is_legal=False,
+            authority_status="not_applicable",
+            reason=f"Decision type {type(decision).__name__} is not a registered H2A type",
+        )
+
     # Step 0: full decision reconstruction via model_validate (catches Literal enum
     # mismatches, primitive subclasses, and any field type violations from model_copy)
     # BUT first: check original __dict__ for undeclared attrs (model_dump omits these!)
@@ -121,7 +143,7 @@ def validate_proposal(
         value = decision.__dict__.get(field_name)
         if value is None:
             continue
-        # Check primitive subclasses
+        # Check primitive subclasses (str, float, int)
         if isinstance(value, str) and type(value) not in (str, bytes):
             return ValidationResult(
                 decision_id=getattr(decision, "decision_id", "<unknown>"),
@@ -139,6 +161,16 @@ def validate_proposal(
                 authority_status="not_applicable",
                 reason=(
                     f"Decision field {field_name} is a float subclass; "
+                    f"primitive subclasses may carry mutable state"
+                ),
+            )
+        if isinstance(value, int) and type(value) is not int:
+            return ValidationResult(
+                decision_id=getattr(decision, "decision_id", "<unknown>"),
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Decision field {field_name} is an int subclass; "
                     f"primitive subclasses may carry mutable state"
                 ),
             )
@@ -282,6 +314,27 @@ def validate_proposal(
                         is_legal=False,
                         authority_status="not_applicable",
                         reason=f"Dict observation missing required {field_name} field",
+                    )
+                # Reject primitive subclasses in dict observation metadata
+                if isinstance(field_val, str) and type(field_val) not in (str, bytes):
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Dict observation field {field_name} is a str subclass; "
+                            f"primitive subclasses may carry mutable state"
+                        ),
+                    )
+                if isinstance(field_val, int) and type(field_val) is not int:
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Dict observation field {field_name} is an int subclass; "
+                            f"primitive subclasses may carry mutable state"
+                        ),
                     )
             obs_org = observation.get("organization_id")
             obs_sector = observation.get("sector_id")
@@ -431,6 +484,16 @@ def validate_proposal(
                         authority_status="not_applicable",
                         reason=(
                             f"Observation field {field_name} is a str subclass; "
+                            f"primitive subclasses may carry mutable state"
+                        ),
+                    )
+                if isinstance(value, int) and type(value) is not int:
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Observation field {field_name} is an int subclass; "
                             f"primitive subclasses may carry mutable state"
                         ),
                     )
