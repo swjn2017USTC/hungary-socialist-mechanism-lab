@@ -503,8 +503,19 @@ def validate_proposal(
                             f"got {type(obs_fields).__name__}"
                         ),
                     )
-                observation = dict(observation)
-                observation["observed_fields"] = tuple(obs_fields)
+                try:
+                    observation = dict(observation)
+                    observation["observed_fields"] = tuple(obs_fields)
+                except TypeError:
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Dict observation observed_fields must be iterable, "
+                            f"got non-iterable {type(obs_fields).__name__}"
+                        ),
+                    )
 
         # Re-validate ActorObservation at boundary (catches model_copy bypass of __init__)
         # Check __dict__ for extra attributes AND __slots__ BEFORE model_dump
@@ -531,11 +542,26 @@ def validate_proposal(
                     reason=f"Observation has extra attributes: {extra_attrs}",
                 )
             # Check for primitive subclasses in declared fields (model_dump normalizes them)
+            # String fields: require exact str type (reject str subclasses AND bytes with __eq__)
+            _STRING_FIELDS = frozenset({
+                "actor_role", "organization_id", "sector_id", "geographic_id", "quarter",
+            })
             for field_name in declared_fields:
                 value = observation.__dict__.get(field_name)
                 if value is None:
                     continue
-                if isinstance(value, str) and type(value) not in (str, bytes):
+                if field_name in _STRING_FIELDS:
+                    if type(value) is not str:
+                        return ValidationResult(
+                            decision_id=decision.decision_id,
+                            is_legal=False,
+                            authority_status="not_applicable",
+                            reason=(
+                                f"Observation field {field_name} must be exactly str, "
+                                f"got {type(value).__name__}"
+                            ),
+                        )
+                elif isinstance(value, str) and type(value) is not str:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
