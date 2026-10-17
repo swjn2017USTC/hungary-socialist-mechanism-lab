@@ -1221,6 +1221,35 @@ class TestAuthorityBindingEnforcement:
         assert not result.is_legal
         assert "bounded_planning" in result.reason.lower()
 
+    def test_dict_observation_missing_context_rejected(self, calendar):
+        """Dict observation missing required context fields must be rejected."""
+        decision = ProcurementDecision(
+            decision_id="missing-ctx",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        # Dict observation missing organization_id
+        dict_obs = {
+            "actor_role": "procurement_organization",
+            # missing organization_id
+            "sector_id": "industry",
+            "quarter": "1968Q2",
+            "available_at": date(1968, 5, 25),
+            "observed_fields": [
+                ("supply_quantity", 100.0),
+            ],
+        }
+        result = validate_proposal(decision, calendar, observation=dict_obs)
+        assert not result.is_legal
+        assert "missing required" in result.reason.lower()
+
     def test_decision_with_date_subclass_rejected(self):
         """Decision with date subclass for decision_at must be rejected."""
         class MutableDate(date):

@@ -402,7 +402,7 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
                 f"Value for '{name}' contains prohibited content"
             )
         # Check for prohibited keys in nested containers
-        if isinstance(value, (tuple, dict)):
+        if isinstance(value, (tuple, dict, frozenset)):
             try:
                 _check_no_prohibited_keys(value)
             except TypeError as exc:

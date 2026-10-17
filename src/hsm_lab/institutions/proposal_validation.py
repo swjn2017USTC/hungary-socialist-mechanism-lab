@@ -176,6 +176,19 @@ def validate_proposal(
                             authority_status="not_applicable",
                             reason=f"Dict observation contains prohibited key {key!r}",
                         )
+            # Require context fields in dict observations
+            for field_name, field_val in [
+                ("organization_id", observation.get("organization_id")),
+                ("sector_id", observation.get("sector_id")),
+                ("quarter", observation.get("quarter")),
+            ]:
+                if field_val is None:
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=f"Dict observation missing required {field_name} field",
+                    )
             obs_org = observation.get("organization_id")
             obs_sector = observation.get("sector_id")
             obs_quarter = observation.get("quarter")
@@ -273,6 +286,25 @@ def validate_proposal(
                 ),
             )
 
+        # Decision timestamp binding: observation's decision_at must match decision's
+        if isinstance(observation, ActorObservation):
+            obs_decision_at = observation.decision_at
+        elif isinstance(observation, dict):
+            obs_decision_at = observation.get("decision_at")
+        else:
+            obs_decision_at = None
+
+        if obs_decision_at is not None and obs_decision_at != decision.decision_at:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Observation decision_at {obs_decision_at} "
+                    f"does not match decision decision_at {decision.decision_at}"
+                ),
+            )
+
         # Bounded planning: reject future information in observation
         bp_passed, bp_reason = BoundedPlanning().evaluate(decision, observation)
         if not bp_passed:
@@ -313,7 +345,7 @@ def validate_proposal(
 
             try:
                 obs_errors = verify_observation_invariants(_DictAdapter(observation))
-            except (AttributeError, TypeError, KeyError) as exc:
+            except (AttributeError, TypeError, KeyError, ValueError) as exc:
                 return ValidationResult(
                     decision_id=decision.decision_id,
                     is_legal=False,
