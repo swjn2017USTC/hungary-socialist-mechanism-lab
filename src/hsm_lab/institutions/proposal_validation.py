@@ -89,6 +89,8 @@ def validate_proposal(
 
     The organization and sector are derived from the decision's own declared identity.
     The caller-supplied geographic_id supplements the decision's context.
+    The decision's quarter must match the year/quarter implied by decision_at
+    (single-clock principle: no actor may record a mismatched institutional period).
 
     Returns
     -------
@@ -96,6 +98,23 @@ def validate_proposal(
         Frozen result with is_legal, authority_status, and reason.
         No state is modified.
     """
+    # Step 0: single-clock — quarter must be consistent with decision_at
+    quarter_year = decision.decision_at.year
+    quarter_month = (decision.decision_at.month - 1) // 3 + 1
+    implied_quarter = f"{quarter_year}Q{quarter_month}"
+    if decision.quarter != implied_quarter:
+        return ValidationResult(
+            decision_id=decision.decision_id,
+            is_legal=False,
+            authority_status="not_applicable",
+            reason=(
+                f"Quarter mismatch: decision.quarter={decision.quarter!r} "
+                f"does not match quarter implied by decision_at "
+                f"{decision.decision_at} ({implied_quarter}); "
+                f"single-clock principle violated"
+            ),
+        )
+
     # Step 1: structural legality (no negative quantities, non-empty IDs, available_at)
     is_legal, legal_reason = decision.validate_legality()
     if not is_legal:

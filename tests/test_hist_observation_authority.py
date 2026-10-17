@@ -371,7 +371,7 @@ class TestAuthorityValidation:
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
             organization_id="ORG-ENT-A",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             kind=ProcurementChoiceKind.REQUEST,
@@ -558,7 +558,7 @@ class TestRolePermissionIsolation:
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
             organization_id="ORG-ENT-A",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             kind=ProcurementChoiceKind.REQUEST,
@@ -573,7 +573,7 @@ class TestRolePermissionIsolation:
             actor_role=ActorRole.HOUSEHOLD_RECEIVER,
             organization_id="HH-001",
             sector_id="household",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             kind=HouseholdNeedKind.REGISTER,
@@ -702,7 +702,7 @@ class TestBatchValidation:
                 actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
                 organization_id="ORG-ENT-A",
                 sector_id="industry",
-                quarter="1968Q1",
+                quarter="1968Q2",
                 decision_at=date(1968, 6, 1),
                 available_at=date(1968, 5, 25),
                 kind=ProcurementChoiceKind.REQUEST,
@@ -714,7 +714,7 @@ class TestBatchValidation:
                 actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
                 organization_id="ORG-ENT-A",
                 sector_id="industry",
-                quarter="1968Q1",
+                quarter="1968Q2",
                 decision_at=date(1968, 6, 1),
                 available_at=date(1968, 5, 25),
                 kind=ProcurementChoiceKind.REQUEST,
@@ -1004,7 +1004,7 @@ class TestAuthorityBindingEnforcement:
             actor_role=ActorRole.INVESTMENT_ORGANIZATION,
             organization_id="ORG-ENT-A",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             project_id="P1",
@@ -1023,7 +1023,7 @@ class TestAuthorityBindingEnforcement:
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
             organization_id="ORG-ENT-A",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             project_id="P1",
@@ -1040,7 +1040,7 @@ class TestAuthorityBindingEnforcement:
             actor_role=ActorRole.APPROVER,
             organization_id="ORG-GOV",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             kind=ProcurementChoiceKind.REQUEST,
@@ -1058,7 +1058,7 @@ class TestAuthorityBindingEnforcement:
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
             organization_id="ORG-ENT-A",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             kind=PriceProposalKind.SET,
@@ -1076,7 +1076,7 @@ class TestAuthorityBindingEnforcement:
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
             organization_id="ORG-ENT-A",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             kind=ProcurementChoiceKind.REQUEST,
@@ -1094,7 +1094,7 @@ class TestAuthorityBindingEnforcement:
             actor_role=ActorRole.APPROVER,
             organization_id="ORG-GOV",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             kind=PriceProposalKind.SET,
@@ -1105,6 +1105,28 @@ class TestAuthorityBindingEnforcement:
         assert not is_legal
         assert "finite" in reason.lower()
 
+    def test_quarter_decision_at_mismatch_rejected(self, calendar):
+        """Decision with mismatched quarter and decision_at must be rejected.
+
+        quarter='1957Q1' but decision_at=1968-06-01 → single-clock violation.
+        """
+        decision = ProcurementDecision(
+            decision_id="mismatch-1",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1957Q1",  # mismatched with decision_at=1968
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        result = validate_proposal(decision, calendar)
+        assert not result.is_legal
+        assert "quarter mismatch" in result.reason.lower()
+        assert "single-clock" in result.reason.lower()
+
 
 class TestValidationResultFrozen:
     def test_validation_result_is_frozen(self, calendar):
@@ -1113,7 +1135,7 @@ class TestValidationResultFrozen:
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
             organization_id="ORG-ENT-A",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             kind=ProcurementChoiceKind.REQUEST,
@@ -1134,7 +1156,7 @@ class TestValidationResultFrozen:
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
             organization_id="ORG-ENT-A",
             sector_id="industry",
-            quarter="1968Q1",
+            quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
             kind=ProcurementChoiceKind.REQUEST,
