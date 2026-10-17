@@ -89,13 +89,7 @@ class ActorObservation(StrictModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        # Enforce available_at <= decision_at
-        if self.available_at > self.decision_at:
-            raise ValueError(
-                f"available_at {self.available_at} cannot be after "
-                f"decision_at {self.decision_at}"
-            )
-        # Reject date subclasses that may carry mutable state
+        # Reject date subclasses BEFORE comparison to prevent __gt__ callback execution
         for field_name in ("decision_at", "available_at"):
             value = getattr(self, field_name)
             if type(value) is not date:
@@ -103,6 +97,12 @@ class ActorObservation(StrictModel):
                     f"{field_name} must be a plain date, not {type(value).__name__}; "
                     f"date subclasses may carry mutable state"
                 )
+        # Enforce available_at <= decision_at (after type validation)
+        if self.available_at > self.decision_at:
+            raise ValueError(
+                f"available_at {self.available_at} cannot be after "
+                f"decision_at {self.decision_at}"
+            )
         # Enforce actor_role is registered
         if self.actor_role not in _ROLE_WHITELISTS:
             raise ValueError(
