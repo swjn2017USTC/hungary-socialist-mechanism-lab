@@ -1212,6 +1212,7 @@ class TestAuthorityBindingEnforcement:
             "organization_id": "ORG-ENT-A",
             "sector_id": "industry",
             "quarter": "1968Q2",
+            "decision_at": date(1968, 6, 1),
             "available_at": date(1985, 1, 10),  # future
             "observed_fields": [
                 ("supply_quantity", 100.0),
@@ -1241,6 +1242,7 @@ class TestAuthorityBindingEnforcement:
             # missing organization_id
             "sector_id": "industry",
             "quarter": "1968Q2",
+            "decision_at": date(1968, 6, 1),
             "available_at": date(1968, 5, 25),
             "observed_fields": [
                 ("supply_quantity", 100.0),
@@ -1294,6 +1296,7 @@ class TestAuthorityBindingEnforcement:
             "organization_id": "ORG-ENT-A",
             "sector_id": "industry",
             "quarter": "1968Q2",
+            "decision_at": date(1968, 6, 1),
             "available_at": ForgedDate(1988, 1, 1),  # forged future date
             "observed_fields": [
                 ("supply_quantity", 100.0),
@@ -1370,6 +1373,7 @@ class TestAuthorityBindingEnforcement:
             "organization_id": "ORG-ENT-A",
             "sector_id": "industry",
             "quarter": "1968Q2",
+            "decision_at": date(1968, 6, 1),
             "available_at": date(1968, 5, 25),
             # Prohibited content in observed_fields
             "observed_fields": [

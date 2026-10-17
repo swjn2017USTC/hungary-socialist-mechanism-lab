@@ -164,23 +164,36 @@ def validate_proposal(
                     authority_status="not_applicable",
                     reason="Dict observation missing required actor_role field",
                 )
-            # Reject dict observations with top-level prohibited keys
+            # Reject dict observations with top-level prohibited keys (exact match for
+            # known fields; _role suffix check for role-variant spellings)
+            _TOP_LEVEL_PROHIBITED = frozenset({
+                "raw_truth", "session", "callback", "closure", "target",
+                "truth", "calibration_target",
+            })
             for key in observation:
+                if key in _TOP_LEVEL_PROHIBITED:
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=f"Dict observation contains prohibited key {key!r}",
+                    )
+                # Catch role-suffix fields (e.g., "role_assignment", "user_role")
+                # but not "actor_role" (the legitimate field)
                 key_lower = key.lower()
-                for prohibited in ("raw_truth", "session", "callback", "closure",
-                                   "target"):
-                    if prohibited in key_lower:
-                        return ValidationResult(
-                            decision_id=decision.decision_id,
-                            is_legal=False,
-                            authority_status="not_applicable",
-                            reason=f"Dict observation contains prohibited key {key!r}",
-                        )
+                if key_lower.endswith("_role") and key_lower != "actor_role":
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=f"Dict observation contains prohibited key {key!r}",
+                    )
             # Require context fields in dict observations
             for field_name, field_val in [
                 ("organization_id", observation.get("organization_id")),
                 ("sector_id", observation.get("sector_id")),
                 ("quarter", observation.get("quarter")),
+                ("decision_at", observation.get("decision_at")),
             ]:
                 if field_val is None:
                     return ValidationResult(
@@ -315,9 +328,10 @@ def validate_proposal(
                 reason=f"bounded_planning violated: {bp_reason}",
             )
 
-        # Verify dict observations pass all observation invariants
+        # Verify all observation representations pass observation invariants
+        from hsm_lab.institutions.observed import verify_observation_invariants
+
         if isinstance(observation, dict):
-            from hsm_lab.institutions.observed import verify_observation_invariants
 
             class _DictAdapter:
                 """Minimal dict wrapper for verify_observation_invariants."""
@@ -333,11 +347,11 @@ def validate_proposal(
 
                 @property
                 def decision_at(self):
-                    return self._d.get("decision_at", decision.decision_at)
+                    return self._d["decision_at"]
 
                 @property
                 def actor_role(self):
-                    return self._d.get("actor_role", decision.actor_role.value)
+                    return self._d["actor_role"]
 
                 @property
                 def observed_fields(self):
@@ -345,6 +359,24 @@ def validate_proposal(
 
             try:
                 obs_errors = verify_observation_invariants(_DictAdapter(observation))
+            except (AttributeError, TypeError, KeyError, ValueError) as exc:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=f"observation malformed: {exc}",
+                )
+            if obs_errors:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=f"observation invariant violation: {obs_errors[0]}",
+                )
+        else:
+            # ActorObservation: still verify (model_copy may have bypassed __init__)
+            try:
+                obs_errors = verify_observation_invariants(observation)
             except (AttributeError, TypeError, KeyError, ValueError) as exc:
                 return ValidationResult(
                     decision_id=decision.decision_id,

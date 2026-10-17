@@ -277,17 +277,21 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
                             f"found in observation at {path}[{i}]"
                         )
     elif t is frozenset:
-        for v in value:
-            if isinstance(v, (tuple, dict)):
-                _check_no_prohibited_keys(v, path=f"{path}[]")
+        for i, v in enumerate(value):
+            if isinstance(v, str):
+                v_lower = v.lower()
+                for prohibited in _PROHIBITED_KEYS:
+                    if prohibited in v_lower:
+                        raise TypeError(
+                            f"Prohibited content {v!r} (contains '{prohibited}') "
+                            f"found in frozenset at {path}[{i}]"
+                        )
+            elif isinstance(v, (tuple, dict, frozenset)):
+                _check_no_prohibited_keys(v, path=f"{path}[{i}]")
     elif t is list:
         for i, v in enumerate(value):
             if isinstance(v, (tuple, dict)):
                 _check_no_prohibited_keys(v, path=f"{path}[{i}]")
-    elif t is frozenset:
-        for v in value:
-            if isinstance(v, (tuple, dict)):
-                _check_no_prohibited_keys(v, path=f"{path}[]")
 
 
 def _to_immutable(value: Any) -> Any:
