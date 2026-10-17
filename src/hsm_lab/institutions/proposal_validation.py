@@ -352,27 +352,19 @@ def validate_proposal(
                         authority_status="not_applicable",
                         reason=f"Dict observation missing required {field_name} field",
                     )
-                # Reject primitive subclasses in dict observation metadata
-                if isinstance(field_val, str) and type(field_val) is not str:
-                    return ValidationResult(
-                        decision_id=decision.decision_id,
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Dict observation field {field_name} is a str subclass; "
-                            f"primitive subclasses may carry mutable state"
-                        ),
-                    )
-                if isinstance(field_val, int) and type(field_val) is not int:
-                    return ValidationResult(
-                        decision_id=decision.decision_id,
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Dict observation field {field_name} is an int subclass; "
-                            f"primitive subclasses may carry mutable state"
-                        ),
-                    )
+                # String metadata fields must be exactly str type (reject str subclasses
+                # AND arbitrary objects with matching __eq__)
+                if field_name in ("organization_id", "sector_id", "quarter", "geographic_id"):
+                    if type(field_val) is not str:
+                        return ValidationResult(
+                            decision_id=decision.decision_id,
+                            is_legal=False,
+                            authority_status="not_applicable",
+                            reason=(
+                                f"Dict observation field {field_name} must be exactly str, "
+                                f"got {type(field_val).__name__}"
+                            ),
+                        )
             obs_org = observation.get("organization_id")
             obs_sector = observation.get("sector_id")
             obs_quarter = observation.get("quarter")
@@ -500,6 +492,17 @@ def validate_proposal(
                     reason="Dict observation observed_fields must be a tuple, not None",
                 )
             if not isinstance(obs_fields, tuple):
+                # Reject non-iterable observed_fields (int, float, etc.)
+                if not hasattr(obs_fields, "__iter__"):
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Dict observation observed_fields must be iterable, "
+                            f"got {type(obs_fields).__name__}"
+                        ),
+                    )
                 observation = dict(observation)
                 observation["observed_fields"] = tuple(obs_fields)
 
