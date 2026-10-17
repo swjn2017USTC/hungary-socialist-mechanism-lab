@@ -131,41 +131,77 @@ def validate_proposal(
             ),
         )
 
-    # Step 0c: observation context must be consistent with decision identity
+    # Step 0c: sector must be registered for this role
+    permitted_sectors = _ROLE_SECTOR_IDS.get(decision.actor_role, ())
+    if decision.sector_id not in permitted_sectors:
+        return ValidationResult(
+            decision_id=decision.decision_id,
+            is_legal=False,
+            authority_status="not_applicable",
+            reason=(
+                f"Sector {decision.sector_id!r} is not registered for "
+                f"role {decision.actor_role.value}; registered: {permitted_sectors}"
+            ),
+        )
+
+    # Step 0d: observation context must be consistent with decision identity
     if observation is not None:
         from hsm_lab.institutions.observed import ActorObservation
         if isinstance(observation, ActorObservation):
-            if observation.organization_id != decision.organization_id:
-                return ValidationResult(
-                    decision_id=decision.decision_id,
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=(
-                        f"Observation organization_id {observation.organization_id!r} "
-                        f"does not match decision organization_id "
-                        f"{decision.organization_id!r}"
-                    ),
-                )
-            if observation.sector_id != decision.sector_id:
-                return ValidationResult(
-                    decision_id=decision.decision_id,
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=(
-                        f"Observation sector_id {observation.sector_id!r} "
-                        f"does not match decision sector_id {decision.sector_id!r}"
-                    ),
-                )
-            if observation.quarter != decision.quarter:
-                return ValidationResult(
-                    decision_id=decision.decision_id,
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=(
-                        f"Observation quarter {observation.quarter!r} "
-                        f"does not match decision quarter {decision.quarter!r}"
-                    ),
-                )
+            obs_org = observation.organization_id
+            obs_sector = observation.sector_id
+            obs_quarter = observation.quarter
+        elif isinstance(observation, dict):
+            # Validate dict observations for key fields; skip if not present
+            obs_org = observation.get("organization_id")
+            obs_sector = observation.get("sector_id")
+            obs_quarter = observation.get("quarter")
+        else:
+            obs_org = None
+            obs_sector = None
+            obs_quarter = None
+
+        if obs_org is not None and obs_org != decision.organization_id:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Observation organization_id {obs_org!r} "
+                    f"does not match decision organization_id "
+                    f"{decision.organization_id!r}"
+                ),
+            )
+        if obs_sector is not None and obs_sector != decision.sector_id:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Observation sector_id {obs_sector!r} "
+                    f"does not match decision sector_id {decision.sector_id!r}"
+                ),
+            )
+        if obs_quarter is not None and obs_quarter != decision.quarter:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Observation quarter {obs_quarter!r} "
+                    f"does not match decision quarter {decision.quarter!r}"
+                ),
+            )
+
+        # Bounded planning: reject future information in observation
+        bp_passed, bp_reason = BoundedPlanning().evaluate(decision, observation)
+        if not bp_passed:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=f"bounded_planning violated: {bp_reason}",
+            )
 
     # Step 1: structural legality (no negative quantities, non-empty IDs, available_at)
     is_legal, legal_reason = decision.validate_legality()

@@ -1133,7 +1133,7 @@ class TestAuthorityBindingEnforcement:
             decision_id="wrong-org",
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
             organization_id="HH-001",  # not registered for procurement role
-            sector_id="household",
+            sector_id="industry",
             quarter="1968Q2",
             decision_at=date(1968, 6, 1),
             available_at=date(1968, 5, 25),
@@ -1144,6 +1144,24 @@ class TestAuthorityBindingEnforcement:
         result = validate_proposal(decision, calendar)
         assert not result.is_legal
         assert "not registered for role" in result.reason.lower()
+
+    def test_sector_not_registered_for_role_rejected(self, calendar):
+        """sector_id='household' is not registered for PROCUREMENT_ORGANIZATION role."""
+        decision = ProcurementDecision(
+            decision_id="wrong-sector",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="household",  # not registered for procurement role
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        result = validate_proposal(decision, calendar)
+        assert not result.is_legal
+        assert "not registered for" in result.reason.lower()
 
     def test_observation_org_mismatch_rejected(self, calendar):
         """Observation with different organization_id than decision must be rejected."""
@@ -1174,159 +1192,10 @@ class TestAuthorityBindingEnforcement:
         assert not result.is_legal
         assert "does not match decision organization_id" in result.reason.lower()
 
-    def test_investment_decision_with_correct_role_and_permission(self, calendar):
-        """InvestmentDecision with INVESTMENT_ORGANIZATION queries investment_approval."""
-        decision = InvestmentDecision(
-            decision_id="inv-1",
-            actor_role=ActorRole.INVESTMENT_ORGANIZATION,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
-            quarter="1968Q2",
-            decision_at=date(1968, 6, 1),
-            available_at=date(1968, 5, 25),
-            project_id="P1",
-            requested_amount=50.0,
-        )
-        result = validate_proposal(decision, calendar)
-        # ORG-ENT-A has investment_approval granted in 1968
-        assert result.is_legal
-        assert result.authority_status == "granted"
-        assert "investment" in result.reason.lower()
-
-    def test_investment_decision_with_wrong_role_rejected(self, calendar):
-        """InvestmentDecision with PROCUREMENT_ORGANIZATION role must be rejected."""
-        decision = InvestmentDecision(
-            decision_id="inv-wrong-role",
-            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
-            quarter="1968Q2",
-            decision_at=date(1968, 6, 1),
-            available_at=date(1968, 5, 25),
-            project_id="P1",
-            requested_amount=50.0,
-        )
-        result = validate_proposal(decision, calendar)
-        assert not result.is_legal
-        # Should fail on role check first
-        assert "INVESTMENT_ORGANIZATION" in result.reason or "not registered" in result.reason.lower()
-
-    def test_procurement_decision_with_approver_role_rejected(self, calendar):
-        """ProcurementDecision with APPROVER role must be rejected."""
+    def test_dict_observation_future_info_rejected(self, calendar):
+        """Dict observation with future available_at must be rejected by BoundedPlanning."""
         decision = ProcurementDecision(
-            decision_id="wrong-role-proc",
-            actor_role=ActorRole.APPROVER,
-            organization_id="ORG-GOV",
-            sector_id="industry",
-            quarter="1968Q2",
-            decision_at=date(1968, 6, 1),
-            available_at=date(1968, 5, 25),
-            kind=ProcurementChoiceKind.REQUEST,
-            commodity_id="coal",
-            requested_quantity=50.0,
-        )
-        result = validate_proposal(decision, calendar)
-        assert not result.is_legal
-        assert "PROCUREMENT_ORGANIZATION" in result.reason
-
-    def test_price_decision_with_procurement_role_rejected(self, calendar):
-        """PriceProposalDecision with PROCUREMENT_ORGANIZATION role must be rejected."""
-        decision = PriceProposalDecision(
-            decision_id="wrong-role-price",
-            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
-            quarter="1968Q2",
-            decision_at=date(1968, 6, 1),
-            available_at=date(1968, 5, 25),
-            kind=PriceProposalKind.SET,
-            commodity_id="steel",
-            proposed_price=50.0,
-        )
-        result = validate_proposal(decision, calendar)
-        assert not result.is_legal
-        assert "APPROVER" in result.reason
-
-    def test_nan_quantity_rejected(self):
-        """NaN quantities must be rejected in legal validation."""
-        decision = ProcurementDecision(
-            decision_id="nan-qty",
-            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
-            quarter="1968Q2",
-            decision_at=date(1968, 6, 1),
-            available_at=date(1968, 5, 25),
-            kind=ProcurementChoiceKind.REQUEST,
-            commodity_id="coal",
-            requested_quantity=float("nan"),
-        )
-        is_legal, reason = decision.validate_legality()
-        assert not is_legal
-        assert "finite" in reason.lower()
-
-    def test_inf_quantity_rejected(self):
-        """Inf quantities must be rejected in legal validation."""
-        decision = PriceProposalDecision(
-            decision_id="inf-price",
-            actor_role=ActorRole.APPROVER,
-            organization_id="ORG-GOV",
-            sector_id="industry",
-            quarter="1968Q2",
-            decision_at=date(1968, 6, 1),
-            available_at=date(1968, 5, 25),
-            kind=PriceProposalKind.SET,
-            commodity_id="steel",
-            proposed_price=float("inf"),
-        )
-        is_legal, reason = decision.validate_legality()
-        assert not is_legal
-        assert "finite" in reason.lower()
-
-    def test_quarter_decision_at_mismatch_rejected(self, calendar):
-        """Decision with mismatched quarter and decision_at must be rejected.
-
-        quarter='1957Q1' but decision_at=1968-06-01 → single-clock violation.
-        """
-        decision = ProcurementDecision(
-            decision_id="mismatch-1",
-            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
-            organization_id="ORG-ENT-A",
-            sector_id="industry",
-            quarter="1957Q1",  # mismatched with decision_at=1968
-            decision_at=date(1968, 6, 1),
-            available_at=date(1968, 5, 25),
-            kind=ProcurementChoiceKind.REQUEST,
-            commodity_id="coal",
-            requested_quantity=50.0,
-        )
-        result = validate_proposal(decision, calendar)
-        assert not result.is_legal
-        assert "quarter mismatch" in result.reason.lower()
-        assert "single-clock" in result.reason.lower()
-
-    def test_organization_not_registered_for_role_rejected(self, calendar):
-        """Organization HH-001 is not registered for PROCUREMENT_ORGANIZATION role."""
-        decision = ProcurementDecision(
-            decision_id="wrong-org",
-            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
-            organization_id="HH-001",  # not registered for procurement role
-            sector_id="household",
-            quarter="1968Q2",
-            decision_at=date(1968, 6, 1),
-            available_at=date(1968, 5, 25),
-            kind=ProcurementChoiceKind.REQUEST,
-            commodity_id="coal",
-            requested_quantity=50.0,
-        )
-        result = validate_proposal(decision, calendar)
-        assert not result.is_legal
-        assert "not registered for role" in result.reason.lower()
-
-    def test_observation_org_mismatch_rejected(self, calendar):
-        """Observation with different organization_id than decision must be rejected."""
-        decision = ProcurementDecision(
-            decision_id="ctx-mismatch",
+            decision_id="dict-future",
             actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
             organization_id="ORG-ENT-A",
             sector_id="industry",
@@ -1337,21 +1206,37 @@ class TestAuthorityBindingEnforcement:
             commodity_id="coal",
             requested_quantity=50.0,
         )
-        # Observation for ORG-ENT-B (wrong org)
-        obs = ActorObservation(
-            actor_role="procurement_organization",
-            organization_id="ORG-ENT-B",  # mismatched
-            sector_id="industry",
-            geographic_id="national",
-            quarter="1968Q2",
-            decision_at=date(1968, 6, 1),
-            available_at=date(1968, 5, 25),
-            observed_fields=(("supply_quantity", 100.0),),
-        )
-        result = validate_proposal(decision, calendar, observation=obs)
+        # Dict observation with future available_at
+        dict_obs = {
+            "organization_id": "ORG-ENT-A",
+            "sector_id": "industry",
+            "quarter": "1968Q2",
+            "available_at": date(1985, 1, 10),  # future
+            "inventory_level": 999.0,
+        }
+        result = validate_proposal(decision, calendar, observation=dict_obs)
         assert not result.is_legal
-        assert "does not match decision organization_id" in result.reason.lower()
+        assert "bounded_planning" in result.reason.lower()
 
+    def test_decision_with_date_subclass_rejected(self):
+        """Decision with date subclass for decision_at must be rejected."""
+        class MutableDate(date):
+            pass
+
+        d = MutableDate(1968, 6, 1)
+        with pytest.raises(TypeError, match="plain date"):
+            ProcurementDecision(
+                decision_id="date-subclass",
+                actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                quarter="1968Q2",
+                decision_at=d,
+                available_at=date(1968, 5, 25),
+                kind=ProcurementChoiceKind.REQUEST,
+                commodity_id="coal",
+                requested_quantity=50.0,
+            )
 
 class TestValidationResultFrozen:
     def test_validation_result_is_frozen(self, calendar):
