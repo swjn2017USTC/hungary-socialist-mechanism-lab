@@ -7,6 +7,7 @@ and that the actor has the required permission from the H1B authority layer.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 from hsm_lab.contract.base import ConfigError
@@ -151,16 +152,52 @@ def validate_proposal(
             obs_org = observation.organization_id
             obs_sector = observation.sector_id
             obs_quarter = observation.quarter
+            obs_geo = observation.geographic_id
         elif isinstance(observation, dict):
             # Validate dict observations for key fields; skip if not present
             obs_org = observation.get("organization_id")
             obs_sector = observation.get("sector_id")
             obs_quarter = observation.get("quarter")
+            obs_geo = observation.get("geographic_id")
+            # Reject dict observations with non-date available_at
+            obs_avail_raw = observation.get("available_at")
+            if obs_avail_raw is not None:
+                # available_at must be a plain date (not subclass, not string)
+                if isinstance(obs_avail_raw, date) and type(obs_avail_raw) is not date:
+                    # Date subclass — reject (could carry forged __gt__)
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Observation available_at is a date subclass "
+                            f"({type(obs_avail_raw).__name__}); "
+                            f"date subclasses may carry forged comparison methods"
+                        ),
+                    )
+                if not isinstance(obs_avail_raw, date):
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Observation available_at must be a date, "
+                            f"got {type(obs_avail_raw).__name__}"
+                        ),
+                    )
         else:
-            obs_org = None
-            obs_sector = None
-            obs_quarter = None
+            # Reject unsupported observation types
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Unsupported observation type {type(observation).__name__}; "
+                    f"must be ActorObservation or dict with required date fields"
+                ),
+            )
 
+        # Organization check
         if obs_org is not None and obs_org != decision.organization_id:
             return ValidationResult(
                 decision_id=decision.decision_id,
@@ -172,6 +209,7 @@ def validate_proposal(
                     f"{decision.organization_id!r}"
                 ),
             )
+        # Sector check
         if obs_sector is not None and obs_sector != decision.sector_id:
             return ValidationResult(
                 decision_id=decision.decision_id,
@@ -182,6 +220,7 @@ def validate_proposal(
                     f"does not match decision sector_id {decision.sector_id!r}"
                 ),
             )
+        # Quarter check
         if obs_quarter is not None and obs_quarter != decision.quarter:
             return ValidationResult(
                 decision_id=decision.decision_id,
@@ -190,6 +229,17 @@ def validate_proposal(
                 reason=(
                     f"Observation quarter {obs_quarter!r} "
                     f"does not match decision quarter {decision.quarter!r}"
+                ),
+            )
+        # Geographic context check: if observation has geographic_id, it must match
+        if obs_geo is not None and obs_geo != geographic_id:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Observation geographic_id {obs_geo!r} "
+                    f"does not match authorized scope {geographic_id!r}"
                 ),
             )
 
@@ -202,6 +252,43 @@ def validate_proposal(
                 authority_status="not_applicable",
                 reason=f"bounded_planning violated: {bp_reason}",
             )
+
+        # Verify dict observations pass all observation invariants
+        if isinstance(observation, dict):
+            from hsm_lab.institutions.observed import verify_observation_invariants
+
+            class _DictAdapter:
+                """Minimal dict wrapper for verify_observation_invariants."""
+
+                __slots__ = ("_d",)
+
+                def __init__(self, d):
+                    self._d = d
+
+                @property
+                def available_at(self):
+                    return self._d["available_at"]
+
+                @property
+                def decision_at(self):
+                    return self._d.get("decision_at", decision.decision_at)
+
+                @property
+                def actor_role(self):
+                    return self._d.get("actor_role", decision.actor_role.value)
+
+                @property
+                def observed_fields(self):
+                    return tuple(self._d.get("observed_fields", []))
+
+            obs_errors = verify_observation_invariants(_DictAdapter(observation))
+            if obs_errors:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=f"observation invariant violation: {obs_errors[0]}",
+                )
 
     # Step 1: structural legality (no negative quantities, non-empty IDs, available_at)
     is_legal, legal_reason = decision.validate_legality()
@@ -403,11 +490,19 @@ class BoundedPlanning(DecisionRule):
             obs_avail = getattr(observation, "available_at", None)
             if obs_avail is None and isinstance(observation, dict):
                 obs_avail = observation.get("available_at")
-            if obs_avail is not None and obs_avail > decision.decision_at:
-                return False, (
-                    f"bounded_planning violated: observation available_at "
-                    f"{obs_avail} is after decision_at {decision.decision_at}"
-                )
+            if obs_avail is not None:
+                # Reject date subclasses (could carry forged __gt__)
+                if isinstance(obs_avail, date) and type(obs_avail) is not date:
+                    return False, (
+                        f"bounded_planning violated: observation available_at "
+                        f"is a date subclass ({type(obs_avail).__name__}); "
+                        f"date subclasses may carry forged comparison methods"
+                    )
+                if obs_avail > decision.decision_at:
+                    return False, (
+                        f"bounded_planning violated: observation available_at "
+                        f"{obs_avail} is after decision_at {decision.decision_at}"
+                    )
         return True, "bounded_planning: information horizon respected"
 
 

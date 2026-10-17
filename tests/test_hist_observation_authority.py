@@ -1238,6 +1238,84 @@ class TestAuthorityBindingEnforcement:
                 requested_quantity=50.0,
             )
 
+    def test_forged_date_in_dict_observation_rejected(self, calendar):
+        """Dict observation with forged date subclass (overridden __gt__) must be rejected."""
+        class ForgedDate(date):
+            """Date subclass with forged __gt__ that always returns False."""
+            def __gt__(self, other):
+                return False  # lies: claims every date is not greater
+
+        decision = ProcurementDecision(
+            decision_id="forged-date",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        dict_obs = {
+            "organization_id": "ORG-ENT-A",
+            "sector_id": "industry",
+            "quarter": "1968Q2",
+            "available_at": ForgedDate(1988, 1, 1),  # forged future date
+            "inventory_level": 999.0,
+        }
+        result = validate_proposal(decision, calendar, observation=dict_obs)
+        assert not result.is_legal
+        assert "date subclass" in result.reason.lower()
+
+    def test_unsupported_observation_type_rejected(self, calendar):
+        """Unsupported observation type (not ActorObservation or dict) must be rejected."""
+        decision = ProcurementDecision(
+            decision_id="bad-obs-type",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        # Use a plain object as observation
+        result = validate_proposal(decision, calendar, observation=object())
+        assert not result.is_legal
+        assert "unsupported observation type" in result.reason.lower()
+
+    def test_dict_observation_with_callback_rejected(self, calendar):
+        """Dict observation containing prohibited content must be rejected."""
+        decision = ProcurementDecision(
+            decision_id="callback-obs",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        dict_obs = {
+            "organization_id": "ORG-ENT-A",
+            "sector_id": "industry",
+            "quarter": "1968Q2",
+            "available_at": date(1968, 5, 25),
+            # Prohibited content in observed_fields
+            "observed_fields": [
+                ("supply_quantity", 100.0),
+                ("raw_truth", {"inventory_level": 999}),  # prohibited key
+            ],
+        }
+        result = validate_proposal(decision, calendar, observation=dict_obs)
+        # Dict observations with prohibited keys in observed_fields rejected
+        assert not result.is_legal
+
 class TestValidationResultFrozen:
     def test_validation_result_is_frozen(self, calendar):
         decision = ProcurementDecision(
