@@ -304,8 +304,8 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
     elif t is tuple:
         # Handle (key, value) pairs — check key, recurse into value
         for i, v in enumerate(value):
-            # Use exact type checks to avoid subclass __iter__ callback execution
-            if type(v) in (tuple, dict, frozenset):
+            # Use chained `is` comparisons to avoid tuple membership `in` which triggers __eq__
+            if type(v) is tuple or type(v) is dict or type(v) is frozenset:
                 _check_no_prohibited_keys(v, path=f"{path}[{i}]")
             elif type(v) is str:
                 # It's a key in a (key, value) pair — check case-insensitively

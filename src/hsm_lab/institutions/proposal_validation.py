@@ -471,12 +471,10 @@ def validate_proposal(
             obs_avail_raw = observation.get("available_at")
             if obs_avail_raw is not None:
                 # Reject date subclasses without isinstance() to avoid __getattribute__("__class__")
-                # Use date in type(x).__mro__ to safely detect date subclasses:
-                # - type(x).__mro__ is a tuple on the class (not x itself), safe from callbacks
-                # - For ForgedDate: date is in ForgedDate.__mro__ → True → "date subclass" error
-                # - For plain date: date in date.__mro__ → True, but type is date → not a subclass
-                # - For non-date: date in type(x).__mro__ → False → "must be a date" error
-                is_date_subclass = date in type(obs_avail_raw).__mro__
+                # Use any(base is date for base in type(x).__bases__) to detect subclasses:
+                # - __bases__ is a tuple attribute on the type object, safe from instance callbacks
+                # - Uses identity comparison `is` (never overridden) instead of `in` (uses __eq__)
+                is_date_subclass = any(base is date for base in type(obs_avail_raw).__bases__)
                 if is_date_subclass and type(obs_avail_raw) is not date:
                     return ValidationResult(
                         decision_id=decision.decision_id,
@@ -499,10 +497,12 @@ def validate_proposal(
                     )
         else:
             # Check for ActorObservation subclasses without isinstance() to avoid callback
-            # Use type(x).__mro__ to safely detect subclasses:
-            # - type(x).__mro__ is a tuple on the class (not x itself), safe from callbacks
-            # - For SubObservation: ActorObservation in SubObservation.__mro__ → True
-            is_actor_obs_subclass = ActorObservation in type(observation).__mro__
+            # Use any(base is ActorObservation for base in type(x).__bases__) to detect subclasses:
+            # - __bases__ is a tuple attribute on the type object, safe from instance callbacks
+            # - Uses identity comparison `is` (never overridden) instead of `in` (uses __eq__)
+            is_actor_obs_subclass = any(
+                base is ActorObservation for base in type(observation).__bases__
+            )
             if is_actor_obs_subclass:
                 return ValidationResult(
                     decision_id=decision.decision_id,
@@ -697,21 +697,22 @@ def validate_proposal(
                                 f"got {type(value).__name__}"
                             ),
                         )
-                # Reject str subclasses without triggering __class__ via isinstance()
-                # type(value).__name__ == 'str' is True for str and its subclasses
-                elif type(value) is not str and type(value).__name__ == 'str':
+                # Reject str subclasses in non-string fields: type() is str catches all
+                # non-str types. Use static message to avoid type().__name__ on Payload.
+                elif type(value) is not str:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
                         authority_status="not_applicable",
                         reason=(
                             f"Observation field {field_name} is a str subclass; "
-                            f"primitive subclasses may carry mutable state"
+                            "primitive subclasses may carry mutable state"
                         ),
                     )
-                # Reject int subclasses without triggering __getattribute__ via isinstance()
-                # type(value).__name__ == 'int' is True for int and its subclasses
-                if type(value).__name__ == 'int' and type(value) is not int:
+                # Reject int subclasses: use any(base is int for base in type(value).__bases__)
+                # This avoids the `in` operator (which uses __eq__) and avoids __mro__
+                # Uses identity comparison `is` which is never overridden.
+                if any(base is int for base in type(value).__bases__):
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -1006,8 +1007,8 @@ class BoundedPlanning(DecisionRule):
                 obs_avail = observation.get("available_at")
             if obs_avail is not None:
                 # Reject date subclasses without isinstance() to avoid __getattribute__("__class__")
-                # Use date in type(x).__mro__ to safely detect date subclasses
-                is_date_subclass = date in type(obs_avail).__mro__
+                # Use any(base is date for base in type(x).__bases__) to detect subclasses safely
+                is_date_subclass = any(base is date for base in type(obs_avail).__bases__)
                 if is_date_subclass and type(obs_avail) is not date:
                     return False, (
                         "bounded_planning violated: observation available_at "
