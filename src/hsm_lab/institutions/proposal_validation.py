@@ -281,7 +281,10 @@ def validate_proposal(
     # Step 0d: observation context must be consistent with decision identity
     if observation is not None:
         from hsm_lab.institutions.observed import ActorObservation
-        if isinstance(observation, ActorObservation):
+        # Use type() is check instead of isinstance() to avoid __getattribute__("__class__")
+        # callback on smuggled objects. isinstance(obs, ActorObservation) triggers
+        # obs.__class__ access even for plain dicts passed as observation.
+        if type(observation) is ActorObservation:
             # Reject ActorObservation subclasses FIRST, before any __dict__ access.
             # Subclass's __getattribute__ could intercept __dict__ lookup.
             if type(observation) is not ActorObservation:
@@ -319,7 +322,8 @@ def validate_proposal(
                             f"got {type(field_val).__name__}"
                         ),
                     )
-        elif isinstance(observation, dict):
+        # Use type() is check to avoid __getattribute__("__class__") callback
+        elif type(observation) is dict:
             # Reject dict subclasses (could carry __slots__ with raw_truth/session)
             if type(observation) is not dict:
                 return ValidationResult(
@@ -466,18 +470,24 @@ def validate_proposal(
             # available_at must be a plain date (not subclass, not string)
             obs_avail_raw = observation.get("available_at")
             if obs_avail_raw is not None:
-                if isinstance(obs_avail_raw, date) and type(obs_avail_raw) is not date:
+                # Reject date subclasses without isinstance() to avoid __getattribute__("__class__")
+                # Use date in type(x).__mro__ to safely detect date subclasses:
+                # - type(x).__mro__ is a tuple on the class (not x itself), safe from callbacks
+                # - For ForgedDate: date is in ForgedDate.__mro__ → True → "date subclass" error
+                # - For plain date: date in date.__mro__ → True, but type is date → not a subclass
+                # - For non-date: date in type(x).__mro__ → False → "must be a date" error
+                is_date_subclass = date in type(obs_avail_raw).__mro__
+                if is_date_subclass and type(obs_avail_raw) is not date:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
                         authority_status="not_applicable",
                         reason=(
-                            f"Observation available_at is a date subclass "
-                            f"({type(obs_avail_raw).__name__}); "
-                            f"date subclasses may carry forged comparison methods"
+                            "Observation available_at is a date subclass; "
+                            "date subclasses may carry forged comparison methods"
                         ),
                     )
-                if not isinstance(obs_avail_raw, date):
+                if type(obs_avail_raw) is not date:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -488,14 +498,28 @@ def validate_proposal(
                         ),
                     )
         else:
-            # Reject unsupported observation types
+            # Check for ActorObservation subclasses without isinstance() to avoid callback
+            # Use type(x).__mro__ to safely detect subclasses:
+            # - type(x).__mro__ is a tuple on the class (not x itself), safe from callbacks
+            # - For SubObservation: ActorObservation in SubObservation.__mro__ → True
+            is_actor_obs_subclass = ActorObservation in type(observation).__mro__
+            if is_actor_obs_subclass:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        "Observation is a subclass of ActorObservation; "
+                        "only concrete ActorObservation allowed"
+                    ),
+                )
             return ValidationResult(
                 decision_id=decision.decision_id,
                 is_legal=False,
                 authority_status="not_applicable",
                 reason=(
                     f"Unsupported observation type {type(observation).__name__}; "
-                    f"must be ActorObservation or dict with required date fields"
+                    "must be ActorObservation or dict with required date fields"
                 ),
             )
 
@@ -558,7 +582,9 @@ def validate_proposal(
 
         # Decision timestamp binding: observation's decision_at must match decision's
         # Check type BEFORE comparison to prevent callback execution via __eq__
-        if isinstance(observation, ActorObservation):
+        # Use type() is check to avoid __getattribute__("__class__") callback on smuggled obs
+        obs_type = type(observation)
+        if obs_type is ActorObservation:
             obs_decision_at = observation.decision_at
             if type(obs_decision_at) is not date:
                 return ValidationResult(
@@ -570,7 +596,7 @@ def validate_proposal(
                         f"got {type(obs_decision_at).__name__}"
                     ),
                 )
-        elif isinstance(observation, dict):
+        elif obs_type is dict:
             obs_decision_at = observation.get("decision_at")
             if obs_decision_at is not None and type(obs_decision_at) is not date:
                 return ValidationResult(
@@ -597,7 +623,8 @@ def validate_proposal(
             )
 
         # Convert mutable observed_fields to immutable for downstream safety
-        if isinstance(observation, dict) and "observed_fields" in observation:
+        # Use obs_type (computed at line 567) to avoid repeated __class__ access
+        if obs_type is dict and "observed_fields" in observation:
             obs_fields = observation["observed_fields"]
             if obs_fields is None:
                 return ValidationResult(
@@ -627,7 +654,8 @@ def validate_proposal(
 
         # Re-validate ActorObservation at boundary (catches model_copy bypass of __init__)
         # Check __dict__ for extra attributes AND __slots__ BEFORE model_dump
-        if isinstance(observation, ActorObservation):
+        # Use type() is check to avoid __getattribute__("__class__") on smuggled observation
+        if type(observation) is ActorObservation:
             # Reject ActorObservation subclasses (only concrete type allowed)
             if type(observation) is not ActorObservation:
                 return ValidationResult(
@@ -669,7 +697,9 @@ def validate_proposal(
                                 f"got {type(value).__name__}"
                             ),
                         )
-                elif isinstance(value, str) and type(value) is not str:
+                # Reject str subclasses without triggering __class__ via isinstance()
+                # type(value).__name__ == 'str' is True for str and its subclasses
+                elif type(value) is not str and type(value).__name__ == 'str':
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -679,7 +709,9 @@ def validate_proposal(
                             f"primitive subclasses may carry mutable state"
                         ),
                     )
-                if isinstance(value, int) and type(value) is not int:
+                # Reject int subclasses without triggering __getattribute__ via isinstance()
+                # type(value).__name__ == 'int' is True for int and its subclasses
+                if type(value).__name__ == 'int' and type(value) is not int:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -709,7 +741,8 @@ def validate_proposal(
         # Verify all observation representations pass observation invariants
         from hsm_lab.institutions.observed import verify_observation_invariants
 
-        if isinstance(observation, dict):
+        # Use type() is check to avoid __getattribute__("__class__") callback on smuggled obs
+        if type(observation) is dict:
 
             class _DictAdapter:
                 """Minimal dict wrapper for verify_observation_invariants."""
@@ -968,15 +1001,22 @@ class BoundedPlanning(DecisionRule):
         if observation is not None:
             # Try ActorObservation attribute first, then raw dict key
             obs_avail = getattr(observation, "available_at", None)
-            if obs_avail is None and isinstance(observation, dict):
+            # Use type() is check to avoid __getattribute__("__class__") callback on smuggled obs
+            if obs_avail is None and type(observation) is dict:
                 obs_avail = observation.get("available_at")
             if obs_avail is not None:
-                # Reject date subclasses (could carry forged __gt__)
-                if isinstance(obs_avail, date) and type(obs_avail) is not date:
+                # Reject date subclasses without isinstance() to avoid __getattribute__("__class__")
+                # Use date in type(x).__mro__ to safely detect date subclasses
+                is_date_subclass = date in type(obs_avail).__mro__
+                if is_date_subclass and type(obs_avail) is not date:
+                    return False, (
+                        "bounded_planning violated: observation available_at "
+                        "is a date subclass; date subclasses may carry forged comparison methods"
+                    )
+                if type(obs_avail) is not date:
                     return False, (
                         f"bounded_planning violated: observation available_at "
-                        f"is a date subclass ({type(obs_avail).__name__}); "
-                        f"date subclasses may carry forged comparison methods"
+                        f"must be a date, got {type(obs_avail).__name__}"
                     )
                 if obs_avail > decision.decision_at:
                     return False, (

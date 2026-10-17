@@ -327,11 +327,12 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
                             f"Prohibited content {v!r} (contains '{prohibited}') "
                             f"found in frozenset at {path}[{i}]"
                         )
-            elif isinstance(v, (tuple, dict, frozenset)):
+            elif type(v) is tuple or type(v) is dict or type(v) is frozenset:
                 _check_no_prohibited_keys(v, path=f"{path}[{i}]")
     elif t is list:
         for i, v in enumerate(value):
-            if isinstance(v, (tuple, dict)):
+            # Use `is` comparisons to avoid tuple membership `in` which triggers __eq__
+            if type(v) is tuple or type(v) is dict:
                 _check_no_prohibited_keys(v, path=f"{path}[{i}]")
 
 
@@ -509,22 +510,28 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
             continue  # already reported above
         name, value = elem  # safe: checked type and length above
         if not _is_deep_immutable(value):
+            # Use plain "field" instead of {name} to avoid __str__ on untrusted name
+            # Use plain "value" instead of type(value).__name__ to avoid Meta.__getattribute__
             violations.append(
-                f"Value for '{name}' is not deep-immutable: {type(value).__name__}"
+                "Value for field is not deep-immutable"
             )
         # Check string values for prohibited substrings
         # Use type() check instead of isinstance() to prevent str-subclass __str__ callback
         if type(value) is str and _value_has_prohibited_keys(value):
+            # Use plain "field" to avoid Meta.__getattribute__ via type(name).__name__
             violations.append(
-                f"Value for '{name}' contains prohibited content"
+                "Value for field contains prohibited content"
             )
         # Check for prohibited keys in nested containers
-        # Use exact type checks to prevent subclass __iter__ callback
-        if type(value) in (tuple, dict, frozenset):
+        # Use chained `is` comparisons to avoid tuple membership `in` which triggers __eq__
+        if type(value) is tuple or type(value) is dict or type(value) is frozenset:
             try:
                 _check_no_prohibited_keys(value)
             except TypeError as exc:
-                violations.append(f"Prohibited content in '{name}': {exc}")
+                # Use plain "field" to avoid Meta.__getattribute__
+                violations.append(
+                    f"Prohibited content in field: {exc}"
+                )
 
     return violations
 
@@ -604,10 +611,12 @@ def _dict_has_prohibited_keys(value: dict[Any, Any]) -> bool:
                 return True
         elif t is tuple:
             for elem in v:
-                if isinstance(elem, dict) and _dict_has_prohibited_keys(elem):
+                # Use `is` comparisons to avoid tuple membership `in` which triggers __eq__
+                if type(elem) is dict and _dict_has_prohibited_keys(elem):
                     return True
         elif t is list:
             for elem in v:
-                if isinstance(elem, dict) and _dict_has_prohibited_keys(elem):
+                # Use `is` comparisons to avoid tuple membership `in` which triggers __eq__
+                if type(elem) is dict and _dict_has_prohibited_keys(elem):
                     return True
     return False

@@ -922,6 +922,43 @@ class TestObservationInvariants:
         violations = verify_observation_invariants(obs)
         assert len(violations) == 0, f"Unexpected violations: {violations}"
 
+    def test_observed_fields_bad_name_no_str_in_error_message(self):
+        """Non-string name in observed_fields must not trigger __str__ in error messages.
+
+        Regression test for P0-12: verify_observation_invariants previously formatted
+        non-string field names in error messages, triggering __str__ callbacks.
+        """
+        str_called: list[str] = []
+
+        class BadName:
+            def __str__(self) -> str:
+                str_called.append("BadName.__str__")
+                return "malicious-name"
+
+        builder = ObservationBuilder("procurement_organization")
+        obs = builder.build(
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            geographic_id="national",
+            quarter="1968Q1",
+            decision_at=date(1968, 1, 15),
+            available_at=date(1968, 1, 10),
+            raw_data={"supply_quantity": 100.0},
+        )
+        # Smuggle non-string BadName as field name via __setattr__
+        object.__setattr__(obs, "observed_fields", ((BadName(), 42),))
+
+        violations = verify_observation_invariants(obs)
+        # Must reject and report the issue
+        assert any(
+            "exactly tuple" in v or "not deep-immutable" in v for v in violations
+        )
+        # __str__ must NOT have been called
+        assert str_called == [], (
+            f"BadName.__str__ was called {len(str_called)} time(s); "
+            "error messages must use type(name).__name__, not {name}"
+        )
+
     def test_observed_fields_tuple_type_check_before_unpack(self):
         """verify_observation_invariants must check observed_fields is tuple before unpacking.
 
@@ -1299,6 +1336,45 @@ class TestObservationBoundaryEnforcement:
             f"TopKeyRepr.__repr__ was called {len(repr_called)} time(s); "
             "top-level rejection must not use {{key!r}} formatting"
         )
+
+    def test_check_no_prohibited_keys_list_branch_no_class_callback(self):
+        """List branch of _check_no_prohibited_keys must use type() not isinstance().
+
+        Regression test for P0-14: the list/frozenset branches previously used
+        isinstance(v, (tuple, dict)) which triggers __getattribute__ on a smuggled
+        object's __class__ descriptor. Now uses type(v) in (tuple, dict, frozenset)
+        which only does C-level type comparison without invoking user code.
+
+        This is a defense-in-depth fix: in current code, Payload is caught earlier
+        by _is_deep_immutable in the ActorObservation constructor, so isinstance
+        is never reached. But if that check were bypassed, type() prevents callback.
+        """
+        # Verify _check_no_prohibited_keys doesn't call __class__ on elements
+        # by checking it handles unknown types without isinstance callbacks
+        from hsm_lab.institutions.observed import _check_no_prohibited_keys
+
+        class_calls: list[str] = []
+
+        class UnknownType:
+            """Object with __class__ descriptor that records access."""
+            def __getattribute__(self, name: str) -> object:
+                if name == "__class__":
+                    class_calls.append("__class__")
+                return object.__getattribute__(self, name)
+
+        # A tuple containing a list containing an UnknownType should not trigger
+        # __class__ access during the recursive scan in _check_no_prohibited_keys
+        test_value = (([UnknownType()],),)
+
+        try:
+            _check_no_prohibited_keys(test_value)
+        except TypeError:
+            pass  # rejection is fine, we only care about callback count
+        assert class_calls == [], (
+            f"__class__ was accessed {len(class_calls)} time(s); "
+            "list/frozenset branch must use type() comparisons, not isinstance()"
+        )
+
 
     def test_nested_prohibited_key_rejected(self):
         """A nested dict containing prohibited keys must be rejected."""
@@ -1957,6 +2033,59 @@ class TestAuthorityBindingEnforcement:
         assert dict_calls == [], (
             f"__getattribute__ was called {len(dict_calls)} time(s); "
             "ActorObservation subclass check must happen before any __dict__ access"
+        )
+
+    def test_isinstance_not_used_for_str_int_field_checks(self, calendar):
+        """String/int field checks must not use isinstance() which triggers __class__.
+
+        Regression test for P0-13: validate_proposal previously used isinstance(value, str)
+        and isinstance(value, int) for field-type checks, triggering __class__ on
+        smuggled Payload objects.
+        """
+        class_calls: list[str] = []
+
+        class Payload:
+            """Object that tracks __class__ access."""
+            def __getattribute__(self, name: str) -> object:
+                if name == "__class__":
+                    class_calls.append("__class__")
+                return object.__getattribute__(self, name)
+
+        builder = ObservationBuilder("procurement_organization")
+        clean_obs = builder.build(
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            geographic_id="national",
+            quarter="1968Q1",
+            decision_at=date(1968, 1, 15),
+            available_at=date(1968, 1, 10),
+            raw_data={"supply_quantity": 100.0},
+        )
+        # Inject Payload into a field that would be checked with isinstance(value, str/int)
+        forged = clean_obs.model_copy(
+            update={"observed_fields": (("supply_quantity", Payload()),)},
+        )
+
+        decision = ProcurementDecision(
+            decision_id="isinstance-check",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q1",
+            decision_at=date(1968, 1, 15),
+            available_at=date(1968, 1, 10),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        class_calls.clear()
+        result = validate_proposal(decision, calendar, observation=forged)
+        # Must be rejected
+        assert not result.is_legal
+        # __class__ must NOT have been accessed via isinstance() checks
+        assert class_calls == [], (
+            f"__class__ was accessed {len(class_calls)} time(s); "
+            "field type checks must use type() comparisons, not isinstance()"
         )
 
 class TestValidationResultFrozen:
