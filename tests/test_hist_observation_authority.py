@@ -1214,6 +1214,7 @@ class TestAuthorityBindingEnforcement:
             "quarter": "1968Q2",
             "decision_at": date(1968, 6, 1),
             "available_at": date(1985, 1, 10),  # future
+            "geographic_id": "national",
             "observed_fields": [
                 ("supply_quantity", 100.0),
             ],
@@ -1244,6 +1245,7 @@ class TestAuthorityBindingEnforcement:
             "quarter": "1968Q2",
             "decision_at": date(1968, 6, 1),
             "available_at": date(1968, 5, 25),
+            "geographic_id": "national",
             "observed_fields": [
                 ("supply_quantity", 100.0),
             ],
@@ -1298,6 +1300,7 @@ class TestAuthorityBindingEnforcement:
             "quarter": "1968Q2",
             "decision_at": date(1968, 6, 1),
             "available_at": ForgedDate(1988, 1, 1),  # forged future date
+            "geographic_id": "national",
             "observed_fields": [
                 ("supply_quantity", 100.0),
             ],
@@ -1375,6 +1378,7 @@ class TestAuthorityBindingEnforcement:
             "quarter": "1968Q2",
             "decision_at": date(1968, 6, 1),
             "available_at": date(1968, 5, 25),
+            "geographic_id": "national",
             # Prohibited content in observed_fields
             "observed_fields": [
                 ("supply_quantity", 100.0),

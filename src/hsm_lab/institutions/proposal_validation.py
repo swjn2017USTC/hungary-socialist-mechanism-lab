@@ -164,14 +164,15 @@ def validate_proposal(
                     authority_status="not_applicable",
                     reason="Dict observation missing required actor_role field",
                 )
-            # Reject dict observations with top-level prohibited keys (exact match for
-            # known fields; _role suffix check for role-variant spellings)
+            # Reject dict observations with top-level prohibited keys (case-insensitive exact match;
+            # _role suffix for role-variant fields, excluding actor_role)
             _TOP_LEVEL_PROHIBITED = frozenset({
                 "raw_truth", "session", "callback", "closure", "target",
-                "truth", "calibration_target",
+                "truth", "calibration_target", "role",
             })
             for key in observation:
-                if key in _TOP_LEVEL_PROHIBITED:
+                key_lower = key.lower()
+                if key_lower in _TOP_LEVEL_PROHIBITED:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -180,7 +181,6 @@ def validate_proposal(
                     )
                 # Catch role-suffix fields (e.g., "role_assignment", "user_role")
                 # but not "actor_role" (the legitimate field)
-                key_lower = key.lower()
                 if key_lower.endswith("_role") and key_lower != "actor_role":
                     return ValidationResult(
                         decision_id=decision.decision_id,
@@ -194,6 +194,7 @@ def validate_proposal(
                 ("sector_id", observation.get("sector_id")),
                 ("quarter", observation.get("quarter")),
                 ("decision_at", observation.get("decision_at")),
+                ("geographic_id", observation.get("geographic_id")),
             ]:
                 if field_val is None:
                     return ValidationResult(

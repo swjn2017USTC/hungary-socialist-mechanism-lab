@@ -265,7 +265,7 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
     elif t is tuple:
         # Handle (key, value) pairs — check key, recurse into value
         for i, v in enumerate(value):
-            if isinstance(v, (tuple, dict)):
+            if isinstance(v, (tuple, dict, frozenset)):
                 _check_no_prohibited_keys(v, path=f"{path}[{i}]")
             elif isinstance(v, str):
                 # It's a key in a (key, value) pair — check case-insensitively
@@ -395,6 +395,13 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
                 violations.append(f"Prohibited name '{p}' found in field '{name}'")
 
     # Verify deep immutability of values and check for prohibited nested keys
+    # Check that observed_fields itself is deep-immutable
+    if not _is_deep_immutable(obs.observed_fields):
+        violations.append(
+            f"observed_fields is not deep-immutable: "
+            f"{type(obs.observed_fields).__name__}"
+        )
+
     for name, value in obs.observed_fields:
         if not _is_deep_immutable(value):
             violations.append(
