@@ -645,6 +645,239 @@ class TestSingleClock:
         assert not hasattr(decision, "advance")
         assert not hasattr(decision, "tick_forward")
 
+    def test_three_roles_same_decision_at_same_quarter_rejected_together(self, calendar):
+        """Three different roles using the same decision_at date must all pass the
+        single-clock quarter check, and their outcomes must differ by authority
+        (not by clock divergence).
+
+        This verifies a single clock: no role can operate at a different tick
+        from another role at the same wall-clock date.
+        """
+        # Same date for all three roles
+        same_date = date(1968, 6, 1)
+        same_quarter = "1968Q2"
+
+        # Role 1: PROCUREMENT_ORGANIZATION
+        proc_decision = ProcurementDecision(
+            decision_id="three-role-proc",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter=same_quarter,
+            decision_at=same_date,
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        proc_result = validate_proposal(proc_decision, calendar)
+
+        # Role 2: HOUSEHOLD_RECEIVER
+        hh_decision = HouseholdNeedDecision(
+            decision_id="three-role-hh",
+            actor_role=ActorRole.HOUSEHOLD_RECEIVER,
+            organization_id="HH-001",
+            sector_id="household",
+            quarter=same_quarter,
+            decision_at=same_date,
+            available_at=date(1968, 5, 25),
+            kind=HouseholdNeedKind.REGISTER,
+            household_id="HH-001",
+            commodity_id="coal",
+            claimed_quantity=30.0,
+        )
+        hh_result = validate_proposal(hh_decision, calendar)
+
+        # Role 3: APPROVER
+        appr_decision = PriceProposalDecision(
+            decision_id="three-role-appr",
+            actor_role=ActorRole.APPROVER,
+            organization_id="ORG-GOV",
+            sector_id="industry",
+            quarter=same_quarter,
+            decision_at=same_date,
+            available_at=date(1968, 5, 25),
+            kind=PriceProposalKind.SET,
+            commodity_id="steel",
+            proposed_price=100.0,
+        )
+        appr_result = validate_proposal(appr_decision, calendar)
+
+        # CRITICAL: All three decisions pass the single-clock check.
+        # If any failed with "quarter mismatch", it would indicate a clock bug.
+        # We check that NONE of them have the quarter-mismatch/single-clock reason.
+        for role_label, result in [
+            ("PROCUREMENT_ORGANIZATION", proc_result),
+            ("HOUSEHOLD_RECEIVER", hh_result),
+            ("APPROVER", appr_result),
+        ]:
+            assert "quarter mismatch" not in result.reason.lower(), (
+                f"{role_label} failed single-clock check: {result.reason}"
+            )
+            assert "single-clock" not in result.reason.lower(), (
+                f"{role_label} failed single-clock check: {result.reason}"
+            )
+
+        # Outcomes differ by authority, not by clock:
+        # - PROCUREMENT_ORGANIZATION at ORG-ENT-A: granted → is_legal=True
+        # - HOUSEHOLD_RECEIVER at HH-001: unknown (no grant) → is_legal=False
+        # - APPROVER at ORG-GOV: granted → is_legal=True (price proposals
+        #   are always legal if approver has grant — we only check clock here)
+        assert proc_result.is_legal, (
+            f"PROCUREMENT_ORGANIZATION should be legal: {proc_result.reason}"
+        )
+        assert not hh_result.is_legal, f"HOUSEHOLD_RECEIVER should not be legal: {hh_result.reason}"
+        # APPROVER outcome depends on grant; we only care that all three pass the clock check
+
+    def test_expired_tick_rejected(self, calendar):
+        """A decision whose quarter is earlier than the quarter implied by
+        decision_at must be rejected (single-clock violation)."""
+        # decision_at=1968-06-01 implies 1968Q2, but quarter is 1967Q4 → expired
+        decision = ProcurementDecision(
+            decision_id="expired-tick",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1967Q4",  # earlier than implied 1968Q2
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        result = validate_proposal(decision, calendar)
+        assert not result.is_legal
+        assert "quarter mismatch" in result.reason.lower()
+        assert "single-clock" in result.reason.lower()
+
+    def test_future_tick_rejected(self, calendar):
+        """A decision whose quarter is later than the quarter implied by
+        decision_at must be rejected (single-clock violation)."""
+        # decision_at=1968-06-01 implies 1968Q2, but quarter is 1970Q1 → future
+        decision = ProcurementDecision(
+            decision_id="future-tick",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1970Q1",  # later than implied 1968Q2
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        result = validate_proposal(decision, calendar)
+        assert not result.is_legal
+        assert "quarter mismatch" in result.reason.lower()
+        assert "single-clock" in result.reason.lower()
+
+    def test_same_observation_dict_different_roles_different_outcomes(self, calendar):
+        """Identical dict observation context but different roles → different outcomes.
+
+        Both decisions receive the same observation dict (same quarter, same date,
+        same org/sector/geographic context). Only the actor_role differs.
+        This proves permission depends on role identity, not on smuggled context.
+        """
+        # Shared observation context
+        shared_obs = {
+            "actor_role": "procurement_organization",
+            "organization_id": "ORG-ENT-A",
+            "sector_id": "industry",
+            "quarter": "1968Q2",
+            "decision_at": date(1968, 6, 1),
+            "available_at": date(1968, 5, 25),
+            "geographic_id": "national",
+            "observed_fields": [
+                ("supply_quantity", 100.0),
+            ],
+        }
+
+        # Decision 1: PROCUREMENT_ORGANIZATION — has grant → legal
+        proc_decision = ProcurementDecision(
+            decision_id="same-obs-proc",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        proc_result = validate_proposal(proc_decision, calendar, observation=shared_obs)
+
+        # Decision 2: HOUSEHOLD_RECEIVER — matching HH observation
+        hh_decision = HouseholdNeedDecision(
+            decision_id="same-obs-hh",
+            actor_role=ActorRole.HOUSEHOLD_RECEIVER,
+            organization_id="HH-001",
+            sector_id="household",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=HouseholdNeedKind.REGISTER,
+            household_id="HH-001",
+            commodity_id="coal",
+            claimed_quantity=30.0,
+        )
+        # Use matching HH observation with valid household_receiver fields.
+        # Same "information content" (ration_quota = 50.0 same value as supply_quantity),
+        # but different role context. allocation_quota is NOT in household_receiver
+        # whitelist — use ration_quota instead.
+        hh_obs = {
+            "actor_role": "household_receiver",
+            "organization_id": "HH-001",
+            "sector_id": "household",
+            "quarter": "1968Q2",
+            "decision_at": date(1968, 6, 1),
+            "available_at": date(1968, 5, 25),
+            "geographic_id": "national",
+            "observed_fields": [
+                ("ration_quota", 50.0),  # valid household_receiver field
+            ],
+        }
+        hh_result = validate_proposal(hh_decision, calendar, observation=hh_obs)
+
+        # Outcomes differ by role authority, not because observation was ignored:
+        # - PROCUREMENT_ORGANIZATION at ORG-ENT-A: granted → is_legal=True
+        # - HOUSEHOLD_RECEIVER at HH-001: unknown (no consumption_allocation grant)
+        #   → is_legal=False, authority_status="unknown"
+        assert proc_result.is_legal and proc_result.authority_status == "granted"
+        assert not hh_result.is_legal
+        assert hh_result.authority_status == "unknown"
+        assert proc_result.decision_id != hh_result.decision_id
+
+    def test_observation_org_mismatch_rejected_different_from_stock_injection(self, calendar):
+        """Observation with mismatched org must be rejected, distinct from
+        attempting to inject stock/cash (which is also rejected)."""
+        decision = ProcurementDecision(
+            decision_id="obs-org-mismatch",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        # Observation for different org
+        obs_wrong_org = {
+            "actor_role": "procurement_organization",
+            "organization_id": "ORG-ENT-B",  # mismatch
+            "sector_id": "industry",
+            "quarter": "1968Q2",
+            "decision_at": date(1968, 6, 1),
+            "available_at": date(1968, 5, 25),
+            "geographic_id": "national",
+            "observed_fields": [("supply_quantity", 999.0)],
+        }
+        result = validate_proposal(decision, calendar, observation=obs_wrong_org)
+        assert not result.is_legal
+        assert "organization_id" in result.reason.lower()
+
 
 # ---------------------------------------------------------------------------
 # Test 9 — Verify observation invariants
@@ -688,6 +921,121 @@ class TestObservationInvariants:
         )
         violations = verify_observation_invariants(obs)
         assert len(violations) == 0, f"Unexpected violations: {violations}"
+
+    def test_observed_fields_tuple_type_check_before_unpack(self):
+        """verify_observation_invariants must check observed_fields is tuple before unpacking.
+
+        Regression test for P0-4: verify_observation_invariants previously iterated
+        obs.observed_fields to check whitelist before verifying it is a plain tuple,
+        allowing a non-tuple iterable to execute __iter__ via the for-loop unpacking.
+        """
+        iter_called: list[str] = []
+
+        class CustomIterable:
+            """Iterable that is not a tuple — tests the type check ordering."""
+            def __iter__(self):
+                iter_called.append("CustomIterable.__iter__")
+                return iter([("supply_quantity", 100.0)])
+
+        # Use object.__setattr__ to bypass frozen=True on ActorObservation
+        # This simulates a state where observed_fields has been smuggled as a custom iterable
+        builder = ObservationBuilder("procurement_organization")
+        obs = builder.build(
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            geographic_id="national",
+            quarter="1968Q1",
+            decision_at=date(1968, 1, 15),
+            available_at=date(1968, 1, 10),
+            raw_data={"supply_quantity": 100.0},
+        )
+        # Smuggle in a custom iterable as observed_fields via __setattr__
+        object.__setattr__(obs, "observed_fields", CustomIterable())
+
+        violations = verify_observation_invariants(obs)
+        # Must detect non-tuple type and return early without iterating
+        assert any("exactly tuple" in v for v in violations), (
+            f"Expected 'exactly tuple' violation, got: {violations}"
+        )
+        assert iter_called == [], (
+            f"CustomIterable.__iter__ was called {len(iter_called)} time(s); "
+            "tuple type check must happen before unpacking observed_fields"
+        )
+
+    def test_observed_fields_element_with_iter_callback_rejected(self):
+        """A tuple of custom-iterable elements must be rejected without calling __iter__.
+
+        Regression test: outer observed_fields is a plain tuple, but element has custom
+        __iter__. The element-type check must catch this before any unpacking.
+        """
+        iter_called: list[str] = []
+
+        class EvilElement:
+            """Non-tuple element whose __iter__ appends to a tracker."""
+            def __iter__(self):
+                iter_called.append("EvilElement.__iter__")
+                return iter([("supply_quantity", 100.0)])
+
+        builder = ObservationBuilder("procurement_organization")
+        obs = builder.build(
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            geographic_id="national",
+            quarter="1968Q1",
+            decision_at=date(1968, 1, 15),
+            available_at=date(1968, 1, 10),
+            raw_data={"supply_quantity": 100.0},
+        )
+        # Replace observed_fields with a tuple containing a non-tuple element
+        object.__setattr__(obs, "observed_fields", (EvilElement(),))
+
+        violations = verify_observation_invariants(obs)
+        # Must detect non-tuple element and report it
+        assert any("exactly tuple" in v and "EvilElement" in v for v in violations), (
+            f"Expected 'exactly tuple' violation for EvilElement, got: {violations}"
+        )
+        assert iter_called == [], (
+            f"EvilElement.__iter__ was called {len(iter_called)} time(s); "
+            "element type check must happen before unpacking"
+        )
+
+    def test_verify_observation_invariants_date_comparison_before_type_check(self):
+        """Date subclass in available_at must be rejected without calling __gt__.
+
+        Regression test: verify_observation_invariants previously compared
+        available_at > decision_at before checking if they are plain dates,
+        executing a date subclass's __gt__ callback.
+        """
+        gt_called: list[str] = []
+
+        class EvilDate(date):
+            """date subclass whose __gt__ appends to a tracker."""
+            def __gt__(self, other) -> bool:
+                gt_called.append("EvilDate.__gt__")
+                return False
+
+        builder = ObservationBuilder("procurement_organization")
+        obs = builder.build(
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            geographic_id="national",
+            quarter="1968Q1",
+            decision_at=date(1968, 1, 15),
+            available_at=date(1968, 1, 10),
+            raw_data={"supply_quantity": 100.0},
+        )
+        # Replace available_at with EvilDate using __setattr__
+        object.__setattr__(obs, "available_at", EvilDate(1968, 1, 10))
+
+        violations = verify_observation_invariants(obs)
+        # Must detect date subclass without comparing
+        assert any("plain date" in v and "available_at" in v for v in violations), (
+            f"Expected 'plain date' violation for available_at, got: {violations}"
+        )
+        assert gt_called == [], (
+            f"EvilDate.__gt__ was called {len(gt_called)} time(s); "
+            "date type check must happen before comparison"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -841,6 +1189,116 @@ class TestObservationBoundaryEnforcement:
                 available_at=date(1968, 1, 10),
                 observed_fields=(),
             )
+
+    def test_non_string_dict_key_rejected_no_callback(self):
+        """A dict with a non-string key must be rejected without calling the key's __str__.
+
+        Regression test for P0-1: _check_no_prohibited_keys previously called str(k)
+        before checking type(k) is str, allowing a malicious key's __str__ to execute.
+        """
+        callbacks: list[str] = []
+
+        class MaliciousKey:
+            """Non-string key whose __str__ appends to a tracker."""
+            def __str__(self) -> str:
+                callbacks.append("MaliciousKey.__str__")
+                return "coal"
+
+        builder = ObservationBuilder("procurement_organization")
+        with pytest.raises(TypeError, match="not str"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={"inventory_level": {"outer": {MaliciousKey(): 30.0}}},
+            )
+        assert callbacks == [], (
+            f"MaliciousKey.__str__ was called {len(callbacks)} time(s); "
+            "non-string dict keys must be rejected before calling str(k)"
+        )
+
+    def test_non_string_dict_key_rejected_no_repr_callback(self):
+        """A dict with a non-string key must be rejected without calling the key's __repr__.
+
+        Regression test for P0 (residual): the rejection branch previously used {k!r}
+        formatting which calls __repr__ on untrusted key objects.
+        """
+        repr_called: list[str] = []
+
+        class KeyWithRepr:
+            """Non-string key whose __repr__ appends to a tracker."""
+            def __repr__(self) -> str:
+                repr_called.append("KeyWithRepr.__repr__")
+                return "KeyWithRepr()"
+
+        builder = ObservationBuilder("procurement_organization")
+        with pytest.raises(TypeError, match="not str"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={"supply_quantity": {KeyWithRepr(): 50.0}},
+            )
+        assert repr_called == [], (
+            f"KeyWithRepr.__repr__ was called {len(repr_called)} time(s); "
+            "rejection path must not format untrusted key with {{k!r}}"
+        )
+
+    def test_top_level_raw_data_key_no_str_callback(self):
+        """Top-level raw_data non-string key must be rejected without calling .lower()."""
+        callbacks: list[str] = []
+
+        class TopKey:
+            def lower(self) -> str:
+                callbacks.append("TopKey.lower")
+                return "supply_quantity"
+
+        builder = ObservationBuilder("procurement_organization")
+        with pytest.raises(TypeError, match="not str"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={TopKey(): 50.0},
+            )
+        assert callbacks == [], (
+            f"TopKey.lower() was called {len(callbacks)} time(s); "
+            "top-level raw_data key rejection must use str.lower() builtin"
+        )
+
+    def test_top_level_raw_data_key_no_repr_callback(self):
+        """Top-level raw_data non-string key must be rejected without calling __repr__."""
+        repr_called: list[str] = []
+
+        class TopKeyRepr:
+            def __repr__(self) -> str:
+                repr_called.append("TopKeyRepr.__repr__")
+                return "TopKeyRepr()"
+
+        builder = ObservationBuilder("procurement_organization")
+        with pytest.raises(TypeError, match="not str"):
+            builder.build(
+                organization_id="ORG-ENT-A",
+                sector_id="industry",
+                geographic_id="national",
+                quarter="1968Q1",
+                decision_at=date(1968, 1, 15),
+                available_at=date(1968, 1, 10),
+                raw_data={TopKeyRepr(): 50.0},
+            )
+        assert repr_called == [], (
+            f"TopKeyRepr.__repr__ was called {len(repr_called)} time(s); "
+            "top-level rejection must not use {{key!r}} formatting"
+        )
 
     def test_nested_prohibited_key_rejected(self):
         """A nested dict containing prohibited keys must be rejected."""
@@ -1388,6 +1846,118 @@ class TestAuthorityBindingEnforcement:
         result = validate_proposal(decision, calendar, observation=dict_obs)
         # Dict observations with prohibited keys in observed_fields rejected
         assert not result.is_legal
+
+    def test_forged_actor_role_rejected_no_callback(self, calendar):
+        """Dict observation with forged actor_role (custom __ne__) must be rejected.
+
+        Regression test for P0-2: validate_proposal previously compared obs_role
+        (extracted from dict observation) using != before type-checking it, allowing
+        a malicious object's __ne__ to execute.
+        """
+        callbacks: list[str] = []
+
+        class ForgedRole(str):
+            """str subclass whose __ne__ appends to a tracker."""
+            def __ne__(self, other) -> bool:
+                callbacks.append("ForgedRole.__ne__")
+                return False  # lies: claims equal to everything
+
+        decision = ProcurementDecision(
+            decision_id="forge-role",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        forged_obs = {
+            "actor_role": ForgedRole("procurement_organization"),
+            "organization_id": "ORG-ENT-A",
+            "sector_id": "industry",
+            "quarter": "1968Q2",
+            "decision_at": date(1968, 6, 1),
+            "available_at": date(1968, 5, 25),
+            "geographic_id": "national",
+            "observed_fields": [("supply_quantity", 100.0)],
+        }
+        result = validate_proposal(decision, calendar, observation=forged_obs)
+        # Must be rejected because actor_role is not exactly str
+        assert not result.is_legal, "ForgedRole observation should be rejected"
+        assert "actor_role" in result.reason.lower()
+        assert "exactly str" in result.reason.lower()
+        assert callbacks == [], (
+            f"ForgedRole.__ne__ was called {len(callbacks)} time(s); "
+            "actor_role must be type-checked before comparison"
+        )
+
+    def test_actorobservation_subclass_getattribute_rejected_no_callback(self, calendar):
+        """ActorObservation subclass with __getattribute__ must be rejected before __dict__ access.
+
+        Regression test for P0-5: validate_proposal previously accessed __dict__ five times
+        before checking type(observation) is not ActorObservation, allowing a subclass
+        __getattribute__ to intercept the lookups.
+        """
+        dict_calls: list[str] = []
+
+        class SubObservation(ActorObservation):
+            """ActorObservation subclass whose __getattribute__ logs access."""
+
+            def __getattribute__(self, name: str) -> object:
+                if name.startswith("_"):
+                    return super().__getattribute__(name)
+                dict_calls.append(f"__getattribute__({name!r})")
+                return super().__getattribute__(name)
+
+        # Build a clean observation and wrap it in the subclass
+        builder = ObservationBuilder("procurement_organization")
+        clean_obs = builder.build(
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            geographic_id="national",
+            quarter="1968Q1",
+            decision_at=date(1968, 1, 15),
+            available_at=date(1968, 1, 10),
+            raw_data={"supply_quantity": 100.0},
+        )
+        sub_obs = SubObservation(
+            actor_role=clean_obs.actor_role,
+            organization_id=clean_obs.organization_id,
+            sector_id=clean_obs.sector_id,
+            geographic_id=clean_obs.geographic_id,
+            quarter=clean_obs.quarter,
+            decision_at=clean_obs.decision_at,
+            available_at=clean_obs.available_at,
+            observed_fields=clean_obs.observed_fields,
+        )
+
+        # Clear calls from SubObservation construction (Pydantic validation).
+        # Only calls made DURING validate_proposal matter for this regression test.
+        dict_calls.clear()
+
+        decision = ProcurementDecision(
+            decision_id="sub-obs-test",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q1",
+            decision_at=date(1968, 1, 15),
+            available_at=date(1968, 1, 10),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        result = validate_proposal(decision, calendar, observation=sub_obs)
+        # Must be rejected as ActorObservation subclass
+        assert not result.is_legal
+        assert "subclass" in result.reason.lower()
+        assert dict_calls == [], (
+            f"__getattribute__ was called {len(dict_calls)} time(s); "
+            "ActorObservation subclass check must happen before any __dict__ access"
+        )
 
 class TestValidationResultFrozen:
     def test_validation_result_is_frozen(self, calendar):

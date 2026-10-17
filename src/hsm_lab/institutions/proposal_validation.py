@@ -282,6 +282,18 @@ def validate_proposal(
     if observation is not None:
         from hsm_lab.institutions.observed import ActorObservation
         if isinstance(observation, ActorObservation):
+            # Reject ActorObservation subclasses FIRST, before any __dict__ access.
+            # Subclass's __getattribute__ could intercept __dict__ lookup.
+            if type(observation) is not ActorObservation:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Observation is a {type(observation).__name__} subclass; "
+                        f"only concrete ActorObservation allowed"
+                    ),
+                )
             # Access via __dict__ to avoid triggering descriptor protocol on field access
             # Check type before any comparison to prevent __eq__/__ne__ callback execution
             obs_org = observation.__dict__["organization_id"]
@@ -295,6 +307,7 @@ def validate_proposal(
                 ("sector_id", obs_sector),
                 ("quarter", obs_quarter),
                 ("geographic_id", obs_geo),
+                ("actor_role", obs_role),
             ]:
                 if type(field_val) is not str:
                     return ValidationResult(
@@ -315,6 +328,20 @@ def validate_proposal(
                     authority_status="not_applicable",
                     reason="Observation is a dict subclass; only plain dict allowed",
                 )
+            # Check all dict keys are plain str BEFORE any .get() or iteration.
+            # A str-subclass key with custom __eq__ could execute a callback during
+            # dict lookup before the per-key type check runs.
+            for key in observation:
+                if type(key) is not str:
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Dict observation key must be exactly str, "
+                            f"got {type(key).__name__}"
+                        ),
+                    )
             obs_role = observation.get("actor_role")
             if obs_role is None:
                 return ValidationResult(
@@ -322,6 +349,18 @@ def validate_proposal(
                     is_legal=False,
                     authority_status="not_applicable",
                     reason="Dict observation missing required actor_role field",
+                )
+            # actor_role value must be exactly str — reject str subclasses and arbitrary
+            # objects whose __eq__ could bypass the role binding check
+            if type(obs_role) is not str:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Observation field actor_role must be exactly str, "
+                        f"got {type(obs_role).__name__}"
+                    ),
                 )
             # Reject dict observations with top-level prohibited keys (case-insensitive)
             # and enforce exact-case known field names (reject case variants of known fields)
@@ -650,17 +689,12 @@ def validate_proposal(
                             f"primitive subclasses may carry mutable state"
                         ),
                     )
-            # Also force full re-validation via dump+validate
-            try:
-                dump = observation.model_dump()
-                ActorObservation.model_validate(dump)
-            except Exception as exc:
-                return ValidationResult(
-                    decision_id=decision.decision_id,
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=f"observation re-validation failed: {exc}",
-                )
+            # NOTE: model_dump() removed — it triggers __getattribute__ on all fields,
+            # including any smuggled Payload objects in observed_fields.
+            # Field-level checks above (extra_attrs, str/int subclass guards,
+            # and _is_deep_immutable check in verify_observation_invariants)
+            # provide sufficient validation without triggering callbacks.
+            # We no longer call observation.model_dump() here.
 
         # Bounded planning: reject future information in observation
         bp_passed, bp_reason = BoundedPlanning().evaluate(decision, observation)

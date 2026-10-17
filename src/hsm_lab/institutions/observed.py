@@ -229,13 +229,15 @@ class ObservationBuilder:
         filtered: list[tuple[str, Any]] = []
         for field_name, value in raw_data.items():
             # Reject non-string keys: whitelist is string-keyed, non-strings can never match
+            # Avoid {field_name!r} to prevent __repr__ callback on untrusted key
             if type(field_name) is not str:
                 raise TypeError(
-                    f"raw_data key {field_name!r} is {type(field_name).__name__}, not str; "
+                    f"raw_data key type is {type(field_name).__name__}, not str; "
                     f"non-string keys cannot match the string whitelist"
                 )
             # Reject prohibited top-level keys immediately (before whitelist filter)
-            fn_lower = field_name.lower()
+            # Use str.lower() builtin to bypass str-subclass .lower() override
+            fn_lower = str.lower(field_name)
             for prohibited in _PROHIBITED_KEYS:
                 if prohibited in fn_lower:
                     raise TypeError(
@@ -279,7 +281,19 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
     t = type(value)
     if t is dict:
         for k, v in value.items():
-            key_str = str(k).lower()
+            # Guard: only call str() on keys that are exactly str type.
+            # Non-string keys are rejected as a side-effect here (they would be
+            # caught later by _to_immutable's non-string-key guard), but we
+            # must NOT invoke str(k) on an untrusted object as that executes
+            # its __str__ callback before any type check runs.
+            # We also avoid {k!r} (calls __repr__) and use only type(k).__name__
+            # to prevent __repr__ callbacks on untrusted key objects.
+            if type(k) is not str:
+                raise TypeError(
+                    f"Dict key type is {type(k).__name__}, not str; "
+                    f"non-string keys are not permitted in observations"
+                )
+            key_str = str.lower(k)  # use built-in str.lower to bypass subclass override
             for prohibited in _PROHIBITED_KEYS:
                 if prohibited in key_str:
                     raise TypeError(
@@ -363,10 +377,11 @@ def _to_immutable(value: Any) -> Any:
         return frozenset(_to_immutable(v) for v in value)
     if type(value) is dict:
         # Reject non-string keys BEFORE str(k) conversion to prevent __str__ callbacks
+        # Also avoid {k!r} (calls __repr__) — use type(k).__name__ only
         for k in value.keys():
             if type(k) is not str:
                 raise TypeError(
-                    f"Dict key {k!r} is {type(k).__name__}, not str; "
+                    f"Dict key type is {type(k).__name__}, not str; "
                     f"non-string dict keys cannot be safely converted"
                 )
         # Check for prohibited keys before converting
@@ -400,30 +415,79 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
     """
     violations: list[str] = []
 
-    if obs.available_at > obs.decision_at:
+    # Check date types BEFORE comparison to prevent __gt__ callback on date subclasses.
+    # Use object.__getattribute__ to bypass any custom __getattribute__ on the observation.
+    raw_avail = object.__getattribute__(obs, "available_at")
+    raw_decision = object.__getattribute__(obs, "decision_at")
+    avail_is_plain = type(raw_avail) is date
+    decision_is_plain = type(raw_decision) is date
+    if not avail_is_plain:
         violations.append(
-            f"available_at {obs.available_at} > decision_at {obs.decision_at}"
+            f"available_at must be plain date, not {type(raw_avail).__name__}"
+        )
+    if not decision_is_plain:
+        violations.append(
+            f"decision_at must be plain date, not {type(raw_decision).__name__}"
+        )
+    if avail_is_plain and decision_is_plain and raw_avail > raw_decision:
+        violations.append(
+            f"available_at {raw_avail} > decision_at {raw_decision}"
         )
 
-    # Check date types are plain (not subclasses with mutable state)
-    for field_name in ("decision_at", "available_at"):
-        value = getattr(obs, field_name)
-        if type(value) is not date:
+    # Guard against str-subclass __eq__ in the 'in' check for role whitelist
+    actor_role_val = object.__getattribute__(obs, "actor_role")
+    if type(actor_role_val) is not str or actor_role_val not in _ROLE_WHITELISTS:
+        # Avoid {actor_role_val!r} which calls __repr__ on non-string values
+        violations.append(
+            f"actor_role type is {type(actor_role_val).__name__} "
+            f"(not registered)"
+        )
+        # Return early: do NOT use non-string actor_role_val for whitelist lookup
+        # (would trigger __hash__/__eq__ on untrusted object)
+        return violations
+    expected_whitelist = _ROLE_WHITELISTS.get(actor_role_val, frozenset())
+
+    # Check observed_fields is a tuple before unpacking — prevents __iter__ callback
+    # on custom iterables smuggled as observed_fields
+    if type(obs.observed_fields) is not tuple:
+        violations.append(
+            f"observed_fields must be exactly tuple, got {type(obs.observed_fields).__name__}"
+        )
+        # Cannot safely iterate; return early
+        return violations
+
+    # Check each element is a 2-tuple before unpacking — prevents __iter__ on custom elements
+    for i, elem in enumerate(obs.observed_fields):
+        if type(elem) is not tuple:
             violations.append(
-                f"{field_name} must be plain date, not {type(value).__name__}"
+                f"observed_fields[{i}] must be exactly tuple, got {type(elem).__name__}"
             )
-
-    expected_whitelist = _ROLE_WHITELISTS.get(obs.actor_role, frozenset())
-    if obs.actor_role not in _ROLE_WHITELISTS:
-        violations.append(f"actor_role {obs.actor_role!r} not in registered roles")
-
-    for name, _ in obs.observed_fields:
+            continue
+        if len(elem) != 2:
+            violations.append(
+                f"observed_fields[{i}] must have exactly 2 elements, got {len(elem)}"
+            )
+            continue
+        name, value = elem
+        # Check name is str before any use
+        if type(name) is not str:
+            violations.append(
+                f"observed_fields[{i}] field name must be exactly str, "
+                f"got {type(name).__name__}"
+            )
+            continue
         if name not in expected_whitelist:
             violations.append(f"Field '{name}' not in whitelist for role {obs.actor_role}")
 
     # Check for prohibited names in field names
-    for name, _ in obs.observed_fields:
-        name_lower = name.lower()
+    # Use str.lower() builtin to bypass str-subclass .lower() override
+    for elem in obs.observed_fields:
+        if type(elem) is not tuple or len(elem) != 2:
+            continue  # already reported above
+        name = elem[0]
+        if type(name) is not str:
+            continue  # already reported above
+        name_lower = str.lower(name)
         for p in _PROHIBITED_KEYS:
             if p in name_lower:
                 violations.append(f"Prohibited name '{p}' found in field '{name}'")
@@ -436,18 +500,27 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
             f"{type(obs.observed_fields).__name__}"
         )
 
-    for name, value in obs.observed_fields:
+    # Safe single-pass iteration: check element type BEFORE unpacking
+    for elem in obs.observed_fields:
+        # Check element is a 2-tuple before any unpacking or method calls
+        if type(elem) is not tuple:
+            continue  # already reported above
+        if len(elem) != 2:
+            continue  # already reported above
+        name, value = elem  # safe: checked type and length above
         if not _is_deep_immutable(value):
             violations.append(
                 f"Value for '{name}' is not deep-immutable: {type(value).__name__}"
             )
         # Check string values for prohibited substrings
-        if isinstance(value, str) and _value_has_prohibited_keys(value):
+        # Use type() check instead of isinstance() to prevent str-subclass __str__ callback
+        if type(value) is str and _value_has_prohibited_keys(value):
             violations.append(
                 f"Value for '{name}' contains prohibited content"
             )
         # Check for prohibited keys in nested containers
-        if isinstance(value, (tuple, dict, frozenset)):
+        # Use exact type checks to prevent subclass __iter__ callback
+        if type(value) in (tuple, dict, frozenset):
             try:
                 _check_no_prohibited_keys(value)
             except TypeError as exc:
@@ -505,7 +578,9 @@ def _value_has_prohibited_keys(value: Any) -> bool:
         return False
     if t is dict:
         for k, v in value.items():
-            k_str = str(k).lower()
+            if type(k) is not str:
+                continue  # non-string keys are not prohibited-key strings
+            k_str = str.lower(k)
             for prohibited in _PROHIBITED_KEYS:
                 if prohibited in k_str:
                     return True
@@ -518,7 +593,9 @@ def _value_has_prohibited_keys(value: Any) -> bool:
 def _dict_has_prohibited_keys(value: dict[Any, Any]) -> bool:
     """Return True if any key in the dict or its nested values is prohibited."""
     for k, v in value.items():
-        key_str = str(k).lower()
+        if type(k) is not str:
+            continue  # non-string keys are not prohibited-key strings
+        key_str = str.lower(k)
         if any(p in key_str for p in _PROHIBITED_KEYS):
             return True
         t = type(v)
