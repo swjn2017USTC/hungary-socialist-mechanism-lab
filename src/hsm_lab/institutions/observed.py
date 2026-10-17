@@ -206,8 +206,13 @@ class ObservationBuilder:
                 f"available_at {available_at} cannot be after decision_at {decision_at}"
             )
 
-        # Convert to plain dict before .items() to prevent subclass callback execution
-        raw_data = dict(raw_data)
+        # Reject dict subclasses: arbitrary dict subclasses can execute callbacks
+        # through overridden methods (keys, __getitem__, etc.)
+        if type(raw_data) is not dict:
+            raise TypeError(
+                f"raw_data must be a plain dict, got {type(raw_data).__name__}; "
+                f"dict subclasses may execute arbitrary callbacks"
+            )
 
         # Filter to whitelist, deep-immutable conversion
         filtered: list[tuple[str, Any]] = []

@@ -143,8 +143,9 @@ def validate_proposal(
         value = decision.__dict__.get(field_name)
         if value is None:
             continue
-        # Check primitive subclasses (str, float, int)
-        if isinstance(value, str) and type(value) not in (str, bytes):
+        # Check primitive subclasses (str, float, int) AND coerce objects
+        # (objects with __float__/__int__/__str__ get coerced by model_validate)
+        if isinstance(value, str) and type(value) is not str:
             return ValidationResult(
                 decision_id=getattr(decision, "decision_id", "<unknown>"),
                 is_legal=False,
@@ -164,16 +165,32 @@ def validate_proposal(
                     f"primitive subclasses may carry mutable state"
                 ),
             )
-        if isinstance(value, int) and type(value) is not int:
-            return ValidationResult(
-                decision_id=getattr(decision, "decision_id", "<unknown>"),
-                is_legal=False,
-                authority_status="not_applicable",
-                reason=(
-                    f"Decision field {field_name} is an int subclass; "
-                    f"primitive subclasses may carry mutable state"
-                ),
-            )
+        if hasattr(value, "__float__"):
+            # Reject if __float__ is overridden (not the builtin float's method)
+            value_float_method = getattr(type(value), "__float__", None)
+            if value_float_method is not float.__float__:
+                return ValidationResult(
+                    decision_id=getattr(decision, "decision_id", "<unknown>"),
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Decision field {field_name} has __float__ method; "
+                        f"objects with coercion methods may carry mutable state"
+                    ),
+                )
+        if hasattr(value, "__int__"):
+            # Reject if __int__ is overridden (not builtin int's or float's method)
+            value_int_method = getattr(type(value), "__int__", None)
+            if value_int_method not in (int.__int__, float.__int__):
+                return ValidationResult(
+                    decision_id=getattr(decision, "decision_id", "<unknown>"),
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Decision field {field_name} has __int__ method; "
+                        f"objects with coercion methods may carry mutable state"
+                    ),
+                )
     try:
         decision_dump = decision.model_dump()
         decision = decision_type.model_validate(decision_dump)
