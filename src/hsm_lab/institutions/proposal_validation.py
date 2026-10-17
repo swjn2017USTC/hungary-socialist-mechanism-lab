@@ -165,32 +165,57 @@ def validate_proposal(
                     f"primitive subclasses may carry mutable state"
                 ),
             )
-        if hasattr(value, "__float__"):
-            # Reject if __float__ is overridden (not the builtin float's method)
-            value_float_method = getattr(type(value), "__float__", None)
-            if value_float_method is not float.__float__:
-                return ValidationResult(
-                    decision_id=getattr(decision, "decision_id", "<unknown>"),
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=(
-                        f"Decision field {field_name} has __float__ method; "
-                        f"objects with coercion methods may carry mutable state"
-                    ),
-                )
-        if hasattr(value, "__int__"):
-            # Reject if __int__ is overridden (not builtin int's or float's method)
-            value_int_method = getattr(type(value), "__int__", None)
-            if value_int_method not in (int.__int__, float.__int__):
-                return ValidationResult(
-                    decision_id=getattr(decision, "decision_id", "<unknown>"),
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=(
-                        f"Decision field {field_name} has __int__ method; "
-                        f"objects with coercion methods may carry mutable state"
-                    ),
-                )
+        # Access type-direct to avoid triggering instance __getattribute__
+        # (hasattr triggers __getattribute__ on the instance, which may execute callbacks)
+        value_type = type(value)
+        # __float__: reject if type is not float and has custom __float__
+        if value_type is not float:
+            try:
+                value_float_method = object.__getattribute__(value_type, "__float__")
+                if value_float_method is not float.__float__:
+                    return ValidationResult(
+                        decision_id=getattr(decision, "decision_id", "<unknown>"),
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Decision field {field_name} has __float__ method; "
+                            f"objects with coercion methods may carry mutable state"
+                        ),
+                    )
+            except AttributeError:
+                pass
+        # __int__: reject if type is not int/float and has custom __int__
+        if value_type not in (int, float):
+            try:
+                value_int_method = object.__getattribute__(value_type, "__int__")
+                if value_int_method not in (int.__int__, float.__int__):
+                    return ValidationResult(
+                        decision_id=getattr(decision, "decision_id", "<unknown>"),
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Decision field {field_name} has __int__ method; "
+                            f"objects with coercion methods may carry mutable state"
+                        ),
+                    )
+            except AttributeError:
+                pass
+        # __index__: reject if type is not int and has custom __index__
+        if value_type is not int:
+            try:
+                value_index_method = object.__getattribute__(value_type, "__index__")
+                if value_index_method is not int.__index__:
+                    return ValidationResult(
+                        decision_id=getattr(decision, "decision_id", "<unknown>"),
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Decision field {field_name} has __index__ method; "
+                            f"objects with coercion methods may carry mutable state"
+                        ),
+                    )
+            except AttributeError:
+                pass
     try:
         decision_dump = decision.model_dump()
         decision = decision_type.model_validate(decision_dump)
