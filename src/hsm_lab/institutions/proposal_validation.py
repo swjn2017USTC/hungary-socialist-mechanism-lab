@@ -463,10 +463,31 @@ def validate_proposal(
             )
 
         # Decision timestamp binding: observation's decision_at must match decision's
+        # Check type BEFORE comparison to prevent callback execution via __eq__
         if isinstance(observation, ActorObservation):
             obs_decision_at = observation.decision_at
+            if type(obs_decision_at) is not date:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Observation decision_at must be a plain date, "
+                        f"got {type(obs_decision_at).__name__}"
+                    ),
+                )
         elif isinstance(observation, dict):
             obs_decision_at = observation.get("decision_at")
+            if obs_decision_at is not None and type(obs_decision_at) is not date:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Observation decision_at must be a plain date, "
+                        f"got {type(obs_decision_at).__name__}"
+                    ),
+                )
         else:
             obs_decision_at = None
 

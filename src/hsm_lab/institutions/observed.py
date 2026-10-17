@@ -206,6 +206,9 @@ class ObservationBuilder:
                 f"available_at {available_at} cannot be after decision_at {decision_at}"
             )
 
+        # Convert to plain dict before .items() to prevent subclass callback execution
+        raw_data = dict(raw_data)
+
         # Filter to whitelist, deep-immutable conversion
         filtered: list[tuple[str, Any]] = []
         for field_name, value in raw_data.items():
