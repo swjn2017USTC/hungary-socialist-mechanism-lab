@@ -11,6 +11,8 @@ from datetime import date
 from enum import Enum
 from typing import Literal
 
+from pydantic import model_validator
+
 from hsm_lab.contract.base import StrictModel
 
 
@@ -44,6 +46,18 @@ class Decision(StrictModel, ABC):
     available_at: date  # information cutoff for this decision
     # The information available at decision time is a separate observation object,
     # not embedded here.
+
+    @model_validator(mode="after")
+    def _reject_date_subclasses(self) -> Decision:
+        """Reject date subclasses that may carry mutable state."""
+        for field_name in ("decision_at", "available_at"):
+            value = getattr(self, field_name)
+            if type(value) is not date:
+                raise TypeError(
+                    f"{field_name} must be a plain date, not "
+                    f"{type(value).__name__}; date subclasses may carry mutable state"
+                )
+        return self
 
     @abstractmethod
     def choice_summary(self) -> str:

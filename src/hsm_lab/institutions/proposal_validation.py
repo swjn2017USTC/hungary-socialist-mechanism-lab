@@ -84,13 +84,16 @@ def validate_proposal(
     decision: Decision,
     calendar: RegimeCalendar,
     geographic_id: str = "national",
+    observation: Any = None,  # noqa: ANN401
 ) -> ValidationResult:
     """Validate one decision against authority and legality rules.
 
     The organization and sector are derived from the decision's own declared identity.
     The caller-supplied geographic_id supplements the decision's context.
     The decision's quarter must match the year/quarter implied by decision_at
-    (single-clock principle: no actor may record a mismatched institutional period).
+    (single-clock principle).
+    If an observation is supplied, its organization_id, sector_id, and quarter must
+    be consistent with the decision's declared identity.
 
     Returns
     -------
@@ -114,6 +117,55 @@ def validate_proposal(
                 f"single-clock principle violated"
             ),
         )
+
+    # Step 0b: organization/role compatibility — org must be registered for this role
+    permitted_orgs = _ROLE_ORG_IDS.get(decision.actor_role, ())
+    if decision.organization_id not in permitted_orgs:
+        return ValidationResult(
+            decision_id=decision.decision_id,
+            is_legal=False,
+            authority_status="not_applicable",
+            reason=(
+                f"Organization {decision.organization_id!r} is not registered for "
+                f"role {decision.actor_role.value}; registered: {permitted_orgs}"
+            ),
+        )
+
+    # Step 0c: observation context must be consistent with decision identity
+    if observation is not None:
+        from hsm_lab.institutions.observed import ActorObservation
+        if isinstance(observation, ActorObservation):
+            if observation.organization_id != decision.organization_id:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Observation organization_id {observation.organization_id!r} "
+                        f"does not match decision organization_id "
+                        f"{decision.organization_id!r}"
+                    ),
+                )
+            if observation.sector_id != decision.sector_id:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Observation sector_id {observation.sector_id!r} "
+                        f"does not match decision sector_id {decision.sector_id!r}"
+                    ),
+                )
+            if observation.quarter != decision.quarter:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Observation quarter {observation.quarter!r} "
+                        f"does not match decision quarter {decision.quarter!r}"
+                    ),
+                )
 
     # Step 1: structural legality (no negative quantities, non-empty IDs, available_at)
     is_legal, legal_reason = decision.validate_legality()
@@ -234,13 +286,14 @@ def validate_proposals(
     decisions: list[Decision],
     calendar: RegimeCalendar,
     geographic_id: str = "national",
+    observation: Any = None,  # noqa: ANN401
 ) -> list[ValidationResult]:
     """Validate a batch of decisions, each independently.
 
     Returns a list of ValidationResult in the same order as input decisions.
     """
     return [
-        validate_proposal(d, calendar, geographic_id)
+        validate_proposal(d, calendar, geographic_id, observation)
         for d in decisions
     ]
 
