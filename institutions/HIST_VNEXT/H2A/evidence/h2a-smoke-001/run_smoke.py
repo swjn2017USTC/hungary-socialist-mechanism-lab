@@ -22,7 +22,26 @@ from hsm_lab.institutions.proposal_validation import (
     BoundedPlanning,
     evaluate_all_rules,
     validate_proposal,
+    validate_proposal_retrospective,
 )
+
+def smoke_session(completed_ticks: int = 1):
+    """Exact PoliticalSession carrying only the admission clock state."""
+    from hsm_lab.contract.schemas import Quarter, ScenarioSpec
+    from hsm_lab.engine.political_run import PoliticalSession
+    from hsm_lab.engine.state import MaterialState
+
+    state = object.__new__(MaterialState)
+    object.__setattr__(state, "completed_ticks", completed_ticks)
+    spec = ScenarioSpec.model_construct(start=Quarter.parse("1968Q1"))
+    session = object.__new__(PoliticalSession)
+    object.__setattr__(session, "state", state)
+    object.__setattr__(session, "spec", spec)
+    object.__setattr__(session, "target_ticks", 4)
+    object.__setattr__(session, "opened", True)
+    object.__setattr__(session, "finished", False)
+    return session
+
 
 # ---------------------------------------------------------------------------
 # Load H1B calendar for authority checks
@@ -170,8 +189,12 @@ decision = ProcurementDecision(
     commodity_id="coal",
     requested_quantity=50.0,
 )
-result = validate_proposal(decision, calendar)
-check("S5: legal proposal validated", result.is_legal, result.reason)
+result = validate_proposal(decision, calendar, session=smoke_session(1))
+check(
+    "S5: legal proposal admitted under the session clock",
+    result.is_legal and result.admission_eligible,
+    result.reason,
+)
 
 # S6: Negative quantity rejected
 bad = ProcurementDecision(
@@ -213,6 +236,14 @@ check("S8: bounded_planning rejects future info", not passed_bp2, reason_bp2)
 # S9: evaluate_all_rules returns three results
 results = evaluate_all_rules(decision, None)
 check("S9: evaluate_all_rules returns 3 results", len(results) == 3, f"got {len(results)}")
+
+# S10: retrospective diagnosis is explicitly not admission
+retro = validate_proposal_retrospective(decision, calendar)
+check(
+    "S10: retrospective diagnosis is not admission-eligible",
+    retro.is_legal and retro.mode == "retrospective" and not retro.admission_eligible,
+    retro.reason,
+)
 
 # ---------------------------------------------------------------------------
 # Summary

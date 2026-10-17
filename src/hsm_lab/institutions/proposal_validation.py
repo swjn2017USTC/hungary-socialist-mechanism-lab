@@ -6,21 +6,246 @@ and that the actor has the required permission from the H1B authority layer.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from typing import Any
 
 from hsm_lab.contract.base import ConfigError
+from hsm_lab.contract.schemas import Quarter, ScenarioSpec
+from hsm_lab.engine.state import MaterialState
 from hsm_lab.institutions.authority import authority_at
 from hsm_lab.institutions.decisions import (
+    DECISION_FIELD_TYPES,
     ActorRole,
     Decision,
     HouseholdNeedDecision,
     InvestmentDecision,
     PriceProposalDecision,
     ProcurementDecision,
+    decision_field_value_allowed,
 )
 from hsm_lab.institutions.schemas import RegimeCalendar
+
+# ---------------------------------------------------------------------------
+# Exact-type trust boundary
+# ---------------------------------------------------------------------------
+
+_DECISION_ID_UNKNOWN = "<unknown>"
+
+# Dict-observation schema: exact keys only, one canonical quarter, one cutoff.
+_PROHIBITED_OBSERVATION_KEYS = frozenset({
+    "raw_truth", "session", "callback", "closure", "target",
+    "truth", "calibration_target", "role",
+})
+_KNOWN_OBSERVATION_FIELDS = frozenset({
+    "actor_role", "organization_id", "sector_id", "geographic_id",
+    "quarter", "decision_at", "available_at", "observed_fields",
+})
+_OBSERVATION_STRING_FIELDS = (
+    "actor_role", "organization_id", "sector_id", "geographic_id", "quarter",
+)
+_OBSERVATION_DATE_FIELDS = ("decision_at", "available_at")
+
+
+def _reject(reason: str) -> ValidationResult:
+    """Static rejection result (no untrusted formatting)."""
+    return ValidationResult(
+        decision_id=_DECISION_ID_UNKNOWN,
+        is_legal=False,
+        authority_status="not_applicable",
+        reason=reason,
+    )
+
+
+def _decision_storage_violation(decision: Any) -> str | None:
+    """Return a static storage violation string, or None when clean.
+
+    Used by public rules that must not trust an exact outer model type:
+    ``model_copy`` can inject hostile keys or payload values into ``__dict__``.
+    """
+    decision_type = type(decision)
+    if decision_type is ProcurementDecision:
+        field_types = DECISION_FIELD_TYPES[ProcurementDecision]
+    elif decision_type is PriceProposalDecision:
+        field_types = DECISION_FIELD_TYPES[PriceProposalDecision]
+    elif decision_type is InvestmentDecision:
+        field_types = DECISION_FIELD_TYPES[InvestmentDecision]
+    elif decision_type is HouseholdNeedDecision:
+        field_types = DECISION_FIELD_TYPES[HouseholdNeedDecision]
+    else:
+        return "unsupported decision type"
+    try:
+        extra = object.__getattribute__(decision, "__pydantic_extra__")
+        private = object.__getattribute__(decision, "__pydantic_private__")
+        fields_set = object.__getattribute__(
+            decision, "__pydantic_fields_set__"
+        )
+        instance = object.__getattribute__(decision, "__dict__")
+    except AttributeError:
+        return "decision storage is unavailable"
+    if extra is not None:
+        return "decision __pydantic_extra__ must be empty"
+    if private is not None:
+        return "decision __pydantic_private__ must be empty"
+    if type(fields_set) is not set:
+        return "decision model metadata is malformed"
+    for name in fields_set:
+        if type(name) is not str or name not in field_types:
+            return "decision model metadata contains an unvalidated field name"
+    if type(instance) is not dict:
+        return "decision storage is malformed"
+    storage_count = 0
+    for key in instance:
+        if type(key) is not str:
+            return "decision storage has a non-exact-string key"
+        if key not in field_types:
+            return "decision storage contains an undeclared field"
+        storage_count += 1
+    if storage_count != len(field_types):
+        return "decision storage is missing declared fields"
+    for field_name, allowed in field_types.items():
+        if not decision_field_value_allowed(instance.get(field_name), allowed):
+            return f"decision field {field_name} has an invalid exact type"
+    return None
+
+
+def _quarter_storage_violation(quarter: Any) -> str | None:
+    """Audit a ``Quarter`` before any arithmetic or method dispatch.
+
+    An exact ``Quarter`` can carry a shadowing ``advance`` attribute or
+    non-integer fields via ``model_copy``/``model_construct``.  Only the two
+    declared exact-integer fields may exist; arithmetic is done below with
+    trusted operations, never through instance methods.
+    """
+    if type(quarter) is not Quarter:
+        return "session quarter is malformed"
+    try:
+        extra = object.__getattribute__(quarter, "__pydantic_extra__")
+        private = object.__getattribute__(quarter, "__pydantic_private__")
+        fields_set = object.__getattribute__(quarter, "__pydantic_fields_set__")
+        instance = object.__getattribute__(quarter, "__dict__")
+    except AttributeError:
+        return "session quarter storage is unavailable"
+    if extra is not None or private is not None:
+        return "session quarter metadata is malformed"
+    if type(fields_set) is not set:
+        return "session quarter metadata is malformed"
+    for name in fields_set:
+        if type(name) is not str or name not in ("year", "quarter"):
+            return "session quarter metadata contains an unvalidated field name"
+    if (
+        len(fields_set) != 2
+        or "year" not in fields_set
+        or "quarter" not in fields_set
+    ):
+        return "session quarter metadata must declare exactly year and quarter"
+    if type(instance) is not dict or len(instance) != 2:
+        return "session quarter storage is malformed"
+    for key in instance:
+        if type(key) is not str or key not in ("year", "quarter"):
+            return "session quarter storage is malformed"
+    year = instance.get("year")
+    quarter_index = instance.get("quarter")
+    if type(year) is not int or type(quarter_index) is not int:
+        return "session quarter fields must be exact ints"
+    if not (1 <= year <= 9999) or not (1 <= quarter_index <= 4):
+        return "session quarter fields are out of range"
+    return None
+
+
+def _canonical_observation(
+    observation: Any,
+) -> tuple[Any, str | None]:
+    """Canonicalise an observation through the single custody boundary.
+
+    Returns ``(ActorObservation, None)`` or ``(None, violation)``.  Dict
+    inputs are converted to a clean immutable model so aliases, prohibited
+    keys, identity conflicts, and mutable values cannot survive.
+    """
+    from hsm_lab.institutions.observed import (
+        ActorObservation,
+        _to_immutable,
+        verify_observation_invariants,
+    )
+
+    observation_type = type(observation)
+    if observation_type is ActorObservation:
+        violations = verify_observation_invariants(observation)
+        if violations:
+            return None, violations[0]
+        return observation, None
+    if observation_type is not dict:
+        return None, (
+            "Unsupported observation type; only concrete ActorObservation "
+            "or plain dict allowed; subclasses are rejected"
+        )
+    for key in observation:
+        if type(key) is not str:
+            return None, "Dict observation key must be exactly str"
+        key_lower = str.lower(key)
+        if key_lower in _PROHIBITED_OBSERVATION_KEYS:
+            return None, "Dict observation contains a prohibited key"
+        if key_lower.endswith("_role") and key_lower != "actor_role":
+            return None, "Dict observation contains a prohibited key"
+        if key not in _KNOWN_OBSERVATION_FIELDS:
+            return None, "Dict observation contains an unknown field"
+    for name in _KNOWN_OBSERVATION_FIELDS:
+        if name not in observation:
+            return None, f"Dict observation missing required {name} field"
+    for name in _OBSERVATION_STRING_FIELDS:
+        if type(observation[name]) is not str:
+            return None, f"Dict observation field {name} must be exactly str"
+    for name in _OBSERVATION_DATE_FIELDS:
+        if type(observation[name]) is not date:
+            return None, (
+                f"Dict observation field {name} must be a plain date; "
+                "date subclasses are rejected"
+            )
+    if observation["available_at"] > observation["decision_at"]:
+        return None, (
+            "bounded_planning violated: observation available_at "
+            "is after decision_at"
+        )
+    raw_fields = observation["observed_fields"]
+    if type(raw_fields) is list:
+        raw_fields = tuple(raw_fields)
+    if type(raw_fields) is not tuple:
+        return None, (
+            "Dict observation observed_fields must be a plain list or tuple"
+        )
+    canonical_fields: list[tuple[str, Any]] = []
+    for element in raw_fields:
+        if type(element) is not tuple or len(element) != 2:
+            return None, "observed_fields elements must be 2-tuples"
+        field_name = element[0]
+        if type(field_name) is not str:
+            return None, "observed field name must be exactly str"
+        try:
+            field_value = _to_immutable(element[1])
+        except TypeError:
+            return None, "observed field value is not deep-immutable"
+        canonical_fields.append((field_name, field_value))
+    try:
+        canonical = ActorObservation(
+            actor_role=observation["actor_role"],
+            organization_id=observation["organization_id"],
+            sector_id=observation["sector_id"],
+            geographic_id=observation["geographic_id"],
+            quarter=observation["quarter"],
+            decision_at=observation["decision_at"],
+            available_at=observation["available_at"],
+            observed_fields=tuple(canonical_fields),
+        )
+    except ValueError as exc:
+        # All inputs are exact, converted types, so the message is our static
+        # semantic diagnostic (household identity, duplicate names, quarter).
+        return None, str(exc)
+    except TypeError:
+        return None, "observation malformed"
+    violations = verify_observation_invariants(canonical)
+    if violations:
+        return None, violations[0]
+    return canonical, None
 
 # ---------------------------------------------------------------------------
 # Validation result
@@ -36,6 +261,13 @@ class ValidationResult:
     authority_status: str  # "granted" | "revoked" | "unknown" | "not_applicable"
     reason: str
     warnings: tuple[str, ...] = ()
+    # "admission" (clock-bound) or "retrospective" (calendar-only diagnosis).
+    mode: str = "admission"
+    # True only for a legal result produced by clock-bound admission.
+    admission_eligible: bool = False
+    # SHA-256 of the exact decision payload this result validated.  Execution
+    # must compare it to the decision it is about to commit.
+    decision_digest: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -44,6 +276,9 @@ class ValidationResult:
             "authority_status": self.authority_status,
             "reason": self.reason,
             "warnings": list(self.warnings),
+            "mode": self.mode,
+            "admission_eligible": self.admission_eligible,
+            "decision_digest": self.decision_digest,
         }
 
 
@@ -81,158 +316,47 @@ _ROLE_ORG_IDS: dict[ActorRole, tuple[str, ...]] = {
 # ---------------------------------------------------------------------------
 
 
-def validate_proposal(
+def _validate_proposal_core(
     decision: Decision,
     calendar: RegimeCalendar,
-    geographic_id: str = "national",
-    observation: Any = None,  # noqa: ANN401
+    geographic_id: str,
+    observation: Any,  # noqa: ANN401
+    session: Any,  # noqa: ANN401
 ) -> ValidationResult:
-    """Validate one decision against authority and legality rules.
+    """Shared validator body; callers establish admission/retrospective mode."""
+    # Trusted caller inputs: exact types before any comparison or query.
+    if type(geographic_id) is not str:
+        return _reject("geographic_id must be exactly str")
+    if type(calendar) is not RegimeCalendar:
+        return _reject("calendar must be an exact RegimeCalendar")
 
-    The organization and sector are derived from the decision's own declared identity.
-    The caller-supplied geographic_id supplements the decision's context.
-    The decision's quarter must match the year/quarter implied by decision_at
-    (single-clock principle).
-    If an observation is supplied, its organization_id, sector_id, and quarter must
-    be consistent with the decision's declared identity.
-
-    Returns
-    -------
-    ValidationResult
-        Frozen result with is_legal, authority_status, and reason.
-        No state is modified.
-    """
-    # Step 0: validate against concrete registered decision types only
-    # Reject arbitrary subclasses that may declare stock/cash or other assignment fields
-    # Use type identity checks to avoid string comparison and .__name__ callback.
-    # type() is a C-level op; chained `is` comparisons never trigger __eq__.
-    # Reject all types except the four concrete registered types.
-    from hsm_lab.institutions.decisions import (
-        HouseholdNeedDecision,
-        InvestmentDecision,
-        PriceProposalDecision,
-        ProcurementDecision,
-    )
+    # Step 0: exact-type trust boundary.
+    # Identity-only checks: chained ``is`` comparisons never trigger ``__eq__``
+    # on a hostile metaclass.  Unsupported objects are rejected without any
+    # attribute access and with a static decision identifier.
     dt = type(decision)
-    if not (dt is HouseholdNeedDecision or dt is InvestmentDecision
-            or dt is PriceProposalDecision or dt is ProcurementDecision):
-        return ValidationResult(
-            decision_id=getattr(decision, "decision_id", "<unknown>"),
-            is_legal=False,
-            authority_status="not_applicable",
-            reason="Decision type is not a registered H2A type",
-        )
+    if not (
+        dt is ProcurementDecision
+        or dt is PriceProposalDecision
+        or dt is InvestmentDecision
+        or dt is HouseholdNeedDecision
+    ):
+        return _reject("Decision type is not a registered H2A type")
 
-    # Step 0: full decision reconstruction via model_validate (catches Literal enum
-    # mismatches, primitive subclasses, and any field type violations from model_copy)
-    # BUT first: check original __dict__ for undeclared attrs (model_dump omits these!)
-    decision_type = type(decision)
-    declared_fields = set(decision_type.model_fields.keys())
-    instance_fields = set(decision.__dict__.keys())
-    extra_fields = instance_fields - declared_fields
-    if extra_fields:
-        return ValidationResult(
-            decision_id=getattr(decision, "decision_id", "<unknown>"),
-            is_legal=False,
-            authority_status="not_applicable",
-            reason=f"Decision has extra attributes: {extra_fields}",
-        )
-    # Also check for primitive subclasses in declared fields (model_dump normalizes them away)
-    for field_name in declared_fields:
-        value = decision.__dict__.get(field_name)
-        if value is None:
-            continue
-        # Check primitive subclasses (str, float, int) AND coerce objects
-        # (objects with __float__/__int__/__str__ get coerced by model_validate)
-        if isinstance(value, str) and type(value) is not str:
-            return ValidationResult(
-                decision_id=getattr(decision, "decision_id", "<unknown>"),
-                is_legal=False,
-                authority_status="not_applicable",
-                reason=(
-                    f"Decision field {field_name} is a str subclass; "
-                    f"primitive subclasses may carry mutable state"
-                ),
-            )
-        if isinstance(value, float) and type(value) is not float:
-            return ValidationResult(
-                decision_id=getattr(decision, "decision_id", "<unknown>"),
-                is_legal=False,
-                authority_status="not_applicable",
-                reason=(
-                    f"Decision field {field_name} is a float subclass; "
-                    f"primitive subclasses may carry mutable state"
-                ),
-            )
-        # Use getattr to detect inherited methods (searches MRO), not object.__getattribute__
-        # which only checks the type's own __dict__ and misses inherited methods.
-        # getattr(class, attr) uses the class's __getattribute__ (usually type's slot),
-        # which does NOT trigger custom __getattribute__ on regular class instances.
-        value_type = type(value)
-        # __float__: reject if type is not float and has custom __float__ (including inherited)
-        if value_type is not float:
-            value_float_method = getattr(value_type, "__float__", None)
-            if value_float_method is not None and value_float_method is not float.__float__:
-                return ValidationResult(
-                    decision_id=getattr(decision, "decision_id", "<unknown>"),
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=(
-                        f"Decision field {field_name} has __float__ method; "
-                        f"objects with coercion methods may carry mutable state"
-                    ),
-                )
-        # __int__: reject if type is not int/float and has custom __int__ (including inherited)
-        if value_type not in (int, float):
-            value_int_method = getattr(value_type, "__int__", None)
-            if (value_int_method is not None
-                    and value_int_method not in (int.__int__, float.__int__)):
-                return ValidationResult(
-                    decision_id=getattr(decision, "decision_id", "<unknown>"),
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=(
-                        f"Decision field {field_name} has __int__ method; "
-                        f"objects with coercion methods may carry mutable state"
-                    ),
-                )
-        # __index__: reject if type is not int and has custom __index__ (including inherited)
-        if value_type is not int:
-            value_index_method = getattr(value_type, "__index__", None)
-            if value_index_method is not None and value_index_method is not int.__index__:
-                return ValidationResult(
-                    decision_id=getattr(decision, "decision_id", "<unknown>"),
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=(
-                        f"Decision field {field_name} has __index__ method; "
-                        f"objects with coercion methods may carry mutable state"
-                    ),
-                )
+    # Storage, metadata, exact field types, and declared enum membership are
+    # audited by the same helper used by public rule evaluation.
+    storage_violation = _decision_storage_violation(decision)
+    if storage_violation is not None:
+        return _reject(storage_violation)
+
+    # Reconstruct from the validated field values only (defence in depth
+    # against model_copy bypasses).  Every value is now an exact allowed type.
     try:
         decision_dump = decision.model_dump()
-        decision = decision_type.model_validate(decision_dump)
-    except Exception as exc:
-        return ValidationResult(
-            decision_id=getattr(decision, "decision_id", "<unknown>"),
-            is_legal=False,
-            authority_status="not_applicable",
-            reason=f"Decision re-validation failed: {exc}",
-        )
-
-    # Step 0: decision date subclass recheck (catches model_copy bypass of model_validator)
-    for field_name in ("decision_at", "available_at"):
-        value = getattr(decision, field_name, None)
-        if value is not None and isinstance(value, date) and type(value) is not date:
-            return ValidationResult(
-                decision_id=decision.decision_id,
-                is_legal=False,
-                authority_status="not_applicable",
-                reason=(
-                    f"Decision.{field_name} is a date subclass; "
-                    "date subclasses may carry mutable state"
-                ),
-            )
+        decision = dt.model_validate(decision_dump)
+    except Exception:
+        # Static message: exception text can reference hostile objects.
+        return _reject("Decision re-validation failed")
 
     # Step 0: single-clock — quarter must be consistent with decision_at
     quarter_year = decision.decision_at.year
@@ -250,6 +374,119 @@ def validate_proposal(
                 f"single-clock principle violated"
             ),
         )
+
+    # Step 0a: bind the decision to the existing engine clock, never a second
+    # one.  The session is engine-owned and passed only by trusted callers;
+    # actors never receive it.  ``completed_ticks`` names the quarter being
+    # admitted, which must equal the decision's quarter.
+    if session is not None:
+        from hsm_lab.engine.political_run import PoliticalSession
+
+        if type(session) is not PoliticalSession:
+            return _reject("session must be an exact PoliticalSession")
+        # Read raw lifecycle attributes first.  ``session.done`` and
+        # ``session.completed_ticks`` are properties that coerce (``int(...)``)
+        # before any type check, so they must not run on a rejected session.
+        try:
+            opened = object.__getattribute__(session, "opened")
+            finished = object.__getattribute__(session, "finished")
+        except AttributeError:
+            return _reject("session clock is not initialised")
+        if type(opened) is not bool or opened is not True:
+            return _reject("session is not opened for admission")
+        if type(finished) is not bool:
+            return _reject("session clock is malformed")
+        if finished:
+            return _reject("session is finished; no admission is possible")
+        try:
+            state = object.__getattribute__(session, "state")
+            spec = object.__getattribute__(session, "spec")
+            target_ticks = object.__getattribute__(session, "target_ticks")
+        except AttributeError:
+            return _reject("session clock is not initialised")
+        # Only the engine-owned container types are admissible; arbitrary
+        # replacements could expose ``__dict__`` (or any field) as a property.
+        if type(state) is not MaterialState:
+            return _reject("session state must be an exact MaterialState")
+        if type(spec) is not ScenarioSpec:
+            return _reject("session spec must be an exact ScenarioSpec")
+        # The engine dispatches quarters through ``session.quarter_of``.  An
+        # instance attribute can shadow that method without changing the class,
+        # so reject it before the engine ever runs.
+        try:
+            session_instance = object.__getattribute__(session, "__dict__")
+        except AttributeError:
+            return _reject("session clock is not initialised")
+        if type(session_instance) is not dict:
+            return _reject("session clock storage is malformed")
+        for key in session_instance:
+            if type(key) is not str:
+                return _reject(
+                    "session clock storage has a non-exact-string key"
+                )
+        if "quarter_of" in session_instance:
+            return _reject("session clock method is shadowed")
+        from types import FunctionType
+
+        quarter_method = PoliticalSession.__dict__.get("quarter_of")
+        if type(quarter_method) is not FunctionType:
+            return _reject("session quarter method is unavailable")
+        if type(target_ticks) is not int or target_ticks < 0:
+            return _reject("session clock is malformed")
+        # Read the nested containers' raw storage.  ``object.__getattribute__``
+        # bypasses overridden ``__getattribute__`` but NOT descriptors, so
+        # accessing ``state.completed_ticks`` or ``spec.start`` directly could
+        # execute a property.  Read ``__dict__`` and fixed keys instead.
+        try:
+            state_instance = object.__getattribute__(state, "__dict__")
+            spec_instance = object.__getattribute__(spec, "__dict__")
+        except AttributeError:
+            return _reject("session clock is not initialised")
+        if type(state_instance) is not dict or type(spec_instance) is not dict:
+            return _reject("session clock storage is malformed")
+        for container in (state_instance, spec_instance):
+            for key in container:
+                if type(key) is not str:
+                    return _reject(
+                        "session clock storage has a non-exact-string key"
+                    )
+        raw_tick = state_instance.get("completed_ticks")
+        start = spec_instance.get("start")
+        if type(raw_tick) is not int or raw_tick < 0:
+            return _reject("session clock is malformed")
+        if raw_tick >= target_ticks:
+            return _reject("session has no admissible quarter; it is finished")
+        quarter_violation = _quarter_storage_violation(start)
+        if quarter_violation is not None:
+            return _reject(quarter_violation)
+        # Trusted arithmetic only: no instance methods, no descriptor dispatch.
+        start_instance = object.__getattribute__(start, "__dict__")
+        start_year = start_instance["year"]
+        start_quarter = start_instance["quarter"]
+        ordinal = start_year * 4 + (start_quarter - 1) + raw_tick
+        new_year, new_q0 = divmod(ordinal, 4)
+        if not (1 <= new_year <= 9999):
+            return _reject("session quarter is out of range")
+        session_quarter = f"{new_year}Q{new_q0 + 1}"
+        # The accepted session and the engine must agree on the current
+        # quarter.  ``quarter_method`` is the verified class function; the
+        # spec/quarter storage it reads has already been audited.
+        engine_quarter = quarter_method(session, raw_tick)
+        if type(engine_quarter) is not str or engine_quarter != session_quarter:
+            return _reject(
+                "session quarter method disagrees with the audited clock"
+            )
+        if decision.quarter != session_quarter:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Quarter mismatch: decision.quarter={decision.quarter!r} "
+                    f"does not match session clock quarter {session_quarter!r}; "
+                    f"single-clock principle violated"
+                ),
+            )
 
     # Step 0b: organization/role compatibility — org must be registered for this role
     permitted_orgs = _ROLE_ORG_IDS.get(decision.actor_role, ())
@@ -279,10 +516,103 @@ def validate_proposal(
 
     # Step 0d: observation context must be consistent with decision identity
     if observation is not None:
-        from hsm_lab.institutions.observed import ActorObservation
-        # Use type() is check instead of isinstance() to avoid __getattribute__("__class__")
-        # callback on smuggled objects. isinstance(obs, ActorObservation) triggers
-        # obs.__class__ access even for plain dicts passed as observation.
+        from hsm_lab.institutions.observed import (
+            ActorObservation,
+            _to_immutable,
+            verify_observation_invariants,
+        )
+
+        # Single trust boundary shared with the observation builder.  Exact
+        # types are established before any comparison, iteration, or
+        # formatting; a dict observation is canonicalised into a clean
+        # immutable ActorObservation so caller-held aliases are not retained.
+        observation_type = type(observation)
+        if observation_type is ActorObservation:
+            early_violations = verify_observation_invariants(observation)
+            if early_violations:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=f"observation invariant violation: {early_violations[0]}",
+                )
+        elif observation_type is dict:
+            for key in observation:
+                if type(key) is not str:
+                    return _reject("Dict observation key must be exactly str")
+                key_lower = str.lower(key)
+                if key_lower in _PROHIBITED_OBSERVATION_KEYS:
+                    return _reject("Dict observation contains a prohibited key")
+                if key_lower.endswith("_role") and key_lower != "actor_role":
+                    return _reject("Dict observation contains a prohibited key")
+                if key not in _KNOWN_OBSERVATION_FIELDS:
+                    return _reject("Dict observation contains an unknown field")
+            for name in _KNOWN_OBSERVATION_FIELDS:
+                if name not in observation:
+                    return _reject(
+                        f"Dict observation missing required {name} field"
+                    )
+            for name in _OBSERVATION_STRING_FIELDS:
+                if type(observation[name]) is not str:
+                    return _reject(
+                        f"Dict observation field {name} must be exactly str"
+                    )
+            for name in _OBSERVATION_DATE_FIELDS:
+                if type(observation[name]) is not date:
+                    return _reject(
+                        f"Dict observation field {name} must be a plain date; "
+                        "date subclasses are rejected"
+                    )
+            if observation["available_at"] > observation["decision_at"]:
+                return _reject(
+                    "bounded_planning violated: observation available_at "
+                    "is after decision_at"
+                )
+            raw_fields = observation["observed_fields"]
+            if type(raw_fields) is list:
+                raw_fields = tuple(raw_fields)
+            if type(raw_fields) is not tuple:
+                return _reject(
+                    "Dict observation observed_fields must be a plain list or tuple"
+                )
+            canonical_fields: list[tuple[str, Any]] = []
+            for element in raw_fields:
+                if type(element) is not tuple or len(element) != 2:
+                    return _reject("observed_fields elements must be 2-tuples")
+                element_name = element[0]
+                if type(element_name) is not str:
+                    return _reject("observed field name must be exactly str")
+                try:
+                    element_value = _to_immutable(element[1])
+                except TypeError:
+                    return _reject("observed field value is not deep-immutable")
+                canonical_fields.append((element_name, element_value))
+            try:
+                observation = ActorObservation(
+                    actor_role=observation["actor_role"],
+                    organization_id=observation["organization_id"],
+                    sector_id=observation["sector_id"],
+                    geographic_id=observation["geographic_id"],
+                    quarter=observation["quarter"],
+                    decision_at=observation["decision_at"],
+                    available_at=observation["available_at"],
+                    observed_fields=tuple(canonical_fields),
+                )
+            except (TypeError, ValueError):
+                return _reject("observation malformed")
+            early_violations = verify_observation_invariants(observation)
+            if early_violations:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=f"observation invariant violation: {early_violations[0]}",
+                )
+        else:
+            return _reject(
+                "Unsupported observation type; only concrete ActorObservation "
+                "or plain dict allowed; subclasses are rejected"
+            )
         if type(observation) is ActorObservation:
             # Reject ActorObservation subclasses FIRST, before any __dict__ access.
             # Subclass's __getattribute__ could intercept __dict__ lookup.
@@ -317,8 +647,7 @@ def validate_proposal(
                         is_legal=False,
                         authority_status="not_applicable",
                         reason=(
-                            f"Observation field {field_name} must be exactly str, "
-                            f"got {type(field_val).__name__}"
+                            f"Observation field {field_name} must be exactly str"
                         ),
                     )
         # Use type() is check to avoid __getattribute__("__class__") callback
@@ -364,15 +693,15 @@ def validate_proposal(
                 )
             # Reject dict observations with top-level prohibited keys (case-insensitive)
             # and enforce exact-case known field names (reject case variants of known fields)
-            _TOP_LEVEL_PROHIBITED = frozenset({
+            _OLD_TOP_LEVEL_PROHIBITED = frozenset({
                 "raw_truth", "session", "callback", "closure", "target",
                 "truth", "calibration_target", "role",
             })
-            _KNOWN_OBSERVATION_FIELDS = frozenset({
+            _OLD_KNOWN_OBSERVATION_FIELDS = frozenset({
                 "actor_role", "organization_id", "sector_id", "geographic_id",
                 "quarter", "decision_at", "available_at", "observed_fields",
             })
-            _KNOWN_LOWERCASE = {k.lower() for k in _KNOWN_OBSERVATION_FIELDS}
+            _OLD_KNOWN_LOWERCASE = {k.lower() for k in _OLD_KNOWN_OBSERVATION_FIELDS}
             for key in observation:
                 # Dict key must be exactly str (reject str subclasses used as keys)
                 if type(key) is not str:
@@ -384,7 +713,7 @@ def validate_proposal(
                     )
                 key_lower = key.lower()
                 # Case-insensitive prohibited key check
-                if key_lower in _TOP_LEVEL_PROHIBITED:
+                if key_lower in _OLD_TOP_LEVEL_PROHIBITED:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -402,7 +731,10 @@ def validate_proposal(
                     )
                 # Reject unknown top-level fields (not in known observation schema)
                 # AND reject case variants of known fields (must be exact case)
-                if key_lower not in _KNOWN_LOWERCASE or key not in _KNOWN_OBSERVATION_FIELDS:
+                if (
+                    key_lower not in _OLD_KNOWN_LOWERCASE
+                    or key not in _OLD_KNOWN_OBSERVATION_FIELDS
+                ):
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -652,8 +984,7 @@ def validate_proposal(
                             is_legal=False,
                             authority_status="not_applicable",
                             reason=(
-                                f"Observation field {field_name} must be exactly str, "
-                                f"got {type(value).__name__}"
+                                f"Observation field {field_name} must be exactly str"
                             ),
                         )
             # NOTE: model_dump() removed — it triggers __getattribute__ on all fields,
@@ -811,35 +1142,140 @@ def validate_proposal(
     )
 
 
+def _decision_digest(decision: Any) -> str:
+    """SHA-256 of the exact decision payload, for execution binding.
+
+    Serialization is only safe after the exact-type/storage boundary has
+    proven every field is a trusted primitive/enum/date.  Rejected or
+    malformed payloads get an empty digest, which execution refuses.
+    """
+    import hashlib
+
+    decision_type = type(decision)
+    if not (
+        decision_type is ProcurementDecision
+        or decision_type is PriceProposalDecision
+        or decision_type is InvestmentDecision
+        or decision_type is HouseholdNeedDecision
+    ):
+        return ""
+    if _decision_storage_violation(decision) is not None:
+        return ""
+    try:
+        payload = decision.model_dump_json()
+    except Exception:
+        return ""
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _tag_mode(
+    result: ValidationResult, mode: str, decision: Any
+) -> ValidationResult:
+    """Attach the evaluation mode, eligibility and payload digest."""
+    return replace(
+        result,
+        mode=mode,
+        admission_eligible=bool(result.is_legal and mode == "admission"),
+        decision_digest=_decision_digest(decision),
+    )
+
+
+def validate_proposal(
+    decision: Decision,
+    calendar: RegimeCalendar,
+    geographic_id: str = "national",
+    observation: Any = None,  # noqa: ANN401
+    *,
+    session: Any = None,  # noqa: ANN401 — omitted admission session is rejected
+    retrospective: bool = False,
+) -> ValidationResult:
+    """Validate one decision for clock-bound admission, or explicitly retrospective.
+
+    Admission requires the existing engine-owned ``PoliticalSession`` (opened,
+    unfinished, non-exhausted) whose ``completed_ticks`` quarter equals the
+    decision quarter.  ``retrospective=True`` performs calendar-only diagnosis
+    and is mutually exclusive with ``session``; its result is tagged
+    ``mode="retrospective"`` and ``admission_eligible=False``.
+    """
+    if type(retrospective) is not bool:
+        return _tag_mode(
+            _reject("retrospective must be exactly bool"), "admission", decision
+        )
+    if retrospective:
+        if session is not None:
+            return _tag_mode(
+                _reject("session and retrospective are mutually exclusive"),
+                "retrospective",
+                decision,
+            )
+        mode = "retrospective"
+    else:
+        if session is None:
+            return _tag_mode(
+                _reject(
+                    "session clock is required for admission; pass an existing "
+                    "PoliticalSession or retrospective=True for calendar-only "
+                    "diagnosis"
+                ),
+                "admission",
+                decision,
+            )
+        mode = "admission"
+    result = _validate_proposal_core(
+        decision, calendar, geographic_id, observation, session
+    )
+    return _tag_mode(result, mode, decision)
+
+
+def validate_proposal_retrospective(
+    decision: Decision,
+    calendar: RegimeCalendar,
+    geographic_id: str = "national",
+    observation: Any = None,  # noqa: ANN401
+) -> ValidationResult:
+    """Calendar-only diagnosis for an already-recorded decision.
+
+    This is explicitly NOT admission: it has no engine clock, so its
+    ``is_legal`` result must never be interpreted as current-tick legality.
+    """
+    return validate_proposal(
+        decision,
+        calendar,
+        geographic_id,
+        observation,
+        session=None,
+        retrospective=True,
+    )
+
+
 def _role_specific_check(
     decision: Decision,
     organization_id: str,
     sector_id: str,
 ) -> str:
     """Return a warning string for role-specific constraints; empty = no warning."""
-    match decision:
-        case ProcurementDecision():
-            # procurement requests must be within declared commodity scope
-            if not _commodity_in_scope(decision.commodity_id, sector_id):
-                return (
-                    f"commodity {decision.commodity_id} may be outside sector "
-                    f"{sector_id} scope — verify against registry"
-                )
-        case PriceProposalDecision():
-            # price proposals must be non-negative (already checked in validate_legality)
-            # additional check: extreme price values may indicate data error
-            if decision.proposed_price > 1e9:
-                return f"proposed_price {decision.proposed_price} is extremely large"
-        case InvestmentDecision():
-            # investment requests require sector alignment
-            if sector_id not in ("industry", "infrastructure"):
-                return (
-                    f"investment approval typically applies to industry/infrastructure, "
-                    f"got sector {sector_id}"
-                )
-        case HouseholdNeedDecision():
-            # household need claims must be non-negative (already checked)
-            pass
+    decision_type = type(decision)
+    if decision_type is ProcurementDecision:
+        # procurement requests must be within declared commodity scope
+        if not _commodity_in_scope(decision.commodity_id, sector_id):
+            return (
+                f"commodity {decision.commodity_id} may be outside sector "
+                f"{sector_id} scope — verify against registry"
+            )
+    elif decision_type is PriceProposalDecision:
+        # price proposals must be non-negative (already checked in validate_legality)
+        # additional check: extreme price values may indicate data error
+        if decision.proposed_price > 1e9:
+            return "proposed_price is extremely large"
+    elif decision_type is InvestmentDecision:
+        # investment requests require sector alignment
+        if sector_id not in ("industry", "infrastructure"):
+            return (
+                "investment approval typically applies to industry/infrastructure"
+            )
+    elif decision_type is HouseholdNeedDecision:
+        # household identity binding was already enforced in validate_legality
+        pass
     return ""
 
 
@@ -858,13 +1294,26 @@ def validate_proposals(
     calendar: RegimeCalendar,
     geographic_id: str = "national",
     observation: Any = None,  # noqa: ANN401
+    *,
+    session: Any = None,  # noqa: ANN401 — omitted admission session is rejected
+    retrospective: bool = False,
 ) -> list[ValidationResult]:
     """Validate a batch of decisions, each independently.
 
     Returns a list of ValidationResult in the same order as input decisions.
     """
+    # Reject custom iterables before iteration (no __iter__ callback).
+    if type(decisions) is not list:
+        return [_reject("decisions must be a plain list")]
     return [
-        validate_proposal(d, calendar, geographic_id, observation)
+        validate_proposal(
+            d,
+            calendar,
+            geographic_id,
+            observation,
+            session=session,
+            retrospective=retrospective,
+        )
         for d in decisions
     ]
 
@@ -927,30 +1376,58 @@ class BoundedPlanning(DecisionRule):
     def evaluate(
         self, decision: Decision, observation: Any  # noqa: ANN401
     ) -> tuple[bool, str]:
+        # Public rule: establish exact storage before attribute access.
+        decision_violation = _decision_storage_violation(decision)
+        if decision_violation is not None:
+            return False, f"bounded_planning violated: {decision_violation}"
+        for field_name in ("available_at", "decision_at"):
+            if type(object.__getattribute__(decision, field_name)) is not date:
+                return False, (
+                    "bounded_planning violated: decision date fields must be "
+                    "plain dates"
+                )
         if decision.available_at > decision.decision_at:
             return False, (
                 f"bounded_planning violated: available_at {decision.available_at} "
                 f"is after decision_at {decision.decision_at}"
             )
-        # Bounded planning: observation must be within decision's information horizon
+        # Bounded planning: one shared custody boundary for model and dict
+        # observation representations.
         if observation is not None:
-            # Try ActorObservation attribute first, then raw dict key
-            obs_avail = getattr(observation, "available_at", None)
-            # Use type() is check to avoid __getattribute__("__class__") callback on smuggled obs
-            if obs_avail is None and type(observation) is dict:
-                obs_avail = observation.get("available_at")
-            if obs_avail is not None:
-                # Reject non-plain-date via type() is check (avoids .__bases__ callback)
-                if type(obs_avail) is not date:
-                    return False, (
-                        "bounded_planning violated: observation available_at "
-                        "is a date subclass; date subclasses may carry forged comparison methods"
-                    )
-                if obs_avail > decision.decision_at:
-                    return False, (
-                        f"bounded_planning violated: observation available_at "
-                        f"{obs_avail} is after decision_at {decision.decision_at}"
-                    )
+            canonical_observation, observation_error = _canonical_observation(
+                observation
+            )
+            if observation_error is not None:
+                return False, (
+                    "bounded_planning violated: " + observation_error
+                )
+            obs_avail = object.__getattribute__(
+                canonical_observation, "available_at"
+            )
+            if obs_avail is None:
+                return False, (
+                    "bounded_planning violated: observation availability is missing"
+                )
+            # Reject non-plain-date via type() identity check
+            if type(obs_avail) is not date:
+                return False, (
+                    "bounded_planning violated: observation available_at "
+                    "is a date subclass; date subclasses may carry forged "
+                    "comparison methods"
+                )
+            if obs_avail > decision.decision_at:
+                return False, (
+                    f"bounded_planning violated: observation available_at "
+                    f"{obs_avail} is after decision_at {decision.decision_at}"
+                )
+            # The observation must not contain information newer than the
+            # decision's own declared information cutoff.
+            if obs_avail > decision.available_at:
+                return False, (
+                    f"bounded_planning violated: observation available_at "
+                    f"{obs_avail} is after the decision information cutoff "
+                    f"{decision.available_at}"
+                )
         return True, "bounded_planning: information horizon respected"
 
 

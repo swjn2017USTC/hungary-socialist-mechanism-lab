@@ -3,11 +3,12 @@
   PASS  S2: future available_at rejected
   PASS  S3: observation is frozen
   PASS  S4: clean observation passes invariants
-  PASS  S5: legal proposal validated
+  PASS  S5: legal proposal admitted under the session clock
   PASS  S6: negative quantity rejected
   PASS  S7: bounded_planning passes for legal decision
   PASS  S8: bounded_planning rejects future info
   PASS  S9: evaluate_all_rules returns 3 results
+  PASS  S10: retrospective diagnosis is not admission-eligible
 
-Results: 10 passed, 0 failed
+Results: 11 passed, 0 failed
 ALL SMOKE CHECKS PASSED

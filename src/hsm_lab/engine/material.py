@@ -65,6 +65,7 @@ from hsm_lab.contract.material import (
     ORGANIZATION_TYPE_ORDER,
     PURPOSE_CODES,
     RETAIL_HANDLING_TOTAL,
+    STAGE_CODES,
     WHOLESALE_HANDLING_TOTAL,
     CommoditySpec,
     MaterialParameters,
@@ -742,6 +743,7 @@ def tick_material(
     cell_region = np.asarray(network.cell_region, dtype=np.int64)
     cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
     cell_owner_kind = np.asarray(network.cell_owner_kind, dtype=np.int64)
+    cell_owner_id = np.asarray(network.cell_owner_id, dtype=np.int64)
     has_dest = demand_cell >= 0
     # Exports/housing are valued at the producer price (no domestic retail
     # margin), so the treasury border continuity stays margin-free.
@@ -837,8 +839,6 @@ def tick_material(
         )
         lean = solve_alignment(problem, objective="min_output")
         if lean.get("status") == "LP_FEASIBLE":
-            from hsm_lab.contract.material import commodity_spec
-
             lean_q = np.asarray(lean["activity"], dtype=np.float64)[:, tick % 4]
             # Only non-stockable output is capped: its surplus cannot be carried
             # and can only expire (the observed revenue loss).  Stockable goods
@@ -1033,6 +1033,59 @@ def tick_material(
         )
         desired[procurement_mask] = proc_share * need_by_cell[proc_dest]
         gross[procurement_mask] = proc_share * order_by_cell[proc_dest]
+
+    # Commodity-specific procurement decisions from the institutional layer.
+    # The control names the requesting organization and commodity; the kernel
+    # still owns ordering, allocation, delivery and settlement.  These are
+    # additional demand cells, never a stock or account write.
+    procurement_requests = (
+        None
+        if controls is None
+        else getattr(controls, "procurement_requests", None)
+    )
+    if procurement_requests:
+        owner_is_org = cell_owner_kind[demand_cell] == 0
+        demand_stage = np.asarray(network.cell_stage, dtype=np.int64)[demand_cell]
+        for org_idx, commodity_idx, quantity in procurement_requests:
+            # A procurement order targets the commodity's consumable stage.
+            # Matching commodity only would split one order across the raw and
+            # ready channels, silently discarding the part with no route.
+            consumable_stage = STAGE_CODES[
+                commodity_spec(
+                    network.commodity_ids[int(commodity_idx)]
+                ).consumable_stage()
+            ]
+            mask = (
+                (demand_purpose == _PURPOSE_PROCUREMENT)
+                & (cell_commodity[demand_cell] == commodity_idx)
+                & (demand_stage == consumable_stage)
+            )
+            owner_mask = owner_is_org & (cell_owner_id[demand_cell] == org_idx)
+            if not owner_mask.any():
+                # An organization-specific control must never silently become
+                # another buyer's order.
+                raise ValueError(
+                    "procurement request for organization "
+                    f"{org_idx} commodity {commodity_idx} has no owner-matched "
+                    "procurement destination"
+                )
+            mask = mask & owner_mask
+            if not mask.any():
+                raise ValueError(
+                    "procurement request for organization "
+                    f"{org_idx} commodity {commodity_idx} has no consumable-stage "
+                    "procurement destination"
+                )
+            shares = demand_share[mask]
+            total_share = float(shares.sum())
+            if total_share <= 0.0:
+                raise ValueError(
+                    "procurement request for organization "
+                    f"{org_idx} commodity {commodity_idx} has zero destination share"
+                )
+            increment = float(quantity) * shares / total_share
+            desired[mask] += increment
+            gross[mask] += increment
 
     # Investment hunger (physical producers only) and housing requests.
     has_k_cells = (

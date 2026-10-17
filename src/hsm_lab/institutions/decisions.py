@@ -9,7 +9,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import date
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import model_validator
 
@@ -47,6 +47,33 @@ class Decision(StrictModel, ABC):
     # The information available at decision time is a separate observation object,
     # not embedded here.
 
+    def __init__(self, **data):
+        # Field-specific exact-type gate BEFORE Pydantic processes the input.
+        # Pydantic would otherwise coerce payloads through
+        # __float__/__int__/__str__(enum value), executing untrusted code.
+        cls = type(self)
+        if cls is ProcurementDecision:
+            field_types = DECISION_FIELD_TYPES[ProcurementDecision]
+        elif cls is PriceProposalDecision:
+            field_types = DECISION_FIELD_TYPES[PriceProposalDecision]
+        elif cls is InvestmentDecision:
+            field_types = DECISION_FIELD_TYPES[InvestmentDecision]
+        elif cls is HouseholdNeedDecision:
+            field_types = DECISION_FIELD_TYPES[HouseholdNeedDecision]
+        else:
+            raise TypeError("decision type is not a registered H2A type")
+        for key, value in data.items():
+            if type(key) is not str:
+                raise TypeError("decision field name must be exactly str")
+            allowed = field_types.get(key)
+            if allowed is None:
+                raise TypeError("decision field name is not registered")
+            if not decision_field_value_allowed(value, allowed):
+                raise TypeError(
+                    "decision field value has a disallowed exact type"
+                )
+        super().__init__(**data)
+
     @model_validator(mode="after")
     def _reject_date_subclasses(self) -> Decision:
         """Reject date subclasses that may carry mutable state."""
@@ -54,8 +81,8 @@ class Decision(StrictModel, ABC):
             value = getattr(self, field_name)
             if type(value) is not date:
                 raise TypeError(
-                    f"{field_name} must be a plain date, not "
-                    f"{type(value).__name__}; date subclasses may carry mutable state"
+                    "decision date fields must be plain dates; "
+                    "date subclasses may carry mutable state"
                 )
         return self
 
@@ -220,8 +247,18 @@ class HouseholdNeedDecision(Decision):
             return False, f"claimed_quantity cannot be negative: {self.claimed_quantity}"
         if not math.isfinite(self.claimed_quantity):
             return False, f"claimed_quantity must be finite: {self.claimed_quantity}"
+        if type(self.household_id) is not str or type(self.organization_id) is not str:
+            return False, "household identity must be exact strings"
         if not self.household_id or not self.household_id.strip():
             return False, "household_id must be non-empty"
+        # Identity binding: a receiver may only claim needs for itself.  There is
+        # no implicit delegation; an authorized delegation would have to be
+        # declared explicitly by the institutional layer.
+        if self.household_id != self.organization_id:
+            return False, (
+                "household_id must equal organization_id; "
+                "implicit delegation is not authorized"
+            )
         if not self.commodity_id or not self.commodity_id.strip():
             return False, "commodity_id must be non-empty"
         if self.available_at > self.decision_at:
@@ -229,3 +266,91 @@ class HouseholdNeedDecision(Decision):
                    f"decision_at {self.decision_at}")
             return False, msg
         return True, "legal household need registration"
+
+
+# Field-specific exact types.  Defined after the concrete classes; the
+# constructor and the validator resolve these at call time.  Enum fields are
+# additionally restricted to declared members (identity, never ``__eq__``).
+DECISION_FIELD_TYPES: dict[type, dict[str, tuple[type, ...]]] = {
+    ProcurementDecision: {
+        "decision_id": (str,),
+        "actor_role": (ActorRole,),
+        "organization_id": (str,),
+        "sector_id": (str,),
+        "quarter": (str,),
+        "decision_at": (date,),
+        "available_at": (date,),
+        "kind": (ProcurementChoiceKind,),
+        "commodity_id": (str,),
+        "requested_quantity": (float,),
+    },
+    PriceProposalDecision: {
+        "decision_id": (str,),
+        "actor_role": (ActorRole,),
+        "organization_id": (str,),
+        "sector_id": (str,),
+        "quarter": (str,),
+        "decision_at": (date,),
+        "available_at": (date,),
+        "kind": (PriceProposalKind,),
+        "commodity_id": (str,),
+        "proposed_price": (float,),
+    },
+    InvestmentDecision: {
+        "decision_id": (str,),
+        "actor_role": (ActorRole,),
+        "organization_id": (str,),
+        "sector_id": (str,),
+        "quarter": (str,),
+        "decision_at": (date,),
+        "available_at": (date,),
+        "kind": (str,),
+        "project_id": (str,),
+        "requested_amount": (float,),
+    },
+    HouseholdNeedDecision: {
+        "decision_id": (str,),
+        "actor_role": (ActorRole,),
+        "organization_id": (str,),
+        "sector_id": (str,),
+        "quarter": (str,),
+        "decision_at": (date,),
+        "available_at": (date,),
+        "kind": (HouseholdNeedKind,),
+        "household_id": (str,),
+        "commodity_id": (str,),
+        "claimed_quantity": (float,),
+    },
+}
+
+# Declared members per enum class.  ``object.__new__(EnumClass)`` can fabricate
+# a non-member whose ``_value_`` triggers arbitrary callbacks during coercion;
+# membership is checked by identity against these tuples.
+ENUM_MEMBER_ALLOWLIST: dict[type, tuple[Enum, ...]] = {
+    ActorRole: (ActorRole.PROCUREMENT_ORGANIZATION,
+                ActorRole.INVESTMENT_ORGANIZATION,
+                ActorRole.APPROVER,
+                ActorRole.HOUSEHOLD_RECEIVER),
+    ProcurementChoiceKind: (ProcurementChoiceKind.REQUEST,
+                            ProcurementChoiceKind.CANCEL),
+    PriceProposalKind: (PriceProposalKind.SET, PriceProposalKind.ADJUST),
+    HouseholdNeedKind: (HouseholdNeedKind.REGISTER,
+                        HouseholdNeedKind.UPDATE),
+}
+
+
+def decision_field_value_allowed(
+    value: Any, allowed: tuple[type, ...]
+) -> bool:
+    """Identity-only field check, including declared enum membership."""
+    actual = type(value)
+    for candidate in allowed:
+        if actual is candidate:
+            members = ENUM_MEMBER_ALLOWLIST.get(candidate)
+            if members is None:
+                return True
+            for member in members:
+                if value is member:
+                    return True
+            return False
+    return False

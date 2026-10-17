@@ -43,6 +43,11 @@ class TickControls:
     autonomy: float
     central_target: np.ndarray | None = None  # float64 (P,) or None for the local rule
     policy: PolicyVector | None = None
+    # Commodity-specific procurement orders: ``(organization_idx,
+    # commodity_idx, quantity)``.  The kernel applies these to the
+    # procurement hub's demand cells for the commodity; it never writes
+    # stocks or accounts directly.
+    procurement_requests: tuple[tuple[int, int, float], ...] | None = None
 
 
 @dataclass(frozen=True)
