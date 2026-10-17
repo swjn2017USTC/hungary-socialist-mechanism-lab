@@ -280,6 +280,17 @@ def validate_proposal(
             })
             _KNOWN_LOWERCASE = {k.lower() for k in _KNOWN_OBSERVATION_FIELDS}
             for key in observation:
+                # Dict key must be exactly str (reject str subclasses used as keys)
+                if type(key) is not str:
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Dict observation key must be exactly str, "
+                            f"got {type(key).__name__}"
+                        ),
+                    )
                 key_lower = key.lower()
                 # Case-insensitive prohibited key check
                 if key_lower in _TOP_LEVEL_PROHIBITED:
@@ -308,8 +319,26 @@ def validate_proposal(
                         reason=f"Dict observation contains unknown field {key!r}",
                     )
             # Require context fields in dict observations
+            # actor_role: must be exactly str
+            obs_actor_role = observation.get("actor_role")
+            if obs_actor_role is None:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason="Dict observation missing required actor_role field",
+                )
+            if type(obs_actor_role) is not str:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Dict observation actor_role must be exactly str, "
+                        f"got {type(obs_actor_role).__name__}"
+                    ),
+                )
             for field_name, field_val in [
-                ("actor_role", observation.get("actor_role")),
                 ("organization_id", observation.get("organization_id")),
                 ("sector_id", observation.get("sector_id")),
                 ("quarter", observation.get("quarter")),
@@ -463,6 +492,13 @@ def validate_proposal(
         # Convert mutable observed_fields to immutable for downstream safety
         if isinstance(observation, dict) and "observed_fields" in observation:
             obs_fields = observation["observed_fields"]
+            if obs_fields is None:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason="Dict observation observed_fields must be a tuple, not None",
+                )
             if not isinstance(obs_fields, tuple):
                 observation = dict(observation)
                 observation["observed_fields"] = tuple(obs_fields)
