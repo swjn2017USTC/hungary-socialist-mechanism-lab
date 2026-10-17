@@ -252,7 +252,14 @@ def validate_proposal(
             obs_geo = observation.geographic_id
             obs_role = observation.actor_role
         elif isinstance(observation, dict):
-            # Dict observations: require actor_role to be declared
+            # Reject dict subclasses (could carry __slots__ with raw_truth/session)
+            if type(observation) is not dict:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason="Observation is a dict subclass; only plain dict allowed",
+                )
             obs_role = observation.get("actor_role")
             if obs_role is None:
                 return ValidationResult(
@@ -317,7 +324,7 @@ def validate_proposal(
                         reason=f"Dict observation missing required {field_name} field",
                     )
                 # Reject primitive subclasses in dict observation metadata
-                if isinstance(field_val, str) and type(field_val) not in (str, bytes):
+                if isinstance(field_val, str) and type(field_val) is not str:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
