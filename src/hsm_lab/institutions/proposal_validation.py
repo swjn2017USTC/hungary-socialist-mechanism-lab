@@ -470,12 +470,8 @@ def validate_proposal(
             # available_at must be a plain date (not subclass, not string)
             obs_avail_raw = observation.get("available_at")
             if obs_avail_raw is not None:
-                # Reject date subclasses without isinstance() to avoid __getattribute__("__class__")
-                # Use any(base is date for base in type(x).__bases__) to detect subclasses:
-                # - __bases__ is a tuple attribute on the type object, safe from instance callbacks
-                # - Uses identity comparison `is` (never overridden) instead of `in` (uses __eq__)
-                is_date_subclass = any(base is date for base in type(obs_avail_raw).__bases__)
-                if is_date_subclass and type(obs_avail_raw) is not date:
+                # Reject non-plain-date via type() is check (avoids .__bases__ callback)
+                if type(obs_avail_raw) is not date:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -485,43 +481,19 @@ def validate_proposal(
                             "date subclasses may carry forged comparison methods"
                         ),
                     )
-                if type(obs_avail_raw) is not date:
-                    return ValidationResult(
-                        decision_id=decision.decision_id,
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Observation available_at must be a date, "
-                            f"got {type(obs_avail_raw).__name__}"
-                        ),
-                    )
         else:
-            # Check for ActorObservation subclasses without isinstance() to avoid callback
-            # Use any(base is ActorObservation for base in type(x).__bases__) to detect subclasses:
-            # - __bases__ is a tuple attribute on the type object, safe from instance callbacks
-            # - Uses identity comparison `is` (never overridden) instead of `in` (uses __eq__)
-            is_actor_obs_subclass = any(
-                base is ActorObservation for base in type(observation).__bases__
-            )
-            if is_actor_obs_subclass:
+            # Check for ActorObservation subclasses without isinstance()
+            # Use type() is check: if it's not exactly ActorObservation, reject as unsupported
+            if type(observation) is not ActorObservation:
                 return ValidationResult(
                     decision_id=decision.decision_id,
                     is_legal=False,
                     authority_status="not_applicable",
                     reason=(
-                        "Observation is a subclass of ActorObservation; "
-                        "only concrete ActorObservation allowed"
+                        "Unsupported observation type; only concrete ActorObservation or "
+                        "plain dict allowed; ActorObservation subclasses are rejected"
                     ),
                 )
-            return ValidationResult(
-                decision_id=decision.decision_id,
-                is_legal=False,
-                authority_status="not_applicable",
-                reason=(
-                    f"Unsupported observation type {type(observation).__name__}; "
-                    "must be ActorObservation or dict with required date fields"
-                ),
-            )
 
         # Organization check
         if obs_org is not None and obs_org != decision.organization_id:
@@ -697,22 +669,9 @@ def validate_proposal(
                                 f"got {type(value).__name__}"
                             ),
                         )
-                # Reject str subclasses in non-string fields: type() is str catches all
-                # non-str types. Use static message to avoid type().__name__ on Payload.
-                elif type(value) is not str:
-                    return ValidationResult(
-                        decision_id=decision.decision_id,
-                        is_legal=False,
-                        authority_status="not_applicable",
-                        reason=(
-                            f"Observation field {field_name} is a str subclass; "
-                            "primitive subclasses may carry mutable state"
-                        ),
-                    )
-                # Reject int subclasses: use any(base is int for base in type(value).__bases__)
-                # This avoids the `in` operator (which uses __eq__) and avoids __mro__
-                # Uses identity comparison `is` which is never overridden.
-                if any(base is int for base in type(value).__bases__):
+
+                # Reject int subclasses via type() is check (avoids .__bases__ metaclass callback)
+                if type(value) is not int:
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -1006,18 +965,11 @@ class BoundedPlanning(DecisionRule):
             if obs_avail is None and type(observation) is dict:
                 obs_avail = observation.get("available_at")
             if obs_avail is not None:
-                # Reject date subclasses without isinstance() to avoid __getattribute__("__class__")
-                # Use any(base is date for base in type(x).__bases__) to detect subclasses safely
-                is_date_subclass = any(base is date for base in type(obs_avail).__bases__)
-                if is_date_subclass and type(obs_avail) is not date:
+                # Reject non-plain-date via type() is check (avoids .__bases__ callback)
+                if type(obs_avail) is not date:
                     return False, (
                         "bounded_planning violated: observation available_at "
                         "is a date subclass; date subclasses may carry forged comparison methods"
-                    )
-                if type(obs_avail) is not date:
-                    return False, (
-                        f"bounded_planning violated: observation available_at "
-                        f"must be a date, got {type(obs_avail).__name__}"
                     )
                 if obs_avail > decision.decision_at:
                     return False, (
