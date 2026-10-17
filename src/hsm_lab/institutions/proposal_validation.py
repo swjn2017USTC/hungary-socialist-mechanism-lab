@@ -104,9 +104,47 @@ def validate_proposal(
     """
     # Step 0: full decision reconstruction via model_validate (catches Literal enum
     # mismatches, primitive subclasses, and any field type violations from model_copy)
+    # BUT first: check original __dict__ for undeclared attrs (model_dump omits these!)
+    decision_type = type(decision)
+    declared_fields = set(decision_type.model_fields.keys())
+    instance_fields = set(decision.__dict__.keys())
+    extra_fields = instance_fields - declared_fields
+    if extra_fields:
+        return ValidationResult(
+            decision_id=getattr(decision, "decision_id", "<unknown>"),
+            is_legal=False,
+            authority_status="not_applicable",
+            reason=f"Decision has extra attributes: {extra_fields}",
+        )
+    # Also check for primitive subclasses in declared fields (model_dump normalizes them away)
+    for field_name in declared_fields:
+        value = decision.__dict__.get(field_name)
+        if value is None:
+            continue
+        # Check primitive subclasses
+        if isinstance(value, str) and type(value) not in (str, bytes):
+            return ValidationResult(
+                decision_id=getattr(decision, "decision_id", "<unknown>"),
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Decision field {field_name} is a str subclass; "
+                    f"primitive subclasses may carry mutable state"
+                ),
+            )
+        if isinstance(value, float) and type(value) is not float:
+            return ValidationResult(
+                decision_id=getattr(decision, "decision_id", "<unknown>"),
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Decision field {field_name} is a float subclass; "
+                    f"primitive subclasses may carry mutable state"
+                ),
+            )
     try:
         decision_dump = decision.model_dump()
-        decision = type(decision).model_validate(decision_dump)
+        decision = decision_type.model_validate(decision_dump)
     except Exception as exc:
         return ValidationResult(
             decision_id=getattr(decision, "decision_id", "<unknown>"),
@@ -369,7 +407,7 @@ def validate_proposal(
                 observation["observed_fields"] = tuple(obs_fields)
 
         # Re-validate ActorObservation at boundary (catches model_copy bypass of __init__)
-        # Check __dict__ for extra attributes (model_dump omits unknown attrs)
+        # Check __dict__ for extra attributes AND primitive subclasses BEFORE model_dump
         if isinstance(observation, ActorObservation):
             declared_fields = set(ActorObservation.model_fields.keys())
             instance_attrs = set(observation.__dict__.keys())
@@ -381,6 +419,21 @@ def validate_proposal(
                     authority_status="not_applicable",
                     reason=f"Observation has extra attributes: {extra_attrs}",
                 )
+            # Check for primitive subclasses in declared fields (model_dump normalizes them)
+            for field_name in declared_fields:
+                value = observation.__dict__.get(field_name)
+                if value is None:
+                    continue
+                if isinstance(value, str) and type(value) not in (str, bytes):
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=(
+                            f"Observation field {field_name} is a str subclass; "
+                            f"primitive subclasses may carry mutable state"
+                        ),
+                    )
             # Also force full re-validation via dump+validate
             try:
                 dump = observation.model_dump()
