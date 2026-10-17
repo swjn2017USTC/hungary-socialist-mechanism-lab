@@ -201,6 +201,17 @@ class ObservationBuilder:
         ValueError
             If available_at > decision_at.
         """
+        # Validate date types BEFORE comparison to prevent subclass __gt__ callback execution
+        if type(available_at) is not date:
+            raise TypeError(
+                f"available_at must be a plain date, got {type(available_at).__name__}; "
+                f"date subclasses may carry forged comparison methods"
+            )
+        if type(decision_at) is not date:
+            raise TypeError(
+                f"decision_at must be a plain date, got {type(decision_at).__name__}; "
+                f"date subclasses may carry forged comparison methods"
+            )
         if available_at > decision_at:
             raise ValueError(
                 f"available_at {available_at} cannot be after decision_at {decision_at}"
@@ -217,6 +228,12 @@ class ObservationBuilder:
         # Filter to whitelist, deep-immutable conversion
         filtered: list[tuple[str, Any]] = []
         for field_name, value in raw_data.items():
+            # Reject non-string keys: whitelist is string-keyed, non-strings can never match
+            if type(field_name) is not str:
+                raise TypeError(
+                    f"raw_data key {field_name!r} is {type(field_name).__name__}, not str; "
+                    f"non-string keys cannot match the string whitelist"
+                )
             # Reject prohibited top-level keys immediately (before whitelist filter)
             fn_lower = field_name.lower()
             for prohibited in _PROHIBITED_KEYS:
@@ -273,11 +290,13 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
     elif t is tuple:
         # Handle (key, value) pairs — check key, recurse into value
         for i, v in enumerate(value):
-            if isinstance(v, (tuple, dict, frozenset)):
+            # Use exact type checks to avoid subclass __iter__ callback execution
+            if type(v) in (tuple, dict, frozenset):
                 _check_no_prohibited_keys(v, path=f"{path}[{i}]")
-            elif isinstance(v, str):
+            elif type(v) is str:
                 # It's a key in a (key, value) pair — check case-insensitively
-                v_lower = v.lower()
+                # Use plain str's .lower() to avoid subclass callback
+                v_lower = str.__lower__(v)
                 for prohibited in _PROHIBITED_KEYS:
                     if prohibited in v_lower:
                         raise TypeError(
@@ -286,8 +305,8 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
                         )
     elif t is frozenset:
         for i, v in enumerate(value):
-            if isinstance(v, str):
-                v_lower = v.lower()
+            if type(v) is str:
+                v_lower = str.__lower__(v)
                 for prohibited in _PROHIBITED_KEYS:
                     if prohibited in v_lower:
                         raise TypeError(
