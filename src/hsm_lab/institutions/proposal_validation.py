@@ -102,6 +102,20 @@ def validate_proposal(
         Frozen result with is_legal, authority_status, and reason.
         No state is modified.
     """
+    # Step 0: decision date subclass recheck (catches model_copy bypass of model_validator)
+    for field_name in ("decision_at", "available_at"):
+        value = getattr(decision, field_name, None)
+        if value is not None and isinstance(value, date) and type(value) is not date:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Decision.{field_name} is a date subclass "
+                    f"({type(value).__name__}); date subclasses may carry mutable state"
+                ),
+            )
+
     # Step 0: single-clock — quarter must be consistent with decision_at
     quarter_year = decision.decision_at.year
     quarter_month = (decision.decision_at.month - 1) // 3 + 1
@@ -170,6 +184,10 @@ def validate_proposal(
                 "raw_truth", "session", "callback", "closure", "target",
                 "truth", "calibration_target", "role",
             })
+            _KNOWN_OBSERVATION_FIELDS = frozenset({
+                "actor_role", "organization_id", "sector_id", "geographic_id",
+                "quarter", "decision_at", "available_at", "observed_fields",
+            })
             for key in observation:
                 key_lower = key.lower()
                 if key_lower in _TOP_LEVEL_PROHIBITED:
@@ -187,6 +205,14 @@ def validate_proposal(
                         is_legal=False,
                         authority_status="not_applicable",
                         reason=f"Dict observation contains prohibited key {key!r}",
+                    )
+                # Reject unknown top-level fields (not in known observation schema)
+                if key_lower not in _KNOWN_OBSERVATION_FIELDS:
+                    return ValidationResult(
+                        decision_id=decision.decision_id,
+                        is_legal=False,
+                        authority_status="not_applicable",
+                        reason=f"Dict observation contains unknown field {key!r}",
                     )
             # Require context fields in dict observations
             for field_name, field_val in [
@@ -318,6 +344,13 @@ def validate_proposal(
                     f"does not match decision decision_at {decision.decision_at}"
                 ),
             )
+
+        # Convert mutable observed_fields to immutable for downstream safety
+        if isinstance(observation, dict) and "observed_fields" in observation:
+            obs_fields = observation["observed_fields"]
+            if not isinstance(obs_fields, tuple):
+                observation = dict(observation)
+                observation["observed_fields"] = tuple(obs_fields)
 
         # Bounded planning: reject future information in observation
         bp_passed, bp_reason = BoundedPlanning().evaluate(decision, observation)
