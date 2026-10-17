@@ -295,8 +295,8 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
                 _check_no_prohibited_keys(v, path=f"{path}[{i}]")
             elif type(v) is str:
                 # It's a key in a (key, value) pair — check case-insensitively
-                # Use plain str's .lower() to avoid subclass callback
-                v_lower = str.__lower__(v)
+                # Use str.lower() built-in to bypass str subclass .lower() override
+                v_lower = str.lower(v)
                 for prohibited in _PROHIBITED_KEYS:
                     if prohibited in v_lower:
                         raise TypeError(
@@ -306,7 +306,7 @@ def _check_no_prohibited_keys(value: Any, path: str = "") -> None:
     elif t is frozenset:
         for i, v in enumerate(value):
             if type(v) is str:
-                v_lower = str.__lower__(v)
+                v_lower = str.lower(v)
                 for prohibited in _PROHIBITED_KEYS:
                     if prohibited in v_lower:
                         raise TypeError(
