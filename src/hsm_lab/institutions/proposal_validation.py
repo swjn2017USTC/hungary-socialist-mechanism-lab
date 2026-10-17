@@ -302,6 +302,7 @@ def validate_proposal(
                     )
             # Require context fields in dict observations
             for field_name, field_val in [
+                ("actor_role", observation.get("actor_role")),
                 ("organization_id", observation.get("organization_id")),
                 ("sector_id", observation.get("sector_id")),
                 ("quarter", observation.get("quarter")),
@@ -460,8 +461,19 @@ def validate_proposal(
                 observation["observed_fields"] = tuple(obs_fields)
 
         # Re-validate ActorObservation at boundary (catches model_copy bypass of __init__)
-        # Check __dict__ for extra attributes AND primitive subclasses BEFORE model_dump
+        # Check __dict__ for extra attributes AND __slots__ BEFORE model_dump
         if isinstance(observation, ActorObservation):
+            # Reject ActorObservation subclasses (only concrete type allowed)
+            if type(observation) is not ActorObservation:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=(
+                        f"Observation is a {type(observation).__name__} subclass; "
+                        f"only concrete ActorObservation allowed"
+                    ),
+                )
             declared_fields = set(ActorObservation.model_fields.keys())
             instance_attrs = set(observation.__dict__.keys())
             extra_attrs = instance_attrs - declared_fields
