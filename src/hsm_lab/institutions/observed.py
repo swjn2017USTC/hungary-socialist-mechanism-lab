@@ -396,6 +396,11 @@ def verify_observation_invariants(obs: ActorObservation) -> list[str]:
             violations.append(
                 f"Value for '{name}' is not deep-immutable: {type(value).__name__}"
             )
+        # Check string values for prohibited substrings
+        if isinstance(value, str) and _value_has_prohibited_keys(value):
+            violations.append(
+                f"Value for '{name}' contains prohibited content"
+            )
         # Check for prohibited keys in nested containers
         if isinstance(value, (tuple, dict)):
             try:

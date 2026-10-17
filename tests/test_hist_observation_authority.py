@@ -1208,11 +1208,14 @@ class TestAuthorityBindingEnforcement:
         )
         # Dict observation with future available_at
         dict_obs = {
+            "actor_role": "procurement_organization",
             "organization_id": "ORG-ENT-A",
             "sector_id": "industry",
             "quarter": "1968Q2",
             "available_at": date(1985, 1, 10),  # future
-            "inventory_level": 999.0,
+            "observed_fields": [
+                ("supply_quantity", 100.0),
+            ],
         }
         result = validate_proposal(decision, calendar, observation=dict_obs)
         assert not result.is_legal
@@ -1258,11 +1261,14 @@ class TestAuthorityBindingEnforcement:
             requested_quantity=50.0,
         )
         dict_obs = {
+            "actor_role": "procurement_organization",
             "organization_id": "ORG-ENT-A",
             "sector_id": "industry",
             "quarter": "1968Q2",
             "available_at": ForgedDate(1988, 1, 1),  # forged future date
-            "inventory_level": 999.0,
+            "observed_fields": [
+                ("supply_quantity", 100.0),
+            ],
         }
         result = validate_proposal(decision, calendar, observation=dict_obs)
         assert not result.is_legal
@@ -1287,6 +1293,35 @@ class TestAuthorityBindingEnforcement:
         assert not result.is_legal
         assert "unsupported observation type" in result.reason.lower()
 
+    def test_actor_role_mismatch_rejected(self, calendar):
+        """ActorObservation with wrong actor_role must be rejected."""
+        decision = ProcurementDecision(
+            decision_id="role-mismatch",
+            actor_role=ActorRole.PROCUREMENT_ORGANIZATION,
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            kind=ProcurementChoiceKind.REQUEST,
+            commodity_id="coal",
+            requested_quantity=50.0,
+        )
+        # Observation from investment organization, not procurement
+        obs = ActorObservation(
+            actor_role="investment_organization",
+            organization_id="ORG-ENT-A",
+            sector_id="industry",
+            geographic_id="national",
+            quarter="1968Q2",
+            decision_at=date(1968, 6, 1),
+            available_at=date(1968, 5, 25),
+            observed_fields=(("requested_amount", 999.0),),
+        )
+        result = validate_proposal(decision, calendar, observation=obs)
+        assert not result.is_legal
+        assert "actor_role" in result.reason.lower()
+
     def test_dict_observation_with_callback_rejected(self, calendar):
         """Dict observation containing prohibited content must be rejected."""
         decision = ProcurementDecision(
@@ -1302,6 +1337,7 @@ class TestAuthorityBindingEnforcement:
             requested_quantity=50.0,
         )
         dict_obs = {
+            "actor_role": "procurement_organization",
             "organization_id": "ORG-ENT-A",
             "sector_id": "industry",
             "quarter": "1968Q2",

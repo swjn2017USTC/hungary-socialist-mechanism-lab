@@ -153,18 +153,37 @@ def validate_proposal(
             obs_sector = observation.sector_id
             obs_quarter = observation.quarter
             obs_geo = observation.geographic_id
+            obs_role = observation.actor_role
         elif isinstance(observation, dict):
-            # Validate dict observations for key fields; skip if not present
+            # Dict observations: require actor_role to be declared
+            obs_role = observation.get("actor_role")
+            if obs_role is None:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason="Dict observation missing required actor_role field",
+                )
+            # Reject dict observations with top-level prohibited keys
+            for key in observation:
+                key_lower = key.lower()
+                for prohibited in ("raw_truth", "session", "callback", "closure",
+                                   "target"):
+                    if prohibited in key_lower:
+                        return ValidationResult(
+                            decision_id=decision.decision_id,
+                            is_legal=False,
+                            authority_status="not_applicable",
+                            reason=f"Dict observation contains prohibited key {key!r}",
+                        )
             obs_org = observation.get("organization_id")
             obs_sector = observation.get("sector_id")
             obs_quarter = observation.get("quarter")
             obs_geo = observation.get("geographic_id")
-            # Reject dict observations with non-date available_at
+            # available_at must be a plain date (not subclass, not string)
             obs_avail_raw = observation.get("available_at")
             if obs_avail_raw is not None:
-                # available_at must be a plain date (not subclass, not string)
                 if isinstance(obs_avail_raw, date) and type(obs_avail_raw) is not date:
-                    # Date subclass — reject (could carry forged __gt__)
                     return ValidationResult(
                         decision_id=decision.decision_id,
                         is_legal=False,
@@ -242,6 +261,17 @@ def validate_proposal(
                     f"does not match authorized scope {geographic_id!r}"
                 ),
             )
+        # Role binding: observation's role must match decision's role
+        if obs_role != decision.actor_role.value:
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=(
+                    f"Observation actor_role {obs_role!r} "
+                    f"does not match decision actor_role {decision.actor_role.value!r}"
+                ),
+            )
 
         # Bounded planning: reject future information in observation
         bp_passed, bp_reason = BoundedPlanning().evaluate(decision, observation)
@@ -281,7 +311,15 @@ def validate_proposal(
                 def observed_fields(self):
                     return tuple(self._d.get("observed_fields", []))
 
-            obs_errors = verify_observation_invariants(_DictAdapter(observation))
+            try:
+                obs_errors = verify_observation_invariants(_DictAdapter(observation))
+            except (AttributeError, TypeError, KeyError) as exc:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=f"observation malformed: {exc}",
+                )
             if obs_errors:
                 return ValidationResult(
                     decision_id=decision.decision_id,
