@@ -116,18 +116,31 @@ def validate_proposal(
                 ),
             )
 
-    # Step 0b: reject decisions with prohibited state-assignment fields
-    # H2A decisions are frozen and must not carry stock/cash fields
+    # Step 0b: reject decisions with prohibited state-assignment fields or extra attrs
+    # H2A decisions are frozen and must not carry stock/cash fields;
+    # any presence (including zero) is prohibited since model_copy bypasses frozen=True
     for prohibited_field in ("stock", "cash"):
         if hasattr(decision, prohibited_field):
-            val = getattr(decision, prohibited_field, None)
-            if val is not None and val != 0:
-                return ValidationResult(
-                    decision_id=decision.decision_id,
-                    is_legal=False,
-                    authority_status="not_applicable",
-                    reason=f"Decision contains prohibited field {prohibited_field}={val!r}",
-                )
+            # Reject any presence (stock/cash fields must not exist in H2A decisions)
+            return ValidationResult(
+                decision_id=decision.decision_id,
+                is_legal=False,
+                authority_status="not_applicable",
+                reason=f"Decision contains prohibited field {prohibited_field}",
+            )
+
+    # Reject decisions with extra attributes (model_copy bypasses frozen=True)
+    decision_type = type(decision)
+    decision_declared = set(decision_type.model_fields.keys())
+    decision_instance = set(decision.__dict__.keys())
+    decision_extra = decision_instance - decision_declared
+    if decision_extra:
+        return ValidationResult(
+            decision_id=decision.decision_id,
+            is_legal=False,
+            authority_status="not_applicable",
+            reason=f"Decision has extra attributes: {decision_extra}",
+        )
 
     # Step 0: single-clock — quarter must be consistent with decision_at
     quarter_year = decision.decision_at.year
@@ -369,8 +382,19 @@ def validate_proposal(
                 observation["observed_fields"] = tuple(obs_fields)
 
         # Re-validate ActorObservation at boundary (catches model_copy bypass of __init__)
-        # Use model_dump + model_validate to force full re-validation
+        # Check __dict__ for extra attributes (model_dump omits unknown attrs)
         if isinstance(observation, ActorObservation):
+            declared_fields = set(ActorObservation.model_fields.keys())
+            instance_attrs = set(observation.__dict__.keys())
+            extra_attrs = instance_attrs - declared_fields
+            if extra_attrs:
+                return ValidationResult(
+                    decision_id=decision.decision_id,
+                    is_legal=False,
+                    authority_status="not_applicable",
+                    reason=f"Observation has extra attributes: {extra_attrs}",
+                )
+            # Also force full re-validation via dump+validate
             try:
                 dump = observation.model_dump()
                 ActorObservation.model_validate(dump)
