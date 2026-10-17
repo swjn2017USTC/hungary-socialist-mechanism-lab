@@ -104,24 +104,21 @@ def validate_proposal(
     """
     # Step 0: validate against concrete registered decision types only
     # Reject arbitrary subclasses that may declare stock/cash or other assignment fields
-    from hsm_lab.institutions.decisions import (
-        HouseholdNeedDecision,
-        InvestmentDecision,
-        PriceProposalDecision,
-        ProcurementDecision,
-    )
-    _ALLOWED_DECISION_TYPES = (
-        HouseholdNeedDecision,
-        InvestmentDecision,
-        PriceProposalDecision,
-        ProcurementDecision,
-    )
-    if type(decision) not in _ALLOWED_DECISION_TYPES:
+    _KNOWN_DECISION_TYPE_NAMES = frozenset({
+        "HouseholdNeedDecision",
+        "InvestmentDecision",
+        "PriceProposalDecision",
+        "ProcurementDecision",
+    })
+    # Use type name string comparison to avoid triggering __eq__ callbacks
+    # via the `in` operator on a tuple of types
+    decision_type_name = type(decision).__name__
+    if decision_type_name not in _KNOWN_DECISION_TYPE_NAMES:
         return ValidationResult(
             decision_id=getattr(decision, "decision_id", "<unknown>"),
             is_legal=False,
             authority_status="not_applicable",
-            reason=f"Decision type {type(decision).__name__} is not a registered H2A type",
+            reason=f"Decision type {decision_type_name} is not a registered H2A type",
         )
 
     # Step 0: full decision reconstruction via model_validate (catches Literal enum

@@ -391,10 +391,11 @@ def _to_immutable(value: Any) -> Any:
             (str(k), _to_immutable(v)) for k, v in value.items()
         ))
     # Reject everything else: callable, object, subclassed primitive, etc.
+    # Use static message to avoid type(value).__name__ which triggers
+    # metaclass __getattribute__ on untrusted objects
     raise TypeError(
-        f"Value of type {type(value).__name__!r} is not allowed in "
-        f"observations; only primitive types and plain tuple/frozenset/dict "
-        f"containers are accepted"
+        "Value type not allowed in observations; "
+        "only None, bool, int, float, str, tuple, frozenset, list, dict, set allowed"
     )
 
 
