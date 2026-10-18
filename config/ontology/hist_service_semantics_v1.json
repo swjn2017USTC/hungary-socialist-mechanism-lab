@@ -1,0 +1,97 @@
+{
+  "ontology_id": "hist-service-semantics-v1",
+  "schema_version": "hist-service-metrics-v1",
+  "status": "measurement_overlay",
+  "runtime_catalog": false,
+  "description": "H3A read-only service capability/schedule/provision/use/loss typology. This file is a semantic dictionary, not a runtime catalog: it is never passed to the material catalog loader and never replaces the frozen intermediate8_v1 or f2_v1 axes.",
+  "parent_runtime_catalogs": [
+    "intermediate8_v1",
+    "f2_v1"
+  ],
+  "sources": {
+    "baseline": "BASELINE.md §9.2 and §9.11",
+    "phase_design": [
+      "docs/upgrade_review/HIST_VNEXT/04_DESIGN_CHALLENGES_AND_ABLATIONS.md",
+      "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+      "H3A_服务语义分型_PLAN.md"
+    ],
+    "measurement_module": "src/hsm_lab/measurement/service_semantics.py",
+    "historical_support": "UNIDENTIFIED/NOT_RUN"
+  },
+  "axes": {
+    "activity_axis": "network.activity_kind (P productive organizations plus R plot activities)",
+    "stock_cell_axis": "network.cell_commodity (S canonical stock cells)",
+    "demand_axis": "network.demand_cell (D order intents)",
+    "route_axis": "network.edge_source_cell (M canonical edges)",
+    "service_selection": "commodity_spec(commodity_id).stockable == false, iterated in network.commodity_ids order",
+    "housing_axis": "network.region_ids (R regions)"
+  },
+  "service_commodity_fields": {
+    "commodity_id": "declared commodity id",
+    "unit": "commodity_spec(commodity_id).unit; never summed across commodity ids",
+    "capacity": "nominal quarterly capability: organization activities use opening.organization_capacity, plot activities use network.activity_capacity, then B.T @ capacity summed by cell_commodity",
+    "scheduled": "B.T @ flows.activity_target summed by cell_commodity",
+    "provided": "B.T @ flows.activity_realized summed by cell_commodity (gross provision, not net of same-quarter pool credit)",
+    "unscheduled_capacity": "capacity - scheduled",
+    "schedule_shortfall": "scheduled - provided",
+    "opening": "sum of opening.stock_value over service cells of the commodity",
+    "imports": "flows.imports[commodity]",
+    "used_productive": "flows.used on K demand rows, mapped through demand_input_index and input_cell, summed once per K row",
+    "used_logistics": "flows.edge_service_used attributed through network.edge_transport_service_cell; never through edge_commodity",
+    "used_household": "flows.edge_delivered on RoutePurpose.HOUSEHOLD boundary edges, summed by source cell commodity",
+    "used_other": "flows.second_input_used on service cells plus INVESTMENT actual use plus HOUSING boundary delivery; mutually exclusive with K/household/export paths",
+    "exports": "flows.cmea_exports[commodity] + flows.convertible_exports[commodity]",
+    "lost": "sum of invariant_summary.expired_leftover_by_cell over service cells of the commodity; never inferred from provided - used",
+    "closing": "sum of state.stock_value over service cells of the commodity",
+    "balance_residual": "opening + provided + imports - (used_productive + used_logistics + used_household + used_other + exports + lost + closing)"
+  },
+  "service_input_fields": {
+    "activity_index": "P-axis activity that produces at least one non-stockable service through network.B",
+    "input_index": "K-axis production input row in network.A",
+    "commodity_id": "cell_commodity[input_cell[input_index]]",
+    "unit": "commodity_spec(commodity_id).unit",
+    "used": "flows.used on the K row's unique demand cell (real fuel/other input units; no posterior allocation)"
+  },
+  "housing_fields": {
+    "region_id": "network.region_ids",
+    "unit": "dwelling_unit",
+    "opening_stock": "opening.dwelling_stock[region]",
+    "closing_stock": "state.dwelling_stock[region]",
+    "formal_completed": "flows.delivered on the region's RoutePurpose.HOUSING boundary demand cell",
+    "private_completed": "sum of state.household_weight * flows.private_completed over the region's households",
+    "allocated": "sum of state.household_weight * flows.housing_allocated over the region's households; an assignment of existing dwellings, never a new completion"
+  },
+  "units": {
+    "service_commodities": "commodity-specific declared unit; no cross-commodity sum or ratio",
+    "service_inputs": "the input commodity's declared unit; service output and input units never add directly",
+    "housing": "dwelling_unit, independent from every quarterly service commodity",
+    "legacy_expired_services": "old scalar sink, reported unchanged and never used as a scientific aggregate"
+  },
+  "zero_and_missing": {
+    "no_nonstockable_commodity": "services = () ; no synthetic zero row",
+    "declared_nonstockable_without_cells": "ResearchGateError: missing source/cell is not a legitimate empty measurement",
+    "unknown_commodity": "ConfigError from the frozen commodity registry",
+    "negative_capacity_or_sink": "ResearchGateError beyond ATOL; no max(0, ...) clipping",
+    "dust": "differences inside tolerance_for (ATOL=1e-9, RTOL=1e-10) are retained raw",
+    "clock": "opening.completed_ticks == flows.tick == state.completed_ticks; measured after the gate and before the clock advance"
+  },
+  "conservation": {
+    "service_identity": "opening + provided + imports = used_productive + used_logistics + used_household + used_other + exports + lost + closing",
+    "expiry_authority": "lost sums invariant_summary.expired_leftover_by_cell and must reconcile with flows.expired_services",
+    "housing_identity": "closing_stock - opening_stock = formal_completed + private_completed",
+    "tolerance": "engine.accounting.tolerance_for"
+  },
+  "legacy_expiry": {
+    "flows.expired_services": "per-tick scalar applied by the kernel; recorded as legacy_expired_services",
+    "national_accounts.expiry": "published legacy national row; unchanged",
+    "stage_balances.expiry": "published stage reconstruction; unchanged",
+    "rule": "the new lost field does not replace, rescale or relabel any legacy expiry denominator or gate"
+  },
+  "scope": {
+    "mode": "read-only observation",
+    "default_runtime": false,
+    "writes": "none (no state, flows, clock, disk or calibration mutation)",
+    "historical": "UNIDENTIFIED/NOT_RUN",
+    "structural": "synthetic technical measurement only"
+  }
+}
