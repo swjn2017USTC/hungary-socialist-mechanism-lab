@@ -51,6 +51,7 @@ import hashlib
 import json
 import struct
 import time
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -81,6 +82,7 @@ from hsm_lab.contract.schemas import (
     ScenarioSpec,
 )
 from hsm_lab.engine import finance
+from hsm_lab.engine.accounting import tolerance_for
 from hsm_lab.engine.finance import (
     DOMESTIC_CURRENCY,
     household_account_ids,
@@ -157,6 +159,7 @@ MATERIAL_RESEARCH_WARNING = "material_synthetic_fixture_not_historical_fit"
 
 _ATOL = 1e-9
 _STOCK_DUST = 1e-9
+GATE_PREFIX = "HIST_H3C_ROUTING"
 
 _ORG_TYPES = {t.value: i for i, t in enumerate(ORGANIZATION_TYPE_ORDER)}
 _CODE_COOP = _ORG_TYPES["agricultural_cooperative"]
@@ -551,6 +554,86 @@ def _handling_capacity(state: MaterialState) -> np.ndarray:
     return capacity
 
 
+def _validate_routing_allocation(
+    value: Any, boundary: Mapping[str, Any]
+) -> np.ndarray:
+    """Reject a non-canonical H3C edge vector before it can move stock.
+
+    The validator deliberately rechecks the physical/release upper bounds from
+    the same boundary the allocator saw.  It does not rerun the legacy
+    allocator and never clamps, projects or invents a vector.
+    """
+    m_count = int(np.asarray(boundary["edge_source"]).shape[0])
+    array = np.asarray(value, dtype=np.float64)
+    if array.shape != (m_count,):
+        raise ResearchGateError(
+            f"{GATE_PREFIX}: allocator returned shape {array.shape}, expected ({m_count},)"
+        )
+    if not bool(np.all(np.isfinite(array))):
+        raise ResearchGateError(f"{GATE_PREFIX}: allocator returned a non-finite edge flow")
+    if bool(np.any(array < -1e-9)):
+        bad = int(np.argmin(array))
+        raise ResearchGateError(
+            f"{GATE_PREFIX}: allocator returned negative edge flow at edge {bad}"
+        )
+    array = np.ascontiguousarray(array, dtype=np.float64).copy()
+    edge_demand = np.asarray(boundary["edge_demand"], dtype=np.int64)
+    edge_source = np.asarray(boundary["edge_source"], dtype=np.int64)
+    edge_tier = np.asarray(boundary["edge_tier"], dtype=np.int64)
+    demand_count = int(np.asarray(boundary["demand_ordered"]).shape[0])
+    cell_count = int(np.asarray(boundary["source_available"]).shape[0])
+    ordered = np.asarray(boundary["demand_ordered"], dtype=np.float64)
+    by_demand = np.bincount(edge_demand, weights=array, minlength=demand_count)
+    tolerance = np.asarray(tolerance_for(by_demand, ordered), dtype=np.float64)
+    if bool(np.any(by_demand > ordered + tolerance)):
+        bad = int(np.argmax(by_demand - ordered - tolerance))
+        raise ResearchGateError(
+            f"{GATE_PREFIX}: allocation exceeds ordered demand at demand {bad}: "
+            f"{float(by_demand[bad])!r} > {float(ordered[bad])!r}"
+        )
+    available = np.asarray(boundary["source_available"], dtype=np.float64)
+    by_source = np.bincount(edge_source, weights=array, minlength=cell_count)
+    tolerance = np.asarray(tolerance_for(by_source, available), dtype=np.float64)
+    if bool(np.any(by_source > available + tolerance)):
+        bad = int(np.argmax(by_source - available - tolerance))
+        raise ResearchGateError(
+            f"{GATE_PREFIX}: allocation exceeds source stock at cell {bad}: "
+            f"{float(by_source[bad])!r} > {float(available[bad])!r}"
+        )
+    stock_open = np.asarray(boundary["stock_open"], dtype=np.float64)
+    import_into = np.asarray(boundary["import_into"], dtype=np.float64)
+    produced_into = np.asarray(boundary["produced_into"], dtype=np.float64)
+    split = np.asarray(boundary["service_split"], dtype=np.float64)
+    for source in np.unique(edge_source).tolist():
+        edges = np.flatnonzero(edge_source == int(source))
+        for tier in (0, 1, 2):
+            selected = edges[edge_tier[edges] <= tier]
+            if not selected.size:
+                continue
+            cap = (
+                float(stock_open[source])
+                + float(import_into[source])
+                + float(produced_into[source]) * float(split[2 if tier == 2 else 1])
+            )
+            moved = float(array[selected].sum())
+            if moved > cap + float(tolerance_for(moved, cap)):
+                raise ResearchGateError(
+                    f"{GATE_PREFIX}: allocation exceeds source release at cell "
+                    f"{source}, tier {tier}: {moved!r} > {cap!r}"
+                )
+        fallback = edges[edge_tier[edges] == 3]
+        if fallback.size:
+            prior = edges[edge_tier[edges] <= 2]
+            cap = float(stock_open[source]) + float(import_into[source])
+            moved = float(array[prior].sum()) + float(array[fallback].sum())
+            if moved > cap + float(tolerance_for(moved, cap)):
+                raise ResearchGateError(
+                    f"{GATE_PREFIX}: fallback allocation exceeds the remaining opening "
+                    f"stock at cell {source}: {moved!r} > {cap!r}"
+                )
+    return array
+
+
 # ---------------------------------------------------------------------------
 # Tick kernel
 # ---------------------------------------------------------------------------
@@ -566,6 +649,8 @@ def tick_material(
     controls: Any = None,
     credit_approval_caps: np.ndarray | None = None,
     procurement_trace: dict[str, np.ndarray] | None = None,
+    routing_allocator: Callable[[Mapping[str, Any]], np.ndarray] | None = None,
+    routing_trace: dict[str, Any] | None = None,
 ) -> MaterialTickFlows:
     """Advance the material economy by one admitted quarter (plan section 3).
 
@@ -584,6 +669,14 @@ def tick_material(
     ordering and journal byte.  Caps are validated before any state mutation;
     a non-None trace must be an empty dict, requires caps, and is filled with
     the tick's real intermediate funding arrays before goods scaling.
+
+    ``routing_allocator`` and ``routing_trace`` are the H3C opt-in interface.
+    The allocator receives one read-only boundary mapping at the real step-5
+    allocation point and returns the canonical ``(M,)`` edge flow that replaces
+    the legacy two-round allocation exactly once.  ``None`` preserves the
+    legacy allocation bit for bit.  A trace must be a plain empty dict; it
+    records the boundary and the requested/submitted edge flow for failure
+    export and never changes allocation behaviour.
     """
     mark = time.perf_counter()
 
@@ -632,6 +725,13 @@ def tick_material(
             raise ValueError("procurement_trace must be empty at tick entry")
         if caps is None:
             raise ValueError("procurement_trace requires credit_approval_caps")
+    if routing_allocator is not None and not callable(routing_allocator):
+        raise ValueError("routing_allocator must be callable or None")
+    if routing_trace is not None:
+        if type(routing_trace) is not dict:
+            raise ValueError("routing_trace must be a plain dict")
+        if routing_trace:
+            raise ValueError("routing_trace must be empty at tick entry")
 
     index = _tick_index(network)
     price_net, services_g = _admin_price_vector(parameters, network)
@@ -759,6 +859,7 @@ def tick_material(
     transport_org_mask = org_type == _CODE_TRANSPORT
 
     edge_demand = np.asarray(network.edge_demand, dtype=np.int64)
+    edge_id = np.asarray(network.edge_id, dtype=np.int64)
     edge_source = np.asarray(network.edge_source_cell, dtype=np.int64)
     edge_destination = np.asarray(network.edge_destination_cell, dtype=np.int64)
     edge_purpose = np.asarray(network.edge_purpose, dtype=np.int64)
@@ -1392,43 +1493,228 @@ def tick_material(
     # ---------------- step 5: two-round tiered allocation ----------------
     avail = stock_open + import_into
     tier_stack = index.tier_masks[str(parameters.allocation_order)]
-    edge_allocated = np.zeros(m_count, dtype=np.float64)
-    for tier_index in range(tier_stack.shape[0]):
-        tier_edges = tier_stack[tier_index]
-        if not tier_edges.any():
-            continue
-        tier_avail = avail + produced_into * float(
-            parameters.service_split[2 if tier_index == 2 else 1]
-        )
-        src = edge_source[tier_edges]
-        demand_of_tier = edge_demand[tier_edges]
-        claim1 = ordered[demand_of_tier] * edge_weight[tier_edges]
-        need1 = np.bincount(src, weights=claim1, minlength=cell_count)
-        factor1 = _group_factor(need1, tier_avail)
-        alloc1 = claim1 * factor1[src]
-        avail -= np.bincount(src, weights=alloc1, minlength=cell_count)
-        got = np.bincount(demand_of_tier, weights=alloc1, minlength=d_count)
-        unmet = np.maximum(ordered - got, 0.0)
-        claim2 = unmet[demand_of_tier] * edge_weight[tier_edges]
-        need2 = np.bincount(src, weights=claim2, minlength=cell_count)
-        factor2 = _group_factor(need2, avail)
-        alloc2 = claim2 * factor2[src]
-        avail -= np.bincount(src, weights=alloc2, minlength=cell_count)
-        edge_allocated[tier_edges] = alloc1 + alloc2
-    # P05 §0.3 fallback round: unmet demand may draw from additional
-    # same-commodity sources once the declared sources are exhausted.
     fallback_edges = np.asarray(network.edge_is_fallback, dtype=bool)
-    if fallback_edges.any():
-        allocated_so_far = np.bincount(edge_demand, weights=edge_allocated, minlength=d_count)
-        unmet = np.maximum(ordered - allocated_so_far, 0.0)
-        fb_src = edge_source[fallback_edges]
-        fb_demand = edge_demand[fallback_edges]
-        claim = unmet[fb_demand] * edge_weight[fallback_edges]
-        need = np.bincount(fb_src, weights=claim, minlength=cell_count)
-        factor = _group_factor(need, avail)
-        alloc = claim * factor[fb_src]
-        avail -= np.bincount(fb_src, weights=alloc, minlength=cell_count)
-        edge_allocated[fallback_edges] = alloc
+    edge_allocated = np.zeros(m_count, dtype=np.float64)
+    routing_boundary: dict[str, Any] | None = None
+    if routing_allocator is not None or routing_trace is not None:
+        edge_tier = np.full(m_count, 3, dtype=np.int64)
+        for tier_index in range(tier_stack.shape[0]):
+            edge_tier[tier_stack[tier_index]] = tier_index
+        edge_tier[fallback_edges] = 3
+        cell_pool = np.asarray(network.cell_pool, dtype=np.int64)
+        source_valid = np.zeros(cell_count, dtype=bool)
+        source_valid[edge_source] = True
+        for source_cells in (
+            network.org_output_cell,
+            network.org_wholesale_cell,
+            network.retail_cell,
+            network.plot_raw_cell,
+            network.plot_ready_market_cell,
+            network.import_pool_cell,
+        ):
+            flat = np.asarray(source_cells, dtype=np.int64).reshape(-1)
+            source_valid[flat[flat >= 0]] = True
+        source_valid &= (cell_commodity >= 0) & np.isin(cell_owner_kind, (0, 1, 3))
+        source_valid &= cell_pool != 4
+        buyer_org = index.demand_buyer[edge_demand]
+        org_buyer = buyer_org >= 0
+        plot_buyer = (~org_buyer) & (edge_purpose == _PURPOSE_PRIVATE_PLOT)
+        treasury_buyer = (~org_buyer) & np.isin(
+            edge_purpose, (_PURPOSE_HOUSING, _PURPOSE_EXPORT_CMEA, _PURPOSE_EXPORT_CONVERTIBLE)
+        )
+        safe_destination = np.maximum(edge_destination, 0)
+        buyer_bank = np.where(
+            org_buyer,
+            safe_org_bank[np.maximum(buyer_org, 0)],
+            np.where(
+                plot_buyer,
+                cell_region[safe_destination] % max(bank_count, 1),
+                np.where(treasury_buyer, 0, 0),
+            ),
+        )
+        seller_org = index.cell_owner_org[edge_source]
+        seller_bank = np.where(
+            seller_org >= 0,
+            safe_org_bank[np.maximum(seller_org, 0)],
+            np.where(
+                cell_owner_kind[edge_source] == 1,
+                cell_region[edge_source] % max(bank_count, 1),
+                0,
+            ),
+        )
+        carrier_bank = np.full(m_count, -1, dtype=np.int64)
+        carrier_rows = edge_transport >= 0
+        carrier_bank[carrier_rows] = safe_org_bank[edge_transport[carrier_rows]]
+        buyer_id = np.where(
+            buyer_org >= 0,
+            np.asarray(state.organization_id, dtype=np.int64)[np.maximum(buyer_org, 0)],
+            -1,
+        )
+        carrier_id = np.where(
+            carrier_rows,
+            np.asarray(state.organization_id, dtype=np.int64)[np.maximum(edge_transport, 0)],
+            -1,
+        )
+        funding_group = np.full(d_count, org_count + region_count + 1, dtype=np.int64)
+        for demand_index in range(d_count):
+            buyer_row = int(index.demand_buyer[demand_index])
+            if buyer_row >= 0:
+                funding_group[demand_index] = buyer_row
+            elif demand_purpose[demand_index] == _PURPOSE_PRIVATE_PLOT:
+                destination = int(demand_cell[demand_index])
+                if destination >= 0:
+                    funding_group[demand_index] = org_count + int(
+                        cell_region[destination]
+                    )
+            elif demand_purpose[demand_index] in (
+                _PURPOSE_HOUSING,
+                _PURPOSE_EXPORT_CMEA,
+                _PURPOSE_EXPORT_CONVERTIBLE,
+            ):
+                funding_group[demand_index] = org_count + region_count
+        funding_capacity = np.concatenate(
+            [
+                np.asarray(state.organization_cash, dtype=np.float64).copy(),
+                plot_pool.copy(),
+                np.asarray([float(state.treasury_deposit), 0.0], dtype=np.float64),
+            ]
+        )
+        funding_kind = (
+            *("organization" for _ in range(org_count)),
+            *("plot" for _ in range(region_count)),
+            "treasury",
+            "residual",
+        )
+        routing_boundary = {
+            "tick": tick,
+            "quarter": quarter,
+            "edge_id": edge_id,
+            "edge_source": edge_source,
+            "edge_destination": edge_destination,
+            "edge_demand": edge_demand,
+            "edge_commodity": edge_commodity,
+            "edge_stage": np.asarray(network.edge_stage, dtype=np.int64),
+            "edge_purpose": edge_purpose,
+            "edge_tier": edge_tier,
+            "edge_unit_price": edge_unit_price,
+            "edge_transport_per_unit": edge_per_unit,
+            "edge_self_hauled": edge_self_hauled_flag,
+            "edge_transport_org": edge_transport,
+            "edge_transport_service_cell": np.asarray(
+                network.edge_transport_service_cell, dtype=np.int64
+            ),
+            "edge_weight": edge_weight,
+            "demand_cell": demand_cell,
+            "demand_gross": gross,
+            "demand_ordered": ordered,
+            "demand_desired": desired,
+            "demand_active": np.concatenate(
+                [
+                    ~kt_mask,
+                    np.ones(d_count - k_count, dtype=bool),
+                ]
+            ),
+            # ``realize_imports`` has already credited the landed import
+            # cells to ``state.stock_value``; adding ``import_into`` here
+            # would count the same import twice.
+            "source_available": np.asarray(state.stock_value, dtype=np.float64),
+            "stock_open": stock_open,
+            "import_into": import_into,
+            "produced_into": produced_into,
+            "service_split": np.asarray(parameters.service_split, dtype=np.float64),
+            "logistics_pool": logistics_pool,
+            "handling_capacity": handling_capacity,
+            "handling_work_per_unit": hw_net,
+            "cell_commodity": cell_commodity,
+            "cell_stage": np.asarray(network.cell_stage, dtype=np.int64),
+            "cell_owner_kind": cell_owner_kind,
+            "cell_owner_id": cell_owner_id,
+            "cell_pool": np.asarray(network.cell_pool, dtype=np.int64),
+            "source_valid": source_valid,
+            "funding_group": funding_group,
+            "funding_capacity": funding_capacity,
+            "funding_kind": funding_kind,
+            "buyer_bank": buyer_bank,
+            "seller_bank": seller_bank,
+            "carrier_bank": carrier_bank,
+            "edge_buyer_id": buyer_id,
+            "edge_carrier_id": carrier_id,
+            "demand_purpose": demand_purpose,
+            "edge_unit_pay": edge_unit_price + edge_per_unit * service_price,
+            "bank_reserves": np.asarray(state.bank_reserves, dtype=np.float64).copy(),
+            "organization_cash": np.asarray(
+                state.organization_cash, dtype=np.float64
+            ).copy(),
+            "plot_pool": plot_pool.copy(),
+            "treasury_cash": float(state.treasury_deposit),
+            "service_price": float(service_price),
+            "currency": finance.DOMESTIC_CURRENCY,
+            "org_output_cell": np.asarray(network.org_output_cell, dtype=np.int64),
+            "org_wholesale_cell": np.asarray(network.org_wholesale_cell, dtype=np.int64),
+            "retail_cell": np.asarray(network.retail_cell, dtype=np.int64),
+            "plot_raw_cell": np.asarray(network.plot_raw_cell, dtype=np.int64),
+            "plot_ready_market_cell": np.asarray(
+                network.plot_ready_market_cell, dtype=np.int64
+            ),
+            "import_pool_cell": np.asarray(network.import_pool_cell, dtype=np.int64),
+        }
+        for key, value in list(routing_boundary.items()):
+            if isinstance(value, np.ndarray):
+                frozen = np.array(value, copy=True)
+                frozen.setflags(write=False)
+                routing_boundary[key] = frozen
+    if routing_allocator is None:
+        for tier_index in range(tier_stack.shape[0]):
+            tier_edges = tier_stack[tier_index]
+            if not tier_edges.any():
+                continue
+            tier_avail = avail + produced_into * float(
+                parameters.service_split[2 if tier_index == 2 else 1]
+            )
+            src = edge_source[tier_edges]
+            demand_of_tier = edge_demand[tier_edges]
+            claim1 = ordered[demand_of_tier] * edge_weight[tier_edges]
+            need1 = np.bincount(src, weights=claim1, minlength=cell_count)
+            factor1 = _group_factor(need1, tier_avail)
+            alloc1 = claim1 * factor1[src]
+            avail -= np.bincount(src, weights=alloc1, minlength=cell_count)
+            got = np.bincount(demand_of_tier, weights=alloc1, minlength=d_count)
+            unmet = np.maximum(ordered - got, 0.0)
+            claim2 = unmet[demand_of_tier] * edge_weight[tier_edges]
+            need2 = np.bincount(src, weights=claim2, minlength=cell_count)
+            factor2 = _group_factor(need2, avail)
+            alloc2 = claim2 * factor2[src]
+            avail -= np.bincount(src, weights=alloc2, minlength=cell_count)
+            edge_allocated[tier_edges] = alloc1 + alloc2
+        # P05 §0.3 fallback round: unmet demand may draw from additional
+        # same-commodity sources once the declared sources are exhausted.
+        if fallback_edges.any():
+            allocated_so_far = np.bincount(
+                edge_demand, weights=edge_allocated, minlength=d_count
+            )
+            unmet = np.maximum(ordered - allocated_so_far, 0.0)
+            fb_src = edge_source[fallback_edges]
+            fb_demand = edge_demand[fallback_edges]
+            claim = unmet[fb_demand] * edge_weight[fallback_edges]
+            need = np.bincount(fb_src, weights=claim, minlength=cell_count)
+            factor = _group_factor(need, avail)
+            alloc = claim * factor[fb_src]
+            avail -= np.bincount(fb_src, weights=alloc, minlength=cell_count)
+            edge_allocated[fallback_edges] = alloc
+    else:
+        if routing_boundary is None:  # pragma: no cover - defensive
+            raise ValueError("H3C routing boundary was not built")
+        if routing_trace is not None:
+            # Publish the real pre-allocation flows before the callback so a
+            # rejected certificate still leaves the prelude evidence.
+            routing_trace["flows"] = flows
+        edge_allocated = _validate_routing_allocation(
+            routing_allocator(routing_boundary), routing_boundary
+        )
+    if routing_trace is not None:
+        routing_trace["boundary"] = routing_boundary
+        routing_trace["requested_edge_flow"] = np.asarray(edge_allocated).copy()
+        routing_trace["flows"] = flows
     allocated = np.bincount(edge_demand, weights=edge_allocated, minlength=d_count)
     _phase("allocation")
 
