@@ -180,4 +180,4 @@ gate_pass = behavioral_gate_pass and identity_pass and effective_spec_pass
 
 ## 11. Commit
 
-本地小提交只包含本阶段源码/spec/tests 与 H3D `PLAN/REPORT/REVIEW`；不包含 `outputs/**`、配置、受保护旧文件或用户未跟踪 Plan。commit hash 与 staged-path 白名单检查记录提交后补入。
+本地小提交只包含本阶段源码/spec/tests 与 H3D `PLAN/REPORT/REVIEW`；不包含 `outputs/**`、配置、受保护旧文件或用户未跟踪 Plan。实施 commit 为 **`5f19a09`**（`H3D: fixed two/four-stage lead-time isolation comparison`）；本文件与 `REVIEW.md` 的 hash 记录由随后一个仅文档的本地 commit 补入，未 push。

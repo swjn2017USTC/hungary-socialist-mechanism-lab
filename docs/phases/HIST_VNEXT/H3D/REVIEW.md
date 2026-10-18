@@ -12,6 +12,11 @@ reviewer.
 
 **PASS** — no remaining blocking defect in the reviewed candidate.
 
+Accepted candidate implementation commit: **`5f19a09`**
+(`H3D: fixed two/four-stage lead-time isolation comparison`). This review
+document and the report's hash record are committed by a following
+documentation-only local commit; no push.
+
 Acceptance is limited to the synthetic, default-off fixed lead-time isolation
 contract: 2-stage P→L and 4-stage P/2→L/2→P/2→L/2 on the tiny food-chain /
 energy-lag / transport fixtures, with the real material kernel, the existing
