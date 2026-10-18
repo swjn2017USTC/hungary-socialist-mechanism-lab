@@ -62,6 +62,26 @@ values in the H3A plan:
 - C1 `a8c70922…`, parameter `632ee6a6…`
 - lock `9fd79b62…`, recipe `10655b07…`
 
+## Resource-monitored rerun
+After the user approved the formal budgets on 2026-10-18, the final commands were
+rerun under `outputs/hist-vnext-h3a-20261018/run_logged.py` with concrete caps in
+`resource-budget.json` (600 s wall, 4 GiB sampled process-tree RSS, 512 MiB new
+output, 30 runs). 11/11 runs exited 0; no cap was breached.
+
+| Observed | Value |
+|---|---:|
+| runs | 11 |
+| max wall | 98.79 s (full suite) |
+| max sampled process-tree RSS | 1,086,701,568 B (full suite) |
+| max new output | 20,111,463 B (C0) |
+| C0 / C1 monitored identity | `verify_run_identity` passed, 116 ticks each |
+| reproduce / 4Q / 16Q monitored | artifacts match the final evidence |
+
+`rusage_children_maxrss_bytes` is retained as the cumulative children
+high-water only; the per-run peak is `sampled_peak_rss_bytes`. No paid model
+call was required for this rerun; the review remains the independent
+`phase-reviewer` result.
+
 ## Control-arm evidence (`--mode reproduce`)
 Deterministic seed 1729, capability 5, same demand/cash/capacity. Scheduled /
 provided / logistics / lost / seller→hub delivery:

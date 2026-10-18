@@ -65,3 +65,13 @@ the second audit (the candidate bytes were unchanged by the audit).
 - Formal budgets and model usage are `NOT_SET`; the review establishes code and
   evidence validity, not budget compliance.
 - Historical verdict remains `UNIDENTIFIED / NOT_RUN`.
+
+## Addendum after review (implementer note, not reviewer text)
+The user approved the formal budgets and paid-model use on 2026-10-18. No code
+changed after the PASS. The final commands were rerun under
+`run_logged.py` with the caps in `resource-budget.json`: 11/11 runs exited 0,
+max wall 98.79 s, max sampled process-tree RSS 1,086,701,568 B, max new output
+20,111,463 B. No paid model call was needed. Monitored C0/C1 identities and the
+reproduce/4Q/16Q artifacts matched the reviewed bytes. Resource-monitored
+verification is therefore established separately from, and without altering,
+the reviewer's code verdict.
