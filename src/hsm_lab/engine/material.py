@@ -639,6 +639,34 @@ def _validate_routing_allocation(
 # ---------------------------------------------------------------------------
 
 
+def _frozen_envelope_capacity(
+    actual: np.ndarray, remaining: np.ndarray
+) -> np.ndarray:
+    """Capacity for org/plot/treasury cash: min(real balance, remainder).
+
+    The ``remaining`` argument is the cumulative quarterly envelope after the
+    preceding L rounds, so a later round can never re-spend cash that an
+    earlier round already consumed (even if sale receipts refilled the real
+    account).  Kept as a tiny module-level helper so tests can prove the
+    envelope is genuinely binding by replacing it with one that ignores
+    ``remaining``.
+    """
+    return np.minimum(
+        np.asarray(actual, dtype=np.float64),
+        np.asarray(remaining, dtype=np.float64),
+    )
+
+
+def _frozen_bank_capacity(
+    actual_reserves: np.ndarray, remaining: np.ndarray
+) -> np.ndarray:
+    """Capacity for cross-bank outgoing: min(real reserves, remainder)."""
+    return np.minimum(
+        np.asarray(actual_reserves, dtype=np.float64),
+        np.asarray(remaining, dtype=np.float64),
+    )
+
+
 def tick_material(
     state: MaterialState,
     forcing: MaterialForcing,
@@ -651,6 +679,9 @@ def tick_material(
     procurement_trace: dict[str, np.ndarray] | None = None,
     routing_allocator: Callable[[Mapping[str, Any]], np.ndarray] | None = None,
     routing_trace: dict[str, Any] | None = None,
+    micro_stage_count: Literal[2, 4] | None = None,
+    micro_stage_trace: dict[str, Any] | None = None,
+    micro_stage_audit: dict[str, Any] | None = None,
 ) -> MaterialTickFlows:
     """Advance the material economy by one admitted quarter (plan section 3).
 
@@ -677,6 +708,15 @@ def tick_material(
     legacy allocation bit for bit.  A trace must be a plain empty dict; it
     records the boundary and the requested/submitted edge flow for failure
     export and never changes allocation behaviour.
+
+    ``micro_stage_audit`` is the H3D internal companion to
+    ``micro_stage_trace``.  It must be a plain empty dict and requires a
+    staged ``micro_stage_count``.  The kernel fills it with deep copies of the
+    real state snapshots (prelude stock and per-stage stock/cash/bank values)
+    at the same points it records the trace.  It is never returned to callers
+    or written to evidence; the adapter uses it as the independent authority
+    for the trace verifier so a coherent edit of every trace field is still
+    rejected.
     """
     mark = time.perf_counter()
 
@@ -732,6 +772,47 @@ def tick_material(
             raise ValueError("routing_trace must be a plain dict")
         if routing_trace:
             raise ValueError("routing_trace must be empty at tick entry")
+    # H3D opt-in preflight (before any state mutation or journal append).
+    # The contract admits only int 2 or 4; bool is rejected because Python
+    # treats ``True``/``False`` as a subclass of int.
+    if micro_stage_count is not None or micro_stage_trace is not None:
+        if isinstance(micro_stage_count, bool) or not isinstance(micro_stage_count, int):
+            raise ValueError(
+                "HIST_H3D_LEAD_TIME: micro_stage_count must be None, 2, or 4; "
+                f"got {type(micro_stage_count).__name__}"
+            )
+        if micro_stage_count not in (2, 4):
+            raise ValueError(
+                "HIST_H3D_LEAD_TIME: micro_stage_count must be None, 2, or 4; "
+                f"got {micro_stage_count!r}"
+            )
+        if micro_stage_trace is not None and type(micro_stage_trace) is not dict:
+            raise ValueError("HIST_H3D_LEAD_TIME: micro_stage_trace must be a plain dict")
+        if micro_stage_trace:
+            raise ValueError("HIST_H3D_LEAD_TIME: micro_stage_trace must be empty at tick entry")
+        if (
+            credit_approval_caps is not None
+            or procurement_trace is not None
+            or routing_allocator is not None
+            or routing_trace is not None
+        ):
+            raise ValueError(
+                "HIST_H3D_LEAD_TIME: H3D hook is incompatible with the H3B/H3C hooks"
+            )
+    if micro_stage_audit is not None:
+        if micro_stage_count is None:
+            raise ValueError(
+                "HIST_H3D_LEAD_TIME: micro_stage_audit requires "
+                "micro_stage_count=2 or 4"
+            )
+        if type(micro_stage_audit) is not dict:
+            raise ValueError(
+                "HIST_H3D_LEAD_TIME: micro_stage_audit must be a plain dict"
+            )
+        if micro_stage_audit:
+            raise ValueError(
+                "HIST_H3D_LEAD_TIME: micro_stage_audit must be empty at tick entry"
+            )
 
     index = _tick_index(network)
     price_net, services_g = _admin_price_vector(parameters, network)
@@ -1490,696 +1571,2170 @@ def tick_material(
 
     unfunded = np.maximum(gross - ordered, 0.0)
 
-    # ---------------- step 5: two-round tiered allocation ----------------
-    avail = stock_open + import_into
-    tier_stack = index.tier_masks[str(parameters.allocation_order)]
-    fallback_edges = np.asarray(network.edge_is_fallback, dtype=bool)
-    edge_allocated = np.zeros(m_count, dtype=np.float64)
-    routing_boundary: dict[str, Any] | None = None
-    if routing_allocator is not None or routing_trace is not None:
-        edge_tier = np.full(m_count, 3, dtype=np.int64)
-        for tier_index in range(tier_stack.shape[0]):
-            edge_tier[tier_stack[tier_index]] = tier_index
-        edge_tier[fallback_edges] = 3
-        cell_pool = np.asarray(network.cell_pool, dtype=np.int64)
-        source_valid = np.zeros(cell_count, dtype=bool)
-        source_valid[edge_source] = True
-        for source_cells in (
-            network.org_output_cell,
-            network.org_wholesale_cell,
-            network.retail_cell,
-            network.plot_raw_cell,
-            network.plot_ready_market_cell,
-            network.import_pool_cell,
-        ):
-            flat = np.asarray(source_cells, dtype=np.int64).reshape(-1)
-            source_valid[flat[flat >= 0]] = True
-        source_valid &= (cell_commodity >= 0) & np.isin(cell_owner_kind, (0, 1, 3))
-        source_valid &= cell_pool != 4
+    # Hoist the tier allocation and fallback indices used by both the H3D
+    # staged path and the legacy inline step-5 block.
+    _h3d_tier_stack = index.tier_masks[str(parameters.allocation_order)]
+    _h3d_fallback_edges = np.asarray(network.edge_is_fallback, dtype=bool)
+    _h3d_edge_self_hauled_flag = np.asarray(network.edge_self_hauled, dtype=bool)
+    _h3d_hw_net = _fixed_network_vector(parameters.handling_work_per_unit, network)
+    _h3d_hw_net = np.where(_h3d_hw_net > 0.0, _h3d_hw_net, 1.0)
+    # Alias to the names the staged nested helpers reference as free vars.
+    tier_stack = _h3d_tier_stack
+    fallback_edges = _h3d_fallback_edges
+    edge_self_hauled_flag = _h3d_edge_self_hauled_flag
+    hw_net = _h3d_hw_net
+
+    _h3d_staged_already_ran = False
+    if micro_stage_count is not None:
+        # ===== H3D staged path (default off; opt-in via the hook) =====
+        n_staged_rounds = int(micro_stage_count) // 2
+        staged_target_denom = (
+            float(n_staged_rounds) if n_staged_rounds > 0 else 1.0
+        )
+
+        # Frozen envelopes captured after the prelude (wages, interest,
+        # principal, imports, exports) so later L rounds cannot widen the
+        # quarterly envelope via receipts or interbank incoming.
+        frozen_org_cash = np.asarray(
+            state.organization_cash, dtype=np.float64
+        ).copy()
+        frozen_treasury = float(state.treasury_deposit)
+        frozen_bank_reserves = np.asarray(
+            state.bank_reserves, dtype=np.float64
+        ).copy()
+        frozen_plot_pool = plot_pool.copy()
+        initial_logistics_pool = np.asarray(
+            logistics_pool, dtype=np.float64
+        ).copy()
+        initial_handling_capacity = np.asarray(
+            _handling_capacity(state), dtype=np.float64
+        ).copy()
+
+        # Cumulative quarterly envelopes: start at the frozen prelude values
+        # and shrink by every L round's actual outlay.  A later L can never
+        # widen the envelope via sale receipts or interbank incoming.
+        org_cash_remaining = np.asarray(
+            frozen_org_cash, dtype=np.float64
+        ).copy()
+        plot_pool_remaining = np.asarray(
+            frozen_plot_pool, dtype=np.float64
+        ).copy()
+        treasury_remaining = float(frozen_treasury)
+        bank_outflow_remaining = np.asarray(
+            frozen_bank_reserves, dtype=np.float64
+        ).copy()
+        # Cells owned by a retail organization may credit this-quarter
+        # receipts back to the L-source pool.  Wholesale, producer, plot and
+        # import source cells keep opening + own-produced inventory only.
+        cell_owner_for_mask = np.asarray(
+            index.cell_owner_org, dtype=np.int64
+        )
+        valid_owner_mask = cell_owner_for_mask >= 0
+        retail_source_mask = np.zeros(cell_count, dtype=bool)
+        retail_source_mask[valid_owner_mask] = (
+            org_type[cell_owner_for_mask[valid_owner_mask]] == _CODE_RETAIL
+        )
+
+        cum_edge_allocated = np.zeros(m_count, dtype=np.float64)
+        cum_edge_delivered = np.zeros(m_count, dtype=np.float64)
+        cum_edge_service_used = np.zeros(m_count, dtype=np.float64)
+        cum_edge_service_fee = np.zeros(m_count, dtype=np.float64)
+        cum_delivered = np.zeros(d_count, dtype=np.float64)
+        cum_allocated = np.zeros(d_count, dtype=np.float64)
+        cum_financial_blocked = np.zeros(d_count, dtype=np.float64)
+        cum_physical_blocked = np.zeros(d_count, dtype=np.float64)
+        cum_purchases = np.zeros(org_count, dtype=np.float64)
+        cum_sales_receipts = np.zeros(org_count, dtype=np.float64)
+        cum_realized = np.zeros(activity_count, dtype=np.float64)
+        cum_used_full = np.zeros(k_count, dtype=np.float64)
+        cum_P_output = np.zeros(cell_count, dtype=np.float64)
+        cum_source_debit = np.zeros(cell_count, dtype=np.float64)
+        cum_destination_credit = np.zeros(cell_count, dtype=np.float64)
+        staged_logistics_pool = np.asarray(
+            initial_logistics_pool, dtype=np.float64
+        ).copy()
+        staged_handling_capacity = np.asarray(
+            initial_handling_capacity, dtype=np.float64
+        ).copy()
+
+        if micro_stage_trace is not None:
+            micro_stage_trace["stage_count"] = int(micro_stage_count)
+            micro_stage_trace["n"] = int(n_staged_rounds)
+            # Physical stock at the staged boundary (after the prelude, before
+            # P1).  Every stage must continue from the preceding stage's
+            # closing stock, which binds the P/L sequence to the real path.
+            micro_stage_trace["prelude_stock"] = np.asarray(
+                state.stock_value, dtype=np.float64
+            ).copy()
+            micro_stage_trace["stages"] = []
+            micro_stage_trace["frozen_quarter_budgets"] = {
+                "organization_cash": [float(v) for v in frozen_org_cash],
+                "treasury": frozen_treasury,
+                "bank_reserves": [float(v) for v in frozen_bank_reserves],
+                "plot_pool": [float(v) for v in frozen_plot_pool],
+                "logistics_pool_initial": [
+                    float(v) for v in initial_logistics_pool
+                ],
+                "handling_capacity_initial": [
+                    float(v) for v in initial_handling_capacity
+                ],
+            }
+
+        if micro_stage_audit is not None:
+            # Independent kernel snapshot: the verifier compares every trace
+            # field against these values, so a coherent rewrite of the trace
+            # (e.g. +100 on prelude and every stage stock) cannot pass.
+            micro_stage_audit["stage_count"] = int(micro_stage_count)
+            micro_stage_audit["n"] = int(n_staged_rounds)
+            micro_stage_audit["prelude_stock"] = np.asarray(
+                state.stock_value, dtype=np.float64
+            ).copy()
+            micro_stage_audit["stages"] = []
+
+        def _h3d_record_stage(
+            stage_index: int,
+            kind: str,
+            *,
+            _audit_bank_delta: np.ndarray | None = None,
+            **payload: Any,
+        ) -> None:
+            if micro_stage_trace is None and micro_stage_audit is None:
+                return
+            entry: dict[str, Any] = {
+                "index": int(stage_index),
+                "kind": str(kind),
+            }
+            for key, value in payload.items():
+                if isinstance(value, np.ndarray):
+                    entry[key] = value.tolist()
+                elif isinstance(value, np.generic):
+                    entry[key] = value.item()
+                else:
+                    entry[key] = value
+            if micro_stage_trace is not None:
+                micro_stage_trace["stages"].append(entry)
+            if micro_stage_audit is not None:
+                audit_entry: dict[str, Any] = {
+                    "index": int(stage_index),
+                    "kind": str(kind),
+                }
+                for name in (
+                    "stock_before",
+                    "stock_after",
+                    "state_cash_after",
+                    "state_bank_reserves_after",
+                ):
+                    if name in payload:
+                        audit_entry[name] = np.array(
+                            payload[name], dtype=np.float64, copy=True
+                        )
+                if _audit_bank_delta is not None:
+                    audit_entry["bank_delta"] = np.array(
+                        _audit_bank_delta, dtype=np.float64, copy=True
+                    )
+                micro_stage_audit["stages"].append(audit_entry)
+
+        def _h3d_stockable_production(
+            stage_target: np.ndarray,
+            available_override: np.ndarray | None,
+            stage_index: int,
+        ) -> None:
+            nonlocal cum_realized, cum_used_full, cum_P_output
+            nonlocal state, flows
+            non_transport_k = ~kt_mask
+            if not non_transport_k.any():
+                return
+            if available_override is None:
+                # L already credits its deliveries into ``state.stock_value``;
+                # P must consume that current stock, never opening + delivered.
+                available_arr = np.asarray(
+                    state.stock_value, dtype=np.float64
+                )[input_cell[non_transport_k]].copy()
+            else:
+                available_arr = np.asarray(
+                    available_override, dtype=np.float64
+                ).copy()
+            realized, used = produce_leontief(
+                available_arr,
+                index.k_coefficient[non_transport_k],
+                input_activity[non_transport_k],
+                stage_target,
+            )
+            cum_realized = cum_realized + np.asarray(
+                realized, dtype=np.float64
+            )
+            non_transport_b_mask = ~early_service_acts[index.b_rows]
+            b_rows_subset = index.b_rows[non_transport_b_mask]
+            production_amounts = (
+                index.b_coefficient[non_transport_b_mask]
+                * realized[b_rows_subset]
+            )
+            per_cell_output = np.bincount(
+                index.b_cells[non_transport_b_mask],
+                weights=production_amounts,
+                minlength=cell_count,
+            )
+            # Snapshot source-eligibility and the physical stock BEFORE output
+            # credit / input debit so the trace proves the round never re-used
+            # its own new output and that the stock path is continuous.
+            stock_before_p = np.asarray(
+                state.stock_value, dtype=np.float64
+            ).copy()
+            source_eligible_before_p = stock_before_p.copy()
+            # Persist the exact vector ``produce_leontief`` consumed, before
+            # any mutation.  ``flows.delivered`` is already inside
+            # ``state.stock_value`` (L credits it), so adding it again here
+            # double counted the delivery in the trace.
+            input_available_before_p = np.zeros(k_count, dtype=np.float64)
+            input_available_before_p[non_transport_k] = available_arr
+            state.stock_value = (
+                np.asarray(state.stock_value, dtype=np.float64).copy()
+            )
+            state.stock_value = state.stock_value + per_cell_output
+            cum_P_output = cum_P_output + per_cell_output
+            used_subset = np.asarray(used, dtype=np.float64)
+            state.stock_value[input_cell[non_transport_k]] -= used_subset
+            cum_used_full[non_transport_k] = (
+                cum_used_full[non_transport_k] + used_subset
+            )
+            stock_after_p = np.asarray(
+                state.stock_value, dtype=np.float64
+            ).copy()
+            source_eligible_after_p = stock_after_p.copy()
+            # P does not move cash or bank reserves, but every stage records
+            # the real post-stage values so the audit walk proves that.
+            state_cash_after_p = np.asarray(
+                state.organization_cash, dtype=np.float64
+            ).copy()
+            state_bank_reserves_after_p = np.asarray(
+                state.bank_reserves, dtype=np.float64
+            ).copy()
+            used_full_p = np.zeros(k_count, dtype=np.float64)
+            used_full_p[non_transport_k] = used_subset
+            _h3d_record_stage(
+                stage_index,
+                "P",
+                target=np.asarray(stage_target, dtype=np.float64),
+                activity_realized=np.asarray(realized, dtype=np.float64),
+                used=used_full_p,
+                produced=per_cell_output,
+                input_available_before=input_available_before_p,
+                stock_before=stock_before_p,
+                stock_after=stock_after_p,
+                state_cash_after=state_cash_after_p,
+                state_bank_reserves_after=state_bank_reserves_after_p,
+                source_eligible_before=source_eligible_before_p,
+                source_eligible_after=source_eligible_after_p,
+            )
+
+        def _h3d_delivery_round(
+            round_ordered: np.ndarray, stage_index: int
+        ) -> None:
+            nonlocal cum_edge_allocated, cum_edge_delivered
+            nonlocal cum_edge_service_used, cum_edge_service_fee
+            nonlocal cum_delivered, cum_allocated
+            nonlocal cum_financial_blocked, cum_physical_blocked
+            nonlocal cum_purchases, cum_sales_receipts
+            nonlocal cum_source_debit, cum_destination_credit
+            nonlocal staged_logistics_pool, staged_handling_capacity
+            nonlocal state, flows
+            nonlocal org_cash_remaining, plot_pool_remaining
+            nonlocal treasury_remaining, bank_outflow_remaining
+
+            # Physical stock at the L boundary, before any allocation or
+            # delivery mutation.  The verifier walks this against the previous
+            # stage's closing stock.
+            stock_before_l = np.asarray(
+                state.stock_value, dtype=np.float64
+            ).copy()
+
+            # Per-round capacity caps: each L is bounded by the half-tranche
+            # of the quarterly pool (``initial_pool / n``) AND by the
+            # cumulative quarterly remainder.  Unused first-tranche capacity
+            # therefore cannot enlarge the second tranche.  For 2-stage n=1
+            # the cap reduces to ``initial_pool``, so legacy behaviour is
+            # recovered exactly.
+            n_rounds = max(int(n_staged_rounds), 1)
+            logistics_round_cap = np.minimum(
+                np.asarray(initial_logistics_pool, dtype=np.float64)
+                / float(n_rounds),
+                np.asarray(staged_logistics_pool, dtype=np.float64),
+            )
+            handling_round_cap = np.minimum(
+                np.asarray(initial_handling_capacity, dtype=np.float64)
+                / float(n_rounds),
+                np.asarray(staged_handling_capacity, dtype=np.float64),
+            )
+
+            # Wholesale resale of current-quarter receipts stays forbidden by
+            # only crediting the retail-owned destination cells' receipts back
+            # to the L-source pool.  Producer and wholesale source cells keep
+            # their opening + own-produced inventory only.
+            retail_source_avail = np.where(
+                retail_source_mask, cum_destination_credit, 0.0
+            )
+            avail_round = (
+                np.asarray(stock_open, dtype=np.float64)
+                + np.asarray(import_into, dtype=np.float64)
+                + cum_P_output
+                + retail_source_avail
+                - cum_source_debit
+            )
+            edge_allocated_round = np.zeros(m_count, dtype=np.float64)
+            for tier_index in range(tier_stack.shape[0]):
+                tier_edges = tier_stack[tier_index]
+                if not tier_edges.any():
+                    continue
+                tier_avail_round = (
+                    avail_round
+                    + np.asarray(produced_into, dtype=np.float64)
+                    * float(
+                        parameters.service_split[
+                            2 if tier_index == 2 else 1
+                        ]
+                    )
+                )
+                src = edge_source[tier_edges]
+                demand_of_tier = edge_demand[tier_edges]
+                claim1 = (
+                    round_ordered[demand_of_tier]
+                    * edge_weight[tier_edges]
+                )
+                need1 = np.bincount(
+                    src, weights=claim1, minlength=cell_count
+                )
+                factor1 = _group_factor(need1, tier_avail_round)
+                alloc1 = claim1 * factor1[src]
+                avail_round -= np.bincount(
+                    src, weights=alloc1, minlength=cell_count
+                )
+                got = np.bincount(
+                    demand_of_tier, weights=alloc1, minlength=d_count
+                )
+                unmet = np.maximum(round_ordered - got, 0.0)
+                claim2 = (
+                    unmet[demand_of_tier] * edge_weight[tier_edges]
+                )
+                need2 = np.bincount(
+                    src, weights=claim2, minlength=cell_count
+                )
+                factor2 = _group_factor(need2, avail_round)
+                alloc2 = claim2 * factor2[src]
+                avail_round -= np.bincount(
+                    src, weights=alloc2, minlength=cell_count
+                )
+                edge_allocated_round[tier_edges] = alloc1 + alloc2
+            if fallback_edges.any():
+                allocated_so_far = np.bincount(
+                    edge_demand,
+                    weights=edge_allocated_round,
+                    minlength=d_count,
+                )
+                unmet = np.maximum(
+                    round_ordered - allocated_so_far, 0.0
+                )
+                fb_src = edge_source[fallback_edges]
+                fb_demand = edge_demand[fallback_edges]
+                claim = (
+                    unmet[fb_demand] * edge_weight[fallback_edges]
+                )
+                need = np.bincount(
+                    fb_src, weights=claim, minlength=cell_count
+                )
+                factor = _group_factor(need, avail_round)
+                alloc = claim * factor[fb_src]
+                avail_round -= np.bincount(
+                    fb_src, weights=alloc, minlength=cell_count
+                )
+                edge_allocated_round[fallback_edges] = alloc
+
+            active_round = edge_allocated_round > 0.0
+            phys_factor_round = np.ones(m_count, dtype=np.float64)
+            service_need_round = edge_allocated_round * edge_per_unit
+            needs_transport_round = (
+                (~edge_self_hauled_flag) & (edge_transport >= 0)
+            )
+            if (needs_transport_round & active_round).any():
+                transport_need = np.bincount(
+                    edge_transport[needs_transport_round],
+                    weights=service_need_round[needs_transport_round],
+                    minlength=org_count,
+                )
+                transport_factor_org = _group_factor(
+                    transport_need, logistics_round_cap
+                )
+                phys_factor_round = np.where(
+                    needs_transport_round,
+                    transport_factor_org[
+                        np.where(needs_transport_round, edge_transport, 0)
+                    ],
+                    1.0,
+                )
+
+            handling_capacity_round = np.asarray(
+                handling_round_cap, dtype=np.float64
+            )
+            org_cells_round = index.cell_owner_org >= 0
+            wholesale_cells_round = np.zeros(cell_count, dtype=bool)
+            retail_cells_round = np.zeros(cell_count, dtype=bool)
+            retail_owner_round = np.zeros(cell_count, dtype=np.int64)
+            wholesale_cells_round[org_cells_round] = (
+                org_type[index.cell_owner_org[org_cells_round]]
+                == _CODE_WHOLESALE
+            )
+            retail_cells_round[org_cells_round] = (
+                org_type[index.cell_owner_org[org_cells_round]]
+                == _CODE_RETAIL
+            )
+            retail_owner_round[retail_cells_round] = index.cell_owner_org[
+                retail_cells_round
+            ]
+
+            source_wholesale_round = wholesale_cells_round[edge_source]
+            if (source_wholesale_round & active_round).any():
+                wholesale_edges = source_wholesale_round & active_round
+                work = (
+                    edge_allocated_round[wholesale_edges]
+                    * hw_net[edge_commodity[wholesale_edges]]
+                )
+                wholesale_org = index.cell_owner_org[
+                    edge_source[wholesale_edges]
+                ]
+                wholesale_need = np.bincount(
+                    wholesale_org, weights=work, minlength=org_count
+                )
+                wholesale_factor = _group_factor(
+                    wholesale_need, handling_capacity_round
+                )
+                phys_factor_round = np.minimum(
+                    phys_factor_round,
+                    np.where(
+                        source_wholesale_round,
+                        wholesale_factor[
+                            np.maximum(
+                                index.cell_owner_org[edge_source], 0
+                            )
+                        ],
+                        1.0,
+                    ),
+                )
+            dest_retail_round = np.zeros(m_count, dtype=bool)
+            valid_dest_round = edge_destination >= 0
+            dest_retail_round[valid_dest_round] = retail_cells_round[
+                edge_destination[valid_dest_round]
+            ]
+            retail_work_used_round = np.zeros(org_count, dtype=np.float64)
+            if (dest_retail_round & active_round).any():
+                retail_edges = dest_retail_round & active_round
+                work_dest = (
+                    edge_allocated_round[retail_edges]
+                    * hw_net[edge_commodity[retail_edges]]
+                )
+                retail_org = retail_owner_round[
+                    edge_destination[retail_edges]
+                ]
+                retail_work_used_round = np.bincount(
+                    retail_org,
+                    weights=work_dest,
+                    minlength=org_count,
+                )
+                retail_factor = _group_factor(
+                    retail_work_used_round, handling_capacity_round
+                )
+                safe_retail_org = np.maximum(
+                    retail_owner_round[np.maximum(edge_destination, 0)],
+                    0,
+                )
+                phys_factor_round = np.minimum(
+                    phys_factor_round,
+                    np.where(
+                        dest_retail_round,
+                        retail_factor[safe_retail_org],
+                        1.0,
+                    ),
+                )
+
+            candidate_round = edge_allocated_round * phys_factor_round
+            pay_goods_round = candidate_round * edge_unit_price
+            pay_fee_round = (
+                candidate_round * edge_per_unit * service_price
+            )
+            unit_pay_round = pay_goods_round + pay_fee_round
+
+            fin_factor_round = np.ones(m_count, dtype=np.float64)
+            buyer_org_round = index.demand_buyer[edge_demand]
+            org_buyer_round = buyer_org_round >= 0
+            if (org_buyer_round & active_round).any():
+                org_need = np.bincount(
+                    buyer_org_round[org_buyer_round],
+                    weights=unit_pay_round[org_buyer_round],
+                    minlength=org_count,
+                )
+                org_cash_factor = _group_factor(
+                    org_need,
+                    _frozen_envelope_capacity(
+                        np.asarray(
+                            state.organization_cash, dtype=np.float64
+                        ),
+                        org_cash_remaining,
+                    ),
+                )
+                fin_factor_round = np.where(
+                    org_buyer_round,
+                    org_cash_factor[
+                        np.where(org_buyer_round, buyer_org_round, 0)
+                    ],
+                    1.0,
+                )
+            plot_pool_remaining_round = np.asarray(
+                plot_pool_remaining, dtype=np.float64
+            ).copy()
+            plot_buyer_round = (~org_buyer_round) & (
+                edge_purpose == _PURPOSE_PRIVATE_PLOT
+            )
+            if (plot_buyer_round & active_round).any():
+                plot_need = np.bincount(
+                    cell_region[edge_destination[plot_buyer_round]],
+                    weights=unit_pay_round[plot_buyer_round],
+                    minlength=region_count,
+                )
+                plot_factor = _group_factor(
+                    plot_need,
+                    _frozen_envelope_capacity(
+                        frozen_plot_pool, plot_pool_remaining_round
+                    ),
+                )
+                fin_factor_round = np.minimum(
+                    fin_factor_round,
+                    np.where(
+                        plot_buyer_round,
+                        plot_factor[
+                            cell_region[
+                                np.where(
+                                    plot_buyer_round, edge_destination, 0
+                                )
+                            ]
+                        ],
+                        1.0,
+                    ),
+                )
+            treasury_buyer_round = (~org_buyer_round) & np.isin(
+                edge_purpose,
+                (
+                    _PURPOSE_HOUSING,
+                    _PURPOSE_EXPORT_CMEA,
+                    _PURPOSE_EXPORT_CONVERTIBLE,
+                ),
+            )
+            if (treasury_buyer_round & active_round).any():
+                treasury_need = float(
+                    np.sum(
+                        unit_pay_round[
+                            treasury_buyer_round & active_round
+                        ]
+                    )
+                )
+                treasury_capacity = float(
+                    _frozen_envelope_capacity(
+                        np.asarray(
+                            [float(state.treasury_deposit)], dtype=np.float64
+                        ),
+                        np.asarray([treasury_remaining], dtype=np.float64),
+                    )[0]
+                )
+                treasury_factor = (
+                    min(1.0, treasury_capacity / treasury_need)
+                    if treasury_need > 0.0
+                    else 1.0
+                )
+                fin_factor_round = np.minimum(
+                    fin_factor_round,
+                    np.where(
+                        treasury_buyer_round, treasury_factor, 1.0
+                    ),
+                )
+
+            seller_is_org_round = org_cells_round[edge_source]
+            seller_kind_plot_round = (
+                cell_owner_kind[edge_source] == 1
+            )
+            seller_bank_round = np.where(
+                seller_is_org_round,
+                safe_org_bank[index.cell_owner_org[edge_source]],
+                np.where(
+                    seller_kind_plot_round,
+                    cell_region[edge_source] % max(bank_count, 1),
+                    0,
+                ),
+            )
+            buyer_bank_round = np.where(
+                org_buyer_round,
+                safe_org_bank[
+                    np.where(org_buyer_round, buyer_org_round, 0)
+                ],
+                np.where(
+                    plot_buyer_round,
+                    cell_region[
+                        np.where(plot_buyer_round, edge_destination, 0)
+                    ]
+                    % max(bank_count, 1),
+                    0,
+                ),
+            )
+            cross_bank_round = buyer_bank_round != seller_bank_round
+            if (cross_bank_round & active_round).any():
+                outgoing = np.bincount(
+                    buyer_bank_round[cross_bank_round],
+                    weights=unit_pay_round[cross_bank_round],
+                    minlength=bank_count,
+                )
+                bank_factor = _group_factor(
+                    outgoing,
+                    _frozen_bank_capacity(
+                        np.asarray(
+                            state.bank_reserves, dtype=np.float64
+                        ),
+                        bank_outflow_remaining,
+                    ),
+                )
+                fin_factor_round = np.minimum(
+                    fin_factor_round,
+                    np.where(
+                        cross_bank_round,
+                        bank_factor[buyer_bank_round],
+                        1.0,
+                    ),
+                )
+
+            delivered_round = candidate_round * fin_factor_round
+            blocked_round = candidate_round * (1.0 - fin_factor_round)
+            pay_goods_round = delivered_round * edge_unit_price
+            pay_fee_round = (
+                delivered_round * edge_per_unit * service_price
+            )
+            unit_pay_round = pay_goods_round + pay_fee_round
+
+            flows.edge_allocated = edge_allocated_round
+            flows.edge_delivered = delivered_round
+            flows.edge_service_used = (
+                delivered_round * edge_per_unit
+            )
+            flows.edge_service_fee = (
+                delivered_round * edge_per_unit * service_price
+            )
+            flows.delivered = np.bincount(
+                edge_demand,
+                weights=delivered_round,
+                minlength=d_count,
+            )
+            flows.financial_delivery_blocked = np.bincount(
+                edge_demand,
+                weights=blocked_round,
+                minlength=d_count,
+            )
+            flows.physical_delivery_blocked = np.bincount(
+                edge_demand,
+                weights=np.maximum(
+                    edge_allocated_round - candidate_round, 0.0
+                ),
+                minlength=d_count,
+            )
+
+            source_debit = np.bincount(
+                edge_source,
+                weights=delivered_round,
+                minlength=cell_count,
+            )
+            dest_credit = np.bincount(
+                edge_destination[valid_dest_round],
+                weights=delivered_round[valid_dest_round],
+                minlength=cell_count,
+            )
+            state.stock_value = (
+                np.asarray(state.stock_value, dtype=np.float64)
+                - source_debit
+                + dest_credit
+            )
+            stock_after_l = np.asarray(
+                state.stock_value, dtype=np.float64
+            ).copy()
+            # Real envelope snapshots BEFORE this round's outlay so the trace
+            # can replay the cumulative quarterly budget arithmetic.
+            org_cash_envelope_before = np.asarray(
+                org_cash_remaining, dtype=np.float64
+            ).copy()
+            plot_pool_envelope_before = np.asarray(
+                plot_pool_remaining, dtype=np.float64
+            ).copy()
+            treasury_envelope_before = float(treasury_remaining)
+            bank_outflow_before = np.asarray(
+                bank_outflow_remaining, dtype=np.float64
+            ).copy()
+            # Snapshot the eligible pool for this L BEFORE the cumulative
+            # debits/credits are applied.  Receipts only flow back to retail
+            # source cells.
+            source_eligible_before_snapshot = (
+                np.asarray(stock_open, dtype=np.float64)
+                + np.asarray(import_into, dtype=np.float64)
+                + cum_P_output
+                + retail_source_avail
+                - cum_source_debit
+            )
+            cum_source_debit = cum_source_debit + source_debit
+            cum_destination_credit = (
+                cum_destination_credit + dest_credit
+            )
+
+            service_used_round = flows.edge_service_used
+            log_debit = np.bincount(
+                edge_transport[needs_transport_round],
+                weights=service_used_round[needs_transport_round],
+                minlength=org_count,
+            )
+            staged_logistics_pool = staged_logistics_pool - log_debit
+            handling_debit = np.zeros(org_count, dtype=np.float64)
+            # The pre-delivery feasibility (capacity factor) uses the round's
+            # allocated work, but only the real delivered handling work should
+            # debit the per-round handling capacity.  Sale receipts / interbank
+            # incoming cannot widen later rounds' envelopes.
+            if (source_wholesale_round & active_round).any():
+                wholesale_edges = source_wholesale_round & active_round
+                work = (
+                    delivered_round[wholesale_edges]
+                    * hw_net[edge_commodity[wholesale_edges]]
+                )
+                handling_debit = handling_debit + np.bincount(
+                    index.cell_owner_org[edge_source[wholesale_edges]],
+                    weights=work,
+                    minlength=org_count,
+                )
+            if (dest_retail_round & active_round).any():
+                retail_edges = dest_retail_round & active_round
+                work_dest = (
+                    delivered_round[retail_edges]
+                    * hw_net[edge_commodity[retail_edges]]
+                )
+                handling_debit = handling_debit + np.bincount(
+                    retail_owner_round[
+                        edge_destination[retail_edges]
+                    ],
+                    weights=work_dest,
+                    minlength=org_count,
+                )
+            staged_handling_capacity = (
+                staged_handling_capacity - handling_debit
+            )
+
+            org_cash_round = np.asarray(
+                state.organization_cash, dtype=np.float64
+            ).copy()
+            household_cash_round = np.asarray(
+                state.household_cash, dtype=np.float64
+            ).copy()
+            sales_receipts_round = np.zeros(org_count, dtype=np.float64)
+            purchases_round = np.zeros(org_count, dtype=np.float64)
+            org_cash_account_round = organization_account_ids(
+                state, finance.AccountKind.CASH_DEPOSIT
+            )
+            household_cash_account_round = household_account_ids(
+                state, finance.AccountKind.CASH_DEPOSIT
+            )
+            clearing_accounts_round = plot_clearing_account_ids(state)
+            treasury_cash_account_round = treasury_account_id(
+                state, finance.AccountKind.CASH_DEPOSIT
+            )
+            org_ids_round = np.asarray(
+                state.organization_id, dtype=np.int64
+            )
+            bank_delta_round = np.zeros(bank_count, dtype=np.float64)
+            seller_org_round = index.cell_owner_org[edge_source]
+            seller_is_import_round = (
+                cell_owner_kind[edge_source] == 3
+            )
+
+            leg_debit_round: list[np.ndarray] = []
+            leg_credit_round: list[np.ndarray] = []
+            leg_amount_round: list[np.ndarray] = []
+            leg_group_round: list[np.ndarray] = []
+            leg_org_round: list[list[Any]] = []
+
+            def _h3d_legs(
+                debit: int | np.ndarray,
+                credit: int | np.ndarray,
+                amount: np.ndarray,
+                group: int | np.ndarray,
+                org: np.ndarray | None,
+            ) -> None:
+                amount_local = np.asarray(amount, dtype=np.float64)
+                debit_local = np.broadcast_to(
+                    np.asarray(debit, dtype=np.int64), amount_local.shape
+                )
+                credit_local = np.broadcast_to(
+                    np.asarray(credit, dtype=np.int64), amount_local.shape
+                )
+                group_local = np.broadcast_to(
+                    np.asarray(group, dtype=np.int64), amount_local.shape
+                )
+                mask = amount_local > 0.0
+                if np.count_nonzero(mask):
+                    leg_debit_round.append(debit_local[mask])
+                    leg_credit_round.append(credit_local[mask])
+                    leg_amount_round.append(amount_local[mask])
+                    leg_group_round.append(group_local[mask])
+                    column: list[Any] = [None] * int(
+                        np.count_nonzero(mask)
+                    )
+                    if org is not None:
+                        column = [
+                            int(value)
+                            if value is not None and value >= 0
+                            else None
+                            for value in np.asarray(
+                                org, dtype=np.int64
+                            )[mask].tolist()
+                        ]
+                    leg_org_round.append(column)
+
+            pay_active_round = active_round & (delivered_round > 0.0)
+
+            org_paying_round = org_buyer_round & pay_active_round
+            if org_paying_round.any():
+                buyers_round = buyer_org_round
+                pay_round = pay_goods_round
+                fee_round = pay_fee_round
+                transports_round = edge_transport
+                paid_now = (pay_round + fee_round)[org_paying_round]
+                org_cash_round = org_cash_round - np.bincount(
+                    buyers_round[org_paying_round],
+                    weights=paid_now,
+                    minlength=org_count,
+                )
+                purchases_round = purchases_round + np.bincount(
+                    buyers_round[org_paying_round],
+                    weights=paid_now,
+                    minlength=org_count,
+                )
+                bank_delta_round = bank_delta_round - np.bincount(
+                    safe_org_bank[buyers_round[org_paying_round]],
+                    weights=paid_now,
+                    minlength=bank_count,
+                )
+
+                to_org_round = org_paying_round & seller_is_org_round
+                if to_org_round.any():
+                    rows_round = seller_org_round[to_org_round]
+                    paid_round = pay_goods_round[to_org_round]
+                    org_cash_round = org_cash_round + np.bincount(
+                        rows_round,
+                        weights=paid_round,
+                        minlength=org_count,
+                    )
+                    sales_receipts_round = sales_receipts_round + np.bincount(
+                        rows_round,
+                        weights=paid_round,
+                        minlength=org_count,
+                    )
+                    bank_delta_round = bank_delta_round + np.bincount(
+                        safe_org_bank[rows_round],
+                        weights=paid_round,
+                        minlength=bank_count,
+                    )
+                    _h3d_legs(
+                        org_cash_account_round[
+                            buyers_round[to_org_round]
+                        ],
+                        org_cash_account_round[rows_round],
+                        paid_round,
+                        1_000_000 + np.flatnonzero(to_org_round),
+                        org_ids_round[rows_round],
+                    )
+                to_plot_round = (
+                    org_paying_round & seller_kind_plot_round
+                )
+                if to_plot_round.any():
+                    source_regions_round = cell_region[
+                        edge_source[to_plot_round]
+                    ]
+                    region_receipts_round = np.bincount(
+                        source_regions_round,
+                        weights=pay_goods_round[to_plot_round],
+                        minlength=region_count,
+                    )
+                    receipt_hh_round = (
+                        plot_share * region_receipts_round[hh_region]
+                    )
+                    household_cash_round = (
+                        household_cash_round + receipt_hh_round
+                    )
+                    flows.household_plot_income_formal = (
+                        np.asarray(
+                            flows.household_plot_income_formal,
+                            dtype=np.float64,
+                        )
+                        + receipt_hh_round
+                    )
+                    represented_receipt_round = hh_weight * receipt_hh_round
+                    bank_delta_round = bank_delta_round + np.bincount(
+                        hh_bank,
+                        weights=represented_receipt_round,
+                        minlength=bank_count,
+                    )
+                    paying_orgs_round = buyers_round[to_plot_round]
+                    _h3d_legs(
+                        org_cash_account_round[paying_orgs_round],
+                        clearing_accounts_round[source_regions_round],
+                        pay_goods_round[to_plot_round],
+                        source_regions_round,
+                        org_ids_round[paying_orgs_round],
+                    )
+                    receiving_round = represented_receipt_round > 0.0
+                    _h3d_legs(
+                        clearing_accounts_round[
+                            hh_region[receiving_round]
+                        ],
+                        household_cash_account_round[receiving_round],
+                        represented_receipt_round[receiving_round],
+                        hh_region[receiving_round] + region_count,
+                        None,
+                    )
+                to_import_round = (
+                    org_paying_round & seller_is_import_round
+                )
+                if to_import_round.any():
+                    paid_round = pay_goods_round[to_import_round]
+                    total_round = float(paid_round.sum())
+                    state.treasury_deposit = (
+                        float(state.treasury_deposit) + total_round
+                    )
+                    bank_delta_round[0] += total_round
+                    _h3d_legs(
+                        org_cash_account_round[
+                            buyers_round[to_import_round]
+                        ],
+                        treasury_cash_account_round,
+                        paid_round,
+                        1_000_000 + np.flatnonzero(to_import_round),
+                        org_ids_round[buyers_round[to_import_round]],
+                    )
+                has_fee_round = (
+                    org_paying_round
+                    & (pay_fee_round > 0.0)
+                    & (transports_round >= 0)
+                )
+                if has_fee_round.any():
+                    fee_rows_round = transports_round[has_fee_round]
+                    fee_paid_round = pay_fee_round[has_fee_round]
+                    org_cash_round = org_cash_round + np.bincount(
+                        fee_rows_round,
+                        weights=fee_paid_round,
+                        minlength=org_count,
+                    )
+                    sales_receipts_round = sales_receipts_round + np.bincount(
+                        fee_rows_round,
+                        weights=fee_paid_round,
+                        minlength=org_count,
+                    )
+                    bank_delta_round = bank_delta_round + np.bincount(
+                        safe_org_bank[fee_rows_round],
+                        weights=fee_paid_round,
+                        minlength=bank_count,
+                    )
+                    _h3d_legs(
+                        org_cash_account_round[
+                            buyers_round[has_fee_round]
+                        ],
+                        org_cash_account_round[fee_rows_round],
+                        fee_paid_round,
+                        1_000_000 + np.flatnonzero(has_fee_round),
+                        org_ids_round[fee_rows_round],
+                    )
+
+            plot_paying_round = plot_buyer_round & pay_active_round
+            if plot_paying_round.any():
+                dest_regions_round = cell_region[
+                    edge_destination[plot_paying_round]
+                ]
+                region_paid_round = np.bincount(
+                    dest_regions_round,
+                    weights=unit_pay_round[plot_paying_round],
+                    minlength=region_count,
+                )
+                funding_hh_round = (
+                    plot_share * region_paid_round[hh_region]
+                )
+                household_cash_round = (
+                    household_cash_round - funding_hh_round
+                )
+                flows.household_plot_input_funding = (
+                    np.asarray(
+                        flows.household_plot_input_funding,
+                        dtype=np.float64,
+                    )
+                    + funding_hh_round
+                )
+                bank_delta_round = bank_delta_round - np.bincount(
+                    hh_bank,
+                    weights=hh_weight * funding_hh_round,
+                    minlength=bank_count,
+                )
+                rows_round = seller_org_round[plot_paying_round]
+                paid_round = pay_goods_round[plot_paying_round]
+                to_org_round = plot_paying_round & seller_is_org_round
+                to_import_round = (
+                    plot_paying_round & seller_is_import_round
+                )
+                if to_org_round.any():
+                    org_rows_round = seller_org_round[to_org_round]
+                    org_cash_round = org_cash_round + np.bincount(
+                        org_rows_round,
+                        weights=pay_goods_round[to_org_round],
+                        minlength=org_count,
+                    )
+                    sales_receipts_round = sales_receipts_round + np.bincount(
+                        org_rows_round,
+                        weights=pay_goods_round[to_org_round],
+                        minlength=org_count,
+                    )
+                    bank_delta_round = bank_delta_round + np.bincount(
+                        safe_org_bank[org_rows_round],
+                        weights=pay_goods_round[to_org_round],
+                        minlength=bank_count,
+                    )
+                if to_import_round.any():
+                    import_total_round = float(
+                        pay_goods_round[to_import_round].sum()
+                    )
+                    state.treasury_deposit = (
+                        float(state.treasury_deposit)
+                        + import_total_round
+                    )
+                    bank_delta_round[0] += import_total_round
+                safe_rows_round = np.where(
+                    seller_is_import_round[plot_paying_round],
+                    0,
+                    np.maximum(rows_round, 0),
+                )
+                credit_accounts_round = np.where(
+                    seller_is_import_round[plot_paying_round],
+                    treasury_cash_account_round,
+                    org_cash_account_round[safe_rows_round],
+                )
+                _h3d_legs(
+                    clearing_accounts_round[dest_regions_round],
+                    credit_accounts_round,
+                    paid_round,
+                    1_000_000 + np.flatnonzero(plot_paying_round),
+                    org_ids_round[safe_rows_round],
+                )
+                paying_hh_round = (hh_weight * funding_hh_round) > 0.0
+                _h3d_legs(
+                    household_cash_account_round[paying_hh_round],
+                    clearing_accounts_round[hh_region[paying_hh_round]],
+                    (hh_weight * funding_hh_round)[paying_hh_round],
+                    hh_region[paying_hh_round] + 2 * region_count,
+                    None,
+                )
+                fee_rows_round = edge_transport[plot_paying_round]
+                has_fee_round = (
+                    (pay_fee_round[plot_paying_round] > 0.0)
+                    & (fee_rows_round >= 0)
+                )
+                if has_fee_round.any():
+                    fee_paid_round = pay_fee_round[plot_paying_round][
+                        has_fee_round
+                    ]
+                    fee_orgs_round = fee_rows_round[has_fee_round]
+                    org_cash_round = org_cash_round + np.bincount(
+                        fee_orgs_round,
+                        weights=fee_paid_round,
+                        minlength=org_count,
+                    )
+                    sales_receipts_round = sales_receipts_round + np.bincount(
+                        fee_orgs_round,
+                        weights=fee_paid_round,
+                        minlength=org_count,
+                    )
+                    bank_delta_round = bank_delta_round + np.bincount(
+                        safe_org_bank[fee_orgs_round],
+                        weights=fee_paid_round,
+                        minlength=bank_count,
+                    )
+                    _h3d_legs(
+                        clearing_accounts_round[
+                            dest_regions_round[has_fee_round]
+                        ],
+                        org_cash_account_round[fee_orgs_round],
+                        fee_paid_round,
+                        1_000_000 + np.flatnonzero(plot_paying_round)[
+                            has_fee_round
+                        ],
+                        org_ids_round[fee_orgs_round],
+                    )
+
+            treasury_paying_round = (
+                treasury_buyer_round & pay_active_round
+            )
+            if treasury_paying_round.any():
+                rows_round = seller_org_round[treasury_paying_round]
+                paid_round = pay_goods_round[treasury_paying_round]
+                fee_paid_round = pay_fee_round[treasury_paying_round]
+                fee_rows_round = edge_transport[treasury_paying_round]
+                has_fee_round = (
+                    (fee_paid_round > 0.0) & (fee_rows_round >= 0)
+                )
+                state.treasury_deposit = float(
+                    state.treasury_deposit
+                ) - float(unit_pay_round[treasury_paying_round].sum())
+                org_cash_round = org_cash_round + np.bincount(
+                    rows_round,
+                    weights=paid_round,
+                    minlength=org_count,
+                )
+                sales_receipts_round = sales_receipts_round + np.bincount(
+                    rows_round,
+                    weights=paid_round,
+                    minlength=org_count,
+                )
+                bank_delta_round = bank_delta_round + np.bincount(
+                    safe_org_bank[rows_round],
+                    weights=paid_round,
+                    minlength=bank_count,
+                )
+                bank_delta_round[0] -= float(
+                    unit_pay_round[treasury_paying_round].sum()
+                )
+                _h3d_legs(
+                    treasury_cash_account_round,
+                    org_cash_account_round[rows_round],
+                    paid_round,
+                    np.full(
+                        int(np.count_nonzero(treasury_paying_round)),
+                        -2,
+                        dtype=np.int64,
+                    ),
+                    org_ids_round[rows_round],
+                )
+                if has_fee_round.any():
+                    fee_orgs_round = fee_rows_round[has_fee_round]
+                    org_cash_round = org_cash_round + np.bincount(
+                        fee_orgs_round,
+                        weights=fee_paid_round[has_fee_round],
+                        minlength=org_count,
+                    )
+                    sales_receipts_round = sales_receipts_round + np.bincount(
+                        fee_orgs_round,
+                        weights=fee_paid_round[has_fee_round],
+                        minlength=org_count,
+                    )
+                    bank_delta_round = bank_delta_round + np.bincount(
+                        safe_org_bank[fee_orgs_round],
+                        weights=fee_paid_round[has_fee_round],
+                        minlength=bank_count,
+                    )
+                    _h3d_legs(
+                        treasury_cash_account_round,
+                        org_cash_account_round[fee_orgs_round],
+                        fee_paid_round[has_fee_round],
+                        np.full(
+                            int(np.count_nonzero(has_fee_round)),
+                            -3,
+                            dtype=np.int64,
+                        ),
+                        org_ids_round[fee_orgs_round],
+                    )
+
+            state.organization_cash = org_cash_round
+            state.household_cash = household_cash_round
+            if leg_amount_round:
+                debit_concat = np.concatenate(leg_debit_round)
+                credit_concat = np.concatenate(leg_credit_round)
+                amount_concat = np.concatenate(leg_amount_round)
+                group_concat = np.concatenate(leg_group_round)
+                org_column_concat = [
+                    value
+                    for column in leg_org_round
+                    for value in column
+                ]
+                _append_leg_transactions(
+                    flows,
+                    kind="goods_payment",
+                    debit=debit_concat,
+                    credit=credit_concat,
+                    amount=amount_concat,
+                    groups=group_concat,
+                    org_column=org_column_concat,
+                )
+            if bank_count and np.any(bank_delta_round != 0.0):
+                state.bank_deposit_liability = (
+                    np.asarray(
+                        state.bank_deposit_liability, dtype=np.float64
+                    )
+                    + bank_delta_round
+                )
+                state.bank_reserves = (
+                    np.asarray(
+                        state.bank_reserves, dtype=np.float64
+                    )
+                    + bank_delta_round
+                )
+                finance._append_interbank_legs(
+                    state,
+                    flows,
+                    kind="goods_payment",
+                    delta=bank_delta_round,
+                    leg_offset=0,
+                )
+
+            # Real state after this L (before the next stage).  These are the
+            # physical cash/bank balances, not the frozen envelopes, so the
+            # trace can show that receipts arrived without refilling them.
+            state_cash_after_l = np.asarray(
+                state.organization_cash, dtype=np.float64
+            ).copy()
+            state_bank_reserves_after_l = np.asarray(
+                state.bank_reserves, dtype=np.float64
+            ).copy()
+
+            cum_edge_allocated = cum_edge_allocated + edge_allocated_round
+            cum_edge_delivered = cum_edge_delivered + delivered_round
+            cum_edge_service_used = (
+                cum_edge_service_used + flows.edge_service_used
+            )
+            cum_edge_service_fee = (
+                cum_edge_service_fee + flows.edge_service_fee
+            )
+            cum_delivered = cum_delivered + flows.delivered
+            cum_allocated = cum_allocated + np.bincount(
+                edge_demand,
+                weights=edge_allocated_round,
+                minlength=d_count,
+            )
+            cum_financial_blocked = (
+                cum_financial_blocked + flows.financial_delivery_blocked
+            )
+            cum_physical_blocked = (
+                cum_physical_blocked + flows.physical_delivery_blocked
+            )
+            cum_purchases = cum_purchases + purchases_round
+            cum_sales_receipts = cum_sales_receipts + sales_receipts_round
+
+            # Cumulative envelope subtraction (post-round outlay):
+            # orgs, plots, treasury and cross-bank outgoing each pay only
+            # their delivered share; sale receipts and interbank incoming do
+            # NOT refill this round's envelopes.
+            org_cash_remaining = np.maximum(
+                org_cash_remaining - purchases_round, 0.0
+            )
+            plot_pool_spend_round = np.zeros(
+                region_count, dtype=np.float64
+            )
+            if (plot_buyer_round & pay_active_round).any():
+                plot_pool_spend_round += np.bincount(
+                    cell_region[
+                        edge_destination[
+                            plot_buyer_round & pay_active_round
+                        ]
+                    ],
+                    weights=unit_pay_round[
+                        plot_buyer_round & pay_active_round
+                    ],
+                    minlength=region_count,
+                )
+            plot_pool_remaining = np.maximum(
+                plot_pool_remaining - plot_pool_spend_round, 0.0
+            )
+            treasury_spend_round = 0.0
+            if (treasury_buyer_round & pay_active_round).any():
+                treasury_spend_round = float(
+                    unit_pay_round[
+                        treasury_buyer_round & pay_active_round
+                    ].sum()
+                )
+            treasury_remaining = max(
+                treasury_remaining - treasury_spend_round, 0.0
+            )
+            cross_bank_spend_round = np.zeros(bank_count, dtype=np.float64)
+            cross_edges_active = (
+                cross_bank_round
+                & pay_active_round
+                & (unit_pay_round > 0.0)
+            )
+            if cross_edges_active.any():
+                cross_bank_spend_round = np.bincount(
+                    buyer_bank_round[cross_edges_active],
+                    weights=unit_pay_round[cross_edges_active],
+                    minlength=bank_count,
+                )
+            bank_outflow_remaining = np.maximum(
+                bank_outflow_remaining - cross_bank_spend_round, 0.0
+            )
+
+            _h3d_record_stage(
+                stage_index,
+                "L",
+                round_ordered=round_ordered,
+                allocated=np.bincount(
+                    edge_demand,
+                    weights=edge_allocated_round,
+                    minlength=d_count,
+                ),
+                delivered=flows.delivered,
+                # Real per-edge round arrays before they are aggregated onto
+                # the demand axis / cumulative quarterly flow vectors.  These
+                # let the trace verifier bind source/destination quantities
+                # and logistics/handling spend to actual edge deliveries.
+                edge_allocated=edge_allocated_round,
+                edge_delivered=delivered_round,
+                edge_service_used=flows.edge_service_used,
+                edge_service_fee=pay_fee_round,
+                financial_blocked=flows.financial_delivery_blocked,
+                physical_blocked=flows.physical_delivery_blocked,
+                purchases=purchases_round,
+                sales=sales_receipts_round,
+                stock_before=stock_before_l,
+                stock_after=stock_after_l,
+                state_cash_after=state_cash_after_l,
+                state_bank_reserves_after=state_bank_reserves_after_l,
+                source_outflow=source_debit,
+                destination_credit=dest_credit,
+                source_eligible_before=source_eligible_before_snapshot,
+                source_eligible_after=(
+                    np.asarray(stock_open, dtype=np.float64)
+                    + np.asarray(import_into, dtype=np.float64)
+                    + cum_P_output
+                    + np.where(
+                        retail_source_mask, cum_destination_credit, 0.0
+                    )
+                    - cum_source_debit
+                ),
+                logistics_pool_before=np.asarray(
+                    staged_logistics_pool + log_debit, dtype=np.float64
+                ),
+                logistics_pool_after=np.asarray(
+                    staged_logistics_pool, dtype=np.float64
+                ),
+                logistics_round_cap=np.asarray(
+                    logistics_round_cap, dtype=np.float64
+                ),
+                logistics_spend=np.asarray(log_debit, dtype=np.float64),
+                handling_before=np.asarray(
+                    staged_handling_capacity + handling_debit,
+                    dtype=np.float64,
+                ),
+                handling_after=np.asarray(
+                    staged_handling_capacity, dtype=np.float64
+                ),
+                handling_round_cap=np.asarray(
+                    handling_round_cap, dtype=np.float64
+                ),
+                handling_spend=np.asarray(handling_debit, dtype=np.float64),
+                org_cash_envelope_before=org_cash_envelope_before,
+                org_cash_envelope_after=np.asarray(
+                    org_cash_remaining, dtype=np.float64
+                ),
+                plot_pool_envelope_before=plot_pool_envelope_before,
+                plot_pool_envelope_after=np.asarray(
+                    plot_pool_remaining, dtype=np.float64
+                ),
+                plot_pool_spend=np.asarray(
+                    plot_pool_spend_round, dtype=np.float64
+                ),
+                bank_outflow_before=bank_outflow_before,
+                bank_outflow_after=np.asarray(
+                    bank_outflow_remaining, dtype=np.float64
+                ),
+                bank_outflow_spend=np.asarray(
+                    cross_bank_spend_round, dtype=np.float64
+                ),
+                treasury_before=treasury_envelope_before,
+                treasury_after=float(treasury_remaining),
+                treasury_spend=float(treasury_spend_round),
+                _audit_bank_delta=bank_delta_round,
+            )
+
+        for stage_index in range(int(micro_stage_count)):
+            if stage_index % 2 == 0:
+                stage_target = (
+                    np.asarray(target, dtype=np.float64)
+                    / staged_target_denom
+                )
+                non_transport_k = ~kt_mask
+                if non_transport_k.any():
+                    # Genuine pre-P availability: L has already credited its
+                    # delivered receipts into ``state.stock_value``, so P sees
+                    # the current state on its input cells (no second credit).
+                    available_staged = np.asarray(
+                        state.stock_value, dtype=np.float64
+                    )[input_cell[non_transport_k]].copy()
+                else:
+                    available_staged = None
+                _h3d_stockable_production(
+                    stage_target=stage_target,
+                    available_override=available_staged,
+                    stage_index=stage_index,
+                )
+            else:
+                round_ordered = np.minimum(
+                    np.asarray(ordered, dtype=np.float64)
+                    / staged_target_denom,
+                    np.asarray(ordered, dtype=np.float64)
+                    - cum_allocated,
+                )
+                _h3d_delivery_round(round_ordered, stage_index)
+
+        flows.edge_allocated = cum_edge_allocated
+        flows.edge_delivered = cum_edge_delivered
+        flows.edge_service_used = cum_edge_service_used
+        flows.edge_service_fee = cum_edge_service_fee
+        flows.delivered = cum_delivered
+        flows.financial_delivery_blocked = cum_financial_blocked
+        flows.physical_delivery_blocked = cum_physical_blocked
+        flows.organization_purchases = cum_purchases
+        flows.organization_sales_receipts = cum_sales_receipts
+        flows.activity_realized = np.where(
+                early_service_acts,
+                transport_realized,
+                cum_realized,
+            )
+        # The early-service (transport) production also consumes its own
+        # opening inputs; record them on flows.used so the continuity gate
+        # accounts for the durable-goods/transport stockable input cells.
+        cum_used_full[kt_mask] = transport_used_k[kt_mask]
+        flows.used[:k_count] = cum_used_full
+        _phase("production")
+        _h3d_staged_already_ran = True
+
+    if not _h3d_staged_already_ran:
+        # ---------------- step 5: two-round tiered allocation ----------------
+        avail = stock_open + import_into
+        tier_stack = index.tier_masks[str(parameters.allocation_order)]
+        fallback_edges = np.asarray(network.edge_is_fallback, dtype=bool)
+        edge_allocated = np.zeros(m_count, dtype=np.float64)
+        routing_boundary: dict[str, Any] | None = None
+        if routing_allocator is not None or routing_trace is not None:
+            edge_tier = np.full(m_count, 3, dtype=np.int64)
+            for tier_index in range(tier_stack.shape[0]):
+                edge_tier[tier_stack[tier_index]] = tier_index
+            edge_tier[fallback_edges] = 3
+            cell_pool = np.asarray(network.cell_pool, dtype=np.int64)
+            source_valid = np.zeros(cell_count, dtype=bool)
+            source_valid[edge_source] = True
+            for source_cells in (
+                network.org_output_cell,
+                network.org_wholesale_cell,
+                network.retail_cell,
+                network.plot_raw_cell,
+                network.plot_ready_market_cell,
+                network.import_pool_cell,
+            ):
+                flat = np.asarray(source_cells, dtype=np.int64).reshape(-1)
+                source_valid[flat[flat >= 0]] = True
+            source_valid &= (cell_commodity >= 0) & np.isin(cell_owner_kind, (0, 1, 3))
+            source_valid &= cell_pool != 4
+            buyer_org = index.demand_buyer[edge_demand]
+            org_buyer = buyer_org >= 0
+            plot_buyer = (~org_buyer) & (edge_purpose == _PURPOSE_PRIVATE_PLOT)
+            treasury_buyer = (~org_buyer) & np.isin(
+                edge_purpose, (_PURPOSE_HOUSING, _PURPOSE_EXPORT_CMEA, _PURPOSE_EXPORT_CONVERTIBLE)
+            )
+            safe_destination = np.maximum(edge_destination, 0)
+            buyer_bank = np.where(
+                org_buyer,
+                safe_org_bank[np.maximum(buyer_org, 0)],
+                np.where(
+                    plot_buyer,
+                    cell_region[safe_destination] % max(bank_count, 1),
+                    np.where(treasury_buyer, 0, 0),
+                ),
+            )
+            seller_org = index.cell_owner_org[edge_source]
+            seller_bank = np.where(
+                seller_org >= 0,
+                safe_org_bank[np.maximum(seller_org, 0)],
+                np.where(
+                    cell_owner_kind[edge_source] == 1,
+                    cell_region[edge_source] % max(bank_count, 1),
+                    0,
+                ),
+            )
+            carrier_bank = np.full(m_count, -1, dtype=np.int64)
+            carrier_rows = edge_transport >= 0
+            carrier_bank[carrier_rows] = safe_org_bank[edge_transport[carrier_rows]]
+            buyer_id = np.where(
+                buyer_org >= 0,
+                np.asarray(state.organization_id, dtype=np.int64)[np.maximum(buyer_org, 0)],
+                -1,
+            )
+            carrier_id = np.where(
+                carrier_rows,
+                np.asarray(state.organization_id, dtype=np.int64)[np.maximum(edge_transport, 0)],
+                -1,
+            )
+            funding_group = np.full(d_count, org_count + region_count + 1, dtype=np.int64)
+            for demand_index in range(d_count):
+                buyer_row = int(index.demand_buyer[demand_index])
+                if buyer_row >= 0:
+                    funding_group[demand_index] = buyer_row
+                elif demand_purpose[demand_index] == _PURPOSE_PRIVATE_PLOT:
+                    destination = int(demand_cell[demand_index])
+                    if destination >= 0:
+                        funding_group[demand_index] = org_count + int(
+                            cell_region[destination]
+                        )
+                elif demand_purpose[demand_index] in (
+                    _PURPOSE_HOUSING,
+                    _PURPOSE_EXPORT_CMEA,
+                    _PURPOSE_EXPORT_CONVERTIBLE,
+                ):
+                    funding_group[demand_index] = org_count + region_count
+            funding_capacity = np.concatenate(
+                [
+                    np.asarray(state.organization_cash, dtype=np.float64).copy(),
+                    plot_pool.copy(),
+                    np.asarray([float(state.treasury_deposit), 0.0], dtype=np.float64),
+                ]
+            )
+            funding_kind = (
+                *("organization" for _ in range(org_count)),
+                *("plot" for _ in range(region_count)),
+                "treasury",
+                "residual",
+            )
+            routing_boundary = {
+                "tick": tick,
+                "quarter": quarter,
+                "edge_id": edge_id,
+                "edge_source": edge_source,
+                "edge_destination": edge_destination,
+                "edge_demand": edge_demand,
+                "edge_commodity": edge_commodity,
+                "edge_stage": np.asarray(network.edge_stage, dtype=np.int64),
+                "edge_purpose": edge_purpose,
+                "edge_tier": edge_tier,
+                "edge_unit_price": edge_unit_price,
+                "edge_transport_per_unit": edge_per_unit,
+                "edge_self_hauled": edge_self_hauled_flag,
+                "edge_transport_org": edge_transport,
+                "edge_transport_service_cell": np.asarray(
+                    network.edge_transport_service_cell, dtype=np.int64
+                ),
+                "edge_weight": edge_weight,
+                "demand_cell": demand_cell,
+                "demand_gross": gross,
+                "demand_ordered": ordered,
+                "demand_desired": desired,
+                "demand_active": np.concatenate(
+                    [
+                        ~kt_mask,
+                        np.ones(d_count - k_count, dtype=bool),
+                    ]
+                ),
+                # ``realize_imports`` has already credited the landed import
+                # cells to ``state.stock_value``; adding ``import_into`` here
+                # would count the same import twice.
+                "source_available": np.asarray(state.stock_value, dtype=np.float64),
+                "stock_open": stock_open,
+                "import_into": import_into,
+                "produced_into": produced_into,
+                "service_split": np.asarray(parameters.service_split, dtype=np.float64),
+                "logistics_pool": logistics_pool,
+                "handling_capacity": handling_capacity,
+                "handling_work_per_unit": hw_net,
+                "cell_commodity": cell_commodity,
+                "cell_stage": np.asarray(network.cell_stage, dtype=np.int64),
+                "cell_owner_kind": cell_owner_kind,
+                "cell_owner_id": cell_owner_id,
+                "cell_pool": np.asarray(network.cell_pool, dtype=np.int64),
+                "source_valid": source_valid,
+                "funding_group": funding_group,
+                "funding_capacity": funding_capacity,
+                "funding_kind": funding_kind,
+                "buyer_bank": buyer_bank,
+                "seller_bank": seller_bank,
+                "carrier_bank": carrier_bank,
+                "edge_buyer_id": buyer_id,
+                "edge_carrier_id": carrier_id,
+                "demand_purpose": demand_purpose,
+                "edge_unit_pay": edge_unit_price + edge_per_unit * service_price,
+                "bank_reserves": np.asarray(state.bank_reserves, dtype=np.float64).copy(),
+                "organization_cash": np.asarray(
+                    state.organization_cash, dtype=np.float64
+                ).copy(),
+                "plot_pool": plot_pool.copy(),
+                "treasury_cash": float(state.treasury_deposit),
+                "service_price": float(service_price),
+                "currency": finance.DOMESTIC_CURRENCY,
+                "org_output_cell": np.asarray(network.org_output_cell, dtype=np.int64),
+                "org_wholesale_cell": np.asarray(network.org_wholesale_cell, dtype=np.int64),
+                "retail_cell": np.asarray(network.retail_cell, dtype=np.int64),
+                "plot_raw_cell": np.asarray(network.plot_raw_cell, dtype=np.int64),
+                "plot_ready_market_cell": np.asarray(
+                    network.plot_ready_market_cell, dtype=np.int64
+                ),
+                "import_pool_cell": np.asarray(network.import_pool_cell, dtype=np.int64),
+            }
+            for key, value in list(routing_boundary.items()):
+                if isinstance(value, np.ndarray):
+                    frozen = np.array(value, copy=True)
+                    frozen.setflags(write=False)
+                    routing_boundary[key] = frozen
+        if routing_allocator is None:
+            for tier_index in range(tier_stack.shape[0]):
+                tier_edges = tier_stack[tier_index]
+                if not tier_edges.any():
+                    continue
+                tier_avail = avail + produced_into * float(
+                    parameters.service_split[2 if tier_index == 2 else 1]
+                )
+                src = edge_source[tier_edges]
+                demand_of_tier = edge_demand[tier_edges]
+                claim1 = ordered[demand_of_tier] * edge_weight[tier_edges]
+                need1 = np.bincount(src, weights=claim1, minlength=cell_count)
+                factor1 = _group_factor(need1, tier_avail)
+                alloc1 = claim1 * factor1[src]
+                avail -= np.bincount(src, weights=alloc1, minlength=cell_count)
+                got = np.bincount(demand_of_tier, weights=alloc1, minlength=d_count)
+                unmet = np.maximum(ordered - got, 0.0)
+                claim2 = unmet[demand_of_tier] * edge_weight[tier_edges]
+                need2 = np.bincount(src, weights=claim2, minlength=cell_count)
+                factor2 = _group_factor(need2, avail)
+                alloc2 = claim2 * factor2[src]
+                avail -= np.bincount(src, weights=alloc2, minlength=cell_count)
+                edge_allocated[tier_edges] = alloc1 + alloc2
+            # P05 §0.3 fallback round: unmet demand may draw from additional
+            # same-commodity sources once the declared sources are exhausted.
+            if fallback_edges.any():
+                allocated_so_far = np.bincount(
+                    edge_demand, weights=edge_allocated, minlength=d_count
+                )
+                unmet = np.maximum(ordered - allocated_so_far, 0.0)
+                fb_src = edge_source[fallback_edges]
+                fb_demand = edge_demand[fallback_edges]
+                claim = unmet[fb_demand] * edge_weight[fallback_edges]
+                need = np.bincount(fb_src, weights=claim, minlength=cell_count)
+                factor = _group_factor(need, avail)
+                alloc = claim * factor[fb_src]
+                avail -= np.bincount(fb_src, weights=alloc, minlength=cell_count)
+                edge_allocated[fallback_edges] = alloc
+        else:
+            if routing_boundary is None:  # pragma: no cover - defensive
+                raise ValueError("H3C routing boundary was not built")
+            if routing_trace is not None:
+                # Publish the real pre-allocation flows before the callback so a
+                # rejected certificate still leaves the prelude evidence.
+                routing_trace["flows"] = flows
+            edge_allocated = _validate_routing_allocation(
+                routing_allocator(routing_boundary), routing_boundary
+            )
+        if routing_trace is not None:
+            routing_trace["boundary"] = routing_boundary
+            routing_trace["requested_edge_flow"] = np.asarray(edge_allocated).copy()
+            routing_trace["flows"] = flows
+        allocated = np.bincount(edge_demand, weights=edge_allocated, minlength=d_count)
+        _phase("allocation")
+
+        # ---------------- step 6: delivery ------------------------------------
+        active = edge_allocated > 0.0
+        phys_factor = np.ones(m_count, dtype=np.float64)
+
+        # P05 §0.2: self-hauled routes (a carrier's own inputs, non-stockable
+        # service deliveries, and — for the legacy catalog — every unmetered
+        # same-region leg) never claim the shared carrier service pool.
+        edge_self_hauled = np.asarray(network.edge_self_hauled, dtype=bool)
+        service_need = edge_allocated * edge_per_unit
+        needs_transport = (~edge_self_hauled) & (edge_transport >= 0)
+        if (needs_transport & active).any():
+            transport_need = np.bincount(
+                edge_transport[needs_transport],
+                weights=service_need[needs_transport],
+                minlength=org_count,
+            )
+            transport_factor_org = _group_factor(transport_need, logistics_pool)
+            phys_factor = np.where(
+                needs_transport,
+                transport_factor_org[np.where(needs_transport, edge_transport, 0)],
+                1.0,
+            )
+
+        handling_capacity = _handling_capacity(state)
+        org_cells = index.cell_owner_org >= 0
+        wholesale_cells = np.zeros(cell_count, dtype=bool)
+        retail_cells = np.zeros(cell_count, dtype=bool)
+        retail_owner = np.zeros(cell_count, dtype=np.int64)
+        wholesale_cells[org_cells] = org_type[index.cell_owner_org[org_cells]] == _CODE_WHOLESALE
+        retail_cells[org_cells] = org_type[index.cell_owner_org[org_cells]] == _CODE_RETAIL
+        retail_owner[retail_cells] = index.cell_owner_org[retail_cells]
+
+        source_wholesale = wholesale_cells[edge_source]
+        if (source_wholesale & active).any():
+            wholesale_edges = source_wholesale & active
+            work = edge_allocated[wholesale_edges] * hw_net[edge_commodity[wholesale_edges]]
+            wholesale_org = index.cell_owner_org[edge_source[wholesale_edges]]
+            wholesale_need = np.bincount(wholesale_org, weights=work, minlength=org_count)
+            wholesale_factor = _group_factor(wholesale_need, handling_capacity)
+            phys_factor = np.minimum(
+                phys_factor,
+                np.where(
+                    source_wholesale,
+                    wholesale_factor[np.maximum(index.cell_owner_org[edge_source], 0)],
+                    1.0,
+                ),
+            )
+        dest_retail = np.zeros(m_count, dtype=bool)
+        valid_dest = edge_destination >= 0
+        dest_retail[valid_dest] = retail_cells[edge_destination[valid_dest]]
+        retail_work_used = np.zeros(org_count, dtype=np.float64)
+        if (dest_retail & active).any():
+            retail_edges = dest_retail & active
+            work_dest = edge_allocated[retail_edges] * hw_net[edge_commodity[retail_edges]]
+            retail_org = retail_owner[edge_destination[retail_edges]]
+            retail_work_used = np.bincount(retail_org, weights=work_dest, minlength=org_count)
+            retail_factor = _group_factor(retail_work_used, handling_capacity)
+            safe_retail_org = np.maximum(retail_owner[np.maximum(edge_destination, 0)], 0)
+            phys_factor = np.minimum(
+                phys_factor,
+                np.where(dest_retail, retail_factor[safe_retail_org], 1.0),
+            )
+
+        candidate = edge_allocated * phys_factor
+        pay_goods = candidate * edge_unit_price
+        pay_fee = candidate * edge_per_unit * service_price
+        unit_pay = pay_goods + pay_fee
+
+        fin_factor = np.ones(m_count, dtype=np.float64)
         buyer_org = index.demand_buyer[edge_demand]
         org_buyer = buyer_org >= 0
+        if (org_buyer & active).any():
+            org_need = np.bincount(
+                buyer_org[org_buyer], weights=unit_pay[org_buyer], minlength=org_count
+            )
+            org_cash_factor = _group_factor(
+                org_need, np.asarray(state.organization_cash, dtype=np.float64)
+            )
+            fin_factor = np.where(
+                org_buyer,
+                org_cash_factor[np.where(org_buyer, buyer_org, 0)],
+                1.0,
+            )
+        plot_pool_remaining = plot_pool.copy()
         plot_buyer = (~org_buyer) & (edge_purpose == _PURPOSE_PRIVATE_PLOT)
+        if (plot_buyer & active).any():
+            plot_need = np.bincount(
+                cell_region[edge_destination[plot_buyer]],
+                weights=unit_pay[plot_buyer],
+                minlength=region_count,
+            )
+            plot_factor = _group_factor(plot_need, plot_pool_remaining)
+            fin_factor = np.minimum(
+                fin_factor,
+                np.where(
+                    plot_buyer,
+                    plot_factor[cell_region[np.where(plot_buyer, edge_destination, 0)]],
+                    1.0,
+                ),
+            )
         treasury_buyer = (~org_buyer) & np.isin(
             edge_purpose, (_PURPOSE_HOUSING, _PURPOSE_EXPORT_CMEA, _PURPOSE_EXPORT_CONVERTIBLE)
         )
-        safe_destination = np.maximum(edge_destination, 0)
+        if (treasury_buyer & active).any():
+            treasury_need = float(np.sum(unit_pay[treasury_buyer & active]))
+            treasury_factor = (
+                min(1.0, float(state.treasury_deposit) / treasury_need)
+                if treasury_need > 0.0
+                else 1.0
+            )
+            fin_factor = np.minimum(
+                fin_factor, np.where(treasury_buyer, treasury_factor, 1.0)
+            )
+
+        seller_is_org = org_cells[edge_source]
+        seller_kind_plot = cell_owner_kind[edge_source] == 1
+        seller_bank = np.where(
+            seller_is_org,
+            safe_org_bank[index.cell_owner_org[edge_source]],
+            np.where(seller_kind_plot, cell_region[edge_source] % max(bank_count, 1), 0),
+        )
         buyer_bank = np.where(
             org_buyer,
-            safe_org_bank[np.maximum(buyer_org, 0)],
+            safe_org_bank[np.where(org_buyer, buyer_org, 0)],
             np.where(
                 plot_buyer,
-                cell_region[safe_destination] % max(bank_count, 1),
-                np.where(treasury_buyer, 0, 0),
-            ),
-        )
-        seller_org = index.cell_owner_org[edge_source]
-        seller_bank = np.where(
-            seller_org >= 0,
-            safe_org_bank[np.maximum(seller_org, 0)],
-            np.where(
-                cell_owner_kind[edge_source] == 1,
-                cell_region[edge_source] % max(bank_count, 1),
+                cell_region[np.where(plot_buyer, edge_destination, 0)] % max(bank_count, 1),
                 0,
             ),
         )
-        carrier_bank = np.full(m_count, -1, dtype=np.int64)
-        carrier_rows = edge_transport >= 0
-        carrier_bank[carrier_rows] = safe_org_bank[edge_transport[carrier_rows]]
-        buyer_id = np.where(
-            buyer_org >= 0,
-            np.asarray(state.organization_id, dtype=np.int64)[np.maximum(buyer_org, 0)],
-            -1,
-        )
-        carrier_id = np.where(
-            carrier_rows,
-            np.asarray(state.organization_id, dtype=np.int64)[np.maximum(edge_transport, 0)],
-            -1,
-        )
-        funding_group = np.full(d_count, org_count + region_count + 1, dtype=np.int64)
-        for demand_index in range(d_count):
-            buyer_row = int(index.demand_buyer[demand_index])
-            if buyer_row >= 0:
-                funding_group[demand_index] = buyer_row
-            elif demand_purpose[demand_index] == _PURPOSE_PRIVATE_PLOT:
-                destination = int(demand_cell[demand_index])
-                if destination >= 0:
-                    funding_group[demand_index] = org_count + int(
-                        cell_region[destination]
-                    )
-            elif demand_purpose[demand_index] in (
-                _PURPOSE_HOUSING,
-                _PURPOSE_EXPORT_CMEA,
-                _PURPOSE_EXPORT_CONVERTIBLE,
-            ):
-                funding_group[demand_index] = org_count + region_count
-        funding_capacity = np.concatenate(
-            [
-                np.asarray(state.organization_cash, dtype=np.float64).copy(),
-                plot_pool.copy(),
-                np.asarray([float(state.treasury_deposit), 0.0], dtype=np.float64),
-            ]
-        )
-        funding_kind = (
-            *("organization" for _ in range(org_count)),
-            *("plot" for _ in range(region_count)),
-            "treasury",
-            "residual",
-        )
-        routing_boundary = {
-            "tick": tick,
-            "quarter": quarter,
-            "edge_id": edge_id,
-            "edge_source": edge_source,
-            "edge_destination": edge_destination,
-            "edge_demand": edge_demand,
-            "edge_commodity": edge_commodity,
-            "edge_stage": np.asarray(network.edge_stage, dtype=np.int64),
-            "edge_purpose": edge_purpose,
-            "edge_tier": edge_tier,
-            "edge_unit_price": edge_unit_price,
-            "edge_transport_per_unit": edge_per_unit,
-            "edge_self_hauled": edge_self_hauled_flag,
-            "edge_transport_org": edge_transport,
-            "edge_transport_service_cell": np.asarray(
-                network.edge_transport_service_cell, dtype=np.int64
-            ),
-            "edge_weight": edge_weight,
-            "demand_cell": demand_cell,
-            "demand_gross": gross,
-            "demand_ordered": ordered,
-            "demand_desired": desired,
-            "demand_active": np.concatenate(
-                [
-                    ~kt_mask,
-                    np.ones(d_count - k_count, dtype=bool),
-                ]
-            ),
-            # ``realize_imports`` has already credited the landed import
-            # cells to ``state.stock_value``; adding ``import_into`` here
-            # would count the same import twice.
-            "source_available": np.asarray(state.stock_value, dtype=np.float64),
-            "stock_open": stock_open,
-            "import_into": import_into,
-            "produced_into": produced_into,
-            "service_split": np.asarray(parameters.service_split, dtype=np.float64),
-            "logistics_pool": logistics_pool,
-            "handling_capacity": handling_capacity,
-            "handling_work_per_unit": hw_net,
-            "cell_commodity": cell_commodity,
-            "cell_stage": np.asarray(network.cell_stage, dtype=np.int64),
-            "cell_owner_kind": cell_owner_kind,
-            "cell_owner_id": cell_owner_id,
-            "cell_pool": np.asarray(network.cell_pool, dtype=np.int64),
-            "source_valid": source_valid,
-            "funding_group": funding_group,
-            "funding_capacity": funding_capacity,
-            "funding_kind": funding_kind,
-            "buyer_bank": buyer_bank,
-            "seller_bank": seller_bank,
-            "carrier_bank": carrier_bank,
-            "edge_buyer_id": buyer_id,
-            "edge_carrier_id": carrier_id,
-            "demand_purpose": demand_purpose,
-            "edge_unit_pay": edge_unit_price + edge_per_unit * service_price,
-            "bank_reserves": np.asarray(state.bank_reserves, dtype=np.float64).copy(),
-            "organization_cash": np.asarray(
-                state.organization_cash, dtype=np.float64
-            ).copy(),
-            "plot_pool": plot_pool.copy(),
-            "treasury_cash": float(state.treasury_deposit),
-            "service_price": float(service_price),
-            "currency": finance.DOMESTIC_CURRENCY,
-            "org_output_cell": np.asarray(network.org_output_cell, dtype=np.int64),
-            "org_wholesale_cell": np.asarray(network.org_wholesale_cell, dtype=np.int64),
-            "retail_cell": np.asarray(network.retail_cell, dtype=np.int64),
-            "plot_raw_cell": np.asarray(network.plot_raw_cell, dtype=np.int64),
-            "plot_ready_market_cell": np.asarray(
-                network.plot_ready_market_cell, dtype=np.int64
-            ),
-            "import_pool_cell": np.asarray(network.import_pool_cell, dtype=np.int64),
-        }
-        for key, value in list(routing_boundary.items()):
-            if isinstance(value, np.ndarray):
-                frozen = np.array(value, copy=True)
-                frozen.setflags(write=False)
-                routing_boundary[key] = frozen
-    if routing_allocator is None:
-        for tier_index in range(tier_stack.shape[0]):
-            tier_edges = tier_stack[tier_index]
-            if not tier_edges.any():
-                continue
-            tier_avail = avail + produced_into * float(
-                parameters.service_split[2 if tier_index == 2 else 1]
+        cross_bank = buyer_bank != seller_bank
+        if (cross_bank & active).any():
+            outgoing = np.bincount(
+                buyer_bank[cross_bank], weights=unit_pay[cross_bank], minlength=bank_count
             )
-            src = edge_source[tier_edges]
-            demand_of_tier = edge_demand[tier_edges]
-            claim1 = ordered[demand_of_tier] * edge_weight[tier_edges]
-            need1 = np.bincount(src, weights=claim1, minlength=cell_count)
-            factor1 = _group_factor(need1, tier_avail)
-            alloc1 = claim1 * factor1[src]
-            avail -= np.bincount(src, weights=alloc1, minlength=cell_count)
-            got = np.bincount(demand_of_tier, weights=alloc1, minlength=d_count)
-            unmet = np.maximum(ordered - got, 0.0)
-            claim2 = unmet[demand_of_tier] * edge_weight[tier_edges]
-            need2 = np.bincount(src, weights=claim2, minlength=cell_count)
-            factor2 = _group_factor(need2, avail)
-            alloc2 = claim2 * factor2[src]
-            avail -= np.bincount(src, weights=alloc2, minlength=cell_count)
-            edge_allocated[tier_edges] = alloc1 + alloc2
-        # P05 §0.3 fallback round: unmet demand may draw from additional
-        # same-commodity sources once the declared sources are exhausted.
-        if fallback_edges.any():
-            allocated_so_far = np.bincount(
-                edge_demand, weights=edge_allocated, minlength=d_count
-            )
-            unmet = np.maximum(ordered - allocated_so_far, 0.0)
-            fb_src = edge_source[fallback_edges]
-            fb_demand = edge_demand[fallback_edges]
-            claim = unmet[fb_demand] * edge_weight[fallback_edges]
-            need = np.bincount(fb_src, weights=claim, minlength=cell_count)
-            factor = _group_factor(need, avail)
-            alloc = claim * factor[fb_src]
-            avail -= np.bincount(fb_src, weights=alloc, minlength=cell_count)
-            edge_allocated[fallback_edges] = alloc
-    else:
-        if routing_boundary is None:  # pragma: no cover - defensive
-            raise ValueError("H3C routing boundary was not built")
-        if routing_trace is not None:
-            # Publish the real pre-allocation flows before the callback so a
-            # rejected certificate still leaves the prelude evidence.
-            routing_trace["flows"] = flows
-        edge_allocated = _validate_routing_allocation(
-            routing_allocator(routing_boundary), routing_boundary
+            bank_factor = _group_factor(outgoing, np.asarray(state.bank_reserves, dtype=np.float64))
+            fin_factor = np.minimum(fin_factor, np.where(cross_bank, bank_factor[buyer_bank], 1.0))
+
+        delivered_edges = candidate * fin_factor
+        blocked_edges = candidate * (1.0 - fin_factor)
+        # Buyers pay only for what is actually delivered: the cash/clearing factors
+        # scale the goods and freight charges together with the delivery, so a
+        # cash-limited buyer can never overdraw its deposit.
+        pay_goods = delivered_edges * edge_unit_price
+        pay_fee = delivered_edges * edge_per_unit * service_price
+        unit_pay = pay_goods + pay_fee
+        flows.edge_allocated = edge_allocated
+        flows.edge_delivered = delivered_edges
+        flows.edge_service_used = delivered_edges * edge_per_unit
+        flows.edge_service_fee = delivered_edges * edge_per_unit * service_price
+        flows.delivered = np.bincount(edge_demand, weights=delivered_edges, minlength=d_count)
+        flows.financial_delivery_blocked = np.bincount(
+            edge_demand, weights=blocked_edges, minlength=d_count
         )
-    if routing_trace is not None:
-        routing_trace["boundary"] = routing_boundary
-        routing_trace["requested_edge_flow"] = np.asarray(edge_allocated).copy()
-        routing_trace["flows"] = flows
-    allocated = np.bincount(edge_demand, weights=edge_allocated, minlength=d_count)
-    _phase("allocation")
+        # Physical shortfall: allocated on an edge but not moved because the sourcing
+        # wholesaler or the destination retailer is at its handling ceiling.  Without
+        # this ledger the allocation-to-delivery gap is invisible (financial blocked is
+        # zero while half the plan never moves).
+        flows.physical_delivery_blocked = np.bincount(
+            edge_demand,
+            weights=np.maximum(edge_allocated - candidate, 0.0),
+            minlength=d_count,
+        )
 
-    # ---------------- step 6: delivery ------------------------------------
-    active = edge_allocated > 0.0
-    phys_factor = np.ones(m_count, dtype=np.float64)
-
-    # P05 §0.2: self-hauled routes (a carrier's own inputs, non-stockable
-    # service deliveries, and — for the legacy catalog — every unmetered
-    # same-region leg) never claim the shared carrier service pool.
-    edge_self_hauled = np.asarray(network.edge_self_hauled, dtype=bool)
-    service_need = edge_allocated * edge_per_unit
-    needs_transport = (~edge_self_hauled) & (edge_transport >= 0)
-    if (needs_transport & active).any():
-        transport_need = np.bincount(
+        state.stock_value -= np.bincount(edge_source, weights=delivered_edges, minlength=cell_count)
+        state.stock_value += np.bincount(
+            edge_destination[valid_dest],
+            weights=delivered_edges[valid_dest],
+            minlength=cell_count,
+        )
+        logistics_pool -= np.bincount(
             edge_transport[needs_transport],
-            weights=service_need[needs_transport],
+            weights=flows.edge_service_used[needs_transport],
             minlength=org_count,
         )
-        transport_factor_org = _group_factor(transport_need, logistics_pool)
-        phys_factor = np.where(
-            needs_transport,
-            transport_factor_org[np.where(needs_transport, edge_transport, 0)],
-            1.0,
-        )
 
-    handling_capacity = _handling_capacity(state)
-    org_cells = index.cell_owner_org >= 0
-    wholesale_cells = np.zeros(cell_count, dtype=bool)
-    retail_cells = np.zeros(cell_count, dtype=bool)
-    retail_owner = np.zeros(cell_count, dtype=np.int64)
-    wholesale_cells[org_cells] = org_type[index.cell_owner_org[org_cells]] == _CODE_WHOLESALE
-    retail_cells[org_cells] = org_type[index.cell_owner_org[org_cells]] == _CODE_RETAIL
-    retail_owner[retail_cells] = index.cell_owner_org[retail_cells]
+        # --- payments, bank books and journal legs ---------------------------
+        org_cash = np.asarray(state.organization_cash, dtype=np.float64)
+        household_cash = np.asarray(state.household_cash, dtype=np.float64)
+        sales_receipts = np.zeros(org_count, dtype=np.float64)
+        purchases = np.zeros(org_count, dtype=np.float64)
+        org_cash_account = organization_account_ids(state, finance.AccountKind.CASH_DEPOSIT)
+        household_cash_account = household_account_ids(state, finance.AccountKind.CASH_DEPOSIT)
+        clearing_accounts = plot_clearing_account_ids(state)
+        treasury_cash_account = treasury_account_id(state, finance.AccountKind.CASH_DEPOSIT)
+        org_ids = np.asarray(state.organization_id, dtype=np.int64)
+        bank_delta = np.zeros(bank_count, dtype=np.float64)
+        seller_org = index.cell_owner_org[edge_source]
+        seller_is_import = cell_owner_kind[edge_source] == 3
 
-    source_wholesale = wholesale_cells[edge_source]
-    if (source_wholesale & active).any():
-        wholesale_edges = source_wholesale & active
-        work = edge_allocated[wholesale_edges] * hw_net[edge_commodity[wholesale_edges]]
-        wholesale_org = index.cell_owner_org[edge_source[wholesale_edges]]
-        wholesale_need = np.bincount(wholesale_org, weights=work, minlength=org_count)
-        wholesale_factor = _group_factor(wholesale_need, handling_capacity)
-        phys_factor = np.minimum(
-            phys_factor,
-            np.where(
-                source_wholesale,
-                wholesale_factor[np.maximum(index.cell_owner_org[edge_source], 0)],
-                1.0,
-            ),
-        )
-    dest_retail = np.zeros(m_count, dtype=bool)
-    valid_dest = edge_destination >= 0
-    dest_retail[valid_dest] = retail_cells[edge_destination[valid_dest]]
-    retail_work_used = np.zeros(org_count, dtype=np.float64)
-    if (dest_retail & active).any():
-        retail_edges = dest_retail & active
-        work_dest = edge_allocated[retail_edges] * hw_net[edge_commodity[retail_edges]]
-        retail_org = retail_owner[edge_destination[retail_edges]]
-        retail_work_used = np.bincount(retail_org, weights=work_dest, minlength=org_count)
-        retail_factor = _group_factor(retail_work_used, handling_capacity)
-        safe_retail_org = np.maximum(retail_owner[np.maximum(edge_destination, 0)], 0)
-        phys_factor = np.minimum(
-            phys_factor,
-            np.where(dest_retail, retail_factor[safe_retail_org], 1.0),
-        )
+        leg_debit: list[np.ndarray] = []
+        leg_credit: list[np.ndarray] = []
+        leg_amount: list[np.ndarray] = []
+        leg_group: list[np.ndarray] = []
+        leg_org: list[list[Any]] = []
 
-    candidate = edge_allocated * phys_factor
-    pay_goods = candidate * edge_unit_price
-    pay_fee = candidate * edge_per_unit * service_price
-    unit_pay = pay_goods + pay_fee
+        def _legs(
+            debit: int | np.ndarray,
+            credit: int | np.ndarray,
+            amount: np.ndarray,
+            group: int | np.ndarray,
+            org: np.ndarray | None,
+        ) -> None:
+            amount = np.asarray(amount, dtype=np.float64)
+            debit = np.broadcast_to(np.asarray(debit, dtype=np.int64), amount.shape)
+            credit = np.broadcast_to(np.asarray(credit, dtype=np.int64), amount.shape)
+            group = np.broadcast_to(np.asarray(group, dtype=np.int64), amount.shape)
+            mask = amount > 0.0
+            if np.count_nonzero(mask):
+                leg_debit.append(debit[mask])
+                leg_credit.append(credit[mask])
+                leg_amount.append(amount[mask])
+                leg_group.append(group[mask])
+                column: list[Any] = [None] * int(np.count_nonzero(mask))
+                if org is not None:
+                    column = [
+                        int(value) if value is not None and value >= 0 else None
+                        for value in np.asarray(org, dtype=np.int64)[mask].tolist()
+                    ]
+                leg_org.append(column)
 
-    fin_factor = np.ones(m_count, dtype=np.float64)
-    buyer_org = index.demand_buyer[edge_demand]
-    org_buyer = buyer_org >= 0
-    if (org_buyer & active).any():
-        org_need = np.bincount(
-            buyer_org[org_buyer], weights=unit_pay[org_buyer], minlength=org_count
-        )
-        org_cash_factor = _group_factor(
-            org_need, np.asarray(state.organization_cash, dtype=np.float64)
-        )
-        fin_factor = np.where(org_buyer, org_cash_factor[np.where(org_buyer, buyer_org, 0)], 1.0)
-    plot_pool_remaining = plot_pool.copy()
-    plot_buyer = (~org_buyer) & (edge_purpose == _PURPOSE_PRIVATE_PLOT)
-    if (plot_buyer & active).any():
-        plot_need = np.bincount(
-            cell_region[edge_destination[plot_buyer]],
-            weights=unit_pay[plot_buyer],
-            minlength=region_count,
-        )
-        plot_factor = _group_factor(plot_need, plot_pool_remaining)
-        fin_factor = np.minimum(
-            fin_factor,
-            np.where(
-                plot_buyer,
-                plot_factor[cell_region[np.where(plot_buyer, edge_destination, 0)]],
-                1.0,
-            ),
-        )
-    treasury_buyer = (~org_buyer) & np.isin(
-        edge_purpose, (_PURPOSE_HOUSING, _PURPOSE_EXPORT_CMEA, _PURPOSE_EXPORT_CONVERTIBLE)
-    )
-    if (treasury_buyer & active).any():
-        treasury_need = float(np.sum(unit_pay[treasury_buyer & active]))
-        treasury_factor = (
-            min(1.0, float(state.treasury_deposit) / treasury_need) if treasury_need > 0.0 else 1.0
-        )
-        fin_factor = np.minimum(fin_factor, np.where(treasury_buyer, treasury_factor, 1.0))
+        pay_active = active & (delivered_edges > 0.0)
 
-    seller_is_org = org_cells[edge_source]
-    seller_kind_plot = cell_owner_kind[edge_source] == 1
-    seller_bank = np.where(
-        seller_is_org,
-        safe_org_bank[index.cell_owner_org[edge_source]],
-        np.where(seller_kind_plot, cell_region[edge_source] % max(bank_count, 1), 0),
-    )
-    buyer_bank = np.where(
-        org_buyer,
-        safe_org_bank[np.where(org_buyer, buyer_org, 0)],
-        np.where(
-            plot_buyer,
-            cell_region[np.where(plot_buyer, edge_destination, 0)] % max(bank_count, 1),
-            0,
-        ),
-    )
-    cross_bank = buyer_bank != seller_bank
-    if (cross_bank & active).any():
-        outgoing = np.bincount(
-            buyer_bank[cross_bank], weights=unit_pay[cross_bank], minlength=bank_count
-        )
-        bank_factor = _group_factor(outgoing, np.asarray(state.bank_reserves, dtype=np.float64))
-        fin_factor = np.minimum(fin_factor, np.where(cross_bank, bank_factor[buyer_bank], 1.0))
+        # Org buyers: goods payments + freight fees.
+        org_paying = org_buyer & pay_active
+        if org_paying.any():
+            buyers = buyer_org
+            pay = pay_goods
+            fee = pay_fee
+            transports = edge_transport
+            paid_now = (pay + fee)[org_paying]
+            org_cash -= np.bincount(buyers[org_paying], weights=paid_now, minlength=org_count)
+            purchases += np.bincount(buyers[org_paying], weights=paid_now, minlength=org_count)
+            bank_delta -= np.bincount(
+                safe_org_bank[buyers[org_paying]], weights=paid_now, minlength=bank_count
+            )
 
-    delivered_edges = candidate * fin_factor
-    blocked_edges = candidate * (1.0 - fin_factor)
-    # Buyers pay only for what is actually delivered: the cash/clearing factors
-    # scale the goods and freight charges together with the delivery, so a
-    # cash-limited buyer can never overdraw its deposit.
-    pay_goods = delivered_edges * edge_unit_price
-    pay_fee = delivered_edges * edge_per_unit * service_price
-    unit_pay = pay_goods + pay_fee
-    flows.edge_allocated = edge_allocated
-    flows.edge_delivered = delivered_edges
-    flows.edge_service_used = delivered_edges * edge_per_unit
-    flows.edge_service_fee = delivered_edges * edge_per_unit * service_price
-    flows.delivered = np.bincount(edge_demand, weights=delivered_edges, minlength=d_count)
-    flows.financial_delivery_blocked = np.bincount(
-        edge_demand, weights=blocked_edges, minlength=d_count
-    )
-    # Physical shortfall: allocated on an edge but not moved because the sourcing
-    # wholesaler or the destination retailer is at its handling ceiling.  Without
-    # this ledger the allocation-to-delivery gap is invisible (financial blocked is
-    # zero while half the plan never moves).
-    flows.physical_delivery_blocked = np.bincount(
-        edge_demand,
-        weights=np.maximum(edge_allocated - candidate, 0.0),
-        minlength=d_count,
-    )
+            to_org = org_paying & seller_is_org
+            if to_org.any():
+                rows = seller_org[to_org]
+                paid = pay_goods[to_org]
+                org_cash += np.bincount(rows, weights=paid, minlength=org_count)
+                sales_receipts += np.bincount(rows, weights=paid, minlength=org_count)
+                bank_delta += np.bincount(safe_org_bank[rows], weights=paid, minlength=bank_count)
+                _legs(
+                    org_cash_account[buyers[to_org]],
+                    org_cash_account[rows],
+                    paid,
+                    1_000_000 + np.flatnonzero(to_org),
+                    org_ids[rows],
+                )
+            to_plot = org_paying & seller_kind_plot
+            if to_plot.any():
+                source_regions = cell_region[edge_source[to_plot]]
+                region_receipts = np.bincount(
+                    source_regions, weights=pay_goods[to_plot], minlength=region_count
+                )
+                receipt_hh = plot_share * region_receipts[hh_region]
+                household_cash += receipt_hh
+                flows.household_plot_income_formal += receipt_hh
+                represented_receipt = hh_weight * receipt_hh
+                bank_delta += np.bincount(
+                    hh_bank,
+                    weights=represented_receipt,
+                    minlength=bank_count,
+                )
+                paying_orgs = buyers[to_plot]
+                _legs(
+                    org_cash_account[paying_orgs],
+                    clearing_accounts[source_regions],
+                    pay_goods[to_plot],
+                    source_regions,
+                    org_ids[paying_orgs],
+                )
+                receiving = represented_receipt > 0.0
+                _legs(
+                    clearing_accounts[hh_region[receiving]],
+                    household_cash_account[receiving],
+                    represented_receipt[receiving],
+                    hh_region[receiving] + region_count,
+                    None,
+                )
+            to_import = org_paying & seller_is_import
+            if to_import.any():
+                paid = pay_goods[to_import]
+                total = float(paid.sum())
+                state.treasury_deposit = float(state.treasury_deposit) + total
+                bank_delta[0] += total
+                _legs(
+                    org_cash_account[buyers[to_import]],
+                    treasury_cash_account,
+                    paid,
+                    1_000_000 + np.flatnonzero(to_import),
+                    org_ids[buyers[to_import]],
+                )
+            has_fee = org_paying & (pay_fee > 0.0) & (transports >= 0)
+            if has_fee.any():
+                fee_rows = transports[has_fee]
+                fee_paid = pay_fee[has_fee]
+                org_cash += np.bincount(fee_rows, weights=fee_paid, minlength=org_count)
+                sales_receipts += np.bincount(fee_rows, weights=fee_paid, minlength=org_count)
+                bank_delta += np.bincount(
+                    safe_org_bank[fee_rows], weights=fee_paid, minlength=bank_count
+                )
+                _legs(
+                    org_cash_account[buyers[has_fee]],
+                    org_cash_account[fee_rows],
+                    fee_paid,
+                    1_000_000 + np.flatnonzero(has_fee),
+                    org_ids[fee_rows],
+                )
 
-    state.stock_value -= np.bincount(edge_source, weights=delivered_edges, minlength=cell_count)
-    state.stock_value += np.bincount(
-        edge_destination[valid_dest],
-        weights=delivered_edges[valid_dest],
-        minlength=cell_count,
-    )
-    logistics_pool -= np.bincount(
-        edge_transport[needs_transport],
-        weights=flows.edge_service_used[needs_transport],
-        minlength=org_count,
-    )
+        # Plot-buyer edges: households fund their region's plot inputs.
+        plot_paying = plot_buyer & pay_active
+        if plot_paying.any():
+            dest_regions = cell_region[edge_destination[plot_paying]]
+            region_paid = np.bincount(
+                dest_regions, weights=unit_pay[plot_paying], minlength=region_count
+            )
+            funding_hh = plot_share * region_paid[hh_region]
+            household_cash -= funding_hh
+            flows.household_plot_input_funding += funding_hh
+            bank_delta -= np.bincount(hh_bank, weights=hh_weight * funding_hh, minlength=bank_count)
+            rows = seller_org[plot_paying]
+            paid = pay_goods[plot_paying]
+            to_org = plot_paying & seller_is_org
+            to_import = plot_paying & seller_is_import
+            if to_org.any():
+                org_rows = seller_org[to_org]
+                org_cash += np.bincount(
+                    org_rows,
+                    weights=pay_goods[to_org],
+                    minlength=org_count,
+                )
+                sales_receipts += np.bincount(
+                    org_rows,
+                    weights=pay_goods[to_org],
+                    minlength=org_count,
+                )
+                bank_delta += np.bincount(
+                    safe_org_bank[org_rows],
+                    weights=pay_goods[to_org],
+                    minlength=bank_count,
+                )
+            if to_import.any():
+                # A plot input may be sourced from the national import buffer, so the
+                # Treasury (not an organization) is the seller on that leg.
+                import_total = float(pay_goods[to_import].sum())
+                state.treasury_deposit = float(state.treasury_deposit) + import_total
+                bank_delta[0] += import_total
+            safe_rows = np.where(seller_is_import[plot_paying], 0, np.maximum(rows, 0))
+            credit_accounts = np.where(
+                seller_is_import[plot_paying],
+                treasury_cash_account,
+                org_cash_account[safe_rows],
+            )
+            _legs(
+                clearing_accounts[dest_regions],
+                credit_accounts,
+                paid,
+                1_000_000 + np.flatnonzero(plot_paying),
+                org_ids[safe_rows],
+            )
+            paying_hh = (hh_weight * funding_hh) > 0.0
+            _legs(
+                household_cash_account[paying_hh],
+                clearing_accounts[hh_region[paying_hh]],
+                (hh_weight * funding_hh)[paying_hh],
+                hh_region[paying_hh] + 2 * region_count,
+                None,
+            )
+            fee_rows = edge_transport[plot_paying]
+            has_fee = (pay_fee[plot_paying] > 0.0) & (fee_rows >= 0)
+            if has_fee.any():
+                fee_paid = pay_fee[plot_paying][has_fee]
+                fee_orgs = fee_rows[has_fee]
+                org_cash += np.bincount(fee_orgs, weights=fee_paid, minlength=org_count)
+                sales_receipts += np.bincount(fee_orgs, weights=fee_paid, minlength=org_count)
+                bank_delta += np.bincount(
+                    safe_org_bank[fee_orgs], weights=fee_paid, minlength=bank_count
+                )
+                _legs(
+                    clearing_accounts[dest_regions[has_fee]],
+                    org_cash_account[fee_orgs],
+                    fee_paid,
+                    1_000_000 + np.flatnonzero(plot_paying)[has_fee],
+                    org_ids[fee_orgs],
+                )
 
-    # --- payments, bank books and journal legs ---------------------------
-    org_cash = np.asarray(state.organization_cash, dtype=np.float64)
-    household_cash = np.asarray(state.household_cash, dtype=np.float64)
-    sales_receipts = np.zeros(org_count, dtype=np.float64)
-    purchases = np.zeros(org_count, dtype=np.float64)
-    org_cash_account = organization_account_ids(state, finance.AccountKind.CASH_DEPOSIT)
-    household_cash_account = household_account_ids(state, finance.AccountKind.CASH_DEPOSIT)
-    clearing_accounts = plot_clearing_account_ids(state)
-    treasury_cash_account = treasury_account_id(state, finance.AccountKind.CASH_DEPOSIT)
-    org_ids = np.asarray(state.organization_id, dtype=np.int64)
-    bank_delta = np.zeros(bank_count, dtype=np.float64)
-    seller_org = index.cell_owner_org[edge_source]
-    seller_is_import = cell_owner_kind[edge_source] == 3
-
-    leg_debit: list[np.ndarray] = []
-    leg_credit: list[np.ndarray] = []
-    leg_amount: list[np.ndarray] = []
-    leg_group: list[np.ndarray] = []
-    leg_org: list[list[Any]] = []
-
-    def _legs(
-        debit: int | np.ndarray,
-        credit: int | np.ndarray,
-        amount: np.ndarray,
-        group: int | np.ndarray,
-        org: np.ndarray | None,
-    ) -> None:
-        amount = np.asarray(amount, dtype=np.float64)
-        debit = np.broadcast_to(np.asarray(debit, dtype=np.int64), amount.shape)
-        credit = np.broadcast_to(np.asarray(credit, dtype=np.int64), amount.shape)
-        group = np.broadcast_to(np.asarray(group, dtype=np.int64), amount.shape)
-        mask = amount > 0.0
-        if np.count_nonzero(mask):
-            leg_debit.append(debit[mask])
-            leg_credit.append(credit[mask])
-            leg_amount.append(amount[mask])
-            leg_group.append(group[mask])
-            column: list[Any] = [None] * int(np.count_nonzero(mask))
-            if org is not None:
-                column = [
-                    int(value) if value is not None and value >= 0 else None
-                    for value in np.asarray(org, dtype=np.int64)[mask].tolist()
-                ]
-            leg_org.append(column)
-
-    pay_active = active & (delivered_edges > 0.0)
-
-    # Org buyers: goods payments + freight fees.
-    org_paying = org_buyer & pay_active
-    if org_paying.any():
-        buyers = buyer_org
-        pay = pay_goods
-        fee = pay_fee
-        transports = edge_transport
-        paid_now = (pay + fee)[org_paying]
-        org_cash -= np.bincount(buyers[org_paying], weights=paid_now, minlength=org_count)
-        purchases += np.bincount(buyers[org_paying], weights=paid_now, minlength=org_count)
-        bank_delta -= np.bincount(
-            safe_org_bank[buyers[org_paying]], weights=paid_now, minlength=bank_count
-        )
-
-        to_org = org_paying & seller_is_org
-        if to_org.any():
-            rows = seller_org[to_org]
-            paid = pay_goods[to_org]
+        # Treasury-buyer edges: housing and export purchases (goods + fees).
+        treasury_paying = treasury_buyer & pay_active
+        if treasury_paying.any():
+            rows = seller_org[treasury_paying]
+            paid = pay_goods[treasury_paying]
+            fee_paid = pay_fee[treasury_paying]
+            fee_rows = edge_transport[treasury_paying]
+            has_fee = (fee_paid > 0.0) & (fee_rows >= 0)
+            state.treasury_deposit = float(state.treasury_deposit) - float(
+                unit_pay[treasury_paying].sum()
+            )
             org_cash += np.bincount(rows, weights=paid, minlength=org_count)
             sales_receipts += np.bincount(rows, weights=paid, minlength=org_count)
             bank_delta += np.bincount(safe_org_bank[rows], weights=paid, minlength=bank_count)
+            bank_delta[0] -= float(unit_pay[treasury_paying].sum())
             _legs(
-                org_cash_account[buyers[to_org]],
+                treasury_cash_account,
                 org_cash_account[rows],
                 paid,
-                1_000_000 + np.flatnonzero(to_org),
+                np.full(int(np.count_nonzero(treasury_paying)), -2, dtype=np.int64),
                 org_ids[rows],
             )
-        to_plot = org_paying & seller_kind_plot
-        if to_plot.any():
-            source_regions = cell_region[edge_source[to_plot]]
-            region_receipts = np.bincount(
-                source_regions, weights=pay_goods[to_plot], minlength=region_count
-            )
-            receipt_hh = plot_share * region_receipts[hh_region]
-            household_cash += receipt_hh
-            flows.household_plot_income_formal += receipt_hh
-            represented_receipt = hh_weight * receipt_hh
-            bank_delta += np.bincount(hh_bank, weights=represented_receipt, minlength=bank_count)
-            paying_orgs = buyers[to_plot]
-            _legs(
-                org_cash_account[paying_orgs],
-                clearing_accounts[source_regions],
-                pay_goods[to_plot],
-                source_regions,
-                org_ids[paying_orgs],
-            )
-            receiving = represented_receipt > 0.0
-            _legs(
-                clearing_accounts[hh_region[receiving]],
-                household_cash_account[receiving],
-                represented_receipt[receiving],
-                hh_region[receiving] + region_count,
-                None,
-            )
-        to_import = org_paying & seller_is_import
-        if to_import.any():
-            paid = pay_goods[to_import]
-            total = float(paid.sum())
-            state.treasury_deposit = float(state.treasury_deposit) + total
-            bank_delta[0] += total
-            _legs(
-                org_cash_account[buyers[to_import]],
-                treasury_cash_account,
-                paid,
-                1_000_000 + np.flatnonzero(to_import),
-                org_ids[buyers[to_import]],
-            )
-        has_fee = org_paying & (pay_fee > 0.0) & (transports >= 0)
-        if has_fee.any():
-            fee_rows = transports[has_fee]
-            fee_paid = pay_fee[has_fee]
-            org_cash += np.bincount(fee_rows, weights=fee_paid, minlength=org_count)
-            sales_receipts += np.bincount(fee_rows, weights=fee_paid, minlength=org_count)
-            bank_delta += np.bincount(
-                safe_org_bank[fee_rows], weights=fee_paid, minlength=bank_count
-            )
-            _legs(
-                org_cash_account[buyers[has_fee]],
-                org_cash_account[fee_rows],
-                fee_paid,
-                1_000_000 + np.flatnonzero(has_fee),
-                org_ids[fee_rows],
-            )
+            if has_fee.any():
+                fee_orgs = fee_rows[has_fee]
+                org_cash += np.bincount(
+                    fee_orgs,
+                    weights=fee_paid[has_fee],
+                    minlength=org_count,
+                )
+                sales_receipts += np.bincount(
+                    fee_orgs,
+                    weights=fee_paid[has_fee],
+                    minlength=org_count,
+                )
+                bank_delta += np.bincount(
+                    safe_org_bank[fee_orgs],
+                    weights=fee_paid[has_fee],
+                    minlength=bank_count,
+                )
+                _legs(
+                    treasury_cash_account,
+                    org_cash_account[fee_orgs],
+                    fee_paid[has_fee],
+                    np.full(int(np.count_nonzero(has_fee)), -3, dtype=np.int64),
+                    org_ids[fee_orgs],
+                )
 
-    # Plot-buyer edges: households fund their region's plot inputs.
-    plot_paying = plot_buyer & pay_active
-    if plot_paying.any():
-        dest_regions = cell_region[edge_destination[plot_paying]]
-        region_paid = np.bincount(
-            dest_regions, weights=unit_pay[plot_paying], minlength=region_count
-        )
-        funding_hh = plot_share * region_paid[hh_region]
-        household_cash -= funding_hh
-        flows.household_plot_input_funding += funding_hh
-        bank_delta -= np.bincount(hh_bank, weights=hh_weight * funding_hh, minlength=bank_count)
-        rows = seller_org[plot_paying]
-        paid = pay_goods[plot_paying]
-        to_org = plot_paying & seller_is_org
-        to_import = plot_paying & seller_is_import
-        if to_org.any():
-            org_rows = seller_org[to_org]
-            org_cash += np.bincount(org_rows, weights=pay_goods[to_org], minlength=org_count)
-            sales_receipts += np.bincount(org_rows, weights=pay_goods[to_org], minlength=org_count)
-            bank_delta += np.bincount(
-                safe_org_bank[org_rows], weights=pay_goods[to_org], minlength=bank_count
+        state.organization_cash = org_cash
+        state.household_cash = household_cash
+        if leg_amount:
+            debit = np.concatenate(leg_debit)
+            credit = np.concatenate(leg_credit)
+            amount = np.concatenate(leg_amount)
+            group = np.concatenate(leg_group)
+            org_column = [value for column in leg_org for value in column]
+            _append_leg_transactions(
+                flows,
+                kind="goods_payment",
+                debit=debit,
+                credit=credit,
+                amount=amount,
+                groups=group,
+                org_column=org_column,
             )
-        if to_import.any():
-            # A plot input may be sourced from the national import buffer, so the
-            # Treasury (not an organization) is the seller on that leg.
-            import_total = float(pay_goods[to_import].sum())
-            state.treasury_deposit = float(state.treasury_deposit) + import_total
-            bank_delta[0] += import_total
-        safe_rows = np.where(seller_is_import[plot_paying], 0, np.maximum(rows, 0))
-        credit_accounts = np.where(
-            seller_is_import[plot_paying],
-            treasury_cash_account,
-            org_cash_account[safe_rows],
-        )
-        _legs(
-            clearing_accounts[dest_regions],
-            credit_accounts,
-            paid,
-            1_000_000 + np.flatnonzero(plot_paying),
-            org_ids[safe_rows],
-        )
-        paying_hh = (hh_weight * funding_hh) > 0.0
-        _legs(
-            household_cash_account[paying_hh],
-            clearing_accounts[hh_region[paying_hh]],
-            (hh_weight * funding_hh)[paying_hh],
-            hh_region[paying_hh] + 2 * region_count,
-            None,
-        )
-        fee_rows = edge_transport[plot_paying]
-        has_fee = (pay_fee[plot_paying] > 0.0) & (fee_rows >= 0)
-        if has_fee.any():
-            fee_paid = pay_fee[plot_paying][has_fee]
-            fee_orgs = fee_rows[has_fee]
-            org_cash += np.bincount(fee_orgs, weights=fee_paid, minlength=org_count)
-            sales_receipts += np.bincount(fee_orgs, weights=fee_paid, minlength=org_count)
-            bank_delta += np.bincount(
-                safe_org_bank[fee_orgs], weights=fee_paid, minlength=bank_count
+        if bank_count and np.any(bank_delta != 0.0):
+            state.bank_deposit_liability = (
+                np.asarray(state.bank_deposit_liability, dtype=np.float64) + bank_delta
             )
-            _legs(
-                clearing_accounts[dest_regions[has_fee]],
-                org_cash_account[fee_orgs],
-                fee_paid,
-                1_000_000 + np.flatnonzero(plot_paying)[has_fee],
-                org_ids[fee_orgs],
+            state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + bank_delta
+            finance._append_interbank_legs(
+                state, flows, kind="goods_payment", delta=bank_delta, leg_offset=0
             )
+        _phase("delivery")
 
-    # Treasury-buyer edges: housing and export purchases (goods + fees).
-    treasury_paying = treasury_buyer & pay_active
-    if treasury_paying.any():
-        rows = seller_org[treasury_paying]
-        paid = pay_goods[treasury_paying]
-        fee_paid = pay_fee[treasury_paying]
-        fee_rows = edge_transport[treasury_paying]
-        has_fee = (fee_paid > 0.0) & (fee_rows >= 0)
-        state.treasury_deposit = float(state.treasury_deposit) - float(
-            unit_pay[treasury_paying].sum()
-        )
-        org_cash += np.bincount(rows, weights=paid, minlength=org_count)
-        sales_receipts += np.bincount(rows, weights=paid, minlength=org_count)
-        bank_delta += np.bincount(safe_org_bank[rows], weights=paid, minlength=bank_count)
-        bank_delta[0] -= float(unit_pay[treasury_paying].sum())
-        _legs(
-            treasury_cash_account,
-            org_cash_account[rows],
-            paid,
-            np.full(int(np.count_nonzero(treasury_paying)), -2, dtype=np.int64),
-            org_ids[rows],
-        )
-        if has_fee.any():
-            fee_orgs = fee_rows[has_fee]
-            org_cash += np.bincount(fee_orgs, weights=fee_paid[has_fee], minlength=org_count)
-            sales_receipts += np.bincount(fee_orgs, weights=fee_paid[has_fee], minlength=org_count)
-            bank_delta += np.bincount(
-                safe_org_bank[fee_orgs], weights=fee_paid[has_fee], minlength=bank_count
+        # ---------------- step 7: production and installation ----------------
+        final_realized = np.zeros(activity_count, dtype=np.float64)
+        used_full = np.zeros(k_count, dtype=np.float64)
+        non_transport_k = ~kt_mask
+        if non_transport_k.any():
+            available = (
+                stock_open[input_cell[non_transport_k]]
+                + flows.delivered[np.arange(k_count, dtype=np.int64)[non_transport_k]]
             )
-            _legs(
-                treasury_cash_account,
-                org_cash_account[fee_orgs],
-                fee_paid[has_fee],
-                np.full(int(np.count_nonzero(has_fee)), -3, dtype=np.int64),
-                org_ids[fee_orgs],
+            realized, used = produce_leontief(
+                available,
+                index.k_coefficient[non_transport_k],
+                input_activity[non_transport_k],
+                target,
             )
+            final_realized = realized
+            used_full[non_transport_k] = used
+        final_realized[early_service_acts] = transport_realized[early_service_acts]
+        used_full[kt_mask] = transport_used_k[kt_mask]
+        flows.activity_realized = np.where(early_service_acts, transport_realized, final_realized)
+        state.stock_value[input_cell[non_transport_k]] -= used_full[non_transport_k]
+        non_transport_b = ~early_service_acts[index.b_rows]
+        production_amounts = (
+            index.b_coefficient[non_transport_b] * final_realized[index.b_rows[non_transport_b]]
+        )
+        state.stock_value += np.bincount(
+            index.b_cells[non_transport_b], weights=production_amounts, minlength=cell_count
+        )
+        flows.used[:k_count] = used_full
+        _phase("production")
 
-    state.organization_cash = org_cash
-    state.household_cash = household_cash
-    if leg_amount:
-        debit = np.concatenate(leg_debit)
-        credit = np.concatenate(leg_credit)
-        amount = np.concatenate(leg_amount)
-        group = np.concatenate(leg_group)
-        org_column = [value for column in leg_org for value in column]
-        _append_leg_transactions(
-            flows,
-            kind="goods_payment",
-            debit=debit,
-            credit=credit,
-            amount=amount,
-            groups=group,
-            org_column=org_column,
-        )
-    if bank_count and np.any(bank_delta != 0.0):
-        state.bank_deposit_liability = (
-            np.asarray(state.bank_deposit_liability, dtype=np.float64) + bank_delta
-        )
-        state.bank_reserves = np.asarray(state.bank_reserves, dtype=np.float64) + bank_delta
-        finance._append_interbank_legs(
-            state, flows, kind="goods_payment", delta=bank_delta, leg_offset=0
-        )
-    _phase("delivery")
-
-    # ---------------- step 7: production and installation ----------------
-    final_realized = np.zeros(activity_count, dtype=np.float64)
-    used_full = np.zeros(k_count, dtype=np.float64)
-    non_transport_k = ~kt_mask
-    if non_transport_k.any():
-        available = (
-            stock_open[input_cell[non_transport_k]]
-            + flows.delivered[np.arange(k_count, dtype=np.int64)[non_transport_k]]
-        )
-        realized, used = produce_leontief(
-            available,
-            index.k_coefficient[non_transport_k],
-            input_activity[non_transport_k],
-            target,
-        )
-        final_realized = realized
-        used_full[non_transport_k] = used
-    final_realized[early_service_acts] = transport_realized[early_service_acts]
-    used_full[kt_mask] = transport_used_k[kt_mask]
-    flows.activity_realized = np.where(early_service_acts, transport_realized, final_realized)
-    state.stock_value[input_cell[non_transport_k]] -= used_full[non_transport_k]
-    non_transport_b = ~early_service_acts[index.b_rows]
-    production_amounts = (
-        index.b_coefficient[non_transport_b] * final_realized[index.b_rows[non_transport_b]]
-    )
-    state.stock_value += np.bincount(
-        index.b_cells[non_transport_b], weights=production_amounts, minlength=cell_count
-    )
-    flows.used[:k_count] = used_full
-
-    # Investment installation: delivered WIP into capacity (finance plan).
+    # ---------------- shared closing: investment/housing/export -----------
+    # The installation, housing, export and per-org realised closing are
+    # shared between the legacy and staged paths.  Both already populated
+    # ``flows.delivered`` (the quarterly cumulative): once via the legacy
+    # step 6 single delivery, once via the staged L rounds.  ``run_investment_step``
+    # updates ``state.organization_capital_wip`` and
+    # ``state.organization_construction_wip`` so the project WIP accounting
+    # gate passes.
     project_capital = np.asarray(network.project_capital_cell, dtype=np.int64)
     project_construction = np.asarray(network.project_construction_cell, dtype=np.int64)
     project_owner_by_cell = np.full(cell_count, -1, dtype=np.int64)
@@ -2239,8 +3794,12 @@ def tick_material(
         ]
     if construction_g >= 0:
         construction_cells = project_construction[project_construction >= 0]
-        state.stock_value[construction_cells] -= installed_construction[project_construction >= 0]
-        inv_construction_demand = investment_mask & (cell_commodity[demand_cell] == construction_g)
+        state.stock_value[construction_cells] -= (
+            installed_construction[project_construction >= 0]
+        )
+        inv_construction_demand = investment_mask & (
+            cell_commodity[demand_cell] == construction_g
+        )
         flows.used[inv_construction_demand] = installed_construction[
             investment_owner_by_demand[inv_construction_demand]
         ]
@@ -2270,12 +3829,20 @@ def tick_material(
             if demand_index >= 0:
                 flows.used[demand_index] = flows.delivered[demand_index]
 
-    flows.organization_realized[with_activity] = flows.activity_realized[
-        org_activity[with_activity]
-    ]
-    flows.organization_sales_receipts = sales_receipts
-    flows.organization_purchases = purchases
-    _phase("production")
+    # Per-org realised / receipt aggregates: shared for both legacy and
+    # staged (the staged path already set ``flows.organization_sales_receipts``
+    # and ``flows.organization_purchases`` from the round totals, so only the
+    # legacy branch needs the local assignments here).
+    if with_activity.any():
+        flows.organization_realized = np.asarray(
+            flows.organization_realized, dtype=np.float64
+        ).copy()
+        flows.organization_realized[with_activity] = flows.activity_realized[
+            org_activity[with_activity]
+        ]
+    if not _h3d_staged_already_ran:
+        flows.organization_sales_receipts = sales_receipts
+        flows.organization_purchases = purchases
 
     # ---------------- step 8: households ----------------------------------
     # Step 8: P03 household subsystem (demand was frozen at tick start).
@@ -2401,7 +3968,10 @@ def tick_material(
     flows.ordered = ordered
     flows.ordered_gross = gross
     flows.unfunded_order = unfunded
-    flows.allocated = allocated
+    if _h3d_staged_already_ran:
+        flows.allocated = cum_allocated
+    else:
+        flows.allocated = allocated
     for name, values in saved_household_views.items():
         getattr(flows, name)[household_view] = values
     flows.inventory_open = inv_open
