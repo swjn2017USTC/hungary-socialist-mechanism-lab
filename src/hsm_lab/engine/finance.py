@@ -469,6 +469,39 @@ def _borrower_axes(state: MaterialState) -> tuple[np.ndarray, np.ndarray, np.nda
     return org_bank, safe_bank, borrower, int(state.bank_reserves.shape[0])
 
 
+def _validate_credit_approval_caps(
+    caps: np.ndarray,
+    *,
+    organization_count: int,
+    borrower: np.ndarray,
+) -> np.ndarray:
+    """Validate the opt-in per-organization approval caps before any entry.
+
+    Caps are domestic-currency amounts on the organization axis.  Banks, and
+    organizations without a bank, must carry exactly zero: the cap is an
+    approval limit for a real bank borrower, never a second credit source.
+    """
+    array = np.asarray(caps, dtype=np.float64)
+    if array.shape != (organization_count,):
+        raise ValueError(
+            "credit_approval_caps must have shape "
+            f"({organization_count},), got {array.shape}"
+        )
+    if not bool(np.all(np.isfinite(array))):
+        raise ValueError("credit_approval_caps contains a non-finite value")
+    if bool(np.any(array < 0.0)):
+        bad = int(np.argmin(array))
+        raise ValueError(f"credit_approval_caps[{bad}]={float(array[bad])!r} is negative")
+    invalid = ~np.asarray(borrower, dtype=bool)
+    if bool(np.any(array[invalid] != 0.0)):
+        bad = int(np.flatnonzero(invalid & (array != 0.0))[0])
+        raise ValueError(
+            f"credit_approval_caps[{bad}] must be 0 for a bank or an organization "
+            "without a bank"
+        )
+    return array
+
+
 def _append_interbank_legs(
     state: MaterialState,
     flows: MaterialTickFlows,
@@ -724,13 +757,22 @@ def run_domestic_finance_step(
     new_investment_request_cost: np.ndarray,
     transaction_base: int,
     strategic_importance: np.ndarray | None = None,
+    credit_approval_caps: np.ndarray | None = None,
 ) -> dict[str, np.ndarray]:
     """Working-capital credit, wage payments, interest, principal (plan step F).
 
-    Order inside the step: credit approval -> wage payment -> input payments
-    (handled by the kernel through returned cash budgets) -> interest ->
-    principal. Returns per-organization cash available for goods purchases.
-    All Journal legs are appended; reserves may never go negative.
+    Order inside the step: credit approval -> wage accrual/payment -> interest
+    accrual/payment -> scheduled principal (only from cash left above this
+    quarter's input, old-project and new-project needs).  Input/goods payments
+    are handled by the kernel from the returned cash budget after this step.
+    Returns per-organization cash available for goods purchases.  All Journal
+    legs are appended; reserves may never go negative.
+
+    ``credit_approval_caps`` is the H3B opt-in interface.  ``None`` keeps the
+    legacy Treasury-credit journals byte-for-byte.  When supplied it caps each
+    borrower's total approval after the existing envelope/stock-cap/earmark
+    rules, and journals the drawdown/repayment against the borrower's actual
+    bank (loan asset and deposit liability) rather than the Treasury.
 
     Sequence detail: wage accrual and payment are senior; interest accrues on
     opening principal only (new drawdowns pay from next quarter); interest and
@@ -739,6 +781,21 @@ def run_domestic_finance_step(
     principal keeps its original principal (memo only, never capitalized).
     """
     org_bank, safe_bank, borrower, n_banks = _borrower_axes(state)
+    caps = (
+        None
+        if credit_approval_caps is None
+        else _validate_credit_approval_caps(
+            credit_approval_caps,
+            organization_count=int(state.organization_id.shape[0]),
+            borrower=borrower,
+        )
+    )
+    if caps is not None and bool(getattr(parameters, "m2_neutral_credit", False)):
+        # The H3B bank-lender journals and the M2-neutral credit-fund path are
+        # mutually exclusive; reject before any state or journal mutation.
+        raise ValueError(
+            "credit_approval_caps is incompatible with m2_neutral_credit=True"
+        )
     org_ids = np.asarray(state.organization_id, dtype=np.int64)
     input_order_cost = np.asarray(input_order_cost, dtype=np.float64)
     old_project_cost = np.asarray(old_project_cost, dtype=np.float64)
@@ -752,6 +809,7 @@ def run_domestic_finance_step(
     org_wage_expense_ids = organization_account_ids(state, AccountKind.WAGE_EXPENSE)
     org_interest_expense_ids = organization_account_ids(state, AccountKind.INTEREST_EXPENSE)
     bank_deposit_liability_ids = bank_account_ids(state, AccountKind.DEPOSIT_LIABILITY)
+    bank_loan_asset_ids = bank_account_ids(state, AccountKind.LOAN_ASSET)
     bank_interest_receivable_ids = bank_account_ids(state, AccountKind.INTEREST_RECEIVABLE)
     bank_equity_ids = bank_account_ids(state, AccountKind.EQUITY)
 
@@ -828,6 +886,12 @@ def run_domestic_finance_step(
         # Purpose-tied input credit is an additional line above the general
         # working-capital envelope; it can only cover the declared input order.
         approve += earmarked_approve
+    if caps is not None:
+        # H3B: the policy limit caps the total (general + earmarked) approval
+        # after every legacy rationing rule, and never exceeds the request.
+        capped = np.minimum(np.minimum(approve, request), caps)
+        earmarked_approve = np.minimum(earmarked_approve, capped)
+        approve = capped
     draw = approve.copy()
     earmarked_draw = earmarked_approve.copy()
     if bool(getattr(parameters, "m2_neutral_credit", False)):
@@ -871,16 +935,29 @@ def run_domestic_finance_step(
     treasury_loan_ids = np.full(
         draw.shape[0], treasury_account_id(state, AccountKind.LOAN_ASSET), dtype=np.int64
     )
-    _append_paired_transactions(
-        flows,
-        kind="loan_drawdown",
-        amounts=draw,
-        org_ids=org_ids,
-        first_debit=org_cash_ids,
-        first_credit=treasury_cash_ids,
-        second_debit=treasury_loan_ids,
-        second_credit=org_loan_ids,
-    )
+    if caps is None:
+        _append_paired_transactions(
+            flows,
+            kind="loan_drawdown",
+            amounts=draw,
+            org_ids=org_ids,
+            first_debit=org_cash_ids,
+            first_credit=treasury_cash_ids,
+            second_debit=treasury_loan_ids,
+            second_credit=org_loan_ids,
+        )
+    else:
+        # H3B: the bank creates the deposit and holds the loan asset.
+        _append_paired_transactions(
+            flows,
+            kind="loan_drawdown",
+            amounts=draw,
+            org_ids=org_ids,
+            first_debit=org_cash_ids,
+            first_credit=bank_deposit_liability_ids[safe_bank],
+            second_debit=bank_loan_asset_ids[safe_bank],
+            second_credit=org_loan_ids,
+        )
 
     # --- wage accrual (org expense/payable; household claims pooled) -----
     shares = _person_shares(state)
@@ -1011,16 +1088,30 @@ def run_domestic_finance_step(
             np.asarray(state.bank_deposit_liability, dtype=np.float64) - paid_by_bank
         )
     flows.organization_principal_paid = principal_paid.copy()
-    _append_paired_transactions(
-        flows,
-        kind="principal_repayment",
-        amounts=principal_paid,
-        org_ids=org_ids,
-        first_debit=treasury_cash_ids,
-        first_credit=org_cash_ids,
-        second_debit=org_loan_ids,
-        second_credit=treasury_loan_ids,
-    )
+    if caps is None:
+        _append_paired_transactions(
+            flows,
+            kind="principal_repayment",
+            amounts=principal_paid,
+            org_ids=org_ids,
+            first_debit=treasury_cash_ids,
+            first_credit=org_cash_ids,
+            second_debit=org_loan_ids,
+            second_credit=treasury_loan_ids,
+        )
+    else:
+        # H3B: the borrower's liability and deposit fall, and the actual bank's
+        # loan asset and deposit liability fall by the same amount.
+        _append_paired_transactions(
+            flows,
+            kind="principal_repayment",
+            amounts=principal_paid,
+            org_ids=org_ids,
+            first_debit=org_loan_ids,
+            first_credit=org_cash_ids,
+            second_debit=bank_deposit_liability_ids[safe_bank],
+            second_credit=bank_loan_asset_ids[safe_bank],
+        )
 
     state.organization_cash = cash
     return {

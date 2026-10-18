@@ -564,6 +564,8 @@ def tick_material(
     *,
     phase_times: dict[str, float] | None = None,
     controls: Any = None,
+    credit_approval_caps: np.ndarray | None = None,
+    procurement_trace: dict[str, np.ndarray] | None = None,
 ) -> MaterialTickFlows:
     """Advance the material economy by one admitted quarter (plan section 3).
 
@@ -576,6 +578,12 @@ def tick_material(
     carries the runtime household parameters/catalog and the central-vs-local
     planning mix; ``None`` reproduces the P02/P03 behaviour exactly (the
     runtime catalog/parameters then come from ``network``).
+
+    ``credit_approval_caps`` and ``procurement_trace`` are the H3B opt-in
+    interface.  Their defaults (``None``) preserve every legacy allocation,
+    ordering and journal byte.  Caps are validated before any state mutation;
+    a non-None trace must be an empty dict, requires caps, and is filled with
+    the tick's real intermediate funding arrays before goods scaling.
     """
     mark = time.perf_counter()
 
@@ -601,6 +609,29 @@ def tick_material(
     m_count = int(network.edge_source_cell.shape[0])
     activity_count = int(network.activity_kind.shape[0])
     cell_count = int(network.cell_owner_kind.shape[0])
+
+    # H3B opt-in preflight: validate before any state mutation or flow append.
+    caps: np.ndarray | None = None
+    if credit_approval_caps is not None:
+        org_bank = np.asarray(state.organization_bank, dtype=np.int64)
+        bank_rows = np.asarray(state.organization_type, dtype=np.int64) == finance._BANK_TYPE_CODE
+        borrower = (org_bank >= 0) & ~bank_rows
+        caps = finance._validate_credit_approval_caps(
+            credit_approval_caps,
+            organization_count=org_count,
+            borrower=borrower,
+        )
+        if bool(getattr(parameters, "m2_neutral_credit", False)):
+            raise ValueError(
+                "H3B procurement credit does not run the M2-neutral credit-fund path"
+            )
+    if procurement_trace is not None:
+        if type(procurement_trace) is not dict:
+            raise ValueError("procurement_trace must be a plain dict")
+        if procurement_trace:
+            raise ValueError("procurement_trace must be empty at tick entry")
+        if caps is None:
+            raise ValueError("procurement_trace requires credit_approval_caps")
 
     index = _tick_index(network)
     price_net, services_g = _admin_price_vector(parameters, network)
@@ -1143,8 +1174,23 @@ def tick_material(
         old_project_cost=old_project_cost,
         new_investment_request_cost=new_investment_request_cost,
         transaction_base=0,
+        credit_approval_caps=caps,
     )
     cash_for_goods = np.asarray(finance_result["cash_available_for_goods"], dtype=np.float64).copy()
+    if procurement_trace is not None:
+        # Copy the real pre-scaling intermediates only when explicitly enabled.
+        procurement_trace["credit_approval_caps"] = np.asarray(caps).copy()
+        procurement_trace["demand_unit_cost"] = demand_unit_cost.copy()
+        procurement_trace["input_order_cost"] = input_order_cost.copy()
+        procurement_trace["old_project_cost"] = old_project_cost.copy()
+        procurement_trace["new_investment_request_cost"] = new_investment_request_cost.copy()
+        procurement_trace["cash_available_for_goods"] = np.asarray(
+            finance_result["cash_available_for_goods"], dtype=np.float64
+        ).copy()
+        procurement_trace["input_credit_earmarked"] = np.asarray(
+            finance_result["input_credit_earmarked"], dtype=np.float64
+        ).copy()
+        procurement_trace["edge_unit_price"] = edge_unit_price.copy()
     _phase("finance")
 
     # Purpose-priority cash scaling: inputs (incl. freight) first, then the
