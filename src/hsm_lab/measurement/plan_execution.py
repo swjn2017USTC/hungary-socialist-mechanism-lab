@@ -208,10 +208,7 @@ def _jsonable(value: Any) -> Any:
     if isinstance(value, np.generic):
         return value.item()
     if hasattr(value, "__dataclass_fields__"):
-        return {
-            field: _jsonable(getattr(value, field))
-            for field in value.__dataclass_fields__
-        }
+        return {field: _jsonable(getattr(value, field)) for field in value.__dataclass_fields__}
     if isinstance(value, dict):
         return {str(key): _jsonable(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
@@ -289,10 +286,7 @@ def _at_most(name: str, lhs: np.ndarray, rhs: np.ndarray) -> float:
     residual = np.maximum(lhs - rhs, 0.0)
     if bool(np.any(residual > tolerance)):
         bad = int(np.argmax(residual - tolerance))
-        _reject(
-            f"{name}[{bad}] {float(lhs.ravel()[bad])!r} exceeds "
-            f"{float(rhs.ravel()[bad])!r}"
-        )
+        _reject(f"{name}[{bad}] {float(lhs.ravel()[bad])!r} exceeds {float(rhs.ravel()[bad])!r}")
     return float(np.max(residual)) if residual.size else 0.0
 
 
@@ -618,9 +612,12 @@ def _non_org_payment_residual(
                 np.asarray([expected_pairs[key]]),
             ),
         )
-    import_seller = np.asarray(network.cell_owner_kind, dtype=np.int64)[
-        np.asarray(network.edge_source_cell, dtype=np.int64)
-    ] == 3
+    import_seller = (
+        np.asarray(network.cell_owner_kind, dtype=np.int64)[
+            np.asarray(network.edge_source_cell, dtype=np.int64)
+        ]
+        == 3
+    )
     expected_import = float(np.sum(goods[import_seller]))
     actual_import = float(
         sum(
@@ -662,9 +659,7 @@ def _check_stock_cells_compatible(
     from hsm_lab.engine.state import build_material_prices
 
     prices = build_material_prices(parameters)
-    continuity = accounting._reconstruct(
-        opening, state, flows, network, prices, parameters
-    )
+    continuity = accounting._reconstruct(opening, state, flows, network, prices, parameters)
     stockable = ~continuity.services_cells & ~continuity.retail_org_cells
     residual = 0.0
     if bool(np.any(stockable)):
@@ -756,9 +751,11 @@ def measure_routing_execution(
         ):
             continue
         demand_index = int(problem.edge_demand[edge])
-        seller = int(problem.cell_owner_id[problem.edge_source[edge]]) if bool(
-            problem.cell_owner_kind[problem.edge_source[edge]] == 0
-        ) else -1
+        seller = (
+            int(problem.cell_owner_id[problem.edge_source[edge]])
+            if bool(problem.cell_owner_kind[problem.edge_source[edge]] == 0)
+            else -1
+        )
         row = RoutingEdgeRow(
             edge_index=edge,
             edge_id=int(problem.edge_id[edge]),
@@ -809,10 +806,7 @@ def measure_routing_execution(
             shortfall=float(shortfall[demand_index]),
             shortfall_residual=float(
                 shortfall[demand_index]
-                - (
-                    problem.demand[demand_index]
-                    - actual_delivered_by_demand[demand_index]
-                )
+                - (problem.demand[demand_index] - actual_delivered_by_demand[demand_index])
             ),
             delivery_gap=float(
                 problem.demand[demand_index] - actual_delivered_by_demand[demand_index]
@@ -822,9 +816,7 @@ def measure_routing_execution(
         )
         demand_rows.append(row)
         max_delivery_gap = max(max_delivery_gap, abs(row.delivery_gap))
-        max_shortfall_residual = max(
-            max_shortfall_residual, abs(row.shortfall_residual)
-        )
+        max_shortfall_residual = max(max_shortfall_residual, abs(row.shortfall_residual))
 
     journal = _decode_journal(state, flows)
     org_rows, payment_residual = _organization_payment_rows(
@@ -834,9 +826,7 @@ def measure_routing_execution(
         payment_residual,
         _non_org_payment_residual(state, flows, network, dict(problem.__dict__), journal),
     )
-    stock_residual = _check_stock_cells_compatible(
-        opening, state, flows, parameters, network
-    )
+    stock_residual = _check_stock_cells_compatible(opening, state, flows, parameters, network)
     bank_residual = flow_funnel._check_bank_books(opening, state, flows, parameters)
     if float(invariants.max_material_tolerance_ratio) > 1.0:
         _reject("material invariant gate did not pass")
@@ -1029,9 +1019,7 @@ def execute_routing_certificate(
             trace["certificates"] = solved
             for item in solved:
                 if item.status in ("TIMEOUT", "ERROR"):
-                    _reject(
-                        f"{item.level} solver ended with {item.status}: {item.solver_message}"
-                    )
+                    _reject(f"{item.level} solver ended with {item.status}: {item.solver_message}")
             nested = feasibility.compare_routing_certificates(problem, solved)
             chosen = next(item for item in solved if item.level == level)
         selected = chosen
@@ -1049,9 +1037,7 @@ def execute_routing_certificate(
             projected = False
             project_note = "LP-2 witness sent directly to the real kernel"
         else:
-            submitted, projected, lost_free, project_note = _project_to_executable(
-                problem, chosen
-            )
+            submitted, projected, lost_free, project_note = _project_to_executable(problem, chosen)
         trace["planned_x"] = planned.copy()
         trace["submitted_x"] = submitted.copy()
         return submitted
@@ -1093,9 +1079,7 @@ def execute_routing_certificate(
         if computed_no_demand:
             execution_status = "NO_DEMAND"
         elif level == "LP-2":
-            execution_status = (
-                "PARTIAL" if float(selected.shortfall_total) > ATOL else "EXECUTED"
-            )
+            execution_status = "PARTIAL" if float(selected.shortfall_total) > ATOL else "EXECUTED"
         elif level == "LP-0":
             execution_status = "RELAXATION_ONLY"
         else:
@@ -1160,7 +1144,796 @@ def execute_routing_certificate(
         ) from exc
 
 
+# ---------------------------------------------------------------------------
+# H3E: first-quarter rolling proposal execution
+# ---------------------------------------------------------------------------
+
+H3E_SCHEMA_VERSION = "hist-bounded-execution-v1"
+H3E_GATE_PREFIX = "HIST_H3E_EXECUTION"
+
+
+def _rolling_reject(message: str) -> None:
+    raise ResearchGateError(f"{H3E_GATE_PREFIX}: {message}")
+
+
+@dataclass(frozen=True)
+class RollingSubmissionRow:
+    """One first-quarter procurement decision and its real kernel channel."""
+
+    organization_id: str
+    commodity_id: str
+    organization_index: int
+    commodity_index: int
+    planned_quantity: float
+    requested_quantity: float
+    total_planned_quantity: float
+    baseline_quantity: float
+    incremental_quantity: float
+    allocated_quantity: float
+    delivered_quantity: float
+    goods_payment: float
+    freight_payment: float
+    plan_actual_gap: float
+    incremental_plan_actual_gap: float
+    binding_status: str
+    decision_digest: str
+
+
+@dataclass(frozen=True)
+class RollingExecutionMeasurement:
+    """Read-only measurement of one executed rolling plan quarter."""
+
+    schema_version: str
+    tick: int
+    quarter: str
+    mode: str
+    execution_status: str
+    submissions: tuple[RollingSubmissionRow, ...]
+    journal: tuple[RoutingJournalRow, ...]
+    household_delivered: float
+    household_used: float
+    household_unmet: float
+    household_realized_by_good: np.ndarray
+    household_unmet_by_good: np.ndarray
+    procurement_requested_by_commodity: np.ndarray
+    procurement_total_planned_by_commodity: np.ndarray
+    procurement_baseline_by_commodity: np.ndarray
+    procurement_delivered_by_commodity: np.ndarray
+    procurement_allocated_by_commodity: np.ndarray
+    service_produced: float
+    service_used: float
+    service_lost: float
+    service_produced_by_commodity: np.ndarray
+    service_used_by_commodity: np.ndarray
+    service_lost_by_commodity: np.ndarray
+    expired_services: float
+    goods_payment: float
+    freight_payment: float
+    sales_receipts: float
+    closing_cash: np.ndarray
+    closing_stock: np.ndarray
+    max_material_ratio: float
+    max_finance_ratio: float
+    max_payment_residual: float
+    max_stock_residual: float
+    max_bank_residual: float
+    plan_actual_gap: float
+    total_plan_gap: float
+    incremental_plan_gap: float
+    plan_actual_gap_note: str
+
+
+@dataclass(frozen=True)
+class RollingExecutionResult:
+    """Successful H3E execution: one tick, one clock advance, no fork."""
+
+    schema_version: str
+    mode: str
+    plan: Any
+    submitted: tuple[RollingSubmissionRow, ...]
+    validations: tuple[Any, ...]
+    flows: MaterialTickFlows
+    gate: InvariantSummary
+    measurement: RollingExecutionMeasurement
+    completed_ticks_before: int
+    completed_ticks_after: int
+    execution_status: str
+
+
+class RollingExecutionFailure(ResearchGateError):
+    """A failed H3E execution after the rollback snapshot was captured."""
+
+    def __init__(
+        self,
+        *,
+        phase: str,
+        cause: BaseException,
+        failed_flows: MaterialTickFlows | None,
+        failed_trace: dict[str, Any],
+        submitted: tuple[RollingSubmissionRow, ...],
+    ) -> None:
+        super().__init__(f"{H3E_GATE_PREFIX}: {phase} failed: {cause}")
+        self.phase = phase
+        self.cause = cause
+        self.failed_flows = failed_flows
+        self.failed_trace = failed_trace
+        self.submitted = submitted
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "phase": self.phase,
+            "cause": f"{type(self.cause).__name__}: {self.cause}",
+            "failed_flows": _jsonable(self.failed_flows),
+            "failed_trace": _jsonable(self.failed_trace),
+            "submitted": _jsonable(self.submitted),
+        }
+
+
+def _decision_hash(decision: Any) -> str:
+    import hashlib
+
+    return hashlib.sha256(decision.model_dump_json().encode("utf-8")).hexdigest()
+
+
+def _payload_hash(decisions: tuple[Any, ...]) -> str:
+    import hashlib
+
+    digest = hashlib.sha256()
+    for decision in sorted(decisions, key=lambda item: item.decision_id):
+        digest.update(decision.model_dump_json().encode("utf-8"))
+    return digest.hexdigest()
+
+
+def _procurement_demand_mask(
+    network: MaterialNetwork, organization_index: int, commodity_index: int
+) -> np.ndarray:
+    from hsm_lab.contract.material import STAGE_CODES, commodity_spec
+
+    consumable_stage = STAGE_CODES[
+        commodity_spec(network.commodity_ids[int(commodity_index)]).consumable_stage()
+    ]
+    destination = np.asarray(network.demand_cell, dtype=np.int64)
+    return (
+        (np.asarray(network.demand_purpose, dtype=np.int64) == _purpose_code("procurement"))
+        & (np.asarray(network.cell_commodity, dtype=np.int64)[destination] == commodity_index)
+        & (np.asarray(network.cell_stage, dtype=np.int64)[destination] == consumable_stage)
+        & (np.asarray(network.cell_owner_kind, dtype=np.int64)[destination] == 0)
+        & (np.asarray(network.cell_owner_id, dtype=np.int64)[destination] == organization_index)
+    )
+
+
+def measure_rolling_execution(
+    opening: MaterialStockSnapshot,
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    parameters: Any,
+    network: MaterialNetwork,
+    *,
+    plan: Any,
+    submissions: tuple[RollingSubmissionRow, ...],
+    invariants: InvariantSummary,
+    boundary: dict[str, Any] | None = None,
+) -> RollingExecutionMeasurement:
+    """Measure one real tick against the first-quarter submitted plan."""
+    if int(flows.tick) != int(state.completed_ticks):
+        _rolling_reject("measured flows do not match the engine clock")
+    journal = _decode_journal(state, flows)
+    demand_purpose = np.asarray(network.demand_purpose, dtype=np.int64)
+    household_mask = demand_purpose == _purpose_code("household")
+    delivered = np.asarray(flows.delivered, dtype=np.float64)
+    used = np.asarray(flows.used, dtype=np.float64)
+    desired = np.asarray(flows.desired, dtype=np.float64)
+    household_delivered = float(np.sum(delivered[household_mask]))
+    household_used = float(np.sum(used[household_mask]))
+    household_unmet = float(
+        np.maximum(desired[household_mask] - delivered[household_mask], 0.0).sum()
+    )
+    household_realized = np.asarray(flows.household_realized, dtype=np.float64)
+    household_desired = np.asarray(flows.household_desired, dtype=np.float64)
+    household_unmet = max(
+        household_unmet,
+        float(np.maximum(household_desired - household_realized, 0.0).sum()),
+    )
+    service_used = float(np.sum(flows.edge_service_used))
+    expired = float(flows.expired_services)
+    activity_realized = np.asarray(flows.activity_realized, dtype=np.float64)
+    household_realized_by_good = np.asarray(flows.household_realized, dtype=np.float64).sum(axis=0)
+    household_unmet_by_good = np.maximum(
+        np.asarray(flows.household_desired, dtype=np.float64)
+        - np.asarray(flows.household_realized, dtype=np.float64),
+        0.0,
+    ).sum(axis=0)
+    commodity_count = len(network.commodity_ids)
+    cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
+    demand_cell = np.asarray(network.demand_cell, dtype=np.int64)
+    demand_purpose = np.asarray(network.demand_purpose, dtype=np.int64)
+    procurement_mask = demand_purpose == _purpose_code("procurement")
+    procurement_delivered = np.zeros(commodity_count, dtype=np.float64)
+    procurement_allocated = np.zeros(commodity_count, dtype=np.float64)
+    for demand_index in np.flatnonzero(procurement_mask):
+        commodity = int(cell_commodity[int(demand_cell[demand_index])])
+        procurement_delivered[commodity] += float(flows.delivered[demand_index])
+        procurement_allocated[commodity] += float(flows.allocated[demand_index])
+    procurement_requested = np.zeros(commodity_count, dtype=np.float64)
+    for row in submissions:
+        procurement_requested[row.commodity_index] += row.requested_quantity
+    procurement_total_planned = np.zeros(commodity_count, dtype=np.float64)
+    procurement_baseline = np.zeros(commodity_count, dtype=np.float64)
+    commodity_ids = tuple(str(value) for value in network.commodity_ids)
+    for good_index, goods_id in enumerate(plan.inputs.goods_id):
+        commodity_id = goods_id.split("|", 1)[0]
+        if commodity_id not in commodity_ids:
+            continue
+        commodity_index = commodity_ids.index(commodity_id)
+        procurement_total_planned[commodity_index] += float(
+            np.sum(plan.quarterly[0].purchases[:, good_index])
+        )
+        procurement_baseline[commodity_index] += float(
+            np.sum(plan.inputs.baseline_procurement[0, :, good_index])
+        )
+    b_matrix = network.B.tocsr()
+    early_service = np.asarray(network.activity_early_service, dtype=bool)
+    cell_count = int(cell_commodity.shape[0])
+    production_cells = np.zeros(cell_count, dtype=np.float64)
+    if (
+        early_service.size
+        and activity_realized.size == b_matrix.shape[0]
+        and bool(np.any(early_service))
+    ):
+        production_cells = np.asarray(
+            b_matrix[early_service].T @ activity_realized[early_service]
+        ).ravel()
+    service_produced_by_commodity = np.bincount(
+        cell_commodity,
+        weights=production_cells,
+        minlength=commodity_count,
+    )
+    transport_service_cell = np.asarray(network.edge_transport_service_cell, dtype=np.int64)
+    b_service_cells = set(
+        int(cell)
+        for cell in np.flatnonzero(np.asarray(b_matrix[early_service].sum(axis=0)).ravel() > ATOL)
+    )
+    transport_cells = set(int(cell) for cell in transport_service_cell if cell >= 0)
+    service_commodities = {
+        int(cell_commodity[cell]) for cell in (b_service_cells | transport_cells)
+    }
+    service_cells = np.asarray(
+        [cell for cell in range(cell_count) if int(cell_commodity[cell]) in service_commodities],
+        dtype=np.int64,
+    )
+    opening_stock = np.asarray(opening.stock_value, dtype=np.float64)
+    service_opening = np.zeros(commodity_count, dtype=np.float64)
+    for cell in service_cells:
+        service_opening[int(cell_commodity[cell])] += float(opening_stock[cell])
+    service_used_by_commodity = np.zeros(commodity_count, dtype=np.float64)
+    for edge in np.flatnonzero(np.asarray(flows.edge_service_used) > ATOL):
+        cell = int(transport_service_cell[edge])
+        if cell >= 0:
+            service_used_by_commodity[int(cell_commodity[cell])] += float(
+                flows.edge_service_used[edge]
+            )
+    for demand_index in range(int(demand_cell.shape[0])):
+        commodity = int(cell_commodity[int(demand_cell[demand_index])])
+        if commodity in service_commodities:
+            service_used_by_commodity[commodity] += float(flows.used[demand_index])
+    service_lost_by_commodity = (
+        service_opening + service_produced_by_commodity - service_used_by_commodity
+    )
+    service_produced = float(np.sum(service_produced_by_commodity))
+    service_used = float(np.sum(service_used_by_commodity))
+    service_lost = float(np.sum(np.maximum(service_lost_by_commodity, 0.0)))
+    goods_debit = 0.0
+    goods_credit = 0.0
+    for row in journal:
+        if row.kind != "goods_payment" or row.currency != DOMESTIC_CURRENCY:
+            continue
+        if (
+            row.debit_owner_kind == "organization"
+            and row.debit_account_kind == AccountKind.CASH_DEPOSIT
+        ):
+            goods_debit += row.amount
+        if (
+            row.credit_owner_kind == "organization"
+            and row.credit_account_kind == AccountKind.CASH_DEPOSIT
+        ):
+            goods_credit += row.amount
+    payment_residual = 0.0
+    from hsm_lab.engine.state import build_material_prices
+
+    prices = build_material_prices(parameters)
+    edge_commodity = np.asarray(network.edge_commodity, dtype=np.int64)
+    edge_stage = np.asarray(network.edge_stage, dtype=np.int64)
+    if boundary is None:
+        boundary = {
+            "edge_unit_price": np.asarray(
+                [
+                    float(prices.price_for(int(edge_commodity[edge]), int(edge_stage[edge])))
+                    for edge in range(edge_commodity.size)
+                ],
+                dtype=np.float64,
+            ),
+            "plot_pool": np.zeros(len(network.region_ids), dtype=np.float64),
+        }
+    _org_rows, counterparty_residual = _organization_payment_rows(
+        state, flows, network, boundary, journal
+    )
+    counterparty_residual = max(
+        counterparty_residual,
+        _non_org_payment_residual(state, flows, network, boundary, journal),
+    )
+    payment_residual = max(payment_residual, counterparty_residual)
+    stock_residual = _check_stock_cells_compatible(opening, state, flows, parameters, network)
+    bank_residual = flow_funnel._check_bank_books(opening, state, flows, parameters)
+    total_plan_gap = float(
+        np.max(
+            np.maximum(
+                procurement_total_planned - procurement_delivered,
+                0.0,
+            ),
+            initial=0.0,
+        )
+    )
+    incremental_plan_gap = max(
+        (row.incremental_plan_actual_gap for row in submissions), default=0.0
+    )
+    plan_gap = total_plan_gap
+    return RollingExecutionMeasurement(
+        schema_version=H3E_SCHEMA_VERSION,
+        tick=int(flows.tick),
+        quarter=str(flows.quarter),
+        mode=str(plan.mode),
+        execution_status="MEASURED",
+        submissions=submissions,
+        journal=journal,
+        household_delivered=household_delivered,
+        household_used=household_used,
+        household_unmet=household_unmet,
+        household_realized_by_good=household_realized_by_good,
+        household_unmet_by_good=household_unmet_by_good,
+        procurement_requested_by_commodity=procurement_requested,
+        procurement_total_planned_by_commodity=procurement_total_planned,
+        procurement_baseline_by_commodity=procurement_baseline,
+        procurement_delivered_by_commodity=procurement_delivered,
+        procurement_allocated_by_commodity=procurement_allocated,
+        service_produced=service_produced,
+        service_used=service_used,
+        service_lost=service_lost,
+        service_produced_by_commodity=service_produced_by_commodity,
+        service_used_by_commodity=service_used_by_commodity,
+        service_lost_by_commodity=service_lost_by_commodity,
+        expired_services=expired,
+        goods_payment=goods_debit,
+        freight_payment=float(np.sum(flows.edge_service_fee)),
+        sales_receipts=goods_credit,
+        closing_cash=np.asarray(state.organization_cash, dtype=np.float64).copy(),
+        closing_stock=np.asarray(state.stock_value, dtype=np.float64).copy(),
+        max_material_ratio=float(invariants.max_material_tolerance_ratio),
+        max_finance_ratio=float(invariants.max_finance_tolerance_ratio),
+        max_payment_residual=float(payment_residual),
+        max_stock_residual=float(stock_residual),
+        max_bank_residual=float(bank_residual),
+        plan_actual_gap=float(plan_gap),
+        total_plan_gap=float(total_plan_gap),
+        incremental_plan_gap=float(incremental_plan_gap),
+        plan_actual_gap_note=(
+            "plan gap is measured on the total procurement demand channel; "
+            "baseline endogenous orders are retained by the kernel and are not "
+            "subtracted by a counterfactual fork"
+        ),
+    )
+
+
+def execute_rolling_proposal(
+    plan: Any,
+    state: MaterialState,
+    forcing: MaterialForcing,
+    parameters: Any,
+    network: MaterialNetwork,
+    *,
+    calendar: Any,
+    session: Any,
+    observations: tuple[Any, ...],
+    organization_index: dict[str, int],
+    controls: Any = None,
+    budget_observations: tuple[Any, ...] = (),
+    inputs: Any = None,
+) -> RollingExecutionResult:
+    """Execute only the first-quarter decisions, with exactly one real tick.
+
+    The wrapper never calls the per-decision ``commit_proposal`` path (which
+    ticks and forks a baseline per decision) and never runs a counterfactual on
+    the real state.  All admission checks happen before the tick; any failure
+    restores every ``MaterialState`` field and leaves the clock unchanged.
+    """
+    from hsm_lab.engine.policy import TickControls
+    from hsm_lab.engine.political_run import PoliticalSession
+    from hsm_lab.institutions.decisions import ProcurementDecision
+    from hsm_lab.institutions.proposal_validation import validate_proposal
+    from hsm_lab.planning.proposals import PlanningObservation, observation_digest
+    from hsm_lab.planning.rolling import RollingPlan
+
+    if type(plan) is not RollingPlan:
+        _rolling_reject("plan must be a concrete RollingPlan")
+    if plan.status != "FEASIBLE":
+        _rolling_reject(f"plan status {plan.status!r} is not executable")
+    if plan.horizon_quarters != 4:
+        _rolling_reject("plan horizon is not four quarters")
+    if plan.decision_quarter != plan.quarters[0]:
+        _rolling_reject("plan decision quarter is not the first horizon quarter")
+    if not plan.certificates:
+        _rolling_reject("plan carries no planning certificate")
+    for certificate in plan.certificates:
+        if not np.isfinite(float(certificate.layer_objective)) or not np.isfinite(
+            float(certificate.wall_s)
+        ):
+            _rolling_reject("certificate carries a non-finite scalar")
+        for array in (
+            certificate.row_rhs,
+            certificate.row_activity,
+            certificate.row_residual,
+            certificate.row_slack,
+            certificate.primal,
+            certificate.dual_eq,
+            certificate.dual_ub,
+        ):
+            if array.size and not bool(np.all(np.isfinite(array))):
+                _rolling_reject("certificate contains a non-finite value")
+    if plan.mode == "historical_rule_based":
+        if len(plan.certificates) != 1 or plan.certificates[0].status != "FEASIBLE":
+            _rolling_reject("reference plan certificate is incomplete or not feasible")
+    else:
+        if len(plan.certificates) != 4:
+            _rolling_reject("optimization plan does not carry four lex certificates")
+        for index, certificate in enumerate(plan.certificates):
+            if certificate.layer_index != index or certificate.status != "FEASIBLE":
+                _rolling_reject("optimization plan certificate is out of order or not feasible")
+            if certificate.primal.size != certificate.matrix_cols:
+                _rolling_reject("certificate primal axis does not match its model")
+            for array in (
+                certificate.primal,
+                certificate.row_rhs,
+                certificate.row_activity,
+                certificate.row_residual,
+                certificate.row_slack,
+                certificate.dual_eq,
+                certificate.dual_ub,
+            ):
+                if array.size and not bool(np.all(np.isfinite(array))):
+                    _rolling_reject("certificate contains a non-finite value")
+    from hsm_lab.planning.rolling import verify_plan_certificates
+
+    verified, reason = verify_plan_certificates(plan)
+    if not verified:
+        _rolling_reject(f"certificate verification failed: {reason}")
+    if type(session) is not PoliticalSession:
+        _rolling_reject("session must be an exact PoliticalSession")
+    if type(observations) is not tuple or any(
+        type(item) is not PlanningObservation for item in observations
+    ):
+        _rolling_reject("observations must be a tuple of PlanningObservation")
+    if type(budget_observations) is not tuple:
+        _rolling_reject("budget_observations must be a tuple")
+    if object.__getattribute__(session, "state") is not state:
+        _rolling_reject("session.state is not the supplied material state")
+    if object.__getattribute__(session, "opened") is not True:
+        _rolling_reject("session is not open for admission")
+    if object.__getattribute__(session, "finished") is not False:
+        _rolling_reject("session is finished")
+    tick = int(state.completed_ticks)
+    if int(session.completed_ticks) != tick:
+        _rolling_reject("session and state clocks disagree")
+    quarters = list(forcing.quarters)
+    if tick < 0 or tick >= len(quarters):
+        _rolling_reject("decision tick lies outside the forcing horizon")
+    if str(quarters[tick]) != plan.decision_quarter:
+        _rolling_reject("plan decision quarter does not match the kernel quarter")
+    if str(session.quarter_of(tick)) != plan.decision_quarter:
+        _rolling_reject("session quarter does not match the plan decision quarter")
+    current_observations = tuple(
+        item for item in observations if item.observation.quarter == plan.decision_quarter
+    )
+    if len(current_observations) != len(observations):
+        _rolling_reject("observations contain a report from another quarter")
+    observed_hash = observation_digest(
+        observations,
+        budget_observations,
+        quarter=plan.decision_quarter,
+    )
+    if observed_hash != plan.observation_hash:
+        _rolling_reject("observation hash does not match the frozen plan")
+    from hsm_lab.planning.proposals import PlanningInputs
+
+    frozen_inputs = plan.inputs
+    if type(frozen_inputs) is not PlanningInputs:
+        _rolling_reject("plan does not carry concrete frozen inputs")
+    if inputs is not None:
+        if type(inputs) is not PlanningInputs:
+            _rolling_reject("inputs must be a concrete PlanningInputs")
+        if inputs.digest() != frozen_inputs.digest():
+            _rolling_reject("supplied inputs do not match the plan's frozen inputs")
+    if frozen_inputs.digest() != frozen_inputs.input_hash:
+        _rolling_reject("frozen input arrays or scalars were modified")
+    if plan.plan_hash != plan.digest():
+        _rolling_reject("plan payload was modified after sealing")
+    if frozen_inputs.input_hash != plan.input_hash:
+        _rolling_reject("plan input hash does not match the frozen inputs")
+    if frozen_inputs.observation_hash != plan.observation_hash:
+        _rolling_reject("plan observation hash does not match the frozen inputs")
+    if frozen_inputs.priority_hash != plan.priority_hash:
+        _rolling_reject("plan priority hash does not match the frozen inputs")
+    if frozen_inputs.forecast_hash != plan.forecast_hash:
+        _rolling_reject("plan forecast hash does not match the frozen inputs")
+    if (
+        observation_digest(
+            frozen_inputs.observations,
+            frozen_inputs.budget_observations,
+            quarter=plan.decision_quarter,
+        )
+        != plan.observation_hash
+    ):
+        _rolling_reject("frozen observation payload was modified")
+    if not plan.matrix_hash:
+        _rolling_reject("plan has no matrix hash")
+    for certificate in plan.certificates:
+        if certificate.input_hash != plan.input_hash:
+            _rolling_reject("certificate is not bound to the plan input hash")
+    for name in (
+        "organization_bank",
+        "inventory_initial",
+        "cash_initial",
+        "prices",
+        "demand_ordered",
+        "demand_gross",
+        "recipe_capacity",
+        "funding_capacity",
+        "service_capacity",
+        "handling_capacity",
+        "edge_capacity",
+        "bank_reserves",
+        "wage",
+        "organization_funding_group",
+        "funding_group_capacity",
+        "interest",
+        "order_financing",
+        "edge_service_good",
+        "organization_service_good",
+        "baseline_procurement",
+    ):
+        if bool(getattr(frozen_inputs, name).flags.writeable):
+            _rolling_reject(f"frozen input array {name} is writable")
+    decisions = tuple(plan.first_quarter_decisions)
+    if any(type(item) is not ProcurementDecision for item in decisions):
+        _rolling_reject("plan contains a non-procurement decision")
+    if _payload_hash(decisions) != plan.first_quarter_payload_hash:
+        _rolling_reject("first-quarter payload hash does not match the plan")
+    from hsm_lab.planning.rolling import derive_first_quarter_decisions
+
+    derived = derive_first_quarter_decisions(plan)
+    expected_map = {
+        (item.organization_id, item.commodity_id): float(item.requested_quantity)
+        for item in decisions
+    }
+    derived_map = {
+        (item.organization_id, item.commodity_id): float(item.requested_quantity)
+        for item in derived
+    }
+    if set(expected_map) != set(derived_map):
+        _rolling_reject("submitted payload does not match the plan forecast")
+    for key in expected_map:
+        if abs(expected_map[key] - derived_map[key]) > 1e-6:
+            _rolling_reject("submitted payload quantity does not match the plan forecast")
+    seen: set[tuple[str, str]] = set()
+    existing = set()
+    if controls is not None:
+        for org_idx, commodity_idx, _quantity in controls.procurement_requests or ():
+            existing.add((int(org_idx), int(commodity_idx)))
+    request_rows: list[tuple[int, int, float]] = []
+    validations: list[Any] = []
+    observation_by_key = {
+        (item.organization_id, item.commodity_id): item for item in current_observations
+    }
+    for decision in decisions:
+        if decision.quarter != plan.decision_quarter:
+            _rolling_reject("plan contains a decision for a future quarter")
+        key = (decision.organization_id, decision.commodity_id)
+        if key in seen:
+            _rolling_reject(f"duplicate organization/commodity decision {key!r}")
+        seen.add(key)
+        if decision.organization_id not in organization_index:
+            _rolling_reject(
+                f"organization {decision.organization_id!r} is outside the scenario crosswalk"
+            )
+        org_idx = int(organization_index[decision.organization_id])
+        commodity_ids = tuple(str(value) for value in network.commodity_ids)
+        if decision.commodity_id not in commodity_ids:
+            _rolling_reject(f"commodity {decision.commodity_id!r} is not in the network")
+        commodity_idx = commodity_ids.index(decision.commodity_id)
+        if (org_idx, commodity_idx) in existing:
+            _rolling_reject("controls already carry a request for this organization/commodity")
+        if not bool(_procurement_demand_mask(network, org_idx, commodity_idx).any()):
+            _rolling_reject("organization has no procurement destination for the commodity")
+        observation = observation_by_key.get(key)
+        if observation is None:
+            _rolling_reject("decision has no bound observation")
+        validation = validate_proposal(
+            decision,
+            calendar,
+            observation=observation.observation,
+            session=session,
+        )
+        if not validation.admission_eligible or not validation.is_legal:
+            _rolling_reject(f"proposal admission rejected: {validation.reason}")
+        if validation.decision_digest != _decision_hash(decision):
+            _rolling_reject("validated payload digest does not match the decision")
+        validations.append(validation)
+        request_rows.append((org_idx, commodity_idx, float(decision.requested_quantity)))
+
+    if controls is None:
+        base = TickControls(
+            material_parameters=parameters,
+            household_parameters=network.household_parameters,
+            household_catalog=network.household_catalog,
+            autonomy=0.0,
+            central_target=None,
+            policy=None,
+            procurement_requests=None,
+        )
+    else:
+        base = controls
+    new_controls = TickControls(
+        material_parameters=base.material_parameters,
+        household_parameters=base.household_parameters,
+        household_catalog=base.household_catalog,
+        autonomy=base.autonomy,
+        central_target=base.central_target,
+        policy=base.policy,
+        procurement_requests=(
+            (*(base.procurement_requests or ()), *request_rows)
+            if (base.procurement_requests or request_rows)
+            else None
+        ),
+    )
+
+    before = copy.deepcopy(state)
+    opening = capture_material_stocks(state)
+    trace: dict[str, Any] = {}
+    flows: MaterialTickFlows | None = None
+    submissions: tuple[RollingSubmissionRow, ...] = ()
+    phase = "tick"
+    try:
+        flows = tick_material(
+            state,
+            forcing,
+            parameters,
+            network,
+            controls=new_controls,
+            routing_trace=trace,
+        )
+        phase = "invariants"
+        gate = accounting.check_material_invariants(
+            opening, state, flows, parameters, network, controls=new_controls
+        )
+        if float(gate.max_material_tolerance_ratio) > 1.0:
+            _rolling_reject("material invariant gate did not pass")
+        if float(gate.max_finance_tolerance_ratio) > 1.0:
+            _rolling_reject("finance invariant gate did not pass")
+        phase = "measurement"
+        from hsm_lab.engine.state import build_material_prices
+
+        prices = build_material_prices(parameters)
+        rows: list[RollingSubmissionRow] = []
+        for decision, request in zip(decisions, request_rows, strict=True):
+            org_idx, commodity_idx, quantity = request
+            mask = _procurement_demand_mask(network, org_idx, commodity_idx)
+            demand_indices = np.flatnonzero(mask)
+            delivered_quantity = float(np.sum(np.asarray(flows.delivered, dtype=np.float64)[mask]))
+            allocated_quantity = float(np.sum(np.asarray(flows.allocated, dtype=np.float64)[mask]))
+            edge_mask = np.isin(np.asarray(network.edge_demand, dtype=np.int64), demand_indices)
+            freight = float(np.sum(np.asarray(flows.edge_service_fee, dtype=np.float64)[edge_mask]))
+            demand_index = int(np.flatnonzero(mask)[0])
+            destination_cell = int(network.demand_cell[demand_index])
+            stage = int(np.asarray(network.cell_stage, dtype=np.int64)[destination_cell])
+            unit_price = float(prices.price_for(commodity_idx, stage))
+            total_planned = 0.0
+            baseline = 0.0
+            planning_org_index = frozen_inputs.organization_ids.index(decision.organization_id)
+            for good_index, goods_id in enumerate(frozen_inputs.goods_id):
+                if goods_id.split("|", 1)[0] != decision.commodity_id:
+                    continue
+                total_planned += float(plan.quarterly[0].purchases[planning_org_index, good_index])
+                baseline += float(
+                    frozen_inputs.baseline_procurement[0, planning_org_index, good_index]
+                )
+            incremental = float(quantity)
+            gap = max(0.0, total_planned - delivered_quantity)
+            incremental_gap = max(0.0, incremental - delivered_quantity)
+            rows.append(
+                RollingSubmissionRow(
+                    organization_id=decision.organization_id,
+                    commodity_id=decision.commodity_id,
+                    organization_index=org_idx,
+                    commodity_index=commodity_idx,
+                    planned_quantity=total_planned,
+                    requested_quantity=incremental,
+                    total_planned_quantity=total_planned,
+                    baseline_quantity=baseline,
+                    incremental_quantity=incremental,
+                    allocated_quantity=allocated_quantity,
+                    delivered_quantity=delivered_quantity,
+                    goods_payment=delivered_quantity * unit_price,
+                    freight_payment=freight,
+                    plan_actual_gap=gap,
+                    incremental_plan_actual_gap=incremental_gap,
+                    binding_status="satisfied" if gap <= ATOL else "binding",
+                    decision_digest=_decision_hash(decision),
+                )
+            )
+        submissions = tuple(rows)
+        measurement = measure_rolling_execution(
+            opening,
+            state,
+            flows,
+            parameters,
+            network,
+            plan=plan,
+            submissions=submissions,
+            invariants=gate,
+            boundary=trace.get("boundary"),
+        )
+        if measurement.max_payment_residual > ATOL:
+            _rolling_reject("journal does not reconcile to organization payments")
+        if measurement.max_stock_residual > ATOL:
+            _rolling_reject("stock continuity does not reconcile")
+        if measurement.max_bank_residual > ATOL:
+            _rolling_reject("bank books do not reconcile")
+        before_clock = int(before.completed_ticks)
+        state.completed_ticks = before_clock + 1
+        if submissions and any(row.plan_actual_gap > ATOL for row in submissions):
+            status = "PARTIAL"
+        elif submissions:
+            status = "EXECUTED"
+        else:
+            status = "NO_REQUESTS"
+        return RollingExecutionResult(
+            schema_version=H3E_SCHEMA_VERSION,
+            mode=plan.mode,
+            plan=plan,
+            submitted=submissions,
+            validations=tuple(validations),
+            flows=flows,
+            gate=gate,
+            measurement=measurement,
+            completed_ticks_before=before_clock,
+            completed_ticks_after=int(state.completed_ticks),
+            execution_status=status,
+        )
+    except Exception as exc:  # noqa: BLE001 - every failure must roll back
+        failed_flows = copy.deepcopy(flows) if flows is not None else None
+        failed_trace = {
+            "tick": tick,
+            "quarter": plan.decision_quarter,
+            "mode": plan.mode,
+            "submitted": _jsonable(submissions),
+            "requests": _jsonable(request_rows),
+        }
+        _restore_state(state, before)
+        if isinstance(exc, RollingExecutionFailure):
+            raise
+        raise RollingExecutionFailure(
+            phase=phase,
+            cause=exc,
+            failed_flows=failed_flows,
+            failed_trace=failed_trace,
+            submitted=submissions,
+        ) from exc
+
+
 __all__ = [
+    "H3E_SCHEMA_VERSION",
+    "RollingExecutionFailure",
+    "RollingExecutionMeasurement",
+    "RollingExecutionResult",
+    "RollingSubmissionRow",
     "RoutingDemandRow",
     "RoutingEdgeRow",
     "RoutingExecutionFailure",
@@ -1168,6 +1941,8 @@ __all__ = [
     "RoutingExecutionResult",
     "RoutingJournalRow",
     "RoutingOrganizationPaymentRow",
+    "execute_rolling_proposal",
     "execute_routing_certificate",
+    "measure_rolling_execution",
     "measure_routing_execution",
 ]
