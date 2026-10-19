@@ -99,6 +99,79 @@ class MaterialForcing:
     input_artifact_hashes: dict[str, str]
 
 
+@dataclass(frozen=True)
+class ExportContract:
+    """Synthetic export contract identity for one creditor/debtor pair.
+
+    ``seller_id`` is the Treasury's explicit contractual role (seller 0), never
+    inferred from a procurement payment.  ``buyer_id`` is a declared foreign
+    buyer, distinct from every foreign settlement account.
+    """
+
+    contract_id: str
+    currency: str
+    buyer_id: int
+    seller_id: int
+    commodity_id: str | None = None
+
+
+@dataclass(frozen=True)
+class ExportReceivable:
+    """One delivered export lot carried at its frozen contract principal.
+
+    ``gross``/``provision``/``written_off`` are the H3F-D2 acceptance
+    variables A/L/B.  ``received`` is cumulative cash collected (including
+    recovery receipts); ``recovered`` is the subset restored from a prior
+    write-off and then actually collected.  All amounts are in the lot's own
+    currency.
+    """
+
+    receivable_id: str
+    contract_id: str
+    currency: str
+    buyer_id: int
+    seller_id: int
+    commodity_id: str
+    delivery_tick: int
+    due_tick: int
+    principal: float
+    gross: float
+    provision: float
+    written_off: float
+    received: float
+    recovered: float
+    writeoffs: float
+    provision_expense: float
+    provision_released: float
+
+
+@dataclass(frozen=True)
+class ExportReceivableEvent:
+    """One applied D2 event; the flow log is the journal's identity anchor."""
+
+    event_id: str
+    tick: int
+    kind: str
+    receivable_id: str
+    contract_id: str
+    currency: str
+    buyer_id: int
+    seller_id: int
+    commodity_id: str
+    delivery_tick: int
+    due_tick: int
+    amount: float
+
+
+@dataclass(frozen=True)
+class ExportReceivablePolicy:
+    """Term/contract/event input for one opt-in D2 tick."""
+
+    term_quarters: int
+    contracts: tuple[ExportContract, ...]
+    events: tuple[ExportReceivableEvent, ...] = ()
+
+
 @dataclass
 class MaterialState:
     """Complete mutable material-economy state at an end-of-quarter boundary."""
@@ -212,6 +285,13 @@ class MaterialState:
     # state never loses its term.
     treasury_loan_maturity_tick: float = -1.0
     treasury_loan_rate: float = 0.0
+    # --- H3F-D2 export receivables (default off) -------------------------
+    # Immutable per-lot book.  Empty on every legacy/D1 path, so the replay
+    # digest and checkpoint bytes stay exactly as before unless the opt-in
+    # adapter supplies a policy.  Event ids make cross-tick replay/duplicate
+    # rejection checkpointable; deliveries also enter this log.
+    export_receivables: tuple[ExportReceivable, ...] = field(default_factory=tuple)
+    export_receivable_event_ids: tuple[str, ...] = field(default_factory=tuple)
 
     def copy_dynamic(self) -> MaterialState:
         """Deep-copy every mutable array; shares nothing the tick mutates."""
@@ -270,6 +350,8 @@ class MaterialStockSnapshot:
     household_wage_claim: np.ndarray
     household_deferred_receipt: np.ndarray
     completed_ticks: int
+    export_receivables: tuple[ExportReceivable, ...]
+    export_receivable_event_ids: tuple[str, ...]
 
 
 @dataclass
@@ -415,6 +497,32 @@ class MaterialTickFlows:
     journal_amount: list[float] = field(default_factory=list)
     journal_org: list[int | None] = field(default_factory=list)
     journal_leg: list[int] = field(default_factory=list)
+    # D2-only event identity; ``None`` on every legacy/D1 journal row.
+    journal_event: list[str | None] = field(default_factory=list)
+
+    # --- H3F-D2 export receivables (zero/empty on legacy and D1 paths) --------
+    # Monetary flow scalars are kept per currency; USD and CMEA are never
+    # summed into one quantity.
+    export_receivable_opened_usd: float = 0.0
+    export_receivable_opened_cmea: float = 0.0
+    export_receivable_received_usd: float = 0.0
+    export_receivable_received_cmea: float = 0.0
+    export_receivable_recovered_usd: float = 0.0
+    export_receivable_recovered_cmea: float = 0.0
+    export_receivable_written_off_usd: float = 0.0
+    export_receivable_written_off_cmea: float = 0.0
+    export_receivable_loss_provision_usd: float = 0.0
+    export_receivable_loss_provision_cmea: float = 0.0
+    export_receivable_provision_released_usd: float = 0.0
+    export_receivable_provision_released_cmea: float = 0.0
+    export_receivable_balance_usd: float = 0.0
+    export_receivable_balance_cmea: float = 0.0
+    export_receivable_overdue_usd: float = 0.0
+    export_receivable_overdue_cmea: float = 0.0
+    export_receivable_events: tuple[ExportReceivableEvent, ...] = ()
+    # (CMEA prices, USD prices) on the network commodity axis, used by the
+    # gate to verify each delivery principal against real delivered quantity.
+    export_receivable_channel_prices: tuple[tuple[float, ...], tuple[float, ...]] = ()
 
     # --- residual snapshots (filled by engine.accounting) ------------------------
     material_balance_residual: np.ndarray | None = None
@@ -463,6 +571,10 @@ __all__ = [
     "N_E",
     "N_H",
     "N_Q",
+    "ExportContract",
+    "ExportReceivable",
+    "ExportReceivableEvent",
+    "ExportReceivablePolicy",
     "MaterialForcing",
     "MaterialHistory",
     "MaterialPrices",
@@ -934,6 +1046,8 @@ def capture_material_stocks(state: MaterialState) -> MaterialStockSnapshot:
         treasury_interest_arrears=float(state.treasury_interest_arrears),
         treasury_loan_maturity_tick=float(state.treasury_loan_maturity_tick),
         treasury_loan_rate=float(state.treasury_loan_rate),
+        export_receivables=tuple(state.export_receivables),
+        export_receivable_event_ids=tuple(state.export_receivable_event_ids),
         organization_cash_open=state.organization_cash.copy(),
         organization_principal=state.organization_principal.copy(),
         organization_wage_arrears=state.organization_wage_arrears.copy(),

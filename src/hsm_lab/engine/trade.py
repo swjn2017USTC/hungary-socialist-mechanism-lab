@@ -43,18 +43,34 @@ from hsm_lab.engine.finance import (
     foreign_account_id,
     quarter_external_rate,
     treasury_account_id,
+    treasury_receivable_account_id,
 )
-from hsm_lab.engine.state import MaterialState, MaterialTickFlows
+from hsm_lab.engine.state import (
+    ExportContract,
+    ExportReceivable,
+    ExportReceivableEvent,
+    ExportReceivablePolicy,
+    MaterialState,
+    MaterialTickFlows,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
     from hsm_lab.engine.network import MaterialNetwork
 
 __all__ = [
+    "apply_receivable_events",
     "build_export_demands",
     "channel_prices",
     "realize_external_debt_service",
     "realize_imports",
+    "receivable_journal_rows",
+    "resolve_export_contract",
     "settle_exports_and_closing",
+    "settle_exports_on_receivables",
+    "validate_export_contract",
+    "validate_export_event",
+    "validate_export_policy",
+    "validate_receivable_book",
 ]
 
 
@@ -412,3 +428,701 @@ def settle_exports_and_closing(
                 )
             ],
         )
+
+
+# ---------------------------------------------------------------------------
+# H3F-D2: export receivables on contract terms
+# ---------------------------------------------------------------------------
+
+RECEIVABLE_KINDS = frozenset({"delivery", "receipt", "loss", "writeoff", "recovery"})
+_RECEIVABLE_TOL = 1e-9
+
+
+def _receivable_reject(message: str) -> None:
+    raise ValueError(f"export receivables: {message}")
+
+
+def _contract_for(
+    contracts: tuple[ExportContract, ...], currency: str, commodity_id: str
+) -> ExportContract:
+    matches = [
+        contract
+        for contract in contracts
+        if contract.currency == currency
+        and (contract.commodity_id is None or contract.commodity_id == commodity_id)
+    ]
+    if len(matches) != 1:
+        _receivable_reject(
+            f"expected exactly one contract for ({currency!r}, {commodity_id!r}); "
+            f"found {len(matches)}"
+        )
+    return matches[0]
+
+
+def _strict_int(value: object, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, np.integer)):
+        _receivable_reject(f"{name} must be a strict integer")
+    return int(value)
+
+
+def _strict_amount(value: object, name: str) -> float:
+    if isinstance(value, bool) or not isinstance(
+        value, (int, float, np.integer, np.floating)
+    ):
+        _receivable_reject(f"{name} must be a strict number")
+    amount = float(value)
+    if not np.isfinite(amount):
+        _receivable_reject(f"{name} must be finite")
+    return amount
+
+
+def _strict_text(value: object, name: str) -> str:
+    if not isinstance(value, str) or not value:
+        _receivable_reject(f"{name} must be a non-empty string")
+    return value
+
+
+def validate_export_contract(contract: ExportContract) -> None:
+    if not isinstance(contract, ExportContract):
+        _receivable_reject("contracts must be ExportContract instances")
+    _strict_text(contract.contract_id, "contract.contract_id")
+    if contract.currency not in (USD_CURRENCY, CMEA_CURRENCY):
+        _receivable_reject(f"contract {contract.contract_id!r} has unknown currency")
+    buyer = _strict_int(contract.buyer_id, "contract.buyer_id")
+    seller = _strict_int(contract.seller_id, "contract.seller_id")
+    if buyer < 0 or seller < 0:
+        _receivable_reject(f"contract {contract.contract_id!r} has negative ids")
+    if seller != 0:
+        _receivable_reject("the synthetic export seller is Treasury id 0")
+    if contract.commodity_id is not None:
+        _strict_text(contract.commodity_id, "contract.commodity_id")
+
+
+def validate_export_event(event: ExportReceivableEvent) -> None:
+    if not isinstance(event, ExportReceivableEvent):
+        _receivable_reject("events must be ExportReceivableEvent instances")
+    _strict_text(event.event_id, "event.event_id")
+    _strict_text(event.receivable_id, "event.receivable_id")
+    _strict_text(event.contract_id, "event.contract_id")
+    _strict_text(event.commodity_id, "event.commodity_id")
+    if event.kind not in RECEIVABLE_KINDS:
+        _receivable_reject(f"unknown event kind {event.kind!r}")
+    if event.currency not in (USD_CURRENCY, CMEA_CURRENCY):
+        _receivable_reject(f"event {event.event_id!r} has unknown currency")
+    tick = _strict_int(event.tick, "event.tick")
+    delivery_tick = _strict_int(event.delivery_tick, "event.delivery_tick")
+    due_tick = _strict_int(event.due_tick, "event.due_tick")
+    buyer = _strict_int(event.buyer_id, "event.buyer_id")
+    seller = _strict_int(event.seller_id, "event.seller_id")
+    if tick < 0 or delivery_tick < 0 or due_tick < 0:
+        _receivable_reject(f"event {event.event_id!r} has a negative tick")
+    if buyer < 0 or seller < 0:
+        _receivable_reject(f"event {event.event_id!r} has negative ids")
+    if seller != 0:
+        _receivable_reject("the synthetic export seller is Treasury id 0")
+    if due_tick <= delivery_tick:
+        _receivable_reject(f"event {event.event_id!r} has a non-positive term")
+    if delivery_tick > tick:
+        _receivable_reject(f"event {event.event_id!r} is future-dated")
+    _strict_amount(event.amount, f"event {event.event_id!r} amount")
+    if float(event.amount) <= 0.0:
+        _receivable_reject(f"event {event.event_id!r} amount must be positive")
+
+
+def validate_export_policy(policy: ExportReceivablePolicy) -> None:
+    if not isinstance(policy, ExportReceivablePolicy):
+        _receivable_reject("policy must be an ExportReceivablePolicy")
+    term = _strict_int(policy.term_quarters, "policy.term_quarters")
+    if term < 1:
+        _receivable_reject("policy.term_quarters must be >= 1")
+    if not isinstance(policy.contracts, tuple) or not policy.contracts:
+        _receivable_reject("policy.contracts must be a non-empty tuple")
+    ids: set[str] = set()
+    keys: set[tuple[str, str | None]] = set()
+    wildcards: dict[str, int] = {}
+    for contract in policy.contracts:
+        validate_export_contract(contract)
+        if contract.contract_id in ids:
+            _receivable_reject(f"duplicate contract id {contract.contract_id!r}")
+        ids.add(contract.contract_id)
+        key = (contract.currency, contract.commodity_id)
+        if key in keys:
+            _receivable_reject(f"duplicate contract key {key!r}")
+        keys.add(key)
+        if contract.commodity_id is None:
+            wildcards[contract.currency] = wildcards.get(contract.currency, 0) + 1
+    if any(count > 1 for count in wildcards.values()):
+        _receivable_reject("at most one wildcard contract per currency")
+    seen: set[str] = set()
+    for event in policy.events:
+        validate_export_event(event)
+        if event.kind == "delivery":
+            _receivable_reject("delivery events are generated by the kernel")
+        if event.event_id.startswith("delivery:"):
+            _receivable_reject(
+                f"caller event id {event.event_id!r} uses the reserved delivery namespace"
+            )
+        if event.event_id in seen:
+            _receivable_reject(f"duplicate event id {event.event_id!r}")
+        seen.add(event.event_id)
+
+
+def validate_receivable_book(
+    book: tuple[ExportReceivable, ...],
+    event_ids: tuple[str, ...],
+    *,
+    completed_ticks: int | None = None,
+    commodity_ids: tuple[str, ...] | None = None,
+) -> None:
+    """Validate a whole book/log boundary; shared by gate, adapter and checkpoint."""
+    if not isinstance(book, tuple):
+        _receivable_reject("receivable book must be a tuple")
+    if not isinstance(event_ids, tuple):
+        _receivable_reject("receivable event ids must be a tuple")
+    if completed_ticks is not None:
+        boundary = _strict_int(completed_ticks, "completed_ticks")
+        if boundary < 0:
+            _receivable_reject("completed_ticks must be non-negative")
+        last_tick = boundary - 1
+    else:
+        last_tick = None
+    commodity_set = set(commodity_ids) if commodity_ids is not None else None
+    ids: set[str] = set()
+    for lot in book:
+        if not isinstance(lot, ExportReceivable):
+            _receivable_reject("book entries must be ExportReceivable instances")
+        _strict_text(lot.receivable_id, "receivable.receivable_id")
+        _strict_text(lot.contract_id, "receivable.contract_id")
+        _strict_text(lot.commodity_id, "receivable.commodity_id")
+        if commodity_set is not None and lot.commodity_id not in commodity_set:
+            _receivable_reject(
+                f"receivable {lot.receivable_id!r} names unknown commodity "
+                f"{lot.commodity_id!r}"
+            )
+        if lot.currency not in (USD_CURRENCY, CMEA_CURRENCY):
+            _receivable_reject(f"receivable {lot.receivable_id!r} has unknown currency")
+        buyer = _strict_int(lot.buyer_id, "receivable.buyer_id")
+        seller = _strict_int(lot.seller_id, "receivable.seller_id")
+        delivery_tick = _strict_int(lot.delivery_tick, "receivable.delivery_tick")
+        due_tick = _strict_int(lot.due_tick, "receivable.due_tick")
+        expected_id = f"{lot.contract_id}@{delivery_tick}:{lot.commodity_id}"
+        if lot.receivable_id != expected_id:
+            _receivable_reject(
+                f"receivable id {lot.receivable_id!r} is not the canonical "
+                f"contract@tick:commodity identity {expected_id!r}"
+            )
+        if buyer < 0 or seller < 0:
+            _receivable_reject(f"receivable {lot.receivable_id!r} has negative ids")
+        if seller != 0:
+            _receivable_reject("the synthetic export seller is Treasury id 0")
+        if delivery_tick < 0 or due_tick <= delivery_tick:
+            _receivable_reject(f"receivable {lot.receivable_id!r} has an invalid term")
+        if last_tick is not None:
+            if delivery_tick > last_tick:
+                _receivable_reject(
+                    f"receivable {lot.receivable_id!r} delivery tick is not before "
+                    "the boundary"
+                )
+            if lot.received > _RECEIVABLE_TOL and delivery_tick >= last_tick:
+                _receivable_reject(
+                    f"receivable {lot.receivable_id!r} records collection without "
+                    "a completed post-delivery tick"
+                )
+            if (
+                lot.provision_expense > _RECEIVABLE_TOL
+                or lot.writeoffs > _RECEIVABLE_TOL
+                or lot.recovered > _RECEIVABLE_TOL
+            ) and due_tick > last_tick:
+                _receivable_reject(
+                    f"receivable {lot.receivable_id!r} records loss/write-off/recovery "
+                    "before its due tick has completed"
+                )
+        if lot.receivable_id in ids:
+            _receivable_reject(f"duplicate receivable id {lot.receivable_id!r}")
+        ids.add(lot.receivable_id)
+        principal = _strict_amount(lot.principal, "receivable.principal")
+        if principal <= 0.0:
+            _receivable_reject(f"receivable {lot.receivable_id!r} principal must be positive")
+        _check_lot(lot)
+        if abs(lot.written_off - (lot.writeoffs - lot.recovered)) > _RECEIVABLE_TOL:
+            _receivable_reject(
+                f"receivable {lot.receivable_id!r} written-off balance is not "
+                "cumulative write-offs minus recoveries"
+            )
+        if lot.recovered > lot.received + _RECEIVABLE_TOL:
+            _receivable_reject(
+                f"receivable {lot.receivable_id!r} recovered more than collected"
+            )
+        if abs(lot.provision_released - lot.recovered) > _RECEIVABLE_TOL:
+            _receivable_reject(
+                f"receivable {lot.receivable_id!r} provision releases differ from "
+                "cumulative recoveries"
+            )
+        if lot.writeoffs > lot.principal + _RECEIVABLE_TOL:
+            _receivable_reject(f"receivable {lot.receivable_id!r} write-offs exceed principal")
+    seen: set[str] = set()
+    for event_id in event_ids:
+        _strict_text(event_id, "event id")
+        if event_id in seen:
+            _receivable_reject(f"duplicate event id {event_id!r}")
+        seen.add(event_id)
+    expected_delivery_ids = {f"delivery:{lot.receivable_id}" for lot in book}
+    actual_delivery_ids = {
+        event_id for event_id in seen if event_id.startswith("delivery:")
+    }
+    if actual_delivery_ids != expected_delivery_ids:
+        extra = sorted(actual_delivery_ids - expected_delivery_ids)
+        missing = sorted(expected_delivery_ids - actual_delivery_ids)
+        _receivable_reject(
+            "receivable delivery log does not match retained lots: "
+            f"extra={extra} missing={missing}"
+        )
+
+
+def resolve_export_contract(
+    contracts: tuple[ExportContract, ...], currency: str, commodity_id: str
+) -> ExportContract:
+    """Resolve exactly one declared contract for a real delivery."""
+    for contract in contracts:
+        validate_export_contract(contract)
+    return _contract_for(contracts, currency, commodity_id)
+
+
+def _validate_receivable_event(event: ExportReceivableEvent, current_tick: int) -> None:
+    validate_export_event(event)
+    if event.tick != current_tick:
+        _receivable_reject(
+            f"event {event.event_id!r} carries tick {event.tick}, expected {current_tick}"
+        )
+
+
+def _match_identity(lot: ExportReceivable, event: ExportReceivableEvent) -> None:
+    mismatched = [
+        name
+        for name, left, right in (
+            ("contract_id", lot.contract_id, event.contract_id),
+            ("currency", lot.currency, event.currency),
+            ("buyer_id", lot.buyer_id, event.buyer_id),
+            ("seller_id", lot.seller_id, event.seller_id),
+            ("commodity_id", lot.commodity_id, event.commodity_id),
+            ("delivery_tick", lot.delivery_tick, event.delivery_tick),
+            ("due_tick", lot.due_tick, event.due_tick),
+        )
+        if left != right
+    ]
+    if mismatched:
+        _receivable_reject(
+            f"event {event.event_id!r} identity mismatch on {mismatched}"
+        )
+
+
+def apply_receivable_events(
+    book: tuple[ExportReceivable, ...],
+    event_ids: tuple[str, ...],
+    events: tuple[ExportReceivableEvent, ...],
+    *,
+    current_tick: int,
+) -> tuple[tuple[ExportReceivable, ...], tuple[str, ...]]:
+    """Apply one tick's receivable events to an opening book, purely.
+
+    The function is shared by the settlement step and the independent
+    accounting gate; it never mutates its inputs.  Delivery is the only event
+    that opens a lot; receipts and loss events target existing lots, and a new
+    delivery can never be collected in its own tick.
+    """
+    validate_receivable_book(book, event_ids)
+    lots = {lot.receivable_id: lot for lot in book}
+    seen = set(event_ids)
+    applied_ids = list(event_ids)
+    for event in events:
+        _validate_receivable_event(event, current_tick)
+        if event.event_id in seen:
+            _receivable_reject(f"duplicate event id {event.event_id!r}")
+        seen.add(event.event_id)
+        applied_ids.append(event.event_id)
+
+        if event.kind == "delivery":
+            if event.delivery_tick != current_tick:
+                _receivable_reject("delivery events must be dated in the current tick")
+            if event.receivable_id in lots:
+                _receivable_reject(f"duplicate receivable id {event.receivable_id!r}")
+            lots[event.receivable_id] = ExportReceivable(
+                receivable_id=event.receivable_id,
+                contract_id=event.contract_id,
+                currency=event.currency,
+                buyer_id=event.buyer_id,
+                seller_id=event.seller_id,
+                commodity_id=event.commodity_id,
+                delivery_tick=event.delivery_tick,
+                due_tick=event.due_tick,
+                principal=float(event.amount),
+                gross=float(event.amount),
+                provision=0.0,
+                written_off=0.0,
+                received=0.0,
+                recovered=0.0,
+                writeoffs=0.0,
+                provision_expense=0.0,
+                provision_released=0.0,
+            )
+            continue
+
+        lot = lots.get(event.receivable_id)
+        if lot is None:
+            _receivable_reject(f"unknown receivable {event.receivable_id!r}")
+        _match_identity(lot, event)
+        if lot.delivery_tick >= current_tick:
+            _receivable_reject(
+                f"receivable {event.receivable_id!r} cannot be collected in its delivery tick"
+            )
+
+        amount = float(event.amount)
+        if event.kind == "receipt":
+            if amount > lot.gross + _RECEIVABLE_TOL:
+                _receivable_reject(f"receipt exceeds gross receivable for {event.event_id!r}")
+            lot = _replace_lot(lot, gross=lot.gross - amount, received=lot.received + amount)
+        elif event.kind == "loss":
+            if current_tick < lot.due_tick:
+                _receivable_reject(f"loss before due tick for {event.event_id!r}")
+            if amount > lot.gross - lot.provision + _RECEIVABLE_TOL:
+                _receivable_reject(
+                    f"loss provision exceeds gross receivable for {event.event_id!r}"
+                )
+            lot = _replace_lot(
+                lot,
+                provision=lot.provision + amount,
+                provision_expense=lot.provision_expense + amount,
+            )
+        elif event.kind == "writeoff":
+            if current_tick < lot.due_tick:
+                _receivable_reject(f"write-off before due tick for {event.event_id!r}")
+            if amount > lot.gross + _RECEIVABLE_TOL or amount > lot.provision + _RECEIVABLE_TOL:
+                _receivable_reject(f"write-off exceeds gross/provision for {event.event_id!r}")
+            lot = _replace_lot(
+                lot,
+                gross=lot.gross - amount,
+                provision=lot.provision - amount,
+                written_off=lot.written_off + amount,
+                writeoffs=lot.writeoffs + amount,
+            )
+        elif event.kind == "recovery":
+            if amount > lot.written_off + _RECEIVABLE_TOL:
+                _receivable_reject(f"recovery exceeds written-off balance for {event.event_id!r}")
+            # Restore the claim and its provision, collect it, then release
+            # the rebuilt provision.  The cash receipt is the same amount.
+            lot = _replace_lot(
+                lot,
+                gross=lot.gross,  # restore + collect net to the same gross
+                provision=lot.provision,
+                written_off=lot.written_off - amount,
+                received=lot.received + amount,
+                recovered=lot.recovered + amount,
+                provision_expense=lot.provision_expense + amount,
+                provision_released=lot.provision_released + amount,
+            )
+        _check_lot(lot)
+        lots[event.receivable_id] = lot
+
+    final_book = tuple(lots[key] for key in sorted(lots))
+    final_ids = tuple(applied_ids)
+    validate_receivable_book(final_book, final_ids)
+    return final_book, final_ids
+
+
+def _replace_lot(lot: ExportReceivable, **changes: float) -> ExportReceivable:
+    import dataclasses
+
+    return dataclasses.replace(lot, **changes)
+
+
+def _check_lot(lot: ExportReceivable) -> None:
+    for name in (
+        "principal",
+        "gross",
+        "provision",
+        "written_off",
+        "received",
+        "recovered",
+        "writeoffs",
+        "provision_expense",
+        "provision_released",
+    ):
+        value = float(getattr(lot, name))
+        if not np.isfinite(value) or value < -_RECEIVABLE_TOL:
+            _receivable_reject(f"receivable {lot.receivable_id!r} {name} is invalid")
+    if lot.provision > lot.gross + _RECEIVABLE_TOL:
+        _receivable_reject(f"receivable {lot.receivable_id!r} provision exceeds gross")
+    if lot.written_off < -_RECEIVABLE_TOL:
+        _receivable_reject(f"receivable {lot.receivable_id!r} written-off balance is negative")
+    closure = lot.gross + lot.received + lot.written_off
+    if abs(closure - lot.principal) > max(_RECEIVABLE_TOL, 1e-12 * lot.principal):
+        _receivable_reject(
+            f"receivable {lot.receivable_id!r} principal closure failed: "
+            f"gross+received+written_off={closure!r} principal={lot.principal!r}"
+        )
+    provision_closure = lot.provision_expense - lot.writeoffs - lot.provision_released
+    if abs(provision_closure - lot.provision) > max(
+        _RECEIVABLE_TOL, 1e-12 * max(1.0, lot.provision_expense)
+    ):
+        _receivable_reject(
+            f"receivable {lot.receivable_id!r} provision closure failed: "
+            f"Q-W-V={provision_closure!r} L={lot.provision!r}"
+        )
+
+
+def _receivable_journal_legs(
+    state: MaterialState, event: ExportReceivableEvent
+) -> list[tuple[str, list[tuple[int, int, str, float]]]]:
+    currency = event.currency
+    foreign = foreign_account_id(state, currency)
+    receivable = treasury_receivable_account_id(
+        state, currency, finance.AccountKind.EXPORT_RECEIVABLE
+    )
+    allowance = treasury_receivable_account_id(
+        state, currency, finance.AccountKind.BAD_DEBT_ALLOWANCE
+    )
+    expense = treasury_receivable_account_id(
+        state, currency, finance.AccountKind.BAD_DEBT_EXPENSE
+    )
+    income = treasury_receivable_account_id(
+        state, currency, finance.AccountKind.EXPORT_SALES_INCOME
+    )
+    amount = float(event.amount)
+    if event.kind == "delivery":
+        return [
+            (
+                "export_receivable_delivery",
+                [(receivable, income, currency, amount)],
+            )
+        ]
+    if event.kind == "receipt":
+        return [
+            (
+                "export_receivable_receipt",
+                [(foreign, receivable, currency, amount)],
+            )
+        ]
+    if event.kind == "loss":
+        return [
+            (
+                "export_receivable_loss",
+                [(expense, allowance, currency, amount)],
+            )
+        ]
+    if event.kind == "writeoff":
+        return [
+            (
+                "export_receivable_writeoff",
+                [(allowance, receivable, currency, amount)],
+            )
+        ]
+    if event.kind == "recovery":
+        return [
+            (
+                "export_receivable_recovery_restore",
+                [(receivable, allowance, currency, amount)],
+            ),
+            (
+                "export_receivable_recovery_receipt",
+                [(foreign, receivable, currency, amount)],
+            ),
+            (
+                "export_receivable_recovery_release",
+                [(allowance, expense, currency, amount)],
+            ),
+        ]
+    _receivable_reject(f"unknown event kind {event.kind!r}")
+
+
+def receivable_journal_rows(
+    state: MaterialState, event: ExportReceivableEvent
+) -> list[tuple[str, int, int, str, float, str]]:
+    """Exact ``(kind, debit, credit, currency, amount, event_id)`` rows."""
+    rows: list[tuple[str, int, int, str, float, str]] = []
+    for kind, legs in _receivable_journal_legs(state, event):
+        for debit, credit, currency, amount in legs:
+            rows.append(
+                (kind, int(debit), int(credit), currency, float(amount), event.event_id)
+            )
+    return rows
+
+
+def settle_exports_on_receivables(
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    parameters: MaterialParameters,
+    network: MaterialNetwork,
+    *,
+    cmea_export_delivered: np.ndarray,
+    convertible_export_delivered: np.ndarray,
+    oil_price: float,
+    cmea_contract_price: float,
+    official_fx_quote: float,
+    policy: ExportReceivablePolicy,
+    transaction_base: int = 0,
+) -> None:
+    """Book real deliveries as term receivables, then apply this tick's events.
+
+    Only an actual receipt or recovery increases the foreign settlement
+    balance.  A delivery increases the same-currency receivable and export
+    sales income, never cash.  Every applied event is recorded on the flows so
+    the accounting gate can independently replay it from the opening book.
+    """
+    _finite("oil_price", oil_price)
+    validate_export_policy(policy)
+    current_tick = int(flows.tick)
+    cmea_prices, convertible_prices = channel_prices(
+        parameters,
+        network,
+        oil_price=oil_price,
+        cmea_contract_price=cmea_contract_price,
+    )
+    deliveries = (
+        (
+            CMEA_CURRENCY,
+            np.asarray(cmea_export_delivered, dtype=np.float64),
+            cmea_prices,
+        ),
+        (
+            USD_CURRENCY,
+            np.asarray(convertible_export_delivered, dtype=np.float64),
+            convertible_prices,
+        ),
+    )
+    delivery_events: list[ExportReceivableEvent] = []
+    for currency, delivered, prices in deliveries:
+        if delivered.shape != prices.shape:
+            _receivable_reject("delivered quantity and price axes disagree")
+        if not np.all(np.isfinite(delivered)) or np.any(delivered < 0.0):
+            _receivable_reject("delivered export quantities must be finite and non-negative")
+        for g in np.nonzero(delivered > 0.0)[0]:
+            commodity_id = str(network.commodity_ids[int(g)])
+            contract = _contract_for(policy.contracts, currency, commodity_id)
+            receivable_id = f"{contract.contract_id}@{current_tick}:{commodity_id}"
+            due_tick = current_tick + int(policy.term_quarters)
+            delivery_events.append(
+                ExportReceivableEvent(
+                    event_id=f"delivery:{receivable_id}",
+                    tick=current_tick,
+                    kind="delivery",
+                    receivable_id=receivable_id,
+                    contract_id=contract.contract_id,
+                    currency=currency,
+                    buyer_id=int(contract.buyer_id),
+                    seller_id=int(contract.seller_id),
+                    commodity_id=commodity_id,
+                    delivery_tick=current_tick,
+                    due_tick=due_tick,
+                    amount=float(delivered[int(g)] * prices[int(g)]),
+                )
+            )
+
+    applied = tuple(delivery_events) + tuple(policy.events)
+    book, event_ids = apply_receivable_events(
+        tuple(state.export_receivables),
+        tuple(state.export_receivable_event_ids),
+        applied,
+        current_tick=current_tick,
+    )
+    state.export_receivables = book
+    state.export_receivable_event_ids = event_ids
+
+    cmea_receipt = float(
+        sum(
+            event.amount
+            for event in policy.events
+            if event.currency == CMEA_CURRENCY and event.kind in ("receipt", "recovery")
+        )
+    )
+    usd_receipt = float(
+        sum(
+            event.amount
+            for event in policy.events
+            if event.currency == USD_CURRENCY and event.kind in ("receipt", "recovery")
+        )
+    )
+    state.cmea_settlement_balance = float(state.cmea_settlement_balance) + cmea_receipt
+    state.usd_reserve = float(state.usd_reserve) + usd_receipt
+
+    flows.cmea_exports = np.asarray(cmea_export_delivered, dtype=np.float64).copy()
+    flows.convertible_exports = np.asarray(
+        convertible_export_delivered, dtype=np.float64
+    ).copy()
+    flows.cmea_export_receipt = cmea_receipt
+    flows.usd_export_receipt = usd_receipt
+    flows.official_fx_translation = (
+        float(official_fx_quote) if np.isfinite(official_fx_quote) else None
+    )
+    flows.export_receivable_events = applied
+    flows.export_receivable_channel_prices = (
+        tuple(float(value) for value in cmea_prices.tolist()),
+        tuple(float(value) for value in convertible_prices.tolist()),
+    )
+    def event_total(kinds: tuple[str, ...], currency: str) -> float:
+        return float(
+            sum(
+                event.amount
+                for event in applied
+                if event.kind in kinds and event.currency == currency
+            )
+        )
+
+    for currency, suffix in ((USD_CURRENCY, "usd"), (CMEA_CURRENCY, "cmea")):
+        setattr(
+            flows,
+            f"export_receivable_opened_{suffix}",
+            event_total(("delivery",), currency),
+        )
+        setattr(
+            flows,
+            f"export_receivable_received_{suffix}",
+            event_total(("receipt", "recovery"), currency),
+        )
+        setattr(
+            flows,
+            f"export_receivable_recovered_{suffix}",
+            event_total(("recovery",), currency),
+        )
+        setattr(
+            flows,
+            f"export_receivable_written_off_{suffix}",
+            event_total(("writeoff",), currency),
+        )
+        setattr(
+            flows,
+            f"export_receivable_loss_provision_{suffix}",
+            event_total(("loss",), currency),
+        )
+        setattr(
+            flows,
+            f"export_receivable_provision_released_{suffix}",
+            event_total(("recovery",), currency),
+        )
+        setattr(
+            flows,
+            f"export_receivable_balance_{suffix}",
+            float(sum(lot.gross for lot in book if lot.currency == currency)),
+        )
+        setattr(
+            flows,
+            f"export_receivable_overdue_{suffix}",
+            float(
+                sum(
+                    lot.gross
+                    for lot in book
+                    if lot.currency == currency and lot.due_tick < current_tick
+                )
+            ),
+        )
+
+    transaction_id = int(transaction_base)
+    for event in applied:
+        for kind, legs in _receivable_journal_legs(state, event):
+            finance.append_transaction(
+                flows,
+                transaction_id=transaction_id,
+                kind=kind,
+                legs=legs,
+                event_id=event.event_id,
+            )
+            transaction_id += 1

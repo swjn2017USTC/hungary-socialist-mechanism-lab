@@ -57,22 +57,34 @@ from hsm_lab.contract.material import (
     RoutePurpose,
 )
 from hsm_lab.engine.finance import (
+    CMEA_CURRENCY,
     DOMESTIC_CURRENCY,
+    USD_CURRENCY,
     AccountKind,
     bank_account_ids,
     household_account_ids,
     organization_account_ids,
     quarter_domestic_credit_rate,
     treasury_account_id,
+    treasury_receivable_account_id,
     treasury_term_account_id,
 )
 from hsm_lab.engine.state import (
     POOL_CODES,
+    MaterialForcing,
     MaterialPrices,
     MaterialState,
     MaterialStockSnapshot,
     MaterialTickFlows,
     build_material_prices,
+)
+from hsm_lab.engine.trade import (
+    apply_receivable_events,
+    channel_prices,
+    receivable_journal_rows,
+    resolve_export_contract,
+    validate_export_policy,
+    validate_receivable_book,
 )
 
 if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
@@ -80,6 +92,36 @@ if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
 
 ATOL = 1e-9
 RTOL = 1e-10
+
+_D2_FLOW_FIELDS: tuple[str, ...] = (
+    "export_receivable_opened_usd",
+    "export_receivable_opened_cmea",
+    "export_receivable_received_usd",
+    "export_receivable_received_cmea",
+    "export_receivable_recovered_usd",
+    "export_receivable_recovered_cmea",
+    "export_receivable_written_off_usd",
+    "export_receivable_written_off_cmea",
+    "export_receivable_loss_provision_usd",
+    "export_receivable_loss_provision_cmea",
+    "export_receivable_provision_released_usd",
+    "export_receivable_provision_released_cmea",
+    "export_receivable_balance_usd",
+    "export_receivable_balance_cmea",
+    "export_receivable_overdue_usd",
+    "export_receivable_overdue_cmea",
+)
+_D2_JOURNAL_KINDS: frozenset[str] = frozenset(
+    {
+        "export_receivable_delivery",
+        "export_receivable_receipt",
+        "export_receivable_loss",
+        "export_receivable_writeoff",
+        "export_receivable_recovery_restore",
+        "export_receivable_recovery_receipt",
+        "export_receivable_recovery_release",
+    }
+)
 
 _PER_UNIT_DEFAULT = 0.25  # plan default when parameters are unavailable
 
@@ -883,6 +925,7 @@ def _check_journal(
         flows.journal_amount,
         flows.journal_org,
         flows.journal_leg,
+        flows.journal_event,
     )
     lengths = {len(column) for column in columns}
     _require(
@@ -947,6 +990,8 @@ def check_material_invariants(
     network: MaterialNetwork,
     *,
     controls: Any = None,
+    forcing: MaterialForcing | None = None,
+    export_receivable_policy: Any = None,
 ) -> InvariantSummary:
     """Verify every material/financial ledger of one completed tick.
 
@@ -2240,6 +2285,454 @@ def check_material_invariants(
         np.asarray([treasury_interest_paid]),
         labels=["treasury_working_capital_interest_payment"],
     )
+
+    # --- H3F-D2 export receivables ------------------------------------------
+    # The closing book is reconstructed independently from the opening
+    # snapshot and the flow event log; no state delta is trusted on its own.
+    d2_account_ids = {
+        int(treasury_receivable_account_id(state, currency, account_kind))
+        for currency in (USD_CURRENCY, CMEA_CURRENCY)
+        for account_kind in (
+            AccountKind.EXPORT_RECEIVABLE,
+            AccountKind.BAD_DEBT_ALLOWANCE,
+            AccountKind.BAD_DEBT_EXPENSE,
+            AccountKind.EXPORT_SALES_INCOME,
+        )
+    }
+    touches_d2_account = bool(
+        np.any(np.isin(debit, list(d2_account_ids)))
+        or np.any(np.isin(credit, list(d2_account_ids)))
+    )
+    d2_active = bool(
+        opening.export_receivables
+        or state.export_receivables
+        or opening.export_receivable_event_ids
+        or state.export_receivable_event_ids
+        or flows.export_receivable_events
+        or any(float(getattr(flows, name)) != 0.0 for name in _D2_FLOW_FIELDS)
+        or any(kind_name in _D2_JOURNAL_KINDS for kind_name in flows.journal_kind)
+        or any(value is not None for value in flows.journal_event)
+        or touches_d2_account
+    )
+    if d2_active:
+        if export_receivable_policy is None:
+            raise AccountingError(
+                f"{quarter}: D2 activity requires the admitted export_receivable_policy"
+            )
+        try:
+            validate_export_policy(export_receivable_policy)
+            applied = tuple(flows.export_receivable_events)
+            first_caller = next(
+                (index for index, event in enumerate(applied) if event.kind != "delivery"),
+                len(applied),
+            )
+            if any(event.kind != "delivery" for event in applied[:first_caller]):
+                raise ValueError("delivery events must precede caller events")
+            if any(event.kind == "delivery" for event in applied[first_caller:]):
+                raise ValueError("delivery events must precede caller events")
+            if tuple(applied[first_caller:]) != tuple(export_receivable_policy.events):
+                raise ValueError(
+                    "applied caller events differ from the admitted policy events"
+                )
+            admitted_events = applied
+            validate_receivable_book(
+                tuple(opening.export_receivables),
+                tuple(opening.export_receivable_event_ids),
+                completed_ticks=int(flows.tick),
+                commodity_ids=tuple(network.commodity_ids),
+            )
+            recomputed_book, recomputed_ids = apply_receivable_events(
+                tuple(opening.export_receivables),
+                tuple(opening.export_receivable_event_ids),
+                admitted_events,
+                current_tick=int(flows.tick),
+            )
+            validate_receivable_book(
+                tuple(state.export_receivables),
+                tuple(state.export_receivable_event_ids),
+                completed_ticks=int(flows.tick) + 1,
+                commodity_ids=tuple(network.commodity_ids),
+            )
+        except ValueError as exc:
+            raise AccountingError(
+                f"{quarter}: export receivable continuity rejected: {exc}"
+            ) from exc
+        closing_book = {lot.receivable_id: lot for lot in state.export_receivables}
+        recomputed = {lot.receivable_id: lot for lot in recomputed_book}
+        if set(closing_book) != set(recomputed):
+            missing = sorted(set(recomputed) - set(closing_book))
+            extra = sorted(set(closing_book) - set(recomputed))
+            raise AccountingError(
+                f"{quarter}: export receivable lot set mismatch: "
+                f"missing={missing} extra={extra}"
+            )
+        if tuple(state.export_receivable_event_ids) != recomputed_ids:
+            raise AccountingError(
+                f"{quarter}: export receivable event log is not the opening log plus "
+                "this tick's applied events"
+            )
+        lot_ids = sorted(closing_book)
+        if lot_ids:
+            for field_name in (
+                "contract_id",
+                "currency",
+                "buyer_id",
+                "seller_id",
+                "commodity_id",
+                "delivery_tick",
+                "due_tick",
+            ):
+                for key in lot_ids:
+                    if getattr(closing_book[key], field_name) != getattr(
+                        recomputed[key], field_name
+                    ):
+                        raise AccountingError(
+                            f"{quarter}: receivable {key!r} identity field "
+                            f"{field_name} differs from replay"
+                        )
+            for field_name in (
+                "principal",
+                "gross",
+                "provision",
+                "written_off",
+                "received",
+                "recovered",
+                "writeoffs",
+                "provision_expense",
+                "provision_released",
+            ):
+                finance(
+                    f"export_receivable_{field_name}_continuity",
+                    np.asarray([getattr(closing_book[key], field_name) for key in lot_ids]),
+                    np.asarray([getattr(recomputed[key], field_name) for key in lot_ids]),
+                    labels=lot_ids,
+                )
+        for receivable_currency, suffix in (
+            (USD_CURRENCY, "usd"),
+            (CMEA_CURRENCY, "cmea"),
+        ):
+            finance(
+                f"export_receivable_balance_{suffix}_vs_book",
+                np.asarray([float(getattr(flows, f"export_receivable_balance_{suffix}"))]),
+                np.asarray(
+                    [
+                        float(
+                            sum(
+                                lot.gross
+                                for lot in closing_book.values()
+                                if lot.currency == receivable_currency
+                            )
+                        )
+                    ]
+                ),
+                labels=[f"export_receivable_balance_{suffix}"],
+            )
+            finance(
+                f"export_receivable_overdue_{suffix}_vs_book",
+                np.asarray([float(getattr(flows, f"export_receivable_overdue_{suffix}"))]),
+                np.asarray(
+                    [
+                        float(
+                            sum(
+                                lot.gross
+                                for lot in closing_book.values()
+                                if lot.currency == receivable_currency
+                                and lot.due_tick < int(flows.tick)
+                            )
+                        )
+                    ]
+                ),
+                labels=[f"export_receivable_overdue_{suffix}"],
+            )
+        event_kinds = ("receipt", "loss", "writeoff", "recovery", "delivery")
+        expected_flows: dict[str, float] = {}
+        for receivable_currency, suffix in (
+            (USD_CURRENCY, "usd"),
+            (CMEA_CURRENCY, "cmea"),
+        ):
+            expected_flows[f"export_receivable_opened_{suffix}"] = sum(
+                event.amount
+                for event in admitted_events
+                if event.kind == "delivery" and event.currency == receivable_currency
+            )
+            expected_flows[f"export_receivable_received_{suffix}"] = sum(
+                event.amount
+                for event in admitted_events
+                if event.kind in ("receipt", "recovery") and event.currency == receivable_currency
+            )
+            expected_flows[f"export_receivable_recovered_{suffix}"] = sum(
+                event.amount
+                for event in admitted_events
+                if event.kind == "recovery" and event.currency == receivable_currency
+            )
+            expected_flows[f"export_receivable_written_off_{suffix}"] = sum(
+                event.amount
+                for event in admitted_events
+                if event.kind == "writeoff" and event.currency == receivable_currency
+            )
+            expected_flows[f"export_receivable_loss_provision_{suffix}"] = sum(
+                event.amount
+                for event in admitted_events
+                if event.kind == "loss" and event.currency == receivable_currency
+            )
+            expected_flows[f"export_receivable_provision_released_{suffix}"] = sum(
+                event.amount
+                for event in admitted_events
+                if event.kind == "recovery" and event.currency == receivable_currency
+            )
+        for flow_name, expected in expected_flows.items():
+            finance(
+                f"{flow_name}_vs_events",
+                np.asarray([float(getattr(flows, flow_name))]),
+                np.asarray([float(expected)]),
+                labels=[flow_name],
+            )
+        # Delivery principals are frozen at the real delivered quantity times
+        # the channel price recomputed from the admitted forcing slice, not
+        # from the mutable flows object.  A coherent edit of every flow field
+        # therefore still fails against the scenario's price context.
+        if forcing is None:
+            raise AccountingError(
+                f"{quarter}: D2 delivery valuation requires the admitted forcing"
+            )
+        cmea_expected, usd_expected = channel_prices(
+            parameters,
+            network,
+            oil_price=float(forcing.oil_price[int(flows.tick)]),
+            cmea_contract_price=float(forcing.cmea_energy_price[int(flows.tick)]),
+        )
+        prices_pair = flows.export_receivable_channel_prices
+        if len(prices_pair) != 2:
+            raise AccountingError(
+                f"{quarter}: export receivable delivery events lack channel prices"
+            )
+        cmea_prices = np.asarray(prices_pair[0], dtype=np.float64)
+        usd_prices = np.asarray(prices_pair[1], dtype=np.float64)
+        commodity_axis = list(network.commodity_ids)
+        if (
+            cmea_prices.shape != (G,)
+            or usd_prices.shape != (G,)
+            or cmea_expected.shape != (G,)
+            or usd_expected.shape != (G,)
+        ):
+            raise AccountingError(
+                f"{quarter}: export receivable channel price axes disagree with G={G}"
+            )
+        finance(
+            "export_receivable_cmea_prices_vs_forcing",
+            cmea_prices,
+            cmea_expected,
+            labels=commodity_axis,
+        )
+        finance(
+            "export_receivable_usd_prices_vs_forcing",
+            usd_prices,
+            usd_expected,
+            labels=commodity_axis,
+        )
+        delivered_channels = {
+            CMEA_CURRENCY: np.asarray(flows.cmea_exports, dtype=np.float64),
+            USD_CURRENCY: np.asarray(flows.convertible_exports, dtype=np.float64),
+        }
+        delivery_keys: set[tuple[str, int]] = set()
+        for event in admitted_events:
+            if event.kind != "delivery":
+                continue
+            if event.commodity_id not in commodity_axis:
+                raise AccountingError(
+                    f"{quarter}: delivery event {event.event_id!r} names an unknown "
+                    f"commodity {event.commodity_id!r}"
+                )
+            g = commodity_axis.index(event.commodity_id)
+            prices = cmea_expected if event.currency == CMEA_CURRENCY else usd_expected
+            expected_principal = float(delivered_channels[event.currency][g] * prices[g])
+            finance(
+                "export_receivable_delivery_principal_vs_delivery",
+                np.asarray([float(event.amount)]),
+                np.asarray([expected_principal]),
+                labels=[event.event_id],
+            )
+            contract = resolve_export_contract(
+                tuple(export_receivable_policy.contracts),
+                event.currency,
+                event.commodity_id,
+            )
+            if (
+                event.contract_id != contract.contract_id
+                or event.buyer_id != contract.buyer_id
+                or event.seller_id != contract.seller_id
+            ):
+                raise AccountingError(
+                    f"{quarter}: delivery event {event.event_id!r} disagrees with "
+                    "the admitted contract identity"
+                )
+            if event.due_tick != event.delivery_tick + int(
+                export_receivable_policy.term_quarters
+            ):
+                raise AccountingError(
+                    f"{quarter}: delivery event {event.event_id!r} due tick disagrees "
+                    "with the admitted term"
+                )
+            key = (event.currency, g)
+            if key in delivery_keys:
+                raise AccountingError(
+                    f"{quarter}: duplicate delivery event for {event.currency} commodity {g}"
+                )
+            delivery_keys.add(key)
+        expected_delivery_keys = {
+            (currency, int(g))
+            for currency, delivered in delivered_channels.items()
+            for g in np.nonzero(delivered > 0.0)[0]
+        }
+        if delivery_keys != expected_delivery_keys:
+            raise AccountingError(
+                f"{quarter}: delivery event set {sorted(delivery_keys)} disagrees "
+                f"with real deliveries {sorted(expected_delivery_keys)}"
+            )
+        cash_by_currency = {USD_CURRENCY: 0.0, CMEA_CURRENCY: 0.0}
+        for event in admitted_events:
+            if event.kind in ("receipt", "recovery"):
+                cash_by_currency[event.currency] += float(event.amount)
+        finance(
+            "export_receivable_usd_cash_vs_events",
+            np.asarray([float(flows.usd_export_receipt)]),
+            np.asarray([cash_by_currency[USD_CURRENCY]]),
+            labels=["usd_export_receipt"],
+        )
+        finance(
+            "export_receivable_cmea_cash_vs_events",
+            np.asarray([float(flows.cmea_export_receipt)]),
+            np.asarray([cash_by_currency[CMEA_CURRENCY]]),
+            labels=["cmea_export_receipt"],
+        )
+
+        # Exact event-to-journal correspondence.  Every expected row (count,
+        # kind, accounts, currency, amount and event id) must appear exactly
+        # once; split, merged, duplicated or re-orged rows are rejected.
+        expected_rows: list[tuple[str, int, int, str, float, str]] = []
+        for event in admitted_events:
+            expected_rows.extend(receivable_journal_rows(state, event))
+        def _d2_journal_int(value: object, label: str, index: int) -> int:
+            if isinstance(value, bool) or not isinstance(value, (int, np.integer)):
+                raise AccountingError(
+                    f"{quarter}: D2 journal row {index} {label} must be a strict "
+                    f"integer; got {value!r}"
+                )
+            return int(value)
+
+        def _touches_d2_account(value: object) -> bool:
+            if isinstance(value, bool):
+                return False
+            if isinstance(value, (int, np.integer)):
+                return int(value) in d2_account_ids
+            if isinstance(value, (float, np.floating)):
+                if not np.isfinite(float(value)):
+                    return False
+                return int(value) in d2_account_ids
+            return False
+
+        actual_rows: list[tuple[str, int, int, str, float, str]] = []
+        for index, journal_kind in enumerate(flows.journal_kind):
+            raw_debit = flows.journal_debit[index]
+            raw_credit = flows.journal_credit[index]
+            event_id = flows.journal_event[index]
+            touches_d2 = _touches_d2_account(raw_debit) or _touches_d2_account(
+                raw_credit
+            )
+            is_d2 = journal_kind in _D2_JOURNAL_KINDS
+            if not (touches_d2 or is_d2 or event_id is not None):
+                continue
+            if (
+                not is_d2
+                or event_id is None
+                or not isinstance(event_id, str)
+                or not touches_d2
+            ):
+                raise AccountingError(
+                    f"{quarter}: journal row {index} ({journal_kind!r}) mixes D2 "
+                    "state, accounts or event identity with a non-D2 transaction"
+                )
+            raw_debit_i = _d2_journal_int(raw_debit, "debit", index)
+            raw_credit_i = _d2_journal_int(raw_credit, "credit", index)
+            raw_tick = _d2_journal_int(flows.journal_tick[index], "tick", index)
+            if raw_tick != int(flows.tick):
+                raise AccountingError(
+                    f"{quarter}: D2 journal row {index} tick {raw_tick} != "
+                    f"flow tick {flows.tick}"
+                )
+            raw_leg = _d2_journal_int(flows.journal_leg[index], "leg", index)
+            if raw_leg != 0:
+                raise AccountingError(
+                    f"{quarter}: D2 journal row {index} starts at leg {raw_leg!r}; "
+                    "every D2 event is its own one-leg transaction"
+                )
+            if index + 1 < len(flows.journal_leg):
+                next_leg = flows.journal_leg[index + 1]
+                if (
+                    isinstance(next_leg, bool)
+                    or not isinstance(next_leg, (int, np.integer))
+                    or int(next_leg) != 0
+                ):
+                    raise AccountingError(
+                        f"{quarter}: D2 journal row {index} does not end its "
+                        f"transaction; next leg is {next_leg!r}, expected a new "
+                        "leg-0 transaction"
+                    )
+            raw_currency = flows.journal_currency[index]
+            if not isinstance(raw_currency, str):
+                raise AccountingError(
+                    f"{quarter}: D2 journal row {index} currency must be a string"
+                )
+            raw_amount = flows.journal_amount[index]
+            if (
+                isinstance(raw_amount, bool)
+                or not isinstance(raw_amount, (int, float, np.integer, np.floating))
+                or not np.isfinite(float(raw_amount))
+            ):
+                raise AccountingError(
+                    f"{quarter}: D2 journal row {index} amount must be a finite number"
+                )
+            if flows.journal_org[index] is not None:
+                raise AccountingError(
+                    f"{quarter}: D2 journal row {index} carries journal_org="
+                    f"{flows.journal_org[index]!r}; D2 rows are contract-identified "
+                    "by journal_event"
+                )
+            actual_rows.append(
+                (
+                    str(journal_kind),
+                    raw_debit_i,
+                    raw_credit_i,
+                    raw_currency,
+                    float(raw_amount),
+                    event_id,
+                )
+            )
+
+        def _row_key(
+            row: tuple[str, int, int, str, float, str],
+        ) -> tuple[str, int, int, str, float, str]:
+            return (
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                round(row[4], 12),
+                row[5],
+            )
+
+        expected_keys = sorted(_row_key(row) for row in expected_rows)
+        actual_keys = sorted(_row_key(row) for row in actual_rows)
+        if expected_keys != actual_keys:
+            raise AccountingError(
+                f"{quarter}: D2 journal rows do not match applied events exactly: "
+                f"expected={expected_keys} actual={actual_keys}"
+            )
+        for event in admitted_events:
+            if event.kind not in event_kinds:  # pragma: no cover - apply already guards
+                raise AccountingError(
+                    f"{quarter}: unknown export receivable event kind {event.kind!r}"
+                )
 
     # --- 8. regional household-channel stocks ---------------------------------
     dwelling_delta = np.asarray(state.dwelling_stock, dtype=np.float64) - np.asarray(

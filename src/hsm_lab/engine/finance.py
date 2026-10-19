@@ -73,6 +73,10 @@ class AccountKind:
     FISCAL_EXPENSE = "fiscal_expense"
     TRADE_SETTLEMENT = "trade_settlement"
     PLOT_CLEARING = "plot_clearing"
+    EXPORT_RECEIVABLE = "export_receivable"
+    BAD_DEBT_ALLOWANCE = "bad_debt_allowance"
+    BAD_DEBT_EXPENSE = "bad_debt_expense"
+    EXPORT_SALES_INCOME = "export_sales_income"
 
 
 class JournalError(RuntimeError):
@@ -118,6 +122,16 @@ TREASURY_TERM_ACCOUNT_KINDS: tuple[str, ...] = (
     AccountKind.INTEREST_PAYABLE,
     AccountKind.INTEREST_EXPENSE,
 )
+#: H3F-D2 Treasury export-receivable accounts, one block per currency.  The
+#: block starts after the D1 term block, so every legacy/D1 account id and
+#: journal remains bit-identical when D2 is switched off.
+TREASURY_RECEIVABLE_ACCOUNT_KINDS: tuple[str, ...] = (
+    AccountKind.EXPORT_RECEIVABLE,
+    AccountKind.BAD_DEBT_ALLOWANCE,
+    AccountKind.BAD_DEBT_EXPENSE,
+    AccountKind.EXPORT_SALES_INCOME,
+)
+_RECEIVABLE_CURRENCIES: tuple[str, ...] = (USD_CURRENCY, CMEA_CURRENCY)
 
 
 def _axis_sizes(state: MaterialState) -> tuple[int, int, int, int]:
@@ -225,6 +239,35 @@ def treasury_term_account_id(state: MaterialState, account_kind: str) -> int:
     return base_term + position
 
 
+def treasury_receivable_account_id(
+    state: MaterialState, currency: str, account_kind: str
+) -> int:
+    """Account id of one H3F-D2 Treasury receivable account in one currency.
+
+    The block starts after the D1 term block, so no legacy or D1 id shifts.
+    Each currency has its own four account ids; journals never mix currencies.
+    """
+    if account_kind not in TREASURY_RECEIVABLE_ACCOUNT_KINDS:
+        raise JournalError(f"unknown receivable account kind: {account_kind!r}")
+    if currency not in _RECEIVABLE_CURRENCIES:
+        raise JournalError(f"unknown receivable currency: {currency!r}")
+    position = TREASURY_RECEIVABLE_ACCOUNT_KINDS.index(account_kind)
+    currency_offset = _RECEIVABLE_CURRENCIES.index(currency) * len(
+        TREASURY_RECEIVABLE_ACCOUNT_KINDS
+    )
+    n_households, n_orgs, n_banks, n_regions = _axis_sizes(state)
+    base_term = (
+        len(HOUSEHOLD_ACCOUNT_KINDS) * n_households
+        + len(ORGANIZATION_ACCOUNT_KINDS) * n_orgs
+        + len(BANK_ACCOUNT_KINDS) * n_banks
+        + len(TREASURY_ACCOUNT_KINDS)
+        + 2  # foreign_usd + foreign_cmea
+        + n_regions
+    )
+    base_receivable = base_term + len(TREASURY_TERM_ACCOUNT_KINDS)
+    return base_receivable + currency_offset + position
+
+
 def plot_clearing_account_ids(state: MaterialState) -> np.ndarray:
     """Account ids (R,) of the per-region ephemeral plot clearing accounts."""
     _, n_orgs, n_banks, _ = _axis_sizes(state)
@@ -274,6 +317,11 @@ def build_account_directory(state: MaterialState) -> dict[tuple[str, int, str, s
         directory[("treasury", 0, DOMESTIC_CURRENCY, kind)] = treasury_term_account_id(
             state, kind
         )
+    for currency in _RECEIVABLE_CURRENCIES:
+        for kind in TREASURY_RECEIVABLE_ACCOUNT_KINDS:
+            directory[("treasury", 0, currency, kind)] = treasury_receivable_account_id(
+                state, currency, kind
+            )
     directory[("foreign_usd", 0, USD_CURRENCY, AccountKind.TRADE_SETTLEMENT)] = foreign_account_id(
         state, USD_CURRENCY
     )
@@ -302,6 +350,7 @@ def append_transaction(
     kind: str,
     legs: list[tuple[int, int, str, float]],
     organization_id: int | None = None,
+    event_id: str | None = None,
 ) -> None:
     """Append one transaction's paired legs after validating invariants.
 
@@ -333,6 +382,7 @@ def append_transaction(
         amount=amounts,
         organization_ids=organization_id,
         leg_offset=0,
+        event_id=event_id,
     )
 
 
@@ -346,6 +396,7 @@ def _append_legs(
     amount: np.ndarray,
     organization_ids: int | None | np.ndarray | list[Any] = None,
     leg_offset: int = 0,
+    event_id: str | None = None,
 ) -> int:
     """Bulk-append prevalidated legs of one transaction (vectorized)."""
     amount = np.asarray(amount, dtype=np.float64)
@@ -373,6 +424,7 @@ def _append_legs(
     flows.journal_amount.extend(amount.tolist())
     flows.journal_org.extend(org_column)
     flows.journal_leg.extend(range(leg_offset, leg_offset + count))
+    flows.journal_event.extend([event_id] * count)
     return count
 
 

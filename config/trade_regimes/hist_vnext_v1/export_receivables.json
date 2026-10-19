@@ -1,0 +1,22 @@
+{
+  "schema_version": "hist-export-receivables-regime-v1",
+  "regime_id": "export_receivables",
+  "source_kind": "synthetic",
+  "term_quarters": 1,
+  "contracts": [
+    {
+      "contract_id": "d2-cmea-energy",
+      "currency": "cmea_settlement_unit",
+      "buyer_id": 9102,
+      "seller_id": 0,
+      "commodity_id": "energy"
+    },
+    {
+      "contract_id": "d2-usd-energy",
+      "currency": "USD",
+      "buyer_id": 9101,
+      "seller_id": 0,
+      "commodity_id": "energy"
+    }
+  ]
+}

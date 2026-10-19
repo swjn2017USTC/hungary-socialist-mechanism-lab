@@ -47,12 +47,13 @@ and per-cell non-negativity before returning.
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import struct
 import time
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, fields
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
@@ -120,6 +121,7 @@ from hsm_lab.engine.state import (
     N_D,
     N_E,
     N_Q,
+    ExportReceivablePolicy,
     MaterialForcing,
     MaterialHistory,
     MaterialState,
@@ -130,10 +132,16 @@ from hsm_lab.engine.state import (
     initialize_material,
 )
 from hsm_lab.engine.trade import (
+    apply_receivable_events,
     build_export_demands,
+    channel_prices,
     realize_external_debt_service,
     realize_imports,
+    resolve_export_contract,
     settle_exports_and_closing,
+    settle_exports_on_receivables,
+    validate_export_policy,
+    validate_receivable_book,
 )
 from hsm_lab.provenance.manifest import (
     RunManifest,
@@ -667,7 +675,71 @@ def _frozen_bank_capacity(
     )
 
 
-def tick_material(
+def _validate_export_contract_coverage(
+    policy: ExportReceivablePolicy,
+    parameters: MaterialParameters,
+    network: MaterialNetwork,
+    forcing: MaterialForcing,
+    tick: int,
+) -> None:
+    """Require a declared contract and admissible price for every demand.
+
+    This runs before any state mutation; actual deliveries may be smaller, but
+    a missing channel contract or a non-positive admitted price can never be
+    discovered only at settlement.
+    """
+    g_count = len(network.commodity_ids)
+    desired, _ordered = build_export_demands(
+        parameters,
+        network,
+        treasury_payable=0.0,
+        admin_price=np.zeros(g_count, dtype=np.float64),
+        freight_per_unit=np.zeros(g_count, dtype=np.float64),
+    )
+    cmea_prices, usd_prices = channel_prices(
+        parameters,
+        network,
+        oil_price=float(forcing.oil_price[tick]),
+        cmea_contract_price=float(forcing.cmea_energy_price[tick]),
+    )
+    for currency, row, prices in (
+        (finance.CMEA_CURRENCY, desired[0], cmea_prices),
+        (finance.USD_CURRENCY, desired[1], usd_prices),
+    ):
+        for g in np.nonzero(np.asarray(row, dtype=np.float64) > 0.0)[0]:
+            resolve_export_contract(
+                policy.contracts, currency, str(network.commodity_ids[int(g)])
+            )
+            price = float(prices[int(g)])
+            if not np.isfinite(price) or price <= 0.0:
+                raise ValueError(
+                    f"export receivable {currency} price for "
+                    f"{network.commodity_ids[int(g)]!r} must be finite and positive; "
+                    f"got {price!r}"
+                )
+
+
+def _validate_export_forcing(forcing: MaterialForcing, tick: int) -> None:
+    """Require a strictly consecutive quarter timeline for an opt-in D2 tick."""
+    quarters = list(forcing.quarters)
+    if not (0 <= tick < len(quarters)):
+        raise ValueError(f"tick {tick} lies outside the forcing horizon")
+    try:
+        first = Quarter.parse(quarters[0])
+    except Exception as exc:  # noqa: BLE001 - any malformed quarter is a gate error
+        raise ValueError(f"invalid forcing quarter {quarters[0]!r}: {exc}") from exc
+    previous = first
+    for index in range(1, len(quarters)):
+        if str(previous.advance(1)) != quarters[index]:
+            raise ValueError(
+                "export receivable forcing quarters must be strictly consecutive; "
+                f"index {index} is {quarters[index]!r}, expected "
+                f"{previous.advance(1)!s}"
+            )
+        previous = Quarter.parse(quarters[index])
+
+
+def _tick_material_impl(
     state: MaterialState,
     forcing: MaterialForcing,
     parameters: MaterialParameters,
@@ -683,6 +755,7 @@ def tick_material(
     micro_stage_trace: dict[str, Any] | None = None,
     micro_stage_audit: dict[str, Any] | None = None,
     treasury_housing_payable: float | None = None,
+    export_receivable_policy: ExportReceivablePolicy | None = None,
 ) -> MaterialTickFlows:
     """Advance the material economy by one admitted quarter (plan section 3).
 
@@ -728,6 +801,12 @@ def tick_material(
             phase_times[name] = phase_times.get(name, 0.0) + (now - mark)
             mark = now
 
+    if export_receivable_policy is not None:
+        raw_tick = state.completed_ticks
+        if isinstance(raw_tick, bool) or not isinstance(raw_tick, (int, np.integer)):
+            raise ValueError(
+                "export receivable ticks require an integer state.completed_ticks"
+            )
     tick = int(state.completed_ticks)
     quarters = list(forcing.quarters)
     _require(0 <= tick < len(quarters), f"tick {tick} lies outside the forcing horizon")
@@ -759,6 +838,35 @@ def tick_material(
             )
     else:
         housing_payable = None
+
+    # H3F-D2 opt-in preflight: either the whole tick runs the legacy cash
+    # settlement or every open receivable/event is explicitly carried forward.
+    # A state with open receivables may never silently fall back to cash.
+    if export_receivable_policy is not None:
+        validate_export_policy(export_receivable_policy)
+        _validate_export_forcing(forcing, tick)
+        _validate_export_contract_coverage(
+            export_receivable_policy, parameters, network, forcing, tick
+        )
+        validate_receivable_book(
+            tuple(state.export_receivables),
+            tuple(state.export_receivable_event_ids),
+            completed_ticks=tick,
+            commodity_ids=tuple(network.commodity_ids),
+        )
+        # Validate the caller's events against the opening book/log before any
+        # mutation; the settlement step repeats this on the real book.
+        apply_receivable_events(
+            tuple(state.export_receivables),
+            tuple(state.export_receivable_event_ids),
+            tuple(export_receivable_policy.events),
+            current_tick=tick,
+        )
+    elif state.export_receivables:
+        raise ValueError(
+            "open export receivables require an explicit export_receivable_policy; "
+            "refusing to fall back to the legacy cash settlement"
+        )
 
     # H3B opt-in preflight: validate before any state mutation or flow append.
     caps: np.ndarray | None = None
@@ -3979,18 +4087,33 @@ def tick_material(
             export_delivered_cmea[g] = flows.delivered[int(export_demand_cell[0, g])]
         if export_demand_cell[1, g] >= 0:
             export_delivered_convertible[g] = flows.delivered[int(export_demand_cell[1, g])]
-    settle_exports_and_closing(
-        state,
-        flows,
-        parameters,
-        network,
-        cmea_export_delivered=export_delivered_cmea,
-        convertible_export_delivered=export_delivered_convertible,
-        oil_price=oil_price,
-        cmea_contract_price=cmea_quote,
-        official_fx_quote=fx_quote,
-        transaction_base=200,
-    )
+    if export_receivable_policy is None:
+        settle_exports_and_closing(
+            state,
+            flows,
+            parameters,
+            network,
+            cmea_export_delivered=export_delivered_cmea,
+            convertible_export_delivered=export_delivered_convertible,
+            oil_price=oil_price,
+            cmea_contract_price=cmea_quote,
+            official_fx_quote=fx_quote,
+            transaction_base=200,
+        )
+    else:
+        settle_exports_on_receivables(
+            state,
+            flows,
+            parameters,
+            network,
+            cmea_export_delivered=export_delivered_cmea,
+            convertible_export_delivered=export_delivered_convertible,
+            oil_price=oil_price,
+            cmea_contract_price=cmea_quote,
+            official_fx_quote=fx_quote,
+            policy=export_receivable_policy,
+            transaction_base=200,
+        )
     flows.household_cash_close = np.asarray(state.household_cash, dtype=np.float64).copy()
     _phase("finance")
 
@@ -4169,6 +4292,76 @@ def tick_material(
     return flows
 
 
+def tick_material(
+    state: MaterialState,
+    forcing: MaterialForcing,
+    parameters: MaterialParameters,
+    network: MaterialNetwork,
+    *,
+    phase_times: dict[str, float] | None = None,
+    controls: Any = None,
+    credit_approval_caps: np.ndarray | None = None,
+    procurement_trace: dict[str, np.ndarray] | None = None,
+    routing_allocator: Callable[[Mapping[str, Any]], np.ndarray] | None = None,
+    routing_trace: dict[str, Any] | None = None,
+    micro_stage_count: Literal[2, 4] | None = None,
+    micro_stage_trace: dict[str, Any] | None = None,
+    micro_stage_audit: dict[str, Any] | None = None,
+    treasury_housing_payable: float | None = None,
+    export_receivable_policy: ExportReceivablePolicy | None = None,
+) -> MaterialTickFlows:
+    """Public kernel entry point.
+
+    Legacy/D1 callers (``export_receivable_policy is None``) run the original
+    implementation unchanged.  An opt-in D2 tick is transactional at the
+    public boundary: any failure after mutation restores every
+    ``MaterialState`` field before re-raising, so direct callers never observe
+    a partially-mutated quarter.  The adapter uses the private implementation
+    so it can retain the failed pre-rollback state as evidence.
+    """
+    if export_receivable_policy is None:
+        return _tick_material_impl(
+            state,
+            forcing,
+            parameters,
+            network,
+            phase_times=phase_times,
+            controls=controls,
+            credit_approval_caps=credit_approval_caps,
+            procurement_trace=procurement_trace,
+            routing_allocator=routing_allocator,
+            routing_trace=routing_trace,
+            micro_stage_count=micro_stage_count,
+            micro_stage_trace=micro_stage_trace,
+            micro_stage_audit=micro_stage_audit,
+            treasury_housing_payable=treasury_housing_payable,
+            export_receivable_policy=None,
+        )
+    snapshot = copy.deepcopy(state)
+    try:
+        return _tick_material_impl(
+            state,
+            forcing,
+            parameters,
+            network,
+            phase_times=phase_times,
+            controls=controls,
+            credit_approval_caps=credit_approval_caps,
+            procurement_trace=procurement_trace,
+            routing_allocator=routing_allocator,
+            routing_trace=routing_trace,
+            micro_stage_count=micro_stage_count,
+            micro_stage_trace=micro_stage_trace,
+            micro_stage_audit=micro_stage_audit,
+            treasury_housing_payable=treasury_housing_payable,
+            export_receivable_policy=export_receivable_policy,
+        )
+    except BaseException:
+        for field_name in state.__dataclass_fields__:
+            setattr(state, field_name, copy.deepcopy(getattr(snapshot, field_name)))
+        raise
+
+
 def _new_flows(
     tick: int,
     quarter: str,
@@ -4334,6 +4527,11 @@ def _state_scalar_header(state: MaterialState) -> dict[str, Any]:
         header["treasury_interest_arrears"] = float(state.treasury_interest_arrears)
         header["treasury_loan_maturity_tick"] = float(state.treasury_loan_maturity_tick)
         header["treasury_loan_rate"] = float(state.treasury_loan_rate)
+    # H3F-D2: only a non-empty book/event log enters the replay identity, so
+    # every legacy and D1 digest remains byte-identical.
+    if state.export_receivables or state.export_receivable_event_ids:
+        header["export_receivables"] = [asdict(lot) for lot in state.export_receivables]
+        header["export_receivable_event_ids"] = list(state.export_receivable_event_ids)
     return header
 
 
@@ -4363,6 +4561,34 @@ def _flow_scalar_header(flows: MaterialTickFlows) -> dict[str, Any]:
     }
     if any(value != 0.0 for value in d1_terms.values()):
         header.update(d1_terms)
+    if flows.export_receivable_events:
+        header["export_receivable_events"] = [
+            asdict(event) for event in flows.export_receivable_events
+        ]
+        header["export_receivable_channel_prices"] = [
+            list(prices) for prices in flows.export_receivable_channel_prices
+        ]
+        header["export_receivable_flows"] = {
+            name: float(getattr(flows, name))
+            for name in (
+                "export_receivable_opened_usd",
+                "export_receivable_opened_cmea",
+                "export_receivable_received_usd",
+                "export_receivable_received_cmea",
+                "export_receivable_recovered_usd",
+                "export_receivable_recovered_cmea",
+                "export_receivable_written_off_usd",
+                "export_receivable_written_off_cmea",
+                "export_receivable_loss_provision_usd",
+                "export_receivable_loss_provision_cmea",
+                "export_receivable_provision_released_usd",
+                "export_receivable_provision_released_cmea",
+                "export_receivable_balance_usd",
+                "export_receivable_balance_cmea",
+                "export_receivable_overdue_usd",
+                "export_receivable_overdue_cmea",
+            )
+        }
     return header
 
 
@@ -4404,6 +4630,8 @@ def canonical_material_bytes(state: MaterialState, flows: MaterialTickFlows | No
             "journal_org": list(flows.journal_org),
             "journal_leg": list(flows.journal_leg),
         }
+        if any(value is not None for value in flows.journal_event):
+            journal["journal_event"] = list(flows.journal_event)
         journal_bytes = canonical_json(journal)
         chunks.append(struct.pack("<Q", len(journal_bytes)) + journal_bytes)
     return b"".join(chunks)

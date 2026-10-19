@@ -40,9 +40,11 @@ from hsm_lab.engine.state import (
     N_E,
     N_H,
     N_Q,
+    ExportReceivable,
     MaterialHistory,
     MaterialState,
 )
+from hsm_lab.engine.trade import validate_receivable_book
 from hsm_lab.storage.material_output import (
     AGGREGATE_COLUMNS,
     BUDGET_COLUMNS,
@@ -69,11 +71,12 @@ from hsm_lab.storage.political_output import (
     POLITICAL_TABLES,
 )
 
-# v5 adds the H3F-D1 Treasury term-loan scalars to the payload spec.  The
-# material state version string stays v4 because replay digests over the
-# array field set must remain byte-identical for C0/C1; old v4 checkpoints
-# are refused explicitly by this version gate rather than silently misread.
-CHECKPOINT_VERSION = "material-checkpoint-v5"
+# v6 adds the H3F-D2 export-receivable book/event log (a JSON sidecar in the
+# same hashed payload).  v5 added the H3F-D1 Treasury term-loan scalars.  The
+# material state version string stays v4 because replay digests over the array
+# field set must remain byte-identical for C0/C1; old checkpoints are refused
+# explicitly by this version gate rather than silently misread.
+CHECKPOINT_VERSION = "material-checkpoint-v6"
 STATE_VERSION = MATERIAL_STATE_VERSION  # "material-state-v4"
 ENGINE_VERSION = "material-engine-v4"
 
@@ -466,6 +469,120 @@ def checkpoint_dir(run_dir: Path, completed_ticks: int) -> Path:
     return run_dir / "checkpoints" / f"tick-{completed_ticks:04d}"
 
 
+RECEIVABLE_PAYLOAD = "receivables.json"
+
+
+def _receivable_payload(state: MaterialState) -> dict[str, object]:
+    import dataclasses
+
+    return {
+        "receivables": [
+            dataclasses.asdict(lot) for lot in state.export_receivables
+        ],
+        "event_ids": list(state.export_receivable_event_ids),
+    }
+
+
+def _parse_receivable_payload(
+    directory: Path,
+) -> tuple[tuple[ExportReceivable, ...], tuple[str, ...]]:
+    path = directory / RECEIVABLE_PAYLOAD
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ResearchGateError(f"unreadable checkpoint receivable payload: {exc}") from exc
+    if not isinstance(payload, dict) or set(payload) != {"receivables", "event_ids"}:
+        raise ResearchGateError(
+            "checkpoint receivable payload must carry exactly receivables/event_ids"
+        )
+    raw_lots = payload["receivables"]
+    raw_ids = payload["event_ids"]
+    if not isinstance(raw_lots, list) or not isinstance(raw_ids, list):
+        raise ResearchGateError("checkpoint receivable payload has non-list entries")
+    expected = {
+        "receivable_id",
+        "contract_id",
+        "currency",
+        "buyer_id",
+        "seller_id",
+        "commodity_id",
+        "delivery_tick",
+        "due_tick",
+        "principal",
+        "gross",
+        "provision",
+        "written_off",
+        "received",
+        "recovered",
+        "writeoffs",
+        "provision_expense",
+        "provision_released",
+    }
+    def _text(entry: dict[str, object], name: str, index: int) -> str:
+        value = entry[name]
+        if not isinstance(value, str) or not value:
+            raise ResearchGateError(
+                f"checkpoint receivable {index} {name} must be a non-empty string"
+            )
+        return value
+
+    def _integer(entry: dict[str, object], name: str, index: int) -> int:
+        value = entry[name]
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ResearchGateError(
+                f"checkpoint receivable {index} {name} must be a strict integer"
+            )
+        return int(value)
+
+    def _amount(entry: dict[str, object], name: str, index: int) -> float:
+        value = entry[name]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ResearchGateError(
+                f"checkpoint receivable {index} {name} must be a strict number"
+            )
+        number = float(value)
+        if not np.isfinite(number):
+            raise ResearchGateError(
+                f"checkpoint receivable {index} {name} must be finite"
+            )
+        return number
+
+    lots: list[ExportReceivable] = []
+    for index, entry in enumerate(raw_lots):
+        if not isinstance(entry, dict) or set(entry) != expected:
+            raise ResearchGateError(
+                f"checkpoint receivable {index} must carry exactly the lot fields"
+            )
+        lot = ExportReceivable(
+            receivable_id=_text(entry, "receivable_id", index),
+            contract_id=_text(entry, "contract_id", index),
+            currency=_text(entry, "currency", index),
+            buyer_id=_integer(entry, "buyer_id", index),
+            seller_id=_integer(entry, "seller_id", index),
+            commodity_id=_text(entry, "commodity_id", index),
+            delivery_tick=_integer(entry, "delivery_tick", index),
+            due_tick=_integer(entry, "due_tick", index),
+            principal=_amount(entry, "principal", index),
+            gross=_amount(entry, "gross", index),
+            provision=_amount(entry, "provision", index),
+            written_off=_amount(entry, "written_off", index),
+            received=_amount(entry, "received", index),
+            recovered=_amount(entry, "recovered", index),
+            writeoffs=_amount(entry, "writeoffs", index),
+            provision_expense=_amount(entry, "provision_expense", index),
+            provision_released=_amount(entry, "provision_released", index),
+        )
+        lots.append(lot)
+    event_ids: list[str] = []
+    for index, value in enumerate(raw_ids):
+        if not isinstance(value, str) or not value:
+            raise ResearchGateError(
+                f"checkpoint receivable event id {index} must be a non-empty string"
+            )
+        event_ids.append(value)
+    return tuple(lots), tuple(event_ids)
+
+
 def save_material_checkpoint(
     directory: Path,
     state: MaterialState,
@@ -510,6 +627,16 @@ def save_material_checkpoint(
             **network_arrays(network),
         }
         np.savez(staging / "network.npz", **network_payload)
+        (staging / RECEIVABLE_PAYLOAD).write_text(
+            json.dumps(
+                _receivable_payload(state),
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
 
         from hsm_lab.storage.material_output import history_frames
 
@@ -600,7 +727,12 @@ def _gate_versions(metadata: dict[str, Any]) -> None:
 
 
 def _state_from_payload(
-    payload: Any, completed: int, *, catalog: Any = None
+    payload: Any,
+    completed: int,
+    *,
+    catalog: Any = None,
+    receivables: tuple[ExportReceivable, ...] = (),
+    receivable_event_ids: tuple[str, ...] = (),
 ) -> tuple[MaterialState, dict[str, np.ndarray]]:
     raw_completed = np.asarray(payload["completed_ticks"])
     if raw_completed.dtype != np.dtype("<i8") or raw_completed.shape != ():
@@ -663,6 +795,8 @@ def _state_from_payload(
     state = MaterialState(
         schema_version=STATE_VERSION,
         completed_ticks=completed,
+        export_receivables=receivables,
+        export_receivable_event_ids=receivable_event_ids,
         **cast("dict[str, Any]", arrays),
         **cast("dict[str, Any]", scalars),
     )
@@ -715,6 +849,15 @@ def _validate_state(
         or state.treasury_loan_maturity_tick < -1.0 - ATOL
     ):
         raise ResearchGateError("checkpoint treasury/usd/loan accounts are negative")
+    try:
+        validate_receivable_book(
+            tuple(state.export_receivables),
+            tuple(state.export_receivable_event_ids),
+            completed_ticks=int(state.completed_ticks),
+            commodity_ids=tuple(network.commodity_ids),
+        )
+    except ValueError as exc:
+        raise ResearchGateError(f"checkpoint receivable semantics rejected: {exc}") from exc
     index_checks = (
         ("household_region", arrays["household_region"], regions),
         ("organization_region", arrays["organization_region"], regions),
@@ -1134,6 +1277,7 @@ def load_material_checkpoint(
     metadata = _load_metadata(directory)
     _gate_versions(metadata)
     _verify_payload_hashes(directory, metadata)
+    receivables, receivable_event_ids = _parse_receivable_payload(directory)
 
     snapshot = parse_parent_scenario(metadata)
     for field in (
@@ -1220,7 +1364,13 @@ def load_material_checkpoint(
     completed = int(np.asarray(payload["completed_ticks"]).item())
     if completed != boundary_ticks:
         raise ResearchGateError("checkpoint completed_ticks inconsistent")
-    state, arrays = _state_from_payload(payload, completed, catalog=network.household_catalog)
+    state, arrays = _state_from_payload(
+        payload,
+        completed,
+        catalog=network.household_catalog,
+        receivables=receivables,
+        receivable_event_ids=receivable_event_ids,
+    )
     _validate_state(state, arrays, snapshot, network)
 
     # --- parameter/initial-recipe identity (kernel module owns the vectors)
