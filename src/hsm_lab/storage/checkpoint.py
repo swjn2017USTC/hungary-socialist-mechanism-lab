@@ -40,11 +40,18 @@ from hsm_lab.engine.state import (
     N_E,
     N_H,
     N_Q,
+    CmeaClearingAccount,
+    CmeaClearingContract,
+    CmeaClearingCounterparty,
+    CmeaClearingEntry,
+    CmeaClearingRegimeState,
+    CmeaClearingSettlement,
+    CmeaClearingTransfer,
     ExportReceivable,
     MaterialHistory,
     MaterialState,
 )
-from hsm_lab.engine.trade import validate_receivable_book
+from hsm_lab.engine.trade import validate_clearing_book, validate_receivable_book
 from hsm_lab.storage.material_output import (
     AGGREGATE_COLUMNS,
     BUDGET_COLUMNS,
@@ -470,6 +477,7 @@ def checkpoint_dir(run_dir: Path, completed_ticks: int) -> Path:
 
 
 RECEIVABLE_PAYLOAD = "receivables.json"
+CLEARING_PAYLOAD = "clearing.json"
 
 
 def _receivable_payload(state: MaterialState) -> dict[str, object]:
@@ -583,6 +591,305 @@ def _parse_receivable_payload(
     return tuple(lots), tuple(event_ids)
 
 
+def _clearing_payload(state: MaterialState) -> dict[str, object]:
+    import dataclasses
+
+    return {
+        "regime": (
+            dataclasses.asdict(state.cmea_clearing_regime)
+            if state.cmea_clearing_regime is not None
+            else None
+        ),
+        "accounts": [
+            dataclasses.asdict(account) for account in state.cmea_clearing_accounts
+        ],
+        "entries": [
+            dataclasses.asdict(entry) for entry in state.cmea_clearing_entries
+        ],
+        "transfers": [
+            dataclasses.asdict(transfer) for transfer in state.cmea_clearing_transfers
+        ],
+        "settlements": [
+            dataclasses.asdict(item) for item in state.cmea_clearing_settlements
+        ],
+        "event_ids": list(state.cmea_clearing_event_ids),
+    }
+
+
+def _parse_clearing_payload(directory: Path) -> tuple[
+    CmeaClearingRegimeState | None,
+    tuple[CmeaClearingAccount, ...],
+    tuple[CmeaClearingEntry, ...],
+    tuple[CmeaClearingTransfer, ...],
+    tuple[CmeaClearingSettlement, ...],
+    tuple[str, ...],
+]:
+    path = directory / CLEARING_PAYLOAD
+    if not path.exists():
+        return None, (), (), (), (), ()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ResearchGateError(f"unreadable checkpoint clearing payload: {exc}") from exc
+    expected_keys = {
+        "regime",
+        "accounts",
+        "entries",
+        "transfers",
+        "settlements",
+        "event_ids",
+    }
+    if not isinstance(payload, dict) or set(payload) != expected_keys:
+        raise ResearchGateError(
+            "checkpoint clearing payload must carry exactly "
+            "regime/accounts/entries/transfers/settlements/event_ids"
+        )
+    raw_regime = payload["regime"]
+    raw_accounts = payload["accounts"]
+    raw_entries = payload["entries"]
+    raw_transfers = payload["transfers"]
+    raw_settlements = payload["settlements"]
+    raw_ids = payload["event_ids"]
+    if not all(
+        isinstance(value, list)
+        for value in (
+            raw_accounts,
+            raw_entries,
+            raw_transfers,
+            raw_settlements,
+            raw_ids,
+        )
+    ):
+        raise ResearchGateError("checkpoint clearing payload has non-list entries")
+    if not raw_accounts and not raw_entries and not raw_transfers and not raw_settlements:
+        raise ResearchGateError(
+            "checkpoint clearing sidecar must not be all-empty; omit it for D3-off"
+        )
+
+    def _text(entry: dict[str, object], name: str, index: int, label: str) -> str:
+        value = entry[name]
+        if not isinstance(value, str) or not value:
+            raise ResearchGateError(
+                f"checkpoint clearing {label} {index} {name} must be a non-empty string"
+            )
+        return value
+
+    def _integer(entry: dict[str, object], name: str, index: int, label: str) -> int:
+        value = entry[name]
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ResearchGateError(
+                f"checkpoint clearing {label} {index} {name} must be a strict integer"
+            )
+        return int(value)
+
+    def _amount(entry: dict[str, object], name: str, index: int, label: str) -> float:
+        value = entry[name]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ResearchGateError(
+                f"checkpoint clearing {label} {index} {name} must be a strict number"
+            )
+        number = float(value)
+        if not np.isfinite(number):
+            raise ResearchGateError(
+                f"checkpoint clearing {label} {index} {name} must be finite"
+            )
+        return number
+
+    regime: CmeaClearingRegimeState | None
+    if raw_regime is None:
+        regime = None
+    elif isinstance(raw_regime, dict) and set(raw_regime) == {
+        "term_quarters",
+        "counterparties",
+        "contracts",
+        "clearing_group",
+    }:
+        raw_counterparties = raw_regime["counterparties"]
+        raw_contracts = raw_regime["contracts"]
+        raw_group = raw_regime["clearing_group"]
+        if not all(
+            isinstance(value, list)
+            for value in (raw_counterparties, raw_contracts, raw_group)
+        ):
+            raise ResearchGateError("checkpoint clearing regime has non-list fields")
+        counterparties: list[CmeaClearingCounterparty] = []
+        for index, item in enumerate(raw_counterparties):
+            if not isinstance(item, dict) or set(item) != {
+                "counterparty_id",
+                "credit_limit",
+            }:
+                raise ResearchGateError(
+                    f"checkpoint clearing regime counterparty {index} is malformed"
+                )
+            counterparties.append(
+                CmeaClearingCounterparty(
+                    counterparty_id=_integer(
+                        item, "counterparty_id", index, "regime counterparty"
+                    ),
+                    credit_limit=_amount(
+                        item, "credit_limit", index, "regime counterparty"
+                    ),
+                )
+            )
+        contracts: list[CmeaClearingContract] = []
+        for index, item in enumerate(raw_contracts):
+            if not isinstance(item, dict) or set(item) != {
+                "contract_id",
+                "counterparty_id",
+                "direction",
+                "commodity_id",
+                "price",
+            }:
+                raise ResearchGateError(
+                    f"checkpoint clearing regime contract {index} is malformed"
+                )
+            contracts.append(
+                CmeaClearingContract(
+                    contract_id=_text(item, "contract_id", index, "regime contract"),
+                    counterparty_id=_integer(
+                        item, "counterparty_id", index, "regime contract"
+                    ),
+                    direction=_text(item, "direction", index, "regime contract"),
+                    commodity_id=_text(
+                        item, "commodity_id", index, "regime contract"
+                    ),
+                    price=_amount(item, "price", index, "regime contract"),
+                )
+            )
+        group: list[int] = []
+        for index, value in enumerate(raw_group):
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise ResearchGateError(
+                    f"checkpoint clearing regime group {index} must be a strict integer"
+                )
+            group.append(int(value))
+        regime = CmeaClearingRegimeState(
+            term_quarters=_integer(
+                raw_regime, "term_quarters", 0, "regime"
+            ),
+            counterparties=tuple(counterparties),
+            contracts=tuple(contracts),
+            clearing_group=tuple(group),
+        )
+    else:
+        raise ResearchGateError("checkpoint clearing regime is malformed")
+
+    accounts: list[CmeaClearingAccount] = []
+    for index, item in enumerate(raw_accounts):
+        if not isinstance(item, dict) or set(item) != {
+            "counterparty_id",
+            "credit_limit",
+            "balance",
+        }:
+            raise ResearchGateError(
+                f"checkpoint clearing account {index} is malformed"
+            )
+        accounts.append(
+            CmeaClearingAccount(
+                counterparty_id=_integer(item, "counterparty_id", index, "account"),
+                credit_limit=_amount(item, "credit_limit", index, "account"),
+                balance=_amount(item, "balance", index, "account"),
+            )
+        )
+    entries: list[CmeaClearingEntry] = []
+    entry_fields = {
+        "entry_id",
+        "contract_id",
+        "counterparty_id",
+        "direction",
+        "commodity_id",
+        "entry_tick",
+        "due_tick",
+        "quantity",
+        "amount",
+        "settled",
+    }
+    for index, item in enumerate(raw_entries):
+        if not isinstance(item, dict) or set(item) != entry_fields:
+            raise ResearchGateError(f"checkpoint clearing entry {index} is malformed")
+        entries.append(
+            CmeaClearingEntry(
+                entry_id=_text(item, "entry_id", index, "entry"),
+                contract_id=_text(item, "contract_id", index, "entry"),
+                counterparty_id=_integer(item, "counterparty_id", index, "entry"),
+                direction=_text(item, "direction", index, "entry"),
+                commodity_id=_text(item, "commodity_id", index, "entry"),
+                entry_tick=_integer(item, "entry_tick", index, "entry"),
+                due_tick=_integer(item, "due_tick", index, "entry"),
+                quantity=_amount(item, "quantity", index, "entry"),
+                amount=_amount(item, "amount", index, "entry"),
+                settled=_amount(item, "settled", index, "entry"),
+            )
+        )
+    transfers: list[CmeaClearingTransfer] = []
+    for index, item in enumerate(raw_transfers):
+        if not isinstance(item, dict) or set(item) != {
+            "event_id",
+            "tick",
+            "source_counterparty_id",
+            "target_counterparty_id",
+            "amount",
+        }:
+            raise ResearchGateError(
+                f"checkpoint clearing transfer {index} is malformed"
+            )
+        transfers.append(
+            CmeaClearingTransfer(
+                event_id=_text(item, "event_id", index, "transfer"),
+                tick=_integer(item, "tick", index, "transfer"),
+                source_counterparty_id=_integer(
+                    item, "source_counterparty_id", index, "transfer"
+                ),
+                target_counterparty_id=_integer(
+                    item, "target_counterparty_id", index, "transfer"
+                ),
+                amount=_amount(item, "amount", index, "transfer"),
+            )
+        )
+    settlements: list[CmeaClearingSettlement] = []
+    for index, item in enumerate(raw_settlements):
+        if not isinstance(item, dict) or set(item) != {
+            "event_id",
+            "tick",
+            "entry_id",
+            "amount",
+        }:
+            raise ResearchGateError(
+                f"checkpoint clearing settlement {index} is malformed"
+            )
+        settlements.append(
+            CmeaClearingSettlement(
+                event_id=_text(item, "event_id", index, "settlement"),
+                tick=_integer(item, "tick", index, "settlement"),
+                entry_id=_text(item, "entry_id", index, "settlement"),
+                amount=_amount(item, "amount", index, "settlement"),
+            )
+        )
+    event_ids: list[str] = []
+    for index, value in enumerate(raw_ids):
+        if not isinstance(value, str) or not value:
+            raise ResearchGateError(
+                f"checkpoint clearing event id {index} must be a non-empty string"
+            )
+        event_ids.append(value)
+    if regime is None:
+        raise ResearchGateError(
+            "checkpoint clearing books require a persisted regime"
+        )
+    if not (accounts or entries or transfers or settlements or event_ids):
+        raise ResearchGateError(
+            "checkpoint clearing regime requires at least one persisted book entry"
+        )
+    return (
+        regime,
+        tuple(accounts),
+        tuple(entries),
+        tuple(transfers),
+        tuple(settlements),
+        tuple(event_ids),
+    )
+
+
 def save_material_checkpoint(
     directory: Path,
     state: MaterialState,
@@ -637,6 +944,24 @@ def save_material_checkpoint(
             + "\n",
             encoding="utf-8",
         )
+        if (
+            state.cmea_clearing_accounts
+            or state.cmea_clearing_entries
+            or state.cmea_clearing_transfers
+            or state.cmea_clearing_event_ids
+            or state.cmea_clearing_regime is not None
+            or state.cmea_clearing_settlements
+        ):
+            (staging / CLEARING_PAYLOAD).write_text(
+                json.dumps(
+                    _clearing_payload(state),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
 
         from hsm_lab.storage.material_output import history_frames
 
@@ -733,6 +1058,12 @@ def _state_from_payload(
     catalog: Any = None,
     receivables: tuple[ExportReceivable, ...] = (),
     receivable_event_ids: tuple[str, ...] = (),
+    clearing_accounts: tuple[CmeaClearingAccount, ...] = (),
+    clearing_entries: tuple[CmeaClearingEntry, ...] = (),
+    clearing_transfers: tuple[CmeaClearingTransfer, ...] = (),
+    clearing_event_ids: tuple[str, ...] = (),
+    clearing_regime: CmeaClearingRegimeState | None = None,
+    clearing_settlements: tuple[CmeaClearingSettlement, ...] = (),
 ) -> tuple[MaterialState, dict[str, np.ndarray]]:
     raw_completed = np.asarray(payload["completed_ticks"])
     if raw_completed.dtype != np.dtype("<i8") or raw_completed.shape != ():
@@ -797,6 +1128,12 @@ def _state_from_payload(
         completed_ticks=completed,
         export_receivables=receivables,
         export_receivable_event_ids=receivable_event_ids,
+        cmea_clearing_accounts=clearing_accounts,
+        cmea_clearing_entries=clearing_entries,
+        cmea_clearing_transfers=clearing_transfers,
+        cmea_clearing_event_ids=clearing_event_ids,
+        cmea_clearing_regime=clearing_regime,
+        cmea_clearing_settlements=clearing_settlements,
         **cast("dict[str, Any]", arrays),
         **cast("dict[str, Any]", scalars),
     )
@@ -858,6 +1195,45 @@ def _validate_state(
         )
     except ValueError as exc:
         raise ResearchGateError(f"checkpoint receivable semantics rejected: {exc}") from exc
+    if (
+        state.export_receivables or state.export_receivable_event_ids
+    ) and (
+        state.cmea_clearing_accounts
+        or state.cmea_clearing_entries
+        or state.cmea_clearing_transfers
+        or state.cmea_clearing_event_ids
+    ):
+        raise ResearchGateError(
+            "checkpoint carries both D2 receivables and D3 clearing books"
+        )
+    clearing_present = bool(
+        state.cmea_clearing_accounts
+        or state.cmea_clearing_entries
+        or state.cmea_clearing_transfers
+        or state.cmea_clearing_event_ids
+        or state.cmea_clearing_regime is not None
+        or state.cmea_clearing_settlements
+    )
+    if clearing_present:
+        if state.cmea_clearing_regime is None:
+            raise ResearchGateError(
+                "checkpoint clearing books require a persisted regime"
+            )
+        try:
+            validate_clearing_book(
+                tuple(state.cmea_clearing_accounts),
+                tuple(state.cmea_clearing_entries),
+                tuple(state.cmea_clearing_transfers),
+                tuple(state.cmea_clearing_event_ids),
+                settlements=tuple(state.cmea_clearing_settlements),
+                completed_ticks=int(state.completed_ticks),
+                commodity_ids=tuple(network.commodity_ids),
+                policy=state.cmea_clearing_regime,
+            )
+        except ValueError as exc:
+            raise ResearchGateError(
+                f"checkpoint clearing semantics rejected: {exc}"
+            ) from exc
     index_checks = (
         ("household_region", arrays["household_region"], regions),
         ("organization_region", arrays["organization_region"], regions),
@@ -1278,6 +1654,14 @@ def load_material_checkpoint(
     _gate_versions(metadata)
     _verify_payload_hashes(directory, metadata)
     receivables, receivable_event_ids = _parse_receivable_payload(directory)
+    (
+        clearing_regime,
+        clearing_accounts,
+        clearing_entries,
+        clearing_transfers,
+        clearing_settlements,
+        clearing_event_ids,
+    ) = _parse_clearing_payload(directory)
 
     snapshot = parse_parent_scenario(metadata)
     for field in (
@@ -1370,6 +1754,12 @@ def load_material_checkpoint(
         catalog=network.household_catalog,
         receivables=receivables,
         receivable_event_ids=receivable_event_ids,
+        clearing_accounts=clearing_accounts,
+        clearing_entries=clearing_entries,
+        clearing_transfers=clearing_transfers,
+        clearing_event_ids=clearing_event_ids,
+        clearing_regime=clearing_regime,
+        clearing_settlements=clearing_settlements,
     )
     _validate_state(state, arrays, snapshot, network)
 

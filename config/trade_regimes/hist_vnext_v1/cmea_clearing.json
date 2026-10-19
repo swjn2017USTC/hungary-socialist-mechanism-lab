@@ -1,0 +1,33 @@
+{
+  "schema_version": "hist-cmea-clearing-regime-v1",
+  "regime_id": "cmea_clearing",
+  "source_kind": "synthetic",
+  "term_quarters": 1,
+  "clearing_group": [9201, 9202],
+  "counterparties": [
+    {
+      "counterparty_id": 9201,
+      "credit_limit": 10.0
+    },
+    {
+      "counterparty_id": 9202,
+      "credit_limit": 6.0
+    }
+  ],
+  "contracts": [
+    {
+      "contract_id": "d3-cmea-energy-import-9201",
+      "counterparty_id": 9201,
+      "direction": "import",
+      "commodity_id": "energy",
+      "price": 2.0
+    },
+    {
+      "contract_id": "d3-cmea-energy-export-9202",
+      "counterparty_id": 9202,
+      "direction": "export",
+      "commodity_id": "energy",
+      "price": 2.0
+    }
+  ]
+}

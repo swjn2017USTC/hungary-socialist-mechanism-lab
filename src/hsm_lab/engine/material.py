@@ -121,6 +121,7 @@ from hsm_lab.engine.state import (
     N_D,
     N_E,
     N_Q,
+    CmeaClearingPolicy,
     ExportReceivablePolicy,
     MaterialForcing,
     MaterialHistory,
@@ -132,14 +133,19 @@ from hsm_lab.engine.state import (
     initialize_material,
 )
 from hsm_lab.engine.trade import (
+    apply_clearing_events,
     apply_receivable_events,
     build_export_demands,
     channel_prices,
     realize_external_debt_service,
     realize_imports,
+    realize_imports_on_clearing,
     resolve_export_contract,
     settle_exports_and_closing,
+    settle_exports_on_clearing,
     settle_exports_on_receivables,
+    validate_clearing_book,
+    validate_clearing_policy,
     validate_export_policy,
     validate_receivable_book,
 )
@@ -719,6 +725,64 @@ def _validate_export_contract_coverage(
                 )
 
 
+def _validate_clearing_coverage(
+    policy: CmeaClearingPolicy,
+    parameters: MaterialParameters,
+    network: MaterialNetwork,
+) -> None:
+    """Require a declared import/export contract for every positive demand."""
+    validate_clearing_policy(policy)
+    g_count = len(network.commodity_ids)
+    commodity_axis = list(network.commodity_ids)
+    by_key = {
+        (contract.direction, contract.commodity_id): contract
+        for contract in policy.contracts
+    }
+    for contract in policy.contracts:
+        if contract.commodity_id not in commodity_axis:
+            raise ValueError(
+                f"CMEA clearing contract {contract.contract_id!r} names an unknown "
+                f"commodity {contract.commodity_id!r}"
+            )
+        if contract.direction == "import":
+            g = commodity_axis.index(contract.commodity_id)
+            if int(network.import_pool_cell[g]) < 0:
+                raise ValueError(
+                    f"CMEA clearing import contract {contract.contract_id!r} has no "
+                    "import-pool cell"
+                )
+    desired_imports = np.zeros(g_count, dtype=np.float64)
+    for g, commodity_id in enumerate(commodity_axis):
+        fixed = COMMODITY_INDEX.get(commodity_id)
+        if fixed is not None:
+            desired_imports[g] = float(parameters.trade.cmea_desired_imports[fixed])
+    for g in np.nonzero(desired_imports > 0.0)[0]:
+        commodity_id = str(commodity_axis[int(g)])
+        if ("import", commodity_id) not in by_key:
+            raise ValueError(
+                f"CMEA clearing import demand for {commodity_id!r} has no contract"
+            )
+    desired, _ordered = build_export_demands(
+        parameters,
+        network,
+        treasury_payable=0.0,
+        admin_price=np.zeros(g_count, dtype=np.float64),
+        freight_per_unit=np.zeros(g_count, dtype=np.float64),
+    )
+    for g in np.nonzero(np.asarray(desired[0], dtype=np.float64) > 0.0)[0]:
+        commodity_id = str(commodity_axis[int(g)])
+        contract = by_key.get(("export", commodity_id))
+        if contract is None:
+            raise ValueError(
+                f"CMEA clearing export demand for {commodity_id!r} has no contract"
+            )
+        if not np.isfinite(contract.price) or contract.price <= 0.0:
+            raise ValueError(
+                f"CMEA clearing export contract {contract.contract_id!r} price must "
+                "be finite and positive"
+            )
+
+
 def _validate_export_forcing(forcing: MaterialForcing, tick: int) -> None:
     """Require a strictly consecutive quarter timeline for an opt-in D2 tick."""
     quarters = list(forcing.quarters)
@@ -756,6 +820,7 @@ def _tick_material_impl(
     micro_stage_audit: dict[str, Any] | None = None,
     treasury_housing_payable: float | None = None,
     export_receivable_policy: ExportReceivablePolicy | None = None,
+    cmea_clearing_policy: CmeaClearingPolicy | None = None,
 ) -> MaterialTickFlows:
     """Advance the material economy by one admitted quarter (plan section 3).
 
@@ -801,12 +866,16 @@ def _tick_material_impl(
             phase_times[name] = phase_times.get(name, 0.0) + (now - mark)
             mark = now
 
-    if export_receivable_policy is not None:
+    if export_receivable_policy is not None or cmea_clearing_policy is not None:
         raw_tick = state.completed_ticks
         if isinstance(raw_tick, bool) or not isinstance(raw_tick, (int, np.integer)):
             raise ValueError(
-                "export receivable ticks require an integer state.completed_ticks"
+                "opt-in export ticks require an integer state.completed_ticks"
             )
+    if export_receivable_policy is not None and cmea_clearing_policy is not None:
+        raise ValueError(
+            "H3F-D2 export receivables and H3F-D3 CMEA clearing are mutually exclusive"
+        )
     tick = int(state.completed_ticks)
     quarters = list(forcing.quarters)
     _require(0 <= tick < len(quarters), f"tick {tick} lies outside the forcing horizon")
@@ -843,6 +912,17 @@ def _tick_material_impl(
     # settlement or every open receivable/event is explicitly carried forward.
     # A state with open receivables may never silently fall back to cash.
     if export_receivable_policy is not None:
+        if (
+            state.cmea_clearing_accounts
+            or state.cmea_clearing_entries
+            or state.cmea_clearing_transfers
+            or state.cmea_clearing_event_ids
+            or state.cmea_clearing_regime is not None
+            or state.cmea_clearing_settlements
+        ):
+            raise ValueError(
+                "H3F-D2 export receivables require the D3 clearing books to be empty"
+            )
         validate_export_policy(export_receivable_policy)
         _validate_export_forcing(forcing, tick)
         _validate_export_contract_coverage(
@@ -866,6 +946,87 @@ def _tick_material_impl(
         raise ValueError(
             "open export receivables require an explicit export_receivable_policy; "
             "refusing to fall back to the legacy cash settlement"
+        )
+
+    # H3F-D3 opt-in preflight: validate the whole bilateral clearing book and
+    # every caller event before touching stock, cash or the journal.  A state
+    # with an open clearing book may never silently fall back to the legacy
+    # single memo-credit scalar.
+    if cmea_clearing_policy is not None:
+        if state.export_receivables or state.export_receivable_event_ids:
+            raise ValueError(
+                "H3F-D3 CMEA clearing requires the D2 receivable book to be empty"
+            )
+        if abs(float(state.cmea_settlement_balance)) > 1e-9:
+            raise ValueError(
+                "H3F-D3 CMEA clearing requires the legacy memo-credit scalar to be zero"
+            )
+        if (
+            state.treasury_loan_principal > 0.0
+            or state.treasury_interest_arrears > 0.0
+            or state.treasury_loan_maturity_tick >= 0.0
+        ):
+            raise ValueError(
+                "H3F-D3 CMEA clearing requires the D1 Treasury loan to be switched off"
+            )
+        validate_clearing_policy(cmea_clearing_policy)
+        clearing_books_present = bool(
+            state.cmea_clearing_accounts
+            or state.cmea_clearing_entries
+            or state.cmea_clearing_transfers
+            or state.cmea_clearing_event_ids
+            or state.cmea_clearing_settlements
+        )
+        if clearing_books_present and state.cmea_clearing_regime is None:
+            raise ValueError(
+                "open CMEA clearing books lack their persisted regime"
+            )
+        if state.cmea_clearing_regime is not None and (
+            state.cmea_clearing_regime.term_quarters
+            != cmea_clearing_policy.term_quarters
+            or tuple(state.cmea_clearing_regime.counterparties)
+            != tuple(cmea_clearing_policy.counterparties)
+            or tuple(state.cmea_clearing_regime.contracts)
+            != tuple(cmea_clearing_policy.contracts)
+            or tuple(state.cmea_clearing_regime.clearing_group)
+            != tuple(cmea_clearing_policy.clearing_group)
+        ):
+            raise ValueError(
+                "the admitted CMEA clearing regime differs from the open book"
+            )
+        _validate_export_forcing(forcing, tick)
+        _validate_clearing_coverage(cmea_clearing_policy, parameters, network)
+        validate_clearing_book(
+            tuple(state.cmea_clearing_accounts),
+            tuple(state.cmea_clearing_entries),
+            tuple(state.cmea_clearing_transfers),
+            tuple(state.cmea_clearing_event_ids),
+            settlements=tuple(state.cmea_clearing_settlements),
+            completed_ticks=tick,
+            commodity_ids=tuple(network.commodity_ids),
+            policy=cmea_clearing_policy,
+        )
+        apply_clearing_events(
+            tuple(state.cmea_clearing_accounts),
+            tuple(state.cmea_clearing_entries),
+            tuple(state.cmea_clearing_transfers),
+            tuple(state.cmea_clearing_settlements),
+            tuple(state.cmea_clearing_event_ids),
+            tuple(cmea_clearing_policy.events),
+            current_tick=tick,
+            policy=cmea_clearing_policy,
+        )
+    elif (
+        state.cmea_clearing_accounts
+        or state.cmea_clearing_entries
+        or state.cmea_clearing_transfers
+        or state.cmea_clearing_event_ids
+        or state.cmea_clearing_regime is not None
+        or state.cmea_clearing_settlements
+    ):
+        raise ValueError(
+            "open CMEA clearing books require an explicit cmea_clearing_policy; "
+            "refusing to fall back to the legacy memo-credit path"
         )
 
     # H3B opt-in preflight: validate before any state mutation or flow append.
@@ -1630,15 +1791,27 @@ def _tick_material_impl(
         desired_usd_outlay=desired_usd_outlay,
         transaction_base=1,
     )
-    realize_imports(
-        state,
-        flows,
-        parameters,
-        network,
-        oil_price=oil_price,
-        cmea_contract_price=cmea_quote,
-        transaction_base=10,
-    )
+    if cmea_clearing_policy is None:
+        realize_imports(
+            state,
+            flows,
+            parameters,
+            network,
+            oil_price=oil_price,
+            cmea_contract_price=cmea_quote,
+            transaction_base=10,
+        )
+    else:
+        realize_imports_on_clearing(
+            state,
+            flows,
+            parameters,
+            network,
+            oil_price=oil_price,
+            cmea_contract_price=cmea_quote,
+            policy=cmea_clearing_policy,
+            transaction_base=10,
+        )
     import_into = np.zeros(cell_count, dtype=np.float64)
     import_cell = np.asarray(network.import_pool_cell, dtype=np.int64)
     has_import_cell = import_cell >= 0
@@ -4087,7 +4260,21 @@ def _tick_material_impl(
             export_delivered_cmea[g] = flows.delivered[int(export_demand_cell[0, g])]
         if export_demand_cell[1, g] >= 0:
             export_delivered_convertible[g] = flows.delivered[int(export_demand_cell[1, g])]
-    if export_receivable_policy is None:
+    if cmea_clearing_policy is not None:
+        settle_exports_on_clearing(
+            state,
+            flows,
+            parameters,
+            network,
+            cmea_export_delivered=export_delivered_cmea,
+            convertible_export_delivered=export_delivered_convertible,
+            oil_price=oil_price,
+            cmea_contract_price=cmea_quote,
+            official_fx_quote=fx_quote,
+            policy=cmea_clearing_policy,
+            transaction_base=200,
+        )
+    elif export_receivable_policy is None:
         settle_exports_and_closing(
             state,
             flows,
@@ -4309,6 +4496,7 @@ def tick_material(
     micro_stage_audit: dict[str, Any] | None = None,
     treasury_housing_payable: float | None = None,
     export_receivable_policy: ExportReceivablePolicy | None = None,
+    cmea_clearing_policy: CmeaClearingPolicy | None = None,
 ) -> MaterialTickFlows:
     """Public kernel entry point.
 
@@ -4319,7 +4507,7 @@ def tick_material(
     a partially-mutated quarter.  The adapter uses the private implementation
     so it can retain the failed pre-rollback state as evidence.
     """
-    if export_receivable_policy is None:
+    if export_receivable_policy is None and cmea_clearing_policy is None:
         return _tick_material_impl(
             state,
             forcing,
@@ -4336,6 +4524,7 @@ def tick_material(
             micro_stage_audit=micro_stage_audit,
             treasury_housing_payable=treasury_housing_payable,
             export_receivable_policy=None,
+            cmea_clearing_policy=None,
         )
     snapshot = copy.deepcopy(state)
     try:
@@ -4355,6 +4544,7 @@ def tick_material(
             micro_stage_audit=micro_stage_audit,
             treasury_housing_payable=treasury_housing_payable,
             export_receivable_policy=export_receivable_policy,
+            cmea_clearing_policy=cmea_clearing_policy,
         )
     except BaseException:
         for field_name in state.__dataclass_fields__:
@@ -4532,6 +4722,33 @@ def _state_scalar_header(state: MaterialState) -> dict[str, Any]:
     if state.export_receivables or state.export_receivable_event_ids:
         header["export_receivables"] = [asdict(lot) for lot in state.export_receivables]
         header["export_receivable_event_ids"] = list(state.export_receivable_event_ids)
+    # H3F-D3: only a non-empty clearing book enters the replay identity.
+    if (
+        state.cmea_clearing_accounts
+        or state.cmea_clearing_entries
+        or state.cmea_clearing_transfers
+        or state.cmea_clearing_event_ids
+        or state.cmea_clearing_regime is not None
+        or state.cmea_clearing_settlements
+    ):
+        header["cmea_clearing_regime"] = (
+            asdict(state.cmea_clearing_regime)
+            if state.cmea_clearing_regime is not None
+            else None
+        )
+        header["cmea_clearing_accounts"] = [
+            asdict(account) for account in state.cmea_clearing_accounts
+        ]
+        header["cmea_clearing_entries"] = [
+            asdict(entry) for entry in state.cmea_clearing_entries
+        ]
+        header["cmea_clearing_transfers"] = [
+            asdict(transfer) for transfer in state.cmea_clearing_transfers
+        ]
+        header["cmea_clearing_settlements"] = [
+            asdict(item) for item in state.cmea_clearing_settlements
+        ]
+        header["cmea_clearing_event_ids"] = list(state.cmea_clearing_event_ids)
     return header
 
 
@@ -4588,6 +4805,25 @@ def _flow_scalar_header(flows: MaterialTickFlows) -> dict[str, Any]:
                 "export_receivable_overdue_usd",
                 "export_receivable_overdue_cmea",
             )
+        }
+    if (
+        flows.cmea_clearing_events
+        or flows.cmea_clearing_import_payment
+        or flows.cmea_clearing_export_pending
+        or flows.cmea_clearing_export_settled
+    ):
+        header["cmea_clearing_events"] = [
+            asdict(event) for event in flows.cmea_clearing_events
+        ]
+        header["cmea_clearing_flows"] = {
+            "import_payment": float(flows.cmea_clearing_import_payment),
+            "export_pending": float(flows.cmea_clearing_export_pending),
+            "export_settled": float(flows.cmea_clearing_export_settled),
+            "positions": [list(item) for item in flows.cmea_clearing_positions],
+            "overdue": [list(item) for item in flows.cmea_clearing_overdue],
+            "contract_prices": [
+                list(item) for item in flows.cmea_clearing_contract_prices
+            ],
         }
     return header
 

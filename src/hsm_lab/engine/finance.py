@@ -77,6 +77,10 @@ class AccountKind:
     BAD_DEBT_ALLOWANCE = "bad_debt_allowance"
     BAD_DEBT_EXPENSE = "bad_debt_expense"
     EXPORT_SALES_INCOME = "export_sales_income"
+    CMEA_CLEARING_POSITION = "cmea_clearing_position"
+    CMEA_CLEARING_PENDING = "cmea_clearing_pending"
+    CMEA_CLEARING_INCOME = "cmea_clearing_income"
+    CMEA_CLEARING_EXPENSE = "cmea_clearing_expense"
 
 
 class JournalError(RuntimeError):
@@ -132,6 +136,16 @@ TREASURY_RECEIVABLE_ACCOUNT_KINDS: tuple[str, ...] = (
     AccountKind.EXPORT_SALES_INCOME,
 )
 _RECEIVABLE_CURRENCIES: tuple[str, ...] = (USD_CURRENCY, CMEA_CURRENCY)
+#: H3F-D3 shared CMEA clearing accounts, appended after the D2 block.  Each
+#: counterparty gets its own position account; the shared accounts carry the
+#: pending export claim and the income/expense sides.  The block is absent from
+#: the directory and journals unless a D3 clearing book exists.
+CMEA_CLEARING_ACCOUNT_KINDS: tuple[str, ...] = (
+    AccountKind.CMEA_CLEARING_PENDING,
+    AccountKind.CMEA_CLEARING_INCOME,
+    AccountKind.CMEA_CLEARING_EXPENSE,
+)
+_COUNTERPARTY_CLEARING_KINDS: tuple[str, ...] = (AccountKind.CMEA_CLEARING_POSITION,)
 
 
 def _axis_sizes(state: MaterialState) -> tuple[int, int, int, int]:
@@ -268,6 +282,63 @@ def treasury_receivable_account_id(
     return base_receivable + currency_offset + position
 
 
+def cmea_clearing_shared_account_id(state: MaterialState, account_kind: str) -> int:
+    """Account id of one shared H3F-D3 CMEA clearing account.
+
+    The block starts after the D2 receivable block, so every legacy/D1/D2
+    account id and journal is unchanged when D3 is switched off.
+    """
+    if account_kind not in CMEA_CLEARING_ACCOUNT_KINDS:
+        raise JournalError(f"unknown CMEA clearing account kind: {account_kind!r}")
+    position = CMEA_CLEARING_ACCOUNT_KINDS.index(account_kind)
+    n_households, n_orgs, n_banks, n_regions = _axis_sizes(state)
+    base_term = (
+        len(HOUSEHOLD_ACCOUNT_KINDS) * n_households
+        + len(ORGANIZATION_ACCOUNT_KINDS) * n_orgs
+        + len(BANK_ACCOUNT_KINDS) * n_banks
+        + len(TREASURY_ACCOUNT_KINDS)
+        + 2  # foreign_usd + foreign_cmea
+        + n_regions
+    )
+    base_receivable = base_term + len(TREASURY_TERM_ACCOUNT_KINDS)
+    base_clearing = base_receivable + (
+        len(TREASURY_RECEIVABLE_ACCOUNT_KINDS) * len(_RECEIVABLE_CURRENCIES)
+    )
+    return base_clearing + position
+
+
+def cmea_clearing_account_floor(state: MaterialState) -> int:
+    """First id in the trailing D3 clearing block; ids at/above it are D3-only."""
+    return cmea_clearing_shared_account_id(
+        state, CMEA_CLEARING_ACCOUNT_KINDS[0]
+    )
+
+
+def cmea_clearing_position_account_id(state: MaterialState, counterparty_id: int) -> int:
+    """Account id of one counterparty's signed H3F-D3 CMEA clearing position."""
+    if isinstance(counterparty_id, bool) or not isinstance(
+        counterparty_id, (int, np.integer)
+    ):
+        raise JournalError("CMEA counterparty id must be a strict integer")
+    counterparty = int(counterparty_id)
+    if counterparty < 0:
+        raise JournalError("CMEA counterparty id must be non-negative")
+    n_households, n_orgs, n_banks, n_regions = _axis_sizes(state)
+    base_term = (
+        len(HOUSEHOLD_ACCOUNT_KINDS) * n_households
+        + len(ORGANIZATION_ACCOUNT_KINDS) * n_orgs
+        + len(BANK_ACCOUNT_KINDS) * n_banks
+        + len(TREASURY_ACCOUNT_KINDS)
+        + 2  # foreign_usd + foreign_cmea
+        + n_regions
+    )
+    base_receivable = base_term + len(TREASURY_TERM_ACCOUNT_KINDS)
+    base_clearing = base_receivable + (
+        len(TREASURY_RECEIVABLE_ACCOUNT_KINDS) * len(_RECEIVABLE_CURRENCIES)
+    )
+    return base_clearing + len(CMEA_CLEARING_ACCOUNT_KINDS) + counterparty
+
+
 def plot_clearing_account_ids(state: MaterialState) -> np.ndarray:
     """Account ids (R,) of the per-region ephemeral plot clearing accounts."""
     _, n_orgs, n_banks, _ = _axis_sizes(state)
@@ -322,6 +393,20 @@ def build_account_directory(state: MaterialState) -> dict[tuple[str, int, str, s
             directory[("treasury", 0, currency, kind)] = treasury_receivable_account_id(
                 state, currency, kind
             )
+    if state.cmea_clearing_accounts:
+        for kind in CMEA_CLEARING_ACCOUNT_KINDS:
+            directory[("cmea_clearing", 0, CMEA_CURRENCY, kind)] = (
+                cmea_clearing_shared_account_id(state, kind)
+            )
+        for account in state.cmea_clearing_accounts:
+            directory[
+                (
+                    "cmea_counterparty",
+                    int(account.counterparty_id),
+                    CMEA_CURRENCY,
+                    AccountKind.CMEA_CLEARING_POSITION,
+                )
+            ] = cmea_clearing_position_account_id(state, int(account.counterparty_id))
     directory[("foreign_usd", 0, USD_CURRENCY, AccountKind.TRADE_SETTLEMENT)] = foreign_account_id(
         state, USD_CURRENCY
     )

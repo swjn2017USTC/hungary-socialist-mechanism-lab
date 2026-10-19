@@ -62,6 +62,7 @@ from hsm_lab.engine.finance import (
     USD_CURRENCY,
     AccountKind,
     bank_account_ids,
+    cmea_clearing_account_floor,
     household_account_ids,
     organization_account_ids,
     quarter_domestic_credit_rate,
@@ -71,6 +72,7 @@ from hsm_lab.engine.finance import (
 )
 from hsm_lab.engine.state import (
     POOL_CODES,
+    CmeaClearingRegimeState,
     MaterialForcing,
     MaterialPrices,
     MaterialState,
@@ -79,10 +81,18 @@ from hsm_lab.engine.state import (
     build_material_prices,
 )
 from hsm_lab.engine.trade import (
+    apply_clearing_events,
     apply_receivable_events,
     channel_prices,
+    clearing_delivery_entries,
+    clearing_event_journal_rows,
+    clearing_import_allocation,
+    clearing_journal_rows,
+    clearing_overdue,
     receivable_journal_rows,
     resolve_export_contract,
+    validate_clearing_book,
+    validate_clearing_policy,
     validate_export_policy,
     validate_receivable_book,
 )
@@ -120,6 +130,15 @@ _D2_JOURNAL_KINDS: frozenset[str] = frozenset(
         "export_receivable_recovery_restore",
         "export_receivable_recovery_receipt",
         "export_receivable_recovery_release",
+    }
+)
+
+_D3_JOURNAL_KINDS: frozenset[str] = frozenset(
+    {
+        "cmea_clearing_import",
+        "cmea_clearing_export",
+        "cmea_clearing_settle",
+        "cmea_clearing_transfer",
     }
 )
 
@@ -992,6 +1011,7 @@ def check_material_invariants(
     controls: Any = None,
     forcing: MaterialForcing | None = None,
     export_receivable_policy: Any = None,
+    cmea_clearing_policy: Any = None,
 ) -> InvariantSummary:
     """Verify every material/financial ledger of one completed tick.
 
@@ -2311,7 +2331,10 @@ def check_material_invariants(
         or flows.export_receivable_events
         or any(float(getattr(flows, name)) != 0.0 for name in _D2_FLOW_FIELDS)
         or any(kind_name in _D2_JOURNAL_KINDS for kind_name in flows.journal_kind)
-        or any(value is not None for value in flows.journal_event)
+        or any(
+            value is not None and flows.journal_kind[index] not in _D3_JOURNAL_KINDS
+            for index, value in enumerate(flows.journal_event)
+        )
         or touches_d2_account
     )
     if d2_active:
@@ -2733,6 +2756,342 @@ def check_material_invariants(
                 raise AccountingError(
                     f"{quarter}: unknown export receivable event kind {event.kind!r}"
                 )
+
+    # --- 7b. H3F-D3 independent CMEA clearing --------------------------------
+    d3_event_ids = {
+        *state.cmea_clearing_event_ids,
+        *opening.cmea_clearing_event_ids,
+        *(event.event_id for event in flows.cmea_clearing_events),
+    }
+    d3_floor = int(cmea_clearing_account_floor(state))
+    touches_d3_account = bool(
+        np.any(np.asarray(debit, dtype=np.int64) >= d3_floor)
+        or np.any(np.asarray(credit, dtype=np.int64) >= d3_floor)
+    )
+    d3_active = bool(
+        opening.cmea_clearing_accounts
+        or opening.cmea_clearing_entries
+        or opening.cmea_clearing_transfers
+        or opening.cmea_clearing_event_ids
+        or opening.cmea_clearing_regime is not None
+        or opening.cmea_clearing_settlements
+        or state.cmea_clearing_accounts
+        or state.cmea_clearing_entries
+        or state.cmea_clearing_transfers
+        or state.cmea_clearing_event_ids
+        or state.cmea_clearing_regime is not None
+        or state.cmea_clearing_settlements
+        or flows.cmea_clearing_events
+        or flows.cmea_clearing_import_payment
+        or flows.cmea_clearing_export_pending
+        or flows.cmea_clearing_export_settled
+        or flows.cmea_clearing_positions
+        or flows.cmea_clearing_overdue
+        or flows.cmea_clearing_contract_prices
+        or any(kind_name in _D3_JOURNAL_KINDS for kind_name in flows.journal_kind)
+        or any(
+            isinstance(value, str) and value in d3_event_ids
+            for value in flows.journal_event
+        )
+        or touches_d3_account
+    )
+    if d3_active:
+        if cmea_clearing_policy is None:
+            raise AccountingError(
+                f"{quarter}: D3 clearing activity requires the admitted "
+                "cmea_clearing_policy"
+            )
+        if d2_active:
+            raise AccountingError(
+                f"{quarter}: D2 and D3 activity may not share one tick"
+            )
+        if (
+            state.treasury_loan_principal > 0.0
+            or state.treasury_interest_arrears > 0.0
+            or state.treasury_loan_maturity_tick >= 0.0
+        ):
+            raise AccountingError(
+                f"{quarter}: D3 clearing may not run with a D1 Treasury loan"
+            )
+        try:
+            validate_clearing_policy(cmea_clearing_policy)
+            expected_regime = CmeaClearingRegimeState(
+                term_quarters=int(cmea_clearing_policy.term_quarters),
+                counterparties=tuple(cmea_clearing_policy.counterparties),
+                contracts=tuple(cmea_clearing_policy.contracts),
+                clearing_group=tuple(cmea_clearing_policy.clearing_group),
+            )
+            if state.cmea_clearing_regime != expected_regime:
+                raise ValueError(
+                    "the persisted clearing regime differs from the admitted policy"
+                )
+            validate_clearing_book(
+                tuple(opening.cmea_clearing_accounts),
+                tuple(opening.cmea_clearing_entries),
+                tuple(opening.cmea_clearing_transfers),
+                tuple(opening.cmea_clearing_event_ids),
+                settlements=tuple(opening.cmea_clearing_settlements),
+                completed_ticks=int(flows.tick),
+                commodity_ids=tuple(network.commodity_ids),
+                policy=cmea_clearing_policy,
+            )
+            (
+                expected_imports,
+                after_import_accounts,
+                after_import_entries,
+                after_import_ids,
+                generated_imports,
+            ) = clearing_import_allocation(
+                opening, parameters, network, cmea_clearing_policy
+            )
+            expected_deliveries = clearing_delivery_entries(
+                state,
+                network,
+                cmea_clearing_policy,
+                np.asarray(flows.cmea_exports, dtype=np.float64),
+            )
+            combined_entries = tuple(after_import_entries) + tuple(expected_deliveries)
+            combined_ids = tuple(after_import_ids) + tuple(
+                entry.entry_id for entry in expected_deliveries
+            )
+            (
+                expected_accounts,
+                expected_entries,
+                expected_transfers,
+                expected_settlements,
+                expected_event_ids,
+            ) = apply_clearing_events(
+                tuple(after_import_accounts),
+                combined_entries,
+                tuple(opening.cmea_clearing_transfers),
+                tuple(opening.cmea_clearing_settlements),
+                combined_ids,
+                tuple(cmea_clearing_policy.events),
+                current_tick=int(flows.tick),
+                policy=cmea_clearing_policy,
+            )
+            validate_clearing_book(
+                tuple(state.cmea_clearing_accounts),
+                tuple(state.cmea_clearing_entries),
+                tuple(state.cmea_clearing_transfers),
+                tuple(state.cmea_clearing_event_ids),
+                settlements=tuple(state.cmea_clearing_settlements),
+                completed_ticks=int(flows.tick) + 1,
+                commodity_ids=tuple(network.commodity_ids),
+                policy=cmea_clearing_policy,
+            )
+        except ValueError as exc:
+            raise AccountingError(
+                f"{quarter}: CMEA clearing continuity rejected: {exc}"
+            ) from exc
+        finance(
+            "cmea_clearing_imports_vs_allocation",
+            np.asarray(flows.cmea_imports, dtype=np.float64),
+            np.asarray(expected_imports, dtype=np.float64),
+            labels=list(network.commodity_ids),
+        )
+        if tuple(state.cmea_clearing_accounts) != expected_accounts:
+            raise AccountingError(
+                f"{quarter}: CMEA clearing account book differs from replay"
+            )
+        if tuple(state.cmea_clearing_entries) != expected_entries:
+            raise AccountingError(
+                f"{quarter}: CMEA clearing entry book differs from replay"
+            )
+        if tuple(state.cmea_clearing_transfers) != expected_transfers:
+            raise AccountingError(
+                f"{quarter}: CMEA clearing transfer log differs from replay"
+            )
+        if tuple(state.cmea_clearing_settlements) != expected_settlements:
+            raise AccountingError(
+                f"{quarter}: CMEA clearing settlement log differs from replay"
+            )
+        if tuple(state.cmea_clearing_event_ids) != expected_event_ids:
+            raise AccountingError(
+                f"{quarter}: CMEA clearing event log is not the opening log plus "
+                "this tick's generated and admitted ids"
+            )
+        expected_positions = tuple(
+            (int(account.counterparty_id), float(account.balance))
+            for account in expected_accounts
+        )
+        if tuple(flows.cmea_clearing_positions) != expected_positions:
+            raise AccountingError(
+                f"{quarter}: CMEA clearing flow positions differ from the book"
+            )
+        expected_overdue = tuple(
+            (cid, float(amount))
+            for cid, amount in sorted(
+                clearing_overdue(expected_entries, int(flows.tick)).items()
+            )
+        )
+        if tuple(flows.cmea_clearing_overdue) != expected_overdue:
+            raise AccountingError(
+                f"{quarter}: CMEA clearing overdue amounts differ from the book"
+            )
+        finance(
+            "cmea_clearing_import_payment_vs_entries",
+            np.asarray([float(flows.cmea_clearing_import_payment)]),
+            np.asarray(
+                [float(sum(entry.amount for entry in generated_imports))]
+            ),
+            labels=["cmea_clearing_import_payment"],
+        )
+        finance(
+            "cmea_clearing_export_pending_vs_entries",
+            np.asarray([float(flows.cmea_clearing_export_pending)]),
+            np.asarray(
+                [float(sum(entry.amount for entry in expected_deliveries))]
+            ),
+            labels=["cmea_clearing_export_pending"],
+        )
+        finance(
+            "cmea_clearing_export_settled_vs_events",
+            np.asarray([float(flows.cmea_clearing_export_settled)]),
+            np.asarray(
+                [
+                    float(
+                        sum(
+                            event.amount
+                            for event in cmea_clearing_policy.events
+                            if event.kind == "settle_export"
+                        )
+                    )
+                ]
+            ),
+            labels=["cmea_clearing_export_settled"],
+        )
+        expected_contract_prices = tuple(
+            (contract.contract_id, float(contract.price))
+            for contract in cmea_clearing_policy.contracts
+        )
+        if tuple(flows.cmea_clearing_contract_prices) != expected_contract_prices:
+            raise AccountingError(
+                f"{quarter}: CMEA clearing contract prices differ from the policy"
+            )
+        expected_rows: list[tuple[str, int, int, str, float, str]] = []
+        expected_rows.extend(
+            clearing_journal_rows(
+                state, tuple(generated_imports) + tuple(expected_deliveries)
+            )
+        )
+        expected_rows.extend(
+            clearing_event_journal_rows(
+                state, expected_entries, tuple(cmea_clearing_policy.events)
+            )
+        )
+        actual_rows: list[tuple[str, int, int, str, float, str]] = []
+        for index, journal_kind in enumerate(flows.journal_kind):
+            raw_debit = flows.journal_debit[index]
+            raw_credit = flows.journal_credit[index]
+            event_id = flows.journal_event[index]
+            def _touches_d3_block(value: object) -> bool:
+                if isinstance(value, bool):
+                    return False
+                if isinstance(value, (int, np.integer)):
+                    return int(value) >= d3_floor
+                if isinstance(value, (float, np.floating)):
+                    return bool(np.isfinite(float(value)) and float(value) >= d3_floor)
+                return False
+
+            touches_d3 = _touches_d3_block(raw_debit) or _touches_d3_block(
+                raw_credit
+            )
+            is_d3 = journal_kind in _D3_JOURNAL_KINDS
+            event_matches = isinstance(event_id, str) and event_id in d3_event_ids
+            if not (touches_d3 or is_d3 or event_matches):
+                continue
+            if (
+                not is_d3
+                or event_id is None
+                or not isinstance(event_id, str)
+                or not touches_d3
+            ):
+                raise AccountingError(
+                    f"{quarter}: journal row {index} ({journal_kind!r}) mixes D3 "
+                    "state, accounts or event identity with a non-D3 transaction"
+                )
+            if (
+                isinstance(raw_debit, bool)
+                or not isinstance(raw_debit, (int, np.integer))
+                or isinstance(raw_credit, bool)
+                or not isinstance(raw_credit, (int, np.integer))
+            ):
+                raise AccountingError(
+                    f"{quarter}: D3 journal row {index} accounts must be strict integers"
+                )
+            raw_tick = flows.journal_tick[index]
+            if isinstance(raw_tick, bool) or not isinstance(raw_tick, (int, np.integer)):
+                raise AccountingError(
+                    f"{quarter}: D3 journal row {index} tick must be a strict integer"
+                )
+            if int(raw_tick) != int(flows.tick):
+                raise AccountingError(
+                    f"{quarter}: D3 journal row {index} tick {raw_tick} != "
+                    f"flow tick {flows.tick}"
+                )
+            raw_leg = flows.journal_leg[index]
+            if isinstance(raw_leg, bool) or not isinstance(raw_leg, (int, np.integer)):
+                raise AccountingError(
+                    f"{quarter}: D3 journal row {index} leg must be a strict integer"
+                )
+            if int(raw_leg) != 0:
+                raise AccountingError(
+                    f"{quarter}: D3 journal row {index} starts at leg {raw_leg!r}; "
+                    "every D3 row is its own one-leg transaction"
+                )
+            if index + 1 < len(flows.journal_leg):
+                next_leg = flows.journal_leg[index + 1]
+                if (
+                    isinstance(next_leg, bool)
+                    or not isinstance(next_leg, (int, np.integer))
+                    or int(next_leg) != 0
+                ):
+                    raise AccountingError(
+                        f"{quarter}: D3 journal row {index} does not end its "
+                        "transaction"
+                    )
+            raw_currency = flows.journal_currency[index]
+            if raw_currency != CMEA_CURRENCY:
+                raise AccountingError(
+                    f"{quarter}: D3 journal row {index} currency must be "
+                    f"{CMEA_CURRENCY!r}, got {raw_currency!r}"
+                )
+            raw_amount = flows.journal_amount[index]
+            if (
+                isinstance(raw_amount, bool)
+                or not isinstance(raw_amount, (int, float, np.integer, np.floating))
+                or not np.isfinite(float(raw_amount))
+            ):
+                raise AccountingError(
+                    f"{quarter}: D3 journal row {index} amount must be a finite number"
+                )
+            if flows.journal_org[index] is not None:
+                raise AccountingError(
+                    f"{quarter}: D3 journal row {index} carries journal_org"
+                )
+            actual_rows.append(
+                (
+                    str(journal_kind),
+                    int(raw_debit),
+                    int(raw_credit),
+                    str(raw_currency),
+                    float(raw_amount),
+                    event_id,
+                )
+            )
+        def _d3_row_key(
+            row: tuple[str, int, int, str, float, str],
+        ) -> tuple[str, int, int, str, float, str]:
+            return (row[0], row[1], row[2], row[3], round(row[4], 12), row[5])
+
+        if sorted(map(_d3_row_key, actual_rows)) != sorted(
+            map(_d3_row_key, expected_rows)
+        ):
+            raise AccountingError(
+                f"{quarter}: D3 journal rows do not match generated entries and "
+                "events exactly"
+            )
 
     # --- 8. regional household-channel stocks ---------------------------------
     dwelling_delta = np.asarray(state.dwelling_stock, dtype=np.float64) - np.asarray(

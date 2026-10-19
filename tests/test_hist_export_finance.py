@@ -69,6 +69,7 @@ def _legacy_export_fixture(
     stock: float = 8.0,
     usd_reserve: float = 0.0,
     usd_import_quantity: float = 0.0,
+    cmea_import_quantity: float = 0.0,
 ) -> Fixture:
     """Frozen synthetic legacy Treasury-prepay opening boundary.
 
@@ -87,6 +88,7 @@ def _legacy_export_fixture(
     }
     trade_vectors["cmea_export_demands"][0] = 2.0  # energy
     trade_vectors["convertible_export_demands"][0] = 2.0
+    trade_vectors["cmea_desired_imports"][0] = float(cmea_import_quantity)
     trade_vectors["convertible_desired_imports"][6] = float(usd_import_quantity)
     trade_vectors["convertible_prices"][0] = 3.0  # USD energy price
     trade = TradeParameters(

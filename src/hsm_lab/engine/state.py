@@ -172,6 +172,122 @@ class ExportReceivablePolicy:
     events: tuple[ExportReceivableEvent, ...] = ()
 
 
+@dataclass(frozen=True)
+class CmeaClearingCounterparty:
+    """One explicit synthetic CMEA counterparty and its cumulative credit limit.
+
+    Amounts are in the CMEA settlement unit.  The credit limit is a stock of
+    authorised negative balance, never a per-call flow cap.  No counterparty id
+    is inferred from a Treasury payment or a D2 export buyer.
+    """
+
+    counterparty_id: int
+    credit_limit: float
+
+
+@dataclass(frozen=True)
+class CmeaClearingContract:
+    """One frozen bilateral contract: direction, counterparty, commodity, price.
+
+    ``price`` is the signed contract price and never the quarter's reconstructed
+    forcing quote.  A contract belongs to exactly one direction and commodity;
+    imports and exports therefore cannot silently share an identity.
+    """
+
+    contract_id: str
+    counterparty_id: int
+    direction: str  # "import" | "export"
+    commodity_id: str
+    price: float
+
+
+@dataclass(frozen=True)
+class CmeaClearingEntry:
+    """One real import obligation or delivered export claim.
+
+    ``quantity`` is the real physical quantity; ``amount`` is
+    ``quantity * contract.price`` frozen when the flow occurs.  ``settled`` is
+    the cumulative amount confirmed for an export claim; import obligations are
+    never silently settled in this synthetic regime, so their ``settled`` stays
+    zero and their due/overdue identity is retained.
+    """
+
+    entry_id: str
+    contract_id: str
+    counterparty_id: int
+    direction: str
+    commodity_id: str
+    entry_tick: int
+    due_tick: int
+    quantity: float
+    amount: float
+    settled: float
+
+
+@dataclass(frozen=True)
+class CmeaClearingAccount:
+    """One counterparty's signed clearing position and cumulative limit."""
+
+    counterparty_id: int
+    credit_limit: float
+    balance: float
+
+
+@dataclass(frozen=True)
+class CmeaClearingTransfer:
+    """An explicit, authorised assignment of a confirmed claim."""
+
+    event_id: str
+    tick: int
+    source_counterparty_id: int
+    target_counterparty_id: int
+    amount: float
+
+
+@dataclass(frozen=True)
+class CmeaClearingSettlement:
+    """One admitted export-claim settlement; the path behind ``settled``."""
+
+    event_id: str
+    tick: int
+    entry_id: str
+    amount: float
+
+
+@dataclass(frozen=True)
+class CmeaClearingRegimeState:
+    """The admitted regime persisted with a D3 book (events excluded)."""
+
+    term_quarters: int
+    counterparties: tuple[CmeaClearingCounterparty, ...]
+    contracts: tuple[CmeaClearingContract, ...]
+    clearing_group: tuple[int, ...] = ()
+
+
+@dataclass(frozen=True)
+class CmeaClearingEvent:
+    """One caller-declared settlement or transfer event for the current tick."""
+
+    event_id: str
+    tick: int
+    kind: str  # "settle_export" | "transfer"
+    entry_id: str | None
+    source_counterparty_id: int | None
+    target_counterparty_id: int | None
+    amount: float
+
+
+@dataclass(frozen=True)
+class CmeaClearingPolicy:
+    """Explicit synthetic D3 regime for one opt-in tick."""
+
+    term_quarters: int
+    counterparties: tuple[CmeaClearingCounterparty, ...]
+    contracts: tuple[CmeaClearingContract, ...]
+    events: tuple[CmeaClearingEvent, ...] = ()
+    clearing_group: tuple[int, ...] = ()
+
+
 @dataclass
 class MaterialState:
     """Complete mutable material-economy state at an end-of-quarter boundary."""
@@ -292,6 +408,19 @@ class MaterialState:
     # rejection checkpointable; deliveries also enter this log.
     export_receivables: tuple[ExportReceivable, ...] = field(default_factory=tuple)
     export_receivable_event_ids: tuple[str, ...] = field(default_factory=tuple)
+    # --- H3F-D3 independent CMEA clearing book (default off) -------------
+    # Per-counterparty signed positions, real import/export entries and the
+    # explicit transfer log are immutable tuples.  They stay empty on every
+    # legacy/D1/D2 path, so replay bytes and checkpoint payloads do not change
+    # unless the opt-in D3 regime is supplied.
+    cmea_clearing_accounts: tuple[CmeaClearingAccount, ...] = field(default_factory=tuple)
+    cmea_clearing_entries: tuple[CmeaClearingEntry, ...] = field(default_factory=tuple)
+    cmea_clearing_transfers: tuple[CmeaClearingTransfer, ...] = field(default_factory=tuple)
+    cmea_clearing_event_ids: tuple[str, ...] = field(default_factory=tuple)
+    cmea_clearing_regime: CmeaClearingRegimeState | None = None
+    cmea_clearing_settlements: tuple[CmeaClearingSettlement, ...] = field(
+        default_factory=tuple
+    )
 
     def copy_dynamic(self) -> MaterialState:
         """Deep-copy every mutable array; shares nothing the tick mutates."""
@@ -352,6 +481,12 @@ class MaterialStockSnapshot:
     completed_ticks: int
     export_receivables: tuple[ExportReceivable, ...]
     export_receivable_event_ids: tuple[str, ...]
+    cmea_clearing_accounts: tuple[CmeaClearingAccount, ...] = ()
+    cmea_clearing_entries: tuple[CmeaClearingEntry, ...] = ()
+    cmea_clearing_transfers: tuple[CmeaClearingTransfer, ...] = ()
+    cmea_clearing_event_ids: tuple[str, ...] = ()
+    cmea_clearing_regime: CmeaClearingRegimeState | None = None
+    cmea_clearing_settlements: tuple[CmeaClearingSettlement, ...] = ()
 
 
 @dataclass
@@ -524,6 +659,18 @@ class MaterialTickFlows:
     # gate to verify each delivery principal against real delivered quantity.
     export_receivable_channel_prices: tuple[tuple[float, ...], tuple[float, ...]] = ()
 
+    # --- H3F-D3 CMEA clearing (zero/empty on every legacy/D1/D2 path) ---------
+    # Only CMEA amounts appear here; the USD channel keeps its own legacy
+    # scalars and is never netted against the clearing book.  Positions and
+    # overdue amounts are kept per counterparty, never as one aggregate.
+    cmea_clearing_events: tuple[CmeaClearingEvent, ...] = ()
+    cmea_clearing_import_payment: float = 0.0
+    cmea_clearing_export_pending: float = 0.0
+    cmea_clearing_export_settled: float = 0.0
+    cmea_clearing_positions: tuple[tuple[int, float], ...] = ()
+    cmea_clearing_overdue: tuple[tuple[int, float], ...] = ()
+    cmea_clearing_contract_prices: tuple[tuple[str, float], ...] = ()
+
     # --- residual snapshots (filled by engine.accounting) ------------------------
     material_balance_residual: np.ndarray | None = None
     material_balance_tolerance: np.ndarray | None = None
@@ -571,6 +718,15 @@ __all__ = [
     "N_E",
     "N_H",
     "N_Q",
+    "CmeaClearingAccount",
+    "CmeaClearingContract",
+    "CmeaClearingCounterparty",
+    "CmeaClearingEntry",
+    "CmeaClearingEvent",
+    "CmeaClearingPolicy",
+    "CmeaClearingRegimeState",
+    "CmeaClearingSettlement",
+    "CmeaClearingTransfer",
     "ExportContract",
     "ExportReceivable",
     "ExportReceivableEvent",
@@ -1048,6 +1204,12 @@ def capture_material_stocks(state: MaterialState) -> MaterialStockSnapshot:
         treasury_loan_rate=float(state.treasury_loan_rate),
         export_receivables=tuple(state.export_receivables),
         export_receivable_event_ids=tuple(state.export_receivable_event_ids),
+        cmea_clearing_accounts=tuple(state.cmea_clearing_accounts),
+        cmea_clearing_entries=tuple(state.cmea_clearing_entries),
+        cmea_clearing_transfers=tuple(state.cmea_clearing_transfers),
+        cmea_clearing_event_ids=tuple(state.cmea_clearing_event_ids),
+        cmea_clearing_regime=state.cmea_clearing_regime,
+        cmea_clearing_settlements=tuple(state.cmea_clearing_settlements),
         organization_cash_open=state.organization_cash.copy(),
         organization_principal=state.organization_principal.copy(),
         organization_wage_arrears=state.organization_wage_arrears.copy(),
