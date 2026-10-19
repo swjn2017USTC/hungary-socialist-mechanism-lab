@@ -103,5 +103,8 @@ improvement, or a welfare ranking. Historical status remains
 
 ## Commit
 
-The candidate is eligible for the authorized local commit after this PASS. The
-commit hash is recorded in `REPORT.md` §12 once created. No push.
+The candidate was eligible for the authorized local commit after this PASS.
+Accepted implementation + D0 docs commit:
+`ecc4ae8eae15cc0dfe3d0c2c054d8bc25d466b44`
+(`H3F-D0: versioned legacy Treasury prepay reference`). No push. This hash
+supplement is a docs-only local commit.

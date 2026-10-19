@@ -226,4 +226,11 @@ reasoning tokens 在该 JSONL usage 中未单列，记为 `NOT_MEASURED`；不�
 
 ## 12. Commit
 
-[NOT_RUN] 当前仅完成候选实现与证据，尚未 commit。待独立 `phase-reviewer` 返回 PASS，且本子步 commit 授权已确认后，只 stage 三个白名单文件和本步 docs（PLAN/REPORT/REVIEW），排除 outputs、用户计划、`.omp`、原始数据和秘密，做 `git diff --check` 与 staged-path 检查后本地小提交，禁止 push。建议标题：`H3F-D0: versioned legacy Treasury prepay reference`。
+[VERIFIED_BY_RUN｜技术] 独立第三轮 review 返回 PASS 后，已按授权做本地小提交：
+
+- implementation + D0 docs commit：`ecc4ae8eae15cc0dfe3d0c2c054d8bc25d466b44`
+  (`H3F-D0: versioned legacy Treasury prepay reference`)。
+- staged 仅 6 个白名单路径：config JSON、adapter、test、PLAN/REPORT/REVIEW。
+- 未 stage：`outputs/`、五份用户未跟踪计划、`.omp`、原始数据、秘密。
+- 提交前 `git diff --check` / `git diff --cached --check` 通过；未 push。
+- 本文件与 REVIEW 的 commit-hash 补充随后以 docs-only 本地提交记录。
