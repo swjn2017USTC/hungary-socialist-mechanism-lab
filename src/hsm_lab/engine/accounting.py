@@ -59,10 +59,12 @@ from hsm_lab.contract.material import (
 from hsm_lab.engine.finance import (
     DOMESTIC_CURRENCY,
     AccountKind,
+    bank_account_ids,
     household_account_ids,
     organization_account_ids,
     quarter_domestic_credit_rate,
     treasury_account_id,
+    treasury_term_account_id,
 )
 from hsm_lab.engine.state import (
     POOL_CODES,
@@ -834,6 +836,11 @@ def _sweep_flows(flows: MaterialTickFlows, quarter: str) -> None:
         "usd_interest_accrued",
         "usd_principal_paid",
         "usd_loan_drawn",
+        "treasury_loan_drawn",
+        "treasury_principal_paid",
+        "treasury_interest_due",
+        "treasury_interest_paid",
+        "treasury_export_outlay",
         "expired_services",
     ):
         value = float(getattr(flows, name))
@@ -1692,16 +1699,59 @@ def check_material_invariants(
         labels=bank_labels,
     )
     m2_neutral = bool(getattr(parameters, "m2_neutral_credit", False))
+    # H3F-D1 Treasury term loans are real bank assets booked on the same
+    # ledger as organization credit.  Their bank row is reconstructed from the
+    # journal legs (never from an adapter-supplied hint), and all terms are
+    # exactly zero on every legacy path, so these formulas are unchanged when
+    # D1 is off.
+    treasury_loan_drawn = float(flows.treasury_loan_drawn)
+    treasury_principal_paid = float(flows.treasury_principal_paid)
+    treasury_interest_due = float(flows.treasury_interest_due)
+    treasury_interest_paid = float(flows.treasury_interest_paid)
+
+    def _treasury_bank_delta(account_kind: str, kind_names: tuple[str, ...], *, debit: bool):
+        """Per-bank delta from journal rows of the D1 kinds on one side."""
+        ids = bank_account_ids(state, account_kind)
+        if not B or journal_kind.size == 0:
+            return np.zeros(B, dtype=np.float64)
+        row_of_account = {int(account): row for row, account in enumerate(ids.tolist())}
+        side = journal_debit if debit else journal_credit
+        mask = np.isin(journal_kind, kind_names) & np.isin(side, ids)
+        out = np.zeros(B, dtype=np.float64)
+        for journal_row in np.flatnonzero(mask):
+            bank_row = row_of_account.get(int(side[journal_row]))
+            if bank_row is not None:
+                out[bank_row] += journal_amount[journal_row]
+        return out
+
+    d1_draw_kinds = ("treasury_working_capital_draw",)
+    d1_principal_kinds = ("treasury_working_capital_principal",)
+    d1_accrual_kinds = ("treasury_working_capital_interest_accrual",)
+    d1_interest_kinds = ("treasury_working_capital_interest_payment",)
+    treasury_loan_bank_delta = _treasury_bank_delta(
+        AccountKind.LOAN_ASSET, d1_draw_kinds, debit=True
+    ) - _treasury_bank_delta(AccountKind.LOAN_ASSET, d1_principal_kinds, debit=False)
+    treasury_receivable_bank_delta = _treasury_bank_delta(
+        AccountKind.INTEREST_RECEIVABLE, d1_accrual_kinds, debit=True
+    ) - _treasury_bank_delta(
+        AccountKind.INTEREST_RECEIVABLE, d1_interest_kinds, debit=False
+    )
+    treasury_equity_bank_delta = _treasury_bank_delta(
+        AccountKind.EQUITY, d1_accrual_kinds, debit=False
+    )
     finance(
         "bank_loan_asset_continuity",
         np.asarray(state.bank_loan_asset, dtype=np.float64),
         bank_loan_open
-        if m2_neutral
-        else (
-            bank_loan_open
-            + _bank_sum(np.asarray(flows.organization_credit_drawn, dtype=np.float64))
-            - _bank_sum(np.asarray(flows.organization_principal_paid, dtype=np.float64))
-        ),
+        + (
+            np.zeros(B, dtype=np.float64)
+            if m2_neutral
+            else (
+                _bank_sum(np.asarray(flows.organization_credit_drawn, dtype=np.float64))
+                - _bank_sum(np.asarray(flows.organization_principal_paid, dtype=np.float64))
+            )
+        )
+        + treasury_loan_bank_delta,
         labels=bank_labels,
     )
     finance(
@@ -1709,7 +1759,8 @@ def check_material_invariants(
         np.asarray(state.bank_interest_receivable, dtype=np.float64),
         bank_receivable_open
         + _bank_sum(np.asarray(flows.organization_interest_due, dtype=np.float64))
-        - _bank_sum(np.asarray(flows.organization_interest_paid, dtype=np.float64)),
+        - _bank_sum(np.asarray(flows.organization_interest_paid, dtype=np.float64))
+        + treasury_receivable_bank_delta,
         labels=bank_labels,
     )
     finance(
@@ -1717,7 +1768,8 @@ def check_material_invariants(
         np.asarray(state.bank_equity, dtype=np.float64),
         bank_equity_open
         + _bank_sum(np.asarray(flows.organization_interest_due, dtype=np.float64))
-        - interest_remit_by_bank,
+        - interest_remit_by_bank
+        + treasury_equity_bank_delta,
         labels=bank_labels,
     )
 
@@ -1935,6 +1987,19 @@ def check_material_invariants(
     border_fees = float(
         np.sum(np.asarray(flows.edge_service_fee, dtype=np.float64)[border_purposes])
     )
+    export_purpose_border = np.isin(
+        np.asarray(network.edge_purpose, dtype=np.int64),
+        [_P_EXPORT_CMEA, _P_EXPORT_CONVERTIBLE],
+    )
+    export_service_fees = float(
+        np.sum(np.asarray(flows.edge_service_fee, dtype=np.float64)[export_purpose_border])
+    )
+    finance(
+        "treasury_export_outlay_rule",
+        np.asarray([float(flows.treasury_export_outlay)]),
+        np.asarray([exports_value + export_service_fees]),
+        labels=["treasury_export_outlay"],
+    )
     finance(
         "treasury_deposit_continuity",
         np.asarray([float(state.treasury_deposit)]),
@@ -1947,9 +2012,38 @@ def check_material_invariants(
                 - housing_value
                 - border_fees
                 + treasury_remittance
+                + treasury_loan_drawn
+                - treasury_principal_paid
+                - treasury_interest_paid
             ]
         ),
         labels=["treasury"],
+    )
+    # H3F-D1: the Treasury's outstanding term principal and unpaid interest
+    # are real liabilities with the lending bank.  Zero on every legacy path.
+    finance(
+        "treasury_loan_liability_continuity",
+        np.asarray([float(state.treasury_loan_principal)]),
+        np.asarray(
+            [
+                float(opening.treasury_loan_principal)
+                + treasury_loan_drawn
+                - treasury_principal_paid
+            ]
+        ),
+        labels=["treasury_loan_principal"],
+    )
+    finance(
+        "treasury_interest_arrears_continuity",
+        np.asarray([float(state.treasury_interest_arrears)]),
+        np.asarray(
+            [
+                float(opening.treasury_interest_arrears)
+                + treasury_interest_due
+                - treasury_interest_paid
+            ]
+        ),
+        labels=["treasury_interest_arrears"],
     )
     if m2_neutral:
         drawn_total = float(np.sum(flows.organization_credit_drawn))
@@ -2059,6 +2153,92 @@ def check_material_invariants(
         bailout_journal_total,
         np.asarray([float(np.sum(flows.organization_bailout_granted))]),
         labels=["bailout_grant"],
+    )
+
+    # H3F-D1: every loan flow scalar must be backed by the matching journal
+    # leg on the Treasury/bank side.  This closes the "fake flow, no entry"
+    # hole the engine's structural journal check leaves open.
+    if amount.size:
+        treasury_cash_id = treasury_account_id(state, AccountKind.CASH_DEPOSIT)
+        treasury_liability_id = treasury_term_account_id(state, AccountKind.LOAN_LIABILITY)
+        treasury_payable_id = treasury_term_account_id(state, AccountKind.INTEREST_PAYABLE)
+        bank_receivable_ids = bank_account_ids(state, AccountKind.INTEREST_RECEIVABLE)
+        d1_draw_journal = np.asarray(
+            [
+                float(
+                    np.sum(
+                        amount[
+                            (kind == "treasury_working_capital_draw")
+                            & (debit == treasury_cash_id)
+                        ]
+                    )
+                )
+            ]
+        )
+        d1_principal_journal = np.asarray(
+            [
+                float(
+                    np.sum(
+                        amount[
+                            (kind == "treasury_working_capital_principal")
+                            & (debit == treasury_liability_id)
+                        ]
+                    )
+                )
+            ]
+        )
+        d1_accrual_journal = np.asarray(
+            [
+                float(
+                    np.sum(
+                        amount[
+                            (kind == "treasury_working_capital_interest_accrual")
+                            & np.isin(debit, bank_receivable_ids)
+                        ]
+                    )
+                )
+            ]
+        )
+        d1_interest_journal = np.asarray(
+            [
+                float(
+                    np.sum(
+                        amount[
+                            (kind == "treasury_working_capital_interest_payment")
+                            & (debit == treasury_payable_id)
+                        ]
+                    )
+                )
+            ]
+        )
+    else:
+        d1_draw_journal = np.zeros(1)
+        d1_principal_journal = np.zeros(1)
+        d1_accrual_journal = np.zeros(1)
+        d1_interest_journal = np.zeros(1)
+    finance(
+        "journal_treasury_working_capital_draw_vs_flow",
+        d1_draw_journal,
+        np.asarray([treasury_loan_drawn]),
+        labels=["treasury_working_capital_draw"],
+    )
+    finance(
+        "journal_treasury_working_capital_principal_vs_flow",
+        d1_principal_journal,
+        np.asarray([treasury_principal_paid]),
+        labels=["treasury_working_capital_principal"],
+    )
+    finance(
+        "journal_treasury_working_capital_interest_accrual_vs_flow",
+        d1_accrual_journal,
+        np.asarray([treasury_interest_due]),
+        labels=["treasury_working_capital_interest_accrual"],
+    )
+    finance(
+        "journal_treasury_working_capital_interest_payment_vs_flow",
+        d1_interest_journal,
+        np.asarray([treasury_interest_paid]),
+        labels=["treasury_working_capital_interest_payment"],
     )
 
     # --- 8. regional household-channel stocks ---------------------------------

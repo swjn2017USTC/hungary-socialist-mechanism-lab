@@ -682,6 +682,7 @@ def tick_material(
     micro_stage_count: Literal[2, 4] | None = None,
     micro_stage_trace: dict[str, Any] | None = None,
     micro_stage_audit: dict[str, Any] | None = None,
+    treasury_housing_payable: float | None = None,
 ) -> MaterialTickFlows:
     """Advance the material economy by one admitted quarter (plan section 3).
 
@@ -742,6 +743,22 @@ def tick_material(
     m_count = int(network.edge_source_cell.shape[0])
     activity_count = int(network.activity_kind.shape[0])
     cell_count = int(network.cell_owner_kind.shape[0])
+
+    # H3F-D1 opt-in preflight: the Treasury's housing budget may be capped
+    # below its actual cash so a trade working-capital draw can only fund
+    # export procurement.  ``None`` (the default) keeps the legacy budget.
+    if treasury_housing_payable is not None:
+        if isinstance(treasury_housing_payable, bool) or not isinstance(
+            treasury_housing_payable, (int, float, np.integer, np.floating)
+        ):
+            raise ValueError("treasury_housing_payable must be a real number or None")
+        housing_payable = float(treasury_housing_payable)
+        if not np.isfinite(housing_payable) or housing_payable < 0.0:
+            raise ValueError(
+                "treasury_housing_payable must be finite and non-negative"
+            )
+    else:
+        housing_payable = None
 
     # H3B opt-in preflight: validate before any state mutation or flow append.
     caps: np.ndarray | None = None
@@ -1535,7 +1552,12 @@ def tick_material(
             price_net[construction_g] + index.demand_freight_units[housing_mask] * service_price
         )
         housing_cost = float(np.dot(housing_request, housing_unit_cost))
-        housing_scale = min(1.0, treasury_open / housing_cost) if housing_cost > 0.0 else 0.0
+        housing_budget = (
+            treasury_open
+            if housing_payable is None
+            else min(treasury_open, housing_payable)
+        )
+        housing_scale = min(1.0, housing_budget / housing_cost) if housing_cost > 0.0 else 0.0
         treasury_after_housing = treasury_open - housing_cost * housing_scale
         desired[housing_mask] = housing_request
         gross[housing_mask] = housing_request
@@ -2682,6 +2704,13 @@ def tick_material(
                 has_fee_round = (
                     (fee_paid_round > 0.0) & (fee_rows_round >= 0)
                 )
+                export_paid_round = np.isin(
+                    edge_purpose[treasury_paying_round],
+                    (_PURPOSE_EXPORT_CMEA, _PURPOSE_EXPORT_CONVERTIBLE),
+                )
+                flows.treasury_export_outlay += float(
+                    np.sum(unit_pay_round[treasury_paying_round][export_paid_round])
+                )
                 state.treasury_deposit = float(
                     state.treasury_deposit
                 ) - float(unit_pay_round[treasury_paying_round].sum())
@@ -3630,6 +3659,13 @@ def tick_material(
             fee_paid = pay_fee[treasury_paying]
             fee_rows = edge_transport[treasury_paying]
             has_fee = (fee_paid > 0.0) & (fee_rows >= 0)
+            export_paid_mask = np.isin(
+                edge_purpose[treasury_paying],
+                (_PURPOSE_EXPORT_CMEA, _PURPOSE_EXPORT_CONVERTIBLE),
+            )
+            flows.treasury_export_outlay = float(
+                np.sum(unit_pay[treasury_paying][export_paid_mask])
+            )
             state.treasury_deposit = float(state.treasury_deposit) - float(
                 unit_pay[treasury_paying].sum()
             )
@@ -4249,6 +4285,11 @@ def _new_flows(
         usd_interest_accrued=0.0,
         usd_principal_paid=0.0,
         usd_loan_drawn=0.0,
+        treasury_loan_drawn=0.0,
+        treasury_principal_paid=0.0,
+        treasury_interest_due=0.0,
+        treasury_interest_paid=0.0,
+        treasury_export_outlay=0.0,
         official_fx_translation=None,
         expired_services=0.0,
         service_pool_draw_at_cell=np.zeros(cell_count, dtype=np.float64),
@@ -4277,7 +4318,7 @@ def _block(field: str, array: np.ndarray) -> bytes:
 
 
 def _state_scalar_header(state: MaterialState) -> dict[str, Any]:
-    return {
+    header: dict[str, Any] = {
         "state_version": state.schema_version,
         "completed_ticks": int(state.completed_ticks),
         "treasury_deposit": float(state.treasury_deposit),
@@ -4286,10 +4327,18 @@ def _state_scalar_header(state: MaterialState) -> dict[str, Any]:
         "usd_interest_arrears": float(state.usd_interest_arrears),
         "cmea_settlement_balance": float(state.cmea_settlement_balance),
     }
+    # H3F-D1: bind the non-zero Treasury term book into the replay identity
+    # without changing any legacy (all-zero) C0/C1 byte.
+    if state.treasury_loan_principal != 0.0 or state.treasury_interest_arrears != 0.0:
+        header["treasury_loan_principal"] = float(state.treasury_loan_principal)
+        header["treasury_interest_arrears"] = float(state.treasury_interest_arrears)
+        header["treasury_loan_maturity_tick"] = float(state.treasury_loan_maturity_tick)
+        header["treasury_loan_rate"] = float(state.treasury_loan_rate)
+    return header
 
 
 def _flow_scalar_header(flows: MaterialTickFlows) -> dict[str, Any]:
-    return {
+    header: dict[str, Any] = {
         "tick": int(flows.tick),
         "quarter": flows.quarter,
         "cmea_import_payment": float(flows.cmea_import_payment),
@@ -4303,6 +4352,18 @@ def _flow_scalar_header(flows: MaterialTickFlows) -> dict[str, Any]:
         "official_fx_translation": flows.official_fx_translation,
         "expired_services": float(flows.expired_services),
     }
+    # ``treasury_export_outlay`` is a diagnostic present on legacy export
+    # ticks too, so it must never enter the replay header.  Only the loan
+    # book terms are conditional, and they are zero unless D1 is active.
+    d1_terms = {
+        "treasury_loan_drawn": float(flows.treasury_loan_drawn),
+        "treasury_principal_paid": float(flows.treasury_principal_paid),
+        "treasury_interest_due": float(flows.treasury_interest_due),
+        "treasury_interest_paid": float(flows.treasury_interest_paid),
+    }
+    if any(value != 0.0 for value in d1_terms.values()):
+        header.update(d1_terms)
+    return header
 
 
 def canonical_material_bytes(state: MaterialState, flows: MaterialTickFlows | None = None) -> bytes:

@@ -110,6 +110,14 @@ TREASURY_ACCOUNT_KINDS: tuple[str, ...] = (
     AccountKind.FISCAL_EXPENSE,
     AccountKind.LOAN_ASSET,
 )
+#: H3F-D1 Treasury-side term-loan accounts.  They are appended *after* the
+#: plot-clearing block (not inside ``TREASURY_ACCOUNT_KINDS``) so the legacy
+#: foreign and plot account ids remain bit-identical on every existing path.
+TREASURY_TERM_ACCOUNT_KINDS: tuple[str, ...] = (
+    AccountKind.LOAN_LIABILITY,
+    AccountKind.INTEREST_PAYABLE,
+    AccountKind.INTEREST_EXPENSE,
+)
 
 
 def _axis_sizes(state: MaterialState) -> tuple[int, int, int, int]:
@@ -197,6 +205,26 @@ def foreign_account_id(state: MaterialState, currency: str) -> int:
     return base_foreign + offset
 
 
+def treasury_term_account_id(state: MaterialState, account_kind: str) -> int:
+    """Account id of one H3F-D1 Treasury term-loan account.
+
+    The block starts after every pre-existing account block (including the
+    per-region plot clearing accounts), so adding D1 never shifts the ids of
+    legacy treasury/foreign/plot accounts or the journals that use them.
+    """
+    position = TREASURY_TERM_ACCOUNT_KINDS.index(account_kind)
+    n_households, n_orgs, n_banks, n_regions = _axis_sizes(state)
+    base_term = (
+        len(HOUSEHOLD_ACCOUNT_KINDS) * n_households
+        + len(ORGANIZATION_ACCOUNT_KINDS) * n_orgs
+        + len(BANK_ACCOUNT_KINDS) * n_banks
+        + len(TREASURY_ACCOUNT_KINDS)
+        + 2  # foreign_usd + foreign_cmea
+        + n_regions
+    )
+    return base_term + position
+
+
 def plot_clearing_account_ids(state: MaterialState) -> np.ndarray:
     """Account ids (R,) of the per-region ephemeral plot clearing accounts."""
     _, n_orgs, n_banks, _ = _axis_sizes(state)
@@ -242,6 +270,10 @@ def build_account_directory(state: MaterialState) -> dict[tuple[str, int, str, s
 
     for kind in TREASURY_ACCOUNT_KINDS:
         directory[("treasury", 0, DOMESTIC_CURRENCY, kind)] = treasury_account_id(state, kind)
+    for kind in TREASURY_TERM_ACCOUNT_KINDS:
+        directory[("treasury", 0, DOMESTIC_CURRENCY, kind)] = treasury_term_account_id(
+            state, kind
+        )
     directory[("foreign_usd", 0, USD_CURRENCY, AccountKind.TRADE_SETTLEMENT)] = foreign_account_id(
         state, USD_CURRENCY
     )

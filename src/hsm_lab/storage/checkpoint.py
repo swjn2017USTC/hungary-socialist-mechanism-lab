@@ -69,7 +69,11 @@ from hsm_lab.storage.political_output import (
     POLITICAL_TABLES,
 )
 
-CHECKPOINT_VERSION = "material-checkpoint-v4"
+# v5 adds the H3F-D1 Treasury term-loan scalars to the payload spec.  The
+# material state version string stays v4 because replay digests over the
+# array field set must remain byte-identical for C0/C1; old v4 checkpoints
+# are refused explicitly by this version gate rather than silently misread.
+CHECKPOINT_VERSION = "material-checkpoint-v5"
 STATE_VERSION = MATERIAL_STATE_VERSION  # "material-state-v4"
 ENGINE_VERSION = "material-engine-v4"
 
@@ -189,6 +193,10 @@ _STATE_SCALAR_SPEC: tuple[tuple[str, np.dtype], ...] = (
     ("usd_principal", np.dtype("<f8")),
     ("usd_interest_arrears", np.dtype("<f8")),
     ("cmea_settlement_balance", np.dtype("<f8")),
+    ("treasury_loan_principal", np.dtype("<f8")),
+    ("treasury_interest_arrears", np.dtype("<f8")),
+    ("treasury_loan_maturity_tick", np.dtype("<f8")),
+    ("treasury_loan_rate", np.dtype("<f8")),
 )
 
 # Non-negative state fields (cmea settlement may go negative as memo credit;
@@ -245,6 +253,9 @@ _STATE_NON_NEGATIVE = (
     "usd_reserve",
     "usd_principal",
     "usd_interest_arrears",
+    "treasury_loan_principal",
+    "treasury_interest_arrears",
+    "treasury_loan_rate",
 )
 
 _STATE_UNIT_RANGE = (
@@ -695,8 +706,15 @@ def _validate_state(
         values = arrays[name]
         if float(np.min(values)) < -ATOL or float(np.max(values)) > 1.0 + ATOL:
             raise ResearchGateError(f"checkpoint state field {name} lies outside [0, 1]")
-    if state.treasury_deposit < -ATOL or state.usd_reserve < -ATOL:
-        raise ResearchGateError("checkpoint treasury/usd accounts are negative")
+    if (
+        state.treasury_deposit < -ATOL
+        or state.usd_reserve < -ATOL
+        or state.treasury_loan_principal < -ATOL
+        or state.treasury_interest_arrears < -ATOL
+        or state.treasury_loan_rate < -ATOL
+        or state.treasury_loan_maturity_tick < -1.0 - ATOL
+    ):
+        raise ResearchGateError("checkpoint treasury/usd/loan accounts are negative")
     index_checks = (
         ("household_region", arrays["household_region"], regions),
         ("organization_region", arrays["organization_region"], regions),

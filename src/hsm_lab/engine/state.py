@@ -201,6 +201,17 @@ class MaterialState:
     usd_principal: float
     usd_interest_arrears: float
     cmea_settlement_balance: float  # may go negative (memo credit)
+    # --- H3F-D1 limited-term Treasury trade loan (default off) -----------
+    # Scalar (not array) by design: the legacy replay digest covers the array
+    # field set, so a zero-valued D1 book must not alter C0/C1 bytes.  The
+    # adapter binds the per-batch maturity schedule out of band.
+    treasury_loan_principal: float = 0.0
+    treasury_interest_arrears: float = 0.0
+    # One outstanding facility at a time: the maturity tick (-1 = none) and
+    # the contract rate make the schedule checkpointable, so a resumed D1
+    # state never loses its term.
+    treasury_loan_maturity_tick: float = -1.0
+    treasury_loan_rate: float = 0.0
 
     def copy_dynamic(self) -> MaterialState:
         """Deep-copy every mutable array; shares nothing the tick mutates."""
@@ -241,6 +252,10 @@ class MaterialStockSnapshot:
     usd_principal: float
     usd_interest_arrears: float
     cmea_settlement_balance: float
+    treasury_loan_principal: float
+    treasury_interest_arrears: float
+    treasury_loan_maturity_tick: float
+    treasury_loan_rate: float
     # organization dynamic finance/expectation fields
     organization_cash_open: np.ndarray  # alias of organization_cash above
     organization_principal: np.ndarray
@@ -378,6 +393,13 @@ class MaterialTickFlows:
     usd_interest_accrued: float
     usd_principal_paid: float
     usd_loan_drawn: float
+    # H3F-D1 limited-term Treasury trade loan (all zero unless the opt-in
+    # adapter books a draw/service event for this tick).
+    treasury_loan_drawn: float
+    treasury_principal_paid: float
+    treasury_interest_due: float
+    treasury_interest_paid: float
+    treasury_export_outlay: float  # goods+fee paid by Treasury on export edges
     official_fx_translation: float | None  # diagnostic only
     expired_services: float  # services that expired unused this tick
     # Same-quarter service clearing (P05 §0.4): per-cell pool consumption
@@ -875,6 +897,10 @@ def initialize_material(
         usd_principal=float(parameters.trade.convertible_opening_principal),
         usd_interest_arrears=0.0,
         cmea_settlement_balance=0.0,
+        treasury_loan_principal=0.0,
+        treasury_interest_arrears=0.0,
+        treasury_loan_maturity_tick=-1.0,
+        treasury_loan_rate=0.0,
     )
 
 
@@ -904,6 +930,10 @@ def capture_material_stocks(state: MaterialState) -> MaterialStockSnapshot:
         usd_principal=float(state.usd_principal),
         usd_interest_arrears=float(state.usd_interest_arrears),
         cmea_settlement_balance=float(state.cmea_settlement_balance),
+        treasury_loan_principal=float(state.treasury_loan_principal),
+        treasury_interest_arrears=float(state.treasury_interest_arrears),
+        treasury_loan_maturity_tick=float(state.treasury_loan_maturity_tick),
+        treasury_loan_rate=float(state.treasury_loan_rate),
         organization_cash_open=state.organization_cash.copy(),
         organization_principal=state.organization_principal.copy(),
         organization_wage_arrears=state.organization_wage_arrears.copy(),

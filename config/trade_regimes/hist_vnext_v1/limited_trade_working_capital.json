@@ -1,0 +1,11 @@
+{
+  "schema_version": "hist-trade-working-capital-regime-v1",
+  "regime_id": "limited_trade_working_capital",
+  "source_kind": "synthetic",
+  "bank_index": 0,
+  "credit_limit": 4.0,
+  "annual_rate": 0.04,
+  "term_quarters": 1,
+  "draw_tick_start": 0,
+  "draw_tick_end": 0
+}
