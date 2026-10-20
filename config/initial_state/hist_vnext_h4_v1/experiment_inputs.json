@@ -1,0 +1,65 @@
+{
+  "schema_version": "hist_vnext_h4a1_experiment_v1",
+  "experiment_id": "h4exp_synthetic_dwelling_sensitivity_v1",
+  "classification": "synthetic",
+  "evidence_kind": "experiment_assumption",
+  "data_role": "initial_state",
+  "purpose": "initial_state",
+  "target_initial_at": "1957-01-01",
+  "historical_status": "NOT_ESTABLISHED",
+  "runtime_connected": false,
+  "declared_by": "deepseek/deepseek-flash",
+  "base_scenario": {
+    "path": "config/scenarios/historical_f2_replay.json",
+    "sha256": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c",
+    "household_recipe_sha256": "c879be08f156c389567b8d0cde2caa97f2dce3e83192930c329eea586718b140",
+    "material_recipe_sha256": "b2c4122faf5f2059214297ca2b77221d2b3ec10db99d63e8643b37dba9b6157d"
+  },
+  "upstream_approved_input_set": {
+    "path": "docs/phases/HIST_VNEXT/H4A-0/APPROVED_INPUT_SET.json",
+    "sha256": "4a1cbb3ae0637b8a0ae1c064db89a2890fc0c40c4def5103b0030234dd96a5ac"
+  },
+  "records": [
+    {
+      "assumption_id": "h4exp_inherited_persons",
+      "target_field": "household_initial.counties[].persons_total",
+      "unit": "persons",
+      "basis": "inherited_baseline_synthetic",
+      "ledger_ref": "h4exp_inherited_persons",
+      "historical_support": "none"
+    },
+    {
+      "assumption_id": "h4exp_inherited_households",
+      "target_field": "household_initial.counties[].household_total",
+      "unit": "households",
+      "basis": "inherited_baseline_synthetic",
+      "ledger_ref": "h4exp_inherited_households",
+      "historical_support": "none"
+    },
+    {
+      "assumption_id": "h4exp_dwelling_ratio",
+      "target_field": "material_initial.dwelling_per_person",
+      "unit": "dwellings/person",
+      "basis": "explicit_experiment_design",
+      "ledger_ref": "h4exp_dwelling_ratio",
+      "historical_support": "none"
+    }
+  ],
+  "settings": [
+    {
+      "setting_id": "low",
+      "value": 0.3
+    },
+    {
+      "setting_id": "baseline",
+      "value": 0.4
+    },
+    {
+      "setting_id": "high",
+      "value": 0.5
+    }
+  ],
+  "transformation_version": "inherit-synthetic-recipe-and-dwelling-ratio-v1",
+  "ledger_path": "docs/phases/HIST_VNEXT/H4A-1/ASSUMPTION_LEDGER.md",
+  "ledger_sha256": "55620c401ea3c685df7795cc654581a8fb3c5a79c2d5143be31cbfcf4eee83a9"
+}

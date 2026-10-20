@@ -67,11 +67,12 @@ No 1960 value is forwarded as a 1957 initial value.
 ## Verification gate
 ```sh
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_hist_source_admission.py
-# expected: 16 passed
+# expected: all tests pass (the suite grew during the H4A-1 prerequisite repair;
+# see docs/phases/HIST_VNEXT/H4A-1/H1A_REPAIR.md for the current count and evidence)
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python history/HIST_VNEXT/sources/admission.py --root .
 # expected: exit 1 (structural PASS, historical BLOCKED)
 .venv/bin/ruff check --no-cache history/HIST_VNEXT/sources/admission.py tests/test_hist_source_admission.py
 # expected: All checks passed
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q -p no:cacheprovider
-# expected: 812 passed, 172 warnings
+# expected: all tests pass (current repository-wide count is recorded in the H4A-1 report)
 ```

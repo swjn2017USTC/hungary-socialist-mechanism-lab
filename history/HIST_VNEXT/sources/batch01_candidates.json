@@ -8,7 +8,7 @@
       "authors": [
         "Béla Balassa"
       ],
-      "publication_date": "1982-01-01",
+      "publication_date": "1982",
       "document_number": "SWP506",
       "archival_reference": null,
       "source_type": "secondary_analysis",
@@ -19,10 +19,12 @@
       "pdf_page_range": "1-43",
       "printed_page_range": null,
       "statistical_period": null,
-      "source_available_at": "1982-01-01",
+      "source_available_at": null,
       "rights": {
-        "license": "unknown",
-        "source": "unknown"
+        "license_status": "unknown",
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local intake does not grant copyright, redistribution, or model upload"
       },
       "remote_model_upload_allowed": false,
       "data_role": "not_admitted",
@@ -34,7 +36,9 @@
         "archival_reference",
         "usage_rights",
         "printed_page_mapping"
-      ]
+      ],
+      "publication_precision": "year",
+      "source_available_precision": "unknown"
     },
     {
       "source_id": "kenen_1990_wp9079",
@@ -43,7 +47,7 @@
       "authors": [
         "Peter B. Kenen"
       ],
-      "publication_date": "1990-09-01",
+      "publication_date": "1990-09",
       "document_number": "WP/90/79",
       "archival_reference": null,
       "source_type": "secondary_analysis",
@@ -54,10 +58,12 @@
       "pdf_page_range": "1-40",
       "printed_page_range": null,
       "statistical_period": null,
-      "source_available_at": "1990-09-01",
+      "source_available_at": null,
       "rights": {
-        "license": "unknown",
-        "source": "unknown"
+        "license_status": "unknown",
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local intake does not grant copyright, redistribution, or model upload"
       },
       "remote_model_upload_allowed": false,
       "data_role": "not_admitted",
@@ -69,7 +75,9 @@
         "archival_reference",
         "usage_rights",
         "printed_page_mapping"
-      ]
+      ],
+      "publication_precision": "month",
+      "source_available_precision": "unknown"
     },
     {
       "source_id": "boote_somogyi_1991_ch02",
@@ -79,7 +87,7 @@
         "Anthony R. Boote",
         "János Somogyi"
       ],
-      "publication_date": "1991-01-01",
+      "publication_date": "1991",
       "document_number": "OP/83",
       "archival_reference": null,
       "source_type": "secondary_analysis",
@@ -90,10 +98,12 @@
       "pdf_page_range": "1-2",
       "printed_page_range": null,
       "statistical_period": null,
-      "source_available_at": "1991-01-01",
+      "source_available_at": null,
       "rights": {
-        "license": "unknown",
-        "source": "unknown"
+        "license_status": "unknown",
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local intake does not grant copyright, redistribution, or model upload"
       },
       "remote_model_upload_allowed": false,
       "data_role": "not_admitted",
@@ -105,7 +115,9 @@
         "archival_reference",
         "usage_rights",
         "printed_page_mapping"
-      ]
+      ],
+      "publication_precision": "year",
+      "source_available_precision": "unknown"
     },
     {
       "source_id": "boote_somogyi_1991_ch05",
@@ -115,7 +127,7 @@
         "Anthony R. Boote",
         "János Somogyi"
       ],
-      "publication_date": "1991-01-01",
+      "publication_date": "1991",
       "document_number": "OP/83",
       "archival_reference": null,
       "source_type": "secondary_analysis",
@@ -126,10 +138,12 @@
       "pdf_page_range": "1-4",
       "printed_page_range": null,
       "statistical_period": null,
-      "source_available_at": "1991-01-01",
+      "source_available_at": null,
       "rights": {
-        "license": "unknown",
-        "source": "unknown"
+        "license_status": "unknown",
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local intake does not grant copyright, redistribution, or model upload"
       },
       "remote_model_upload_allowed": false,
       "data_role": "not_admitted",
@@ -141,7 +155,9 @@
         "archival_reference",
         "usage_rights",
         "printed_page_mapping"
-      ]
+      ],
+      "publication_precision": "year",
+      "source_available_precision": "unknown"
     }
   ]
 }

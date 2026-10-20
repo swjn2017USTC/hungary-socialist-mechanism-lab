@@ -1,0 +1,27 @@
+{
+  "schema_version": "hist_vnext_h4a1_experiment_v1",
+  "review": {
+    "path": "docs/phases/HIST_VNEXT/H4A-1/EXPERIMENT_INPUT_REVIEW.json",
+    "sha256": "4100afb8b3cf7e965668c1011cd3653155a89d69d14b16788f885f067057a543"
+  },
+  "reviewed_sha256": {
+    "history/HIST_VNEXT/h4_sources/experiment_admission.py": "7789e9eff0bb45a089617acf358a48a33cbb66a1c50a33b1dd94929aa9851d1f",
+    "config/initial_state/hist_vnext_h4_v1/experiment_inputs.json": "e564786bbcd1eafbd23fd94b3d2bda87a46743e16fba7b800203518c0156a0a5",
+    "tests/test_hist_experiment_initial_admission.py": "133288837328ce90768be58c0617df5b591de87caeeaebe946418f23494229e8",
+    "docs/phases/HIST_VNEXT/H4A-1/ASSUMPTION_LEDGER.md": "55620c401ea3c685df7795cc654581a8fb3c5a79c2d5143be31cbfcf4eee83a9",
+    "config/scenarios/historical_f2_replay.json": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c",
+    "docs/phases/HIST_VNEXT/H4A-0/APPROVED_INPUT_SET.json": "4a1cbb3ae0637b8a0ae1c064db89a2890fc0c40c4def5103b0030234dd96a5ac",
+    "docs/phases/HIST_VNEXT/H4A-1/H1A_REREVIEW_ROUND14.md": "3318c2050652f7224e926374e02a8acfa58c066d94c5dedde5f2940026a19965"
+  },
+  "approved_assumption_ids": [
+    "h4exp_inherited_persons",
+    "h4exp_inherited_households",
+    "h4exp_dwelling_ratio"
+  ],
+  "purpose": "initial_state",
+  "target_initial_at": "1957-01-01",
+  "expires_at": null,
+  "issued_by": "omp:review-subagent/h4a1-step3-experiment",
+  "issued_at": "2026-10-20T14:52:26+00:00",
+  "runtime_connected": false
+}

@@ -1,0 +1,62 @@
+{
+  "schema_version": "hist_vnext_h4a1_actual_inputs_v1",
+  "target_initial_at": "1957-01-01",
+  "historical_status": "NOT_ESTABLISHED",
+  "runtime_connected": false,
+  "experiment_input_status": "EXPERIMENT_ONLY",
+  "approved_but_unconsumed": [
+    {
+      "assumption_id": "h4exp_inherited_persons",
+      "target_field": "household_initial.counties[].persons_total",
+      "unit": "persons",
+      "basis": "inherited_baseline_synthetic",
+      "historical_support": "none"
+    },
+    {
+      "assumption_id": "h4exp_inherited_households",
+      "target_field": "household_initial.counties[].household_total",
+      "unit": "households",
+      "basis": "inherited_baseline_synthetic",
+      "historical_support": "none"
+    },
+    {
+      "assumption_id": "h4exp_dwelling_ratio",
+      "target_field": "material_initial.dwelling_per_person",
+      "unit": "dwellings/person",
+      "basis": "explicit_experiment_design",
+      "historical_support": "none",
+      "settings": [
+        {
+          "setting_id": "low",
+          "value": 0.3
+        },
+        {
+          "setting_id": "baseline",
+          "value": 0.4
+        },
+        {
+          "setting_id": "high",
+          "value": 0.5
+        }
+      ]
+    }
+  ],
+  "consumed_by_model": [],
+  "base_scenario": {
+    "path": "config/scenarios/historical_f2_replay.json",
+    "sha256": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c"
+  },
+  "declaration": {
+    "path": "config/initial_state/hist_vnext_h4_v1/experiment_inputs.json",
+    "sha256": "e564786bbcd1eafbd23fd94b3d2bda87a46743e16fba7b800203518c0156a0a5"
+  },
+  "review": {
+    "path": "docs/phases/HIST_VNEXT/H4A-1/EXPERIMENT_INPUT_REVIEW.json",
+    "sha256": "4100afb8b3cf7e965668c1011cd3653155a89d69d14b16788f885f067057a543"
+  },
+  "approval": {
+    "path": "docs/phases/HIST_VNEXT/H4A-1/EXPERIMENT_INPUT_APPROVAL.json",
+    "sha256": "c322f7bbc5cbc86da9eadc2fed36535152c5bc9efcd29b3d9f0cdb9ec9c450fc"
+  },
+  "notice": "The experiment declaration is approved for design evaluation only. It is not a historical input, is not consumed by the engine, and does not admit any H4A-0 statistical candidate."
+}

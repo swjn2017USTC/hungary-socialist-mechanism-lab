@@ -1,0 +1,42 @@
+{
+  "schema_version": "hist_vnext_h4a1_same_seed_control_v1",
+  "seed": 1729,
+  "control": {
+    "scenario_id": "historical_f2_replay",
+    "until": "1957Q4",
+    "run_id": "467b7d5a2ad747ecbc0f176d51c3ea8d",
+    "status": "paused",
+    "completed_ticks": 4,
+    "planned_ticks": 116,
+    "horizon_reached": false,
+    "identity_verification": "NOT_RUN: verify_run_identity expects a completed 116-tick run; this is a 4-tick horizon-limited control. The digest and parameter/recipe hashes were independently reproduced.",
+    "deterministic_replay_digest": "0d360553a9066dc60515bffd34abae80b5f556ed188609f0063ba6fd73e9fa03",
+    "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+    "initial_recipe_hash": "10655b0706fae7960a6a7b6dec660d160b9c6670186bec7adf82743870432b82",
+    "output_dir": "outputs/hist-vnext-h4a-1-20261020T125432Z/synthetic_4Q"
+  },
+  "h4_initialization_arm": {
+    "status": "BLOCKED",
+    "run_id": null,
+    "difference": null,
+    "gates": [
+      "production initialization not wired",
+      "experiment approval is EXPERIMENT_ONLY, not a historical input",
+      "H3F-D3 strict full-file byte gate remains UNMET",
+      "H3G same-tick household realized/unmet structural null remains"
+    ]
+  },
+  "c0": {
+    "scenario_id": "historical_f2_replay",
+    "digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+    "run_id": "974acc9622f94172ad1e68e61d620030",
+    "output_dir": "outputs/hist-vnext-h4a-1-20261020T125432Z/C0"
+  },
+  "c1": {
+    "scenario_id": "historical_f2_trade_scenario",
+    "digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+    "run_id": "33bc9a0dab07408eabf07e20bf58be9b",
+    "output_dir": "outputs/hist-vnext-h4a-1-20261020T125432Z/C1"
+  },
+  "notice": "The 4Q control is the pure synthetic baseline. It is not an H4 initialization arm and no historical effect is claimed."
+}
