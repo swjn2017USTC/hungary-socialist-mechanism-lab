@@ -1,0 +1,190 @@
+{
+  "schema_version": "hist_vnext_h4b_input_manifest_v1",
+  "phase": "HIST_VNEXT/H4B",
+  "pilot_id": "H4B_PILOT_A",
+  "status": "NOT_RUN",
+  "run_id": null,
+  "runtime_connected": false,
+  "historical_status": "NOT_ESTABLISHED",
+  "consumed_by_model": [],
+  "notice": "No H4B arm executed. No run id, trace, paired delta, first-stage value, seed outcome, or resource profile exists. The H4A-1 approved experiment records remain unconsumed; the C0/C1 entries are frozen regression inputs, not a pilot initial state.",
+  "technical_blockers": [
+    "H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED",
+    "PRICE_INVESTMENT_EXECUTION_MAPPING_ABSENT",
+    "STRICT_FULL_FILE_BYTE_GATE_UNMET"
+  ],
+  "h4a_experiment": {
+    "declaration": {
+      "path": "config/initial_state/hist_vnext_h4_v1/experiment_inputs.json",
+      "sha256": "e564786bbcd1eafbd23fd94b3d2bda87a46743e16fba7b800203518c0156a0a5",
+      "status": "EXPERIMENT_ONLY",
+      "historical_support": "none",
+      "target_initial_at": "1957-01-01"
+    },
+    "review": {
+      "path": "docs/phases/HIST_VNEXT/H4A-1/EXPERIMENT_INPUT_REVIEW.json",
+      "sha256": "4100afb8b3cf7e965668c1011cd3653155a89d69d14b16788f885f067057a543"
+    },
+    "approval": {
+      "path": "docs/phases/HIST_VNEXT/H4A-1/EXPERIMENT_INPUT_APPROVAL.json",
+      "sha256": "c322f7bbc5cbc86da9eadc2fed36535152c5bc9efcd29b3d9f0cdb9ec9c450fc",
+      "approved_assumption_ids": [
+        "h4exp_inherited_persons",
+        "h4exp_inherited_households",
+        "h4exp_dwelling_ratio"
+      ],
+      "scope": "design evaluation only; initial_state purpose; no forcing/actor path"
+    },
+    "approved_but_unconsumed": [
+      {
+        "assumption_id": "h4exp_inherited_persons",
+        "target_field": "household_initial.counties[].persons_total",
+        "unit": "persons",
+        "basis": "inherited_baseline_synthetic",
+        "historical_support": "none"
+      },
+      {
+        "assumption_id": "h4exp_inherited_households",
+        "target_field": "household_initial.counties[].household_total",
+        "unit": "households",
+        "basis": "inherited_baseline_synthetic",
+        "historical_support": "none"
+      },
+      {
+        "assumption_id": "h4exp_dwelling_ratio",
+        "target_field": "material_initial.dwelling_per_person",
+        "unit": "dwellings/person",
+        "basis": "explicit_experiment_design",
+        "historical_support": "none",
+        "settings": [
+          {"setting_id": "low", "value": 0.3},
+          {"setting_id": "baseline", "value": 0.4},
+          {"setting_id": "high", "value": 0.5}
+        ]
+      }
+    ],
+    "consumed_by_model": [],
+    "runtime_connected": false,
+    "cli_observation": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m history.HIST_VNEXT.h4_sources.experiment_admission --root . --config config/initial_state/hist_vnext_h4_v1/experiment_inputs.json --approval docs/phases/HIST_VNEXT/H4A-1/EXPERIMENT_INPUT_APPROVAL.json",
+      "exit_code": 0,
+      "admission": "EXPERIMENT_ONLY",
+      "structural": "PASS",
+      "historical": "NOT_ESTABLISHED",
+      "historical_inputs_admitted": 0,
+      "approved_inputs": 3,
+      "errors": [],
+      "interpretation": "The declaration and approval are valid and design-only. Exit 0 does not show runtime connection, production initialization, or measurement wiring."
+    }
+  },
+  "regression_only": [
+    {
+      "scenario_id": "historical_f2_replay",
+      "path": "config/scenarios/historical_f2_replay.json",
+      "sha256": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c",
+      "seed": 1729,
+      "role": "frozen regression (C0)",
+      "is_pilot_initial_state": false,
+      "note": "Used only to verify the frozen digest/identity. It is not an H4B arm and is not a historical 1968 initial state."
+    },
+    {
+      "scenario_id": "historical_f2_trade_scenario",
+      "path": "config/scenarios/historical_f2_trade_scenario.json",
+      "sha256": "3ad4510064daa6e0b6f37893eb6a5721c3ad0b34f3284175c2cde77a33397a5f",
+      "seed": 1729,
+      "role": "frozen regression (C1)",
+      "is_pilot_initial_state": false,
+      "note": "Used only to verify the frozen digest/identity. It is not an H4B arm."
+    }
+  ],
+  "pilot_arms": [
+    {
+      "arm_id": "A_procurement_granted",
+      "mechanism": "procurement permission",
+      "setting": "granted",
+      "status": "NOT_RUN",
+      "run_id": null,
+      "blocked_by": ["PRICE_INVESTMENT_EXECUTION_MAPPING_ABSENT", "H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED"]
+    },
+    {
+      "arm_id": "A_procurement_revoked",
+      "mechanism": "procurement permission",
+      "setting": "revoked",
+      "status": "NOT_RUN",
+      "run_id": null,
+      "blocked_by": ["H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED"]
+    },
+    {
+      "arm_id": "A_procurement_unknown",
+      "mechanism": "procurement permission",
+      "setting": "unknown",
+      "status": "NOT_RUN",
+      "run_id": null,
+      "blocked_by": ["H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED"],
+      "note": "unknown means undecidable and therefore not executed; it is not central approval."
+    },
+    {
+      "arm_id": "B_price_fixed",
+      "mechanism": "price category",
+      "setting": "fixed",
+      "status": "NOT_RUN",
+      "run_id": null,
+      "blocked_by": ["PRICE_INVESTMENT_EXECUTION_MAPPING_ABSENT", "H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED"]
+    },
+    {
+      "arm_id": "B_price_authorized_adjustment",
+      "mechanism": "price category",
+      "setting": "authorized-adjustment",
+      "status": "NOT_RUN",
+      "run_id": null,
+      "blocked_by": ["PRICE_INVESTMENT_EXECUTION_MAPPING_ABSENT", "H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED"]
+    },
+    {
+      "arm_id": "C_investment_central_approval",
+      "mechanism": "investment approval",
+      "setting": "central-approval",
+      "status": "NOT_RUN",
+      "run_id": null,
+      "blocked_by": ["PRICE_INVESTMENT_EXECUTION_MAPPING_ABSENT", "H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED"]
+    },
+    {
+      "arm_id": "C_investment_delegated_approval",
+      "mechanism": "investment approval",
+      "setting": "delegated-approval",
+      "status": "NOT_RUN",
+      "run_id": null,
+      "blocked_by": ["PRICE_INVESTMENT_EXECUTION_MAPPING_ABSENT", "H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED"]
+    },
+    {
+      "arm_id": "D_combined",
+      "mechanism": "procurement + price + investment",
+      "setting": "all three delegated",
+      "status": "NOT_RUN",
+      "run_id": null,
+      "blocked_by": ["PRICE_INVESTMENT_EXECUTION_MAPPING_ABSENT", "H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED"],
+      "note": "A combination arm counts only when all three operations are genuinely executable; they are not."
+    },
+    {
+      "arm_id": "NEGATIVE_CONTROL",
+      "mechanism": "none",
+      "setting": "same path, no permission change",
+      "status": "NOT_RUN",
+      "run_id": null,
+      "blocked_by": ["H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED"]
+    }
+  ],
+  "forbidden_inputs_not_used": [
+    "1979-1985 sealed target window",
+    "1986-1988 reserved hold-out",
+    "original PDF / full OCR text / private value payloads",
+    "HOLD pages",
+    "target values entering forcing or actor information sets"
+  ],
+  "verification": {
+    "check": "IMPORTANT: this manifest records absence of runs; do not treat any empty field as a zero effect.",
+    "paired_delta": null,
+    "first_stage": null,
+    "trace": null,
+    "failure_seeds": []
+  }
+}

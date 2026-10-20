@@ -1,0 +1,253 @@
+{
+  "schema_version": "hist_vnext_h4b_measurement_manifest_v1",
+  "phase": "HIST_VNEXT/H4B",
+  "declaration_only": true,
+  "runtime_connected": false,
+  "source_crosswalk": {
+    "path": "config/initial_state/hist_vnext_h4_v1/measurement_crosswalk.json",
+    "sha256": "d0fbfab60e7278de01dc642ece9d73643a3b91cf0af4760aca05a72ef92691e8"
+  },
+  "notice": "Definition-only mapping. No restricted value or numeric series is copied. All nine mappings are definition-only (one proxy, eight no_counterpart). None is connected to runtime measurement.",
+  "mapping_count": 9,
+  "records": [
+    {
+      "mapping_id": "meas_household_consumption",
+      "source_variable": "A lakosság fogyasztása / per-capita consumption",
+      "candidate_ids": [
+        "h4cand_d10_household_consumption_definition_1957p420",
+        "h4cand_d10_per_capita_consumption_1968p370"
+      ],
+      "source_unit": "mixed: physical food quantities, current-price Ft, per-capita values",
+      "model_metric": "national_accounts.household_consumption",
+      "model_unit": "f2_v1_commodity_physical_unit",
+      "mapping_status": "proxy",
+      "mapping_reasons": [
+        "source consumption includes purchases, markets, own production and institutional meals",
+        "category/product-group coverage is not reconciled to the 16 F2 commodities",
+        "current-price Ft and per-capita series cannot be used as physical commodity flows"
+      ],
+      "population_basis": "source-defined resident population; per-capita denominator not reconciled",
+      "aggregation": "annual",
+      "price_basis_comparison": "mixed current-price and physical quantities; no direct comparison-price bridge",
+      "data_role": "target",
+      "purpose": "measurement",
+      "runtime_connected": false,
+      "admitted_value_status": "NO_VALUE_ADMITTED",
+      "numeric_comparison_status": "NOT_RUN",
+      "numeric_comparison_reason": "No admitted value series exists; absence is not zero.",
+      "notes": "Proxy only; no numeric target series transcribed or connected."
+    },
+    {
+      "mapping_id": "meas_trade_imports",
+      "source_variable": "Külkereskedelmi forgalom (trade values and net weight by commodity group)",
+      "candidate_ids": [
+        "h4cand_d10_trade_devizaforint_1957p418"
+      ],
+      "source_unit": "devizaforint value and net weight by commodity group; no F2 commodity-level physical quantity",
+      "model_metric": "national_accounts.imports",
+      "model_unit": "f2_v1_commodity_physical_unit",
+      "mapping_status": "no_counterpart",
+      "mapping_reasons": [
+        "devizaforint border-parity values are not physical commodity flows",
+        "gross/netted labour-processing conventions and country attribution differ from the model trade channels",
+        "no CMEA/convertible split with matching commodity definitions was established"
+      ],
+      "population_basis": null,
+      "aggregation": "annual",
+      "price_basis_comparison": "devizaforint current values; no direct physical conversion",
+      "data_role": "target",
+      "purpose": "measurement",
+      "runtime_connected": false,
+      "admitted_value_status": "NO_VALUE_ADMITTED",
+      "numeric_comparison_status": "NOT_RUN",
+      "numeric_comparison_reason": "No admitted value series exists; absence is not zero.",
+      "notes": "No automatic currency or value-to-physical conversion."
+    },
+    {
+      "mapping_id": "meas_trade_convertible_imports",
+      "source_variable": "Külkereskedelmi forgalom (trade values and net weight by commodity group)",
+      "candidate_ids": [
+        "h4cand_d10_trade_devizaforint_1957p418"
+      ],
+      "source_unit": "devizaforint value and net weight by commodity group; no F2 commodity-level physical quantity",
+      "model_metric": "national_accounts.convertible_imports",
+      "model_unit": "f2_v1_commodity_physical_unit",
+      "mapping_status": "no_counterpart",
+      "mapping_reasons": [
+        "devizaforint border-parity values are not physical commodity flows",
+        "gross/netted labour-processing conventions and country attribution differ from the model trade channels",
+        "no CMEA/convertible split with matching commodity definitions was established"
+      ],
+      "population_basis": null,
+      "aggregation": "annual",
+      "price_basis_comparison": "devizaforint current values; no direct physical conversion",
+      "data_role": "target",
+      "purpose": "measurement",
+      "runtime_connected": false,
+      "admitted_value_status": "NO_VALUE_ADMITTED",
+      "numeric_comparison_status": "NOT_RUN",
+      "numeric_comparison_reason": "No admitted value series exists; absence is not zero.",
+      "notes": "No automatic currency or value-to-physical conversion."
+    },
+    {
+      "mapping_id": "meas_trade_cmea_imports",
+      "source_variable": "Külkereskedelmi forgalom (trade values and net weight by commodity group)",
+      "candidate_ids": [
+        "h4cand_d10_trade_devizaforint_1957p418"
+      ],
+      "source_unit": "devizaforint value and net weight by commodity group; no F2 commodity-level physical quantity",
+      "model_metric": "national_accounts.cmea_imports",
+      "model_unit": "f2_v1_commodity_physical_unit",
+      "mapping_status": "no_counterpart",
+      "mapping_reasons": [
+        "devizaforint border-parity values are not physical commodity flows",
+        "gross/netted labour-processing conventions and country attribution differ from the model trade channels",
+        "no CMEA/convertible split with matching commodity definitions was established"
+      ],
+      "population_basis": null,
+      "aggregation": "annual",
+      "price_basis_comparison": "devizaforint current values; no direct physical conversion",
+      "data_role": "target",
+      "purpose": "measurement",
+      "runtime_connected": false,
+      "admitted_value_status": "NO_VALUE_ADMITTED",
+      "numeric_comparison_status": "NOT_RUN",
+      "numeric_comparison_reason": "No admitted value series exists; absence is not zero.",
+      "notes": "No automatic currency or value-to-physical conversion."
+    },
+    {
+      "mapping_id": "meas_trade_exports",
+      "source_variable": "Külkereskedelmi forgalom (trade values and net weight by commodity group)",
+      "candidate_ids": [
+        "h4cand_d10_trade_devizaforint_1957p418"
+      ],
+      "source_unit": "devizaforint value and net weight by commodity group; no F2 commodity-level physical quantity",
+      "model_metric": "national_accounts.exports",
+      "model_unit": "f2_v1_commodity_physical_unit",
+      "mapping_status": "no_counterpart",
+      "mapping_reasons": [
+        "devizaforint border-parity values are not physical commodity flows",
+        "gross/netted labour-processing conventions and country attribution differ from the model trade channels",
+        "no CMEA/convertible split with matching commodity definitions was established"
+      ],
+      "population_basis": null,
+      "aggregation": "annual",
+      "price_basis_comparison": "devizaforint current values; no direct physical conversion",
+      "data_role": "target",
+      "purpose": "measurement",
+      "runtime_connected": false,
+      "admitted_value_status": "NO_VALUE_ADMITTED",
+      "numeric_comparison_status": "NOT_RUN",
+      "numeric_comparison_reason": "No admitted value series exists; absence is not zero.",
+      "notes": "No automatic currency or value-to-physical conversion."
+    },
+    {
+      "mapping_id": "meas_trade_convertible_exports",
+      "source_variable": "Külkereskedelmi forgalom (trade values and net weight by commodity group)",
+      "candidate_ids": [
+        "h4cand_d10_trade_devizaforint_1957p418"
+      ],
+      "source_unit": "devizaforint value and net weight by commodity group; no F2 commodity-level physical quantity",
+      "model_metric": "national_accounts.convertible_exports",
+      "model_unit": "f2_v1_commodity_physical_unit",
+      "mapping_status": "no_counterpart",
+      "mapping_reasons": [
+        "devizaforint border-parity values are not physical commodity flows",
+        "gross/netted labour-processing conventions and country attribution differ from the model trade channels",
+        "no CMEA/convertible split with matching commodity definitions was established"
+      ],
+      "population_basis": null,
+      "aggregation": "annual",
+      "price_basis_comparison": "devizaforint current values; no direct physical conversion",
+      "data_role": "target",
+      "purpose": "measurement",
+      "runtime_connected": false,
+      "admitted_value_status": "NO_VALUE_ADMITTED",
+      "numeric_comparison_status": "NOT_RUN",
+      "numeric_comparison_reason": "No admitted value series exists; absence is not zero.",
+      "notes": "No automatic currency or value-to-physical conversion."
+    },
+    {
+      "mapping_id": "meas_trade_cmea_exports",
+      "source_variable": "Külkereskedelmi forgalom (trade values and net weight by commodity group)",
+      "candidate_ids": [
+        "h4cand_d10_trade_devizaforint_1957p418"
+      ],
+      "source_unit": "devizaforint value and net weight by commodity group; no F2 commodity-level physical quantity",
+      "model_metric": "national_accounts.cmea_exports",
+      "model_unit": "f2_v1_commodity_physical_unit",
+      "mapping_status": "no_counterpart",
+      "mapping_reasons": [
+        "devizaforint border-parity values are not physical commodity flows",
+        "gross/netted labour-processing conventions and country attribution differ from the model trade channels",
+        "no CMEA/convertible split with matching commodity definitions was established"
+      ],
+      "population_basis": null,
+      "aggregation": "annual",
+      "price_basis_comparison": "devizaforint current values; no direct physical conversion",
+      "data_role": "target",
+      "purpose": "measurement",
+      "runtime_connected": false,
+      "admitted_value_status": "NO_VALUE_ADMITTED",
+      "numeric_comparison_status": "NOT_RUN",
+      "numeric_comparison_reason": "No admitted value series exists; absence is not zero.",
+      "notes": "No automatic currency or value-to-physical conversion."
+    },
+    {
+      "mapping_id": "meas_cpi",
+      "source_variable": "Fogyasztói árindex",
+      "candidate_ids": [
+        "h4cand_d10_cpi_method_break_1957p420"
+      ],
+      "source_unit": "index (chain/geometric mean; 1956→1957 method break)",
+      "model_metric": null,
+      "model_unit": null,
+      "mapping_status": "no_counterpart",
+      "mapping_reasons": [
+        "no model CPI metric exists",
+        "chained index and comparison-price bases differ; no rebasing formula is defined in H4A-0"
+      ],
+      "population_basis": "worker/employee and peasant population groups",
+      "aggregation": "annual",
+      "price_basis_comparison": "chain index with a 1956→1957 formula change",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "runtime_connected": false,
+      "admitted_value_status": "NO_VALUE_ADMITTED",
+      "numeric_comparison_status": "NOT_RUN",
+      "numeric_comparison_reason": "No admitted value series exists; absence is not zero.",
+      "notes": "Definition review only."
+    },
+    {
+      "mapping_id": "meas_comparison_price",
+      "source_variable": "Comparison-price basis (1968 → 1976)",
+      "candidate_ids": [
+        "h4cand_d10_comparison_price_1978p370"
+      ],
+      "source_unit": "method definition",
+      "model_metric": null,
+      "model_unit": null,
+      "mapping_status": "no_counterpart",
+      "mapping_reasons": [
+        "no model comparison-price series exists",
+        "1976 basis cannot be concatenated with 1968-basis series"
+      ],
+      "population_basis": "household population as defined by the source",
+      "aggregation": "annual",
+      "price_basis_comparison": "1968 prices replaced by 1976 prices",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "runtime_connected": false,
+      "admitted_value_status": "NO_VALUE_ADMITTED",
+      "numeric_comparison_status": "NOT_RUN",
+      "numeric_comparison_reason": "No admitted value series exists; absence is not zero.",
+      "notes": "Break recorded; no series rebuilt."
+    }
+  ],
+  "not_measured": [
+    "any numeric target comparison for household consumption, trade, CPI, or comparison price",
+    "measurement wiring into an engine run",
+    "H4B arm output measurement"
+  ],
+  "explicit_zero_policy": "A missing value or missing run is recorded as NOT_RUN/null, never as numeric 0."
+}

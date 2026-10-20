@@ -1,0 +1,556 @@
+{
+  "schema_version": "hist_vnext_h4b_source_manifest_v1",
+  "phase": "HIST_VNEXT/H4B",
+  "declaration_only": true,
+  "runtime_connected": false,
+  "generated_at_utc": "2026-10-20T18:11:04Z",
+  "target_initial_at": null,
+  "notice": "Metadata declaration only. No original PDF, OCR body, HOLD page, private transcript, or numeric table is copied or admitted here. approved_excerpt_id is null for every pointer because both source packages report an empty approved-excerpt set.",
+  "policy_inputs": [
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+      "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+      "role": "H4 evidence policy (current user-approved revision)",
+      "matches_plan_frozen_value": true
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+      "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+      "role": "H4 handoff and execution contract",
+      "matches_plan_frozen_value": true
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/08_BATCH01_LITERATURE_INTAKE.md",
+      "sha256": "289735f2be0bc4cf30a2db1623b492ef988fff0df667eaef2db860c30fa9461a",
+      "role": "batch01 intake record"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/09_BATCH02_YEARBOOKS_D08_D10_INTAKE.md",
+      "sha256": "89e0e00d5bf6d4ebefe3364f569d5906ab0c61684c9d6dcc673aacf89100df33",
+      "role": "batch02 intake record; user-owned untracked file, read only"
+    }
+  ],
+  "metadata_inputs": [
+    {
+      "path": "data/private/hist_vnext_sources/batch01_20261016/README_OMP_FIRST.md",
+      "sha256": "07dab5bb30ee1afb680ce2f4be32ef8fbc173a75abd18b8892dea9a7d0774646"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch01_20261016/manifest.json",
+      "sha256": "9102bf05de49d2a12d5d6531f8edbad8d620e71ef21793205d74450e142fa761"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch01_20261016/page_index.csv",
+      "sha256": "5430f70d3c259929c73176cca9254b4b0e104cdf1f8f1882f189048ce0ae71df"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch01_20261016/QA_REPORT.md",
+      "sha256": "3dcc2368fd66c4e5bb97f3e15262d42324a7cc0343877df0bd3e9acfabffe4a4"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch01_20261016/DEFERRED_ARCHIVES.md",
+      "sha256": "78fd3e47f87f6dd3d3ae44da47c5ae8f74cca55a13a5971fe737c68afe2c7de5"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch02_20261020/README_OMP_FIRST.md",
+      "sha256": "c795781951ad8666622f15017b91eb190dda04d23f718dd588d1db412f0304cd"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch02_20261020/manifest.json",
+      "sha256": "89bb0ce395b635acd4661958d2b737566ad0da629214e615f154c1cc8673e242"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch02_20261020/page_index.csv",
+      "sha256": "d04460d4d1e44967f2bc621b0fc6a7fd8c9fb5df581db6bc3ad6f7479e8f3788"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch02_20261020/QA_REPORT.md",
+      "sha256": "cd16489822402338fa92d83bf56cc6453104a4e7eeb883caf6025d10e35f6f00"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch02_20261020/EXPOSURE_AND_ACCESS.md",
+      "sha256": "3def2c5bd024110d5909061bb65d8f6bd304fecc29154789068dc3f3a9c65d5c"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch02_20261020/TABLE_LOCATOR_D08_D10.md",
+      "sha256": "3a5f6ac3750d212a5174f540c2a1230915c4ef80aadaffa7687887817f8af200"
+    },
+    {
+      "path": "data/private/hist_vnext_sources/batch02_20261020/D08_ANCHOR_CROSSWALK_NOTES.md",
+      "sha256": "470ca2bee52128d8c65cbf6abbeda5f6609e63069c33dbfca5bcdf340a73b002"
+    },
+    {
+      "path": "history/HIST_VNEXT/h4_sources/sources.json",
+      "sha256": "0c6f81fac8d91b3c2c8e39d5f6bc476b080a31a703fa147bb8038421f61143b1"
+    },
+    {
+      "path": "history/HIST_VNEXT/h4_sources/shared_observations.json",
+      "sha256": "30451530b03ac2b4fc85cb317c1161d39b8e6fe0fde3e2f40dcafa68b6226b2a"
+    },
+    {
+      "path": "config/initial_state/hist_vnext_h4_v1/candidate_overlay.json",
+      "sha256": "f3c2a13c8eed9a6c36d86592425b80ca038eeb0196fabf754491447f59c140b2"
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "balassa_1982_swp506",
+      "work_id": "balassa_1982_swp506",
+      "title": "The Hungarian Economic Reform, 1968-81",
+      "authors": [
+        "Bela Balassa"
+      ],
+      "year": 1982,
+      "source_type": "secondary_analysis",
+      "local_path": "data/private/hist_vnext_sources/batch01_20261016/D01_balassa_1982/original/source.pdf",
+      "source_sha256": "dd1e86533cf71cfb2842b1c4bcf209e240c0811841a08e74211ed40bd97d95ad",
+      "pdf_pages": 43,
+      "rights": {
+        "local_review": "allowed by 2026-10-20 workflow instruction for targeted non-HOLD pages",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "secondary_context"
+      ]
+    },
+    {
+      "source_id": "kenen_1990_wp9079",
+      "work_id": "kenen_1990_wp9079",
+      "title": "Transitional Arrangements for Trade and Payments Among the CMEA Countries",
+      "authors": [
+        "Peter B. Kenen"
+      ],
+      "year": 1990,
+      "source_type": "secondary_analysis",
+      "local_path": "data/private/hist_vnext_sources/batch01_20261016/D02_imf_1990_cmea/original/source.pdf",
+      "source_sha256": "3e933c7e229e7f7cd866e4e238c8b8bcf081f446f752fd6c9f2b0f84d10ccc0a",
+      "pdf_pages": 40,
+      "rights": {
+        "local_review": "allowed by 2026-10-20 workflow instruction for targeted non-HOLD pages",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "secondary_context"
+      ]
+    },
+    {
+      "source_id": "boote_somogyi_1991_ch02",
+      "work_id": "boote_somogyi_1991_op83",
+      "title": "Economic Reform in Hungary Since 1968 - Chapter II: Framework for Reform Since 1968",
+      "authors": [
+        "Anthony R. Boote",
+        "Janos Somogyi"
+      ],
+      "year": 1991,
+      "source_type": "secondary_analysis",
+      "local_path": "data/private/hist_vnext_sources/batch01_20261016/D02_imf_1991_ch02/original/source.pdf",
+      "source_sha256": "0c8e4bf97fcca2329ef25c585469e53379d879c91d9cace4bd37d350cdd2a1bf",
+      "pdf_pages": 2,
+      "rights": {
+        "local_review": "allowed by 2026-10-20 workflow instruction for targeted non-HOLD pages",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "secondary_context"
+      ]
+    },
+    {
+      "source_id": "boote_somogyi_1991_ch05",
+      "work_id": "boote_somogyi_1991_op83",
+      "title": "Economic Reform in Hungary Since 1968 - Chapter V: Foreign Trade and Exchange Rate Reform",
+      "authors": [
+        "Anthony R. Boote",
+        "Janos Somogyi"
+      ],
+      "year": 1991,
+      "source_type": "secondary_analysis",
+      "local_path": "data/private/hist_vnext_sources/batch01_20261016/D02_imf_1991_ch05/original/source.pdf",
+      "source_sha256": "19e339a02a0aecc389ea4bd2baf3bb3fd58941926d4caa7c35fbf26f98d7009a",
+      "pdf_pages": 4,
+      "rights": {
+        "local_review": "allowed by 2026-10-20 workflow instruction for targeted non-HOLD pages",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "secondary_context",
+        "trade_background_only"
+      ]
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1956",
+      "work_id": "EPA_YEARBOOK_1956",
+      "title": "Hungarian Statistical Yearbook 1956 (published 1958)",
+      "source_type": "historical_official_statistics_scan_user_supplied",
+      "local_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1956/original/source.pdf",
+      "source_sha256": "b443db48013b0a46fc6da01930a3f5f85ed5d0c3955f65d337a1d52d60023f2f",
+      "pdf_pages": 303,
+      "rights": {
+        "local_review": "targeted non-HOLD pages only",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "initial_state_candidate",
+        "definition_review"
+      ]
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1957",
+      "work_id": "EPA_YEARBOOK_1957",
+      "title": "Hungarian Statistical Yearbook 1957 (published 1959)",
+      "source_type": "historical_official_statistics_scan_user_supplied",
+      "local_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1957/original/source.pdf",
+      "source_sha256": "abc690994610a1242f0f4523651bc3bcacb7b6c27fedd8741141b82ac3979a63",
+      "pdf_pages": 467,
+      "rights": {
+        "local_review": "targeted non-HOLD pages only",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "initial_state_candidate",
+        "definition_review"
+      ]
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1960",
+      "work_id": "EPA_YEARBOOK_1960",
+      "title": "Hungarian Statistical Yearbook 1960 (published 1961)",
+      "source_type": "historical_official_statistics_scan_user_supplied",
+      "local_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1960/original/source.pdf",
+      "source_sha256": "12064a8371bbabea6fa5f053b78a0e61847421e01e410ff21587a84ca68f2291",
+      "pdf_pages": 567,
+      "rights": {
+        "local_review": "targeted non-HOLD pages only",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "definition_review",
+        "post_run_measurement"
+      ]
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1968",
+      "work_id": "EPA_YEARBOOK_1968",
+      "title": "Hungarian Statistical Yearbook 1968 (published 1969)",
+      "source_type": "historical_official_statistics_scan_user_supplied",
+      "local_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1968/original/source.pdf",
+      "source_sha256": "a8d3fa708c00f983b1806fdc77490642f19bf8c0fd6f392fbd228be87ba35716",
+      "pdf_pages": 545,
+      "rights": {
+        "local_review": "targeted non-HOLD pages only",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "post_run_measurement",
+        "definition_review"
+      ]
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1973",
+      "work_id": "EPA_YEARBOOK_1973",
+      "title": "Hungarian Statistical Yearbook 1973 (published 1974)",
+      "source_type": "historical_official_statistics_scan_user_supplied",
+      "local_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1973/original/source.pdf",
+      "source_sha256": "729a2d5f1a99ca52d13a803f718c21cfcb35a21e62fd73320fbae8bbcd976a71",
+      "pdf_pages": 585,
+      "rights": {
+        "local_review": "targeted non-HOLD pages only",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "post_run_measurement",
+        "definition_review"
+      ]
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1975",
+      "work_id": "EPA_YEARBOOK_1975",
+      "title": "Hungarian Statistical Yearbook 1975 (published 1976)",
+      "source_type": "historical_official_statistics_scan_user_supplied",
+      "local_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1975/original/source.pdf",
+      "source_sha256": "71abf03d52b191f94899a7873051f38202fa8e177dcd3622789804d82947d202",
+      "pdf_pages": 515,
+      "rights": {
+        "local_review": "targeted non-HOLD pages only",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "definition_review",
+        "post_run_measurement"
+      ]
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1978",
+      "work_id": "EPA_YEARBOOK_1978",
+      "title": "Hungarian Statistical Yearbook 1978 (published 1979)",
+      "source_type": "historical_official_statistics_scan_user_supplied",
+      "local_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1978/original/source.pdf",
+      "source_sha256": "12bfc2b5b42b76caa2f8e5751349a45024ac3c094bae7e1a59118cfdb34f47bc",
+      "pdf_pages": 571,
+      "rights": {
+        "local_review": "targeted non-HOLD pages only",
+        "numerical_value_reuse": "not admitted",
+        "external_model_upload": "not authorized",
+        "redistribution": "not authorized",
+        "license_status": "unknown"
+      },
+      "roles": [
+        "post_run_measurement",
+        "definition_review"
+      ]
+    }
+  ],
+  "physical_page_pointers": [
+    {
+      "source_id": "balassa_1982_swp506",
+      "pdf_pages": "1; 3; 5; 9-11; 14-17; 26-27; 32; 36-37; 43",
+      "locator": "batch01 page_index.csv topic tag reform_permissions",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "candidate location only; no document text read; no proposition"
+    },
+    {
+      "source_id": "boote_somogyi_1991_ch02",
+      "pdf_pages": "1-2",
+      "locator": "batch01 page_index.csv topic tags reform_permissions; prices",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "candidate location only; no proposition"
+    },
+    {
+      "source_id": "boote_somogyi_1991_ch05",
+      "pdf_pages": "1-4",
+      "locator": "batch01 page_index.csv topic tags trade_payments",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "trade background candidate only; no proposition"
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1956",
+      "pdf_pages": "14-21; 279-281",
+      "locator": "batch02 TABLE_LOCATOR D08 rows",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "candidate D08 population/housing tables; values not admitted"
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1957",
+      "pdf_pages": "17-23; 349-351; 379-388; 418-423",
+      "locator": "batch02 TABLE_LOCATOR D08/D10 rows",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "candidate reprints/definitions; values not admitted"
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1960",
+      "pdf_pages": "19-30; 370-374; 399-416; 469-475; 539-546",
+      "locator": "batch02 TABLE_LOCATOR D08/D09/D10 rows",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "1959 IO method, census/household definitions, trade/CPI methods; values not admitted"
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1968",
+      "pdf_pages": "105-106; 272-274; 350-352; 366-377",
+      "locator": "batch02 TABLE_LOCATOR D09/D10 rows",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "industrial classification/comparability, trade valuation, consumption/CPI definitions; no 1968 institutional authority"
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1973",
+      "pdf_pages": "94-97",
+      "locator": "batch02 TABLE_LOCATOR D09 row",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "one 1972 consolidated IO matrix in organizational delimitation, four continuation pages; not four observations, not a 1973 reform act"
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1975",
+      "pdf_pages": "120; 272-275",
+      "locator": "batch02 TABLE_LOCATOR D09/D10 rows",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "organizational/statistical definition change candidate and trade methods; definition is not behavioural-mechanism evidence"
+    },
+    {
+      "source_id": "EPA_YEARBOOK_1978",
+      "pdf_pages": "370-373",
+      "locator": "batch02 TABLE_LOCATOR D10 row",
+      "read_level": "metadata_only",
+      "approved_excerpt_id": null,
+      "supported_proposition": "comparison-price basis changed from 1968 to 1976; measurement statement only"
+    }
+  ],
+  "shared_source_relations": [
+    {
+      "source_ids": [
+        "boote_somogyi_1991_ch02",
+        "boote_somogyi_1991_ch05"
+      ],
+      "work_ids": [
+        "boote_somogyi_1991_op83"
+      ],
+      "independent": false,
+      "basis": "two chapters of one book; not two independent sources"
+    },
+    {
+      "source_ids": [
+        "EPA_YEARBOOK_1956",
+        "EPA_YEARBOOK_1957"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1956",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [
+        "obs_1957_01_01_population_national",
+        "obs_1956_12_31_dwelling_stock_national"
+      ],
+      "independent": false,
+      "basis": "1957-01-01 population and 1956-12-31 dwelling stock are reprinted in the 1957 volume"
+    },
+    {
+      "source_ids": [
+        "EPA_YEARBOOK_1973"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1973"
+      ],
+      "shared_observation_ids": [
+        "obs_1972_io_consolidated_matrix"
+      ],
+      "independent": false,
+      "basis": "pp. 94-97 are four continuation pages of one matrix"
+    },
+    {
+      "source_ids": [
+        "EPA_YEARBOOK_1960"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1960"
+      ],
+      "shared_observation_ids": [
+        "obs_1959_io_method"
+      ],
+      "independent": false,
+      "basis": "pp. 401-402 are one method statement"
+    },
+    {
+      "source_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct tables are not independent sources"
+    },
+    {
+      "source_ids": [
+        "EPA_YEARBOOK_1960",
+        "EPA_YEARBOOK_1968"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1960",
+        "EPA_YEARBOOK_1968"
+      ],
+      "independent": "NOT_ESTABLISHED",
+      "basis": "distinct yearbook volumes; distinct publication does not by itself establish an independent observation of any mechanism"
+    }
+  ],
+  "access_deviations": [
+    {
+      "deviation_id": "H4B-ACCESS-001",
+      "status": "INHERITED_FROM_PLANNING_PHASE; SUBAGENT_SELF_REPORT; NOT_INDEPENDENTLY_VERIFIED",
+      "reader_role": "EvidenceIntake subagent during H4B planning",
+      "what_happened": "After confirming the approved-excerpt set was empty, the subagent self-reports opening candidate native text and sending some candidate content to the main agent result.",
+      "paths_and_pages": [
+        {
+          "path": "data/private/hist_vnext_sources/batch01_20261016/D01_balassa_1982/derived/native_text.md",
+          "pdf_pages": "10-18"
+        },
+        {
+          "path": "data/private/hist_vnext_sources/batch01_20261016/D02_imf_1991_ch02/derived/native_pages.json",
+          "pdf_pages": "1-2"
+        },
+        {
+          "path": "data/private/hist_vnext_sources/batch01_20261016/D02_imf_1991_ch02/derived/native_text.md",
+          "pdf_pages": "1-2"
+        },
+        {
+          "path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1968/selected/p0105/native.txt",
+          "pdf_pages": "105"
+        },
+        {
+          "path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1968/selected/p0106/native.txt",
+          "pdf_pages": "106"
+        },
+        {
+          "path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1968/selected/p0144/native.txt",
+          "pdf_pages": "144"
+        },
+        {
+          "path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1968/selected/p0272/native.txt",
+          "pdf_pages": "272"
+        },
+        {
+          "path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1968/selected/p0350/native.txt",
+          "pdf_pages": "350"
+        },
+        {
+          "path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1968/selected/p0351/native.txt",
+          "pdf_pages": "351"
+        },
+        {
+          "path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1975/selected/p0120/native.txt",
+          "pdf_pages": "120"
+        }
+      ],
+      "consequences": [
+        "These pages are not treated as unseen.",
+        "No proposition, numeric value, candidate selection, or parameter in this package derives from those reads.",
+        "No image, OCR, original PDF, HOLD page, sealed target, or file write is reported by the subagent.",
+        "Blindness is not restored and no retrospective approval is implied.",
+        "This step did not re-read those pages to repair the deviation, and did not wait for substitute excerpts."
+      ],
+      "prior_disclosure": "H4A-0 LOG-002/003 records analogous inadvertent native-text reads of 1960/371, 1960/372 and 1968/367."
+    }
+  ],
+  "verification_status": {
+    "integrity_verifiers": "VERIFIED_BY_RUN (see REPORT.md)",
+    "numbers_admitted": false,
+    "historical_status": "NOT_ESTABLISHED",
+    "verification_by_web": "NOT_RUN; no new web check performed"
+  }
+}
