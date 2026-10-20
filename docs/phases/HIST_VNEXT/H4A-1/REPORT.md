@@ -14,8 +14,8 @@ Run date: 2026-10-20 (UTC). Run root: `outputs/hist-vnext-h4a-1-20261020T125432Z
 | C0/C1 frozen regressions | **PASS** | digests and run identities match the frozen pins |
 | Full suite | **PASS** | 1688 passed, 180 warnings |
 | Baseline / offline lock | **PASS** | baseline exit 0; `uv lock --check --offline` exit 0 |
-| Independent final review | pending | see `REVIEW.md` after this report |
-| Commit | pending | only after final review PASS |
+| Independent final review | **PASS** | `REVIEW.md`; D1–D5 repairs closed, seven-file approval scope byte-identical |
+| Commit | `066c1ac` | local commit after final review PASS; no push |
 
 ## Start state and preservation
 
