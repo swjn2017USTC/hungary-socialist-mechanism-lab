@@ -1,0 +1,1239 @@
+{
+  "schema_version": "hist_vnext_h4a0_v1",
+  "declaration_only": true,
+  "runtime_connected": false,
+  "target_initial_at": "1957-01-01",
+  "notice": "Candidate declarations only. Admission is computed by history.HIST_VNEXT.h4_sources.admission; no candidate is runtime-connected.",
+  "records": [
+    {
+      "candidate_id": "h4cand_d08_population_national_1957_01_01_1956p20",
+      "source_id": "EPA_YEARBOOK_1956",
+      "source_sha256": "b443db48013b0a46fc6da01930a3f5f85ed5d0c3955f65d337a1d52d60023f2f",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1956/original/source.pdf",
+      "pdf_page": 20,
+      "printed_page": "8",
+      "printed_page_status": "verified",
+      "table": "10. A megyei jogú városok és megyék területe és népessége",
+      "row": "Összesen",
+      "column": "Népesség száma, 1000 fő, 1957. január 1.",
+      "source_variable": "Népesség száma",
+      "unit": "1000 persons (rounded)",
+      "reference_date": "1957-01-01",
+      "reference_period": null,
+      "date_precision": "day",
+      "reference_date_basis": "table_header",
+      "publication_at": "1958",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "present (de facto) population; excludes Hungarian citizens abroad, includes foreigners except diplomats and armed forces",
+      "price_basis": null,
+      "population_basis": "de facto present population; 1957-01-01 administrative boundaries; rounded to 1000",
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "point_in_time",
+      "footnotes": [
+        "Rounded to 1000; the exact figure is in the private transcript footnote.",
+        "Printed administrative boundaries and 1957-01-01 population concept; see private transcript."
+      ],
+      "uncertainty": "rounded to 1000; exact footnote; one visual/native cross-check only",
+      "classification": "direct",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "reconstructed_initial",
+      "purpose": "initial_state",
+      "allowed_uses": [
+        "initial_state"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1956",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1956",
+      "work_id": "EPA_YEARBOOK_1956",
+      "observation_ids": [
+        "obs_1957_01_01_population_national"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": "H4A-0 implementation role",
+      "verification_record_ref": "data/private/hist_vnext_h4a0/20261020-092455/review_record.json#p1956_20",
+      "evidence_grade": "C",
+      "missing_fields": [
+        "second_independent_transcription",
+        "value_reuse_rights"
+      ],
+      "block_reasons": [],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": {
+        "path": "data/private/hist_vnext_h4a0/20261020-092455/transcripts/1956_p20_population.md",
+        "sha256": "acedec0bbb82ce5076c209540448dd9305d1b52dda18d20cab7d19cd908bc1dc",
+        "field_locator": "see transcript table/row/column"
+      },
+      "h4_scope_note": "national total only; county/city rows require a boundary crosswalk",
+      "source_year_columns": [
+        1949,
+        1957
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d08_population_national_1957_01_01_1957p21_reprint",
+      "source_id": "EPA_YEARBOOK_1957",
+      "source_sha256": "abc690994610a1242f0f4523651bc3bcacb7b6c27fedd8741141b82ac3979a63",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1957/original/source.pdf",
+      "pdf_page": 21,
+      "printed_page": "7",
+      "printed_page_status": "verified",
+      "table": "9/10. A népesség megoszlása; A megyei jogú városok és megyék területe és népessége",
+      "row": "Összesen",
+      "column": "Népesség száma, 1000 fő, 1957. január 1.",
+      "source_variable": "Népesség száma",
+      "unit": "1000 persons (rounded)",
+      "reference_date": "1957-01-01",
+      "reference_period": null,
+      "date_precision": "day",
+      "reference_date_basis": "table_header",
+      "publication_at": "1959",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "present (de facto) population; same observation as 1956 volume p20, with boundary revision footnote",
+      "price_basis": null,
+      "population_basis": "de facto present population; 1957-01-01 administrative boundaries; rounded to 1000",
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "point_in_time",
+      "footnotes": [
+        "Rounded to 1000; the exact figure is in the private transcript footnote.",
+        "Printed administrative boundaries and 1957-01-01 population concept; see private transcript."
+      ],
+      "uncertainty": "reprint with small boundary revisions; not an independent observation",
+      "classification": "direct",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "reconstructed_initial",
+      "purpose": "initial_state",
+      "allowed_uses": [
+        "initial_state"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1957",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1957",
+      "work_id": "EPA_YEARBOOK_1957",
+      "observation_ids": [],
+      "cited_observation_ids": [
+        "obs_1957_01_01_population_national"
+      ],
+      "verified_by": "H4A-0 implementation role",
+      "verification_record_ref": "data/private/hist_vnext_h4a0/20261020-092455/review_record.json#p1957_21",
+      "evidence_grade": "C",
+      "missing_fields": [
+        "second_independent_transcription",
+        "value_reuse_rights",
+        "independent_root"
+      ],
+      "block_reasons": [],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": {
+        "path": "data/private/hist_vnext_h4a0/20261020-092455/transcripts/1957_p21_population.md",
+        "sha256": "cede2f4900b9ea2fcf454cc43cbde448d1f106a254cb69e1460f1f1ce0685c7f",
+        "field_locator": "see transcript table/row/column"
+      },
+      "h4_scope_note": "same root as 1956 p20; retained as a revision witness, not an independent observation",
+      "source_year_columns": [
+        1949,
+        1957
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d08_housing_stock_national_1956_12_31_1956p279",
+      "source_id": "EPA_YEARBOOK_1956",
+      "source_sha256": "b443db48013b0a46fc6da01930a3f5f85ed5d0c3955f65d337a1d52d60023f2f",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1956/original/source.pdf",
+      "pdf_page": 279,
+      "printed_page": "267",
+      "printed_page_status": "verified",
+      "table": "Lakásállomány és az épített lakások száma",
+      "row": "1956",
+      "column": "Lakásállomány az időszak utolsó napján",
+      "source_variable": "Lakásállomány",
+      "unit": "dwellings (rounded to 1000)",
+      "reference_date": "1956-12-31",
+      "reference_period": null,
+      "date_precision": "day",
+      "reference_date_basis": "table_header",
+      "publication_at": "1958",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "national housing stock at the last day of the period; partly estimated",
+      "price_basis": null,
+      "population_basis": null,
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "end_of_period_stock",
+      "footnotes": [
+        "Partly estimated stock; the source states that other factors also affect the stock.",
+        "The source notes that some dwellings were destroyed in the 1956 October-November events; exact count only in the private transcript."
+      ],
+      "uncertainty": "partly estimated and rounded to 1000; 1956-12-31 stock carried to 1957-01-01 boundary without adding 1957 flows",
+      "classification": "reconstructed",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "reconstructed_initial",
+      "purpose": "initial_state",
+      "allowed_uses": [
+        "initial_state"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1956",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1956",
+      "work_id": "EPA_YEARBOOK_1956",
+      "observation_ids": [
+        "obs_1956_12_31_dwelling_stock_national"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": "H4A-0 implementation role",
+      "verification_record_ref": "data/private/hist_vnext_h4a0/20261020-092455/review_record.json#p1956_279",
+      "evidence_grade": "C",
+      "missing_fields": [
+        "second_independent_transcription",
+        "value_reuse_rights",
+        "full_cell_closure"
+      ],
+      "block_reasons": [],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": {
+        "path": "data/private/hist_vnext_h4a0/20261020-092455/transcripts/1956_p279_housing.md",
+        "sha256": "9dfec5f9068aaa707d94e954981d844e582c073b38d0be636365a61e97d175fe",
+        "field_locator": "see transcript table/row/column"
+      },
+      "h4_scope_note": "end-of-1956 stock equals the 1957-01-01 opening boundary only if no intra-day flow is inserted",
+      "source_year_columns": [
+        1956
+      ],
+      "transformation": "end_of_period_stock_at_1956-12-31_carried_to_1957-01-01_boundary_no_flow_added"
+    },
+    {
+      "candidate_id": "h4cand_d08_housing_stock_national_1956_12_31_1957p349_reprint",
+      "source_id": "EPA_YEARBOOK_1957",
+      "source_sha256": "abc690994610a1242f0f4523651bc3bcacb7b6c27fedd8741141b82ac3979a63",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1957/original/source.pdf",
+      "pdf_page": 349,
+      "printed_page": "335",
+      "printed_page_status": "verified",
+      "table": "2.1 Lakásépítkezések, lakásállomány és laksűrűség",
+      "row": "1956",
+      "column": "Lakásállomány az időszak utolsó napján",
+      "source_variable": "Lakásállomány",
+      "unit": "dwellings (rounded to 1000)",
+      "reference_date": "1956-12-31",
+      "reference_period": null,
+      "date_precision": "day",
+      "reference_date_basis": "table_header",
+      "publication_at": "1959",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "reprint of the 1956 stock; 1957 stock/flow rows are separate and later",
+      "price_basis": null,
+      "population_basis": null,
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "end_of_period_stock",
+      "footnotes": [
+        "Partly estimated stock; the source states that other factors also affect the stock.",
+        "The source notes that some dwellings were destroyed in the 1956 October-November events; exact count only in the private transcript."
+      ],
+      "uncertainty": "same root as 1956 p279; not independent",
+      "classification": "reconstructed",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "reconstructed_initial",
+      "purpose": "initial_state",
+      "allowed_uses": [
+        "initial_state"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1957",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1957",
+      "work_id": "EPA_YEARBOOK_1957",
+      "observation_ids": [],
+      "cited_observation_ids": [
+        "obs_1956_12_31_dwelling_stock_national"
+      ],
+      "verified_by": "H4A-0 implementation role",
+      "verification_record_ref": "data/private/hist_vnext_h4a0/20261020-092455/review_record.json#p1957_349",
+      "evidence_grade": "C",
+      "missing_fields": [
+        "second_independent_transcription",
+        "value_reuse_rights",
+        "independent_root",
+        "full_cell_closure"
+      ],
+      "block_reasons": [],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": {
+        "path": "data/private/hist_vnext_h4a0/20261020-092455/transcripts/1957_p349_housing.md",
+        "sha256": "c7b9db2fbc111730ea07340ff81f5e8fe1b9d1b38f070be060adba678c6f7bb7",
+        "field_locator": "see transcript table/row/column"
+      },
+      "h4_scope_note": "reprint witness; the 1956 stock is not the later 1957 stock row",
+      "source_year_columns": [
+        1956,
+        1957
+      ],
+      "transformation": "end_of_period_stock_at_1956-12-31_carried_to_1957-01-01_boundary_no_flow_added"
+    },
+    {
+      "candidate_id": "h4cand_d08_household_definition_1960_census_p470",
+      "source_id": "EPA_YEARBOOK_1960",
+      "source_sha256": "12064a8371bbabea6fa5f053b78a0e61847421e01e410ff21587a84ca68f2291",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1960/original/source.pdf",
+      "pdf_page": 470,
+      "printed_page": null,
+      "printed_page_status": "unknown",
+      "table": "NÉPESSÉG — Háztartás definition",
+      "row": "Háztartás",
+      "column": "definition",
+      "source_variable": "Háztartás (household) definition",
+      "unit": "not a value; definition only",
+      "reference_date": "1960-01-01",
+      "reference_period": null,
+      "date_precision": "year",
+      "reference_date_basis": "table_header",
+      "publication_at": "1961",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "Második kiadás (second edition), native title page PDF3",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "1960 census household definition: co-resident persons sharing dwelling, meals and living costs; one or more families",
+      "price_basis": null,
+      "population_basis": "1960 census statistical unit; not a 1957 household count",
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "definition",
+      "footnotes": [
+        "The 1960 census household definition is a statistical unit, not a 1957 household count."
+      ],
+      "uncertainty": "later census definition used only to expose the 1957 household gap",
+      "classification": "blocked",
+      "admission_status": "blocked",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "allowed_uses": [
+        "definition_review"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1960",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1960",
+      "work_id": "EPA_YEARBOOK_1960",
+      "observation_ids": [
+        "obs_1960_household_definition"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": null,
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "1957_household_count",
+        "1957_household_denominator",
+        "value_reuse_rights"
+      ],
+      "block_reasons": [
+        "no 1957 national household table located in the selected intake pages",
+        "1960 household definition is not a 1957 observation",
+        "sample household counts cannot stand in for national household totals"
+      ],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "keeps the 21 household anchors blocked; no pseudo-1957 source is invented",
+      "source_year_columns": [
+        1960
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d08_regional_population_1957_01_01_1956p20",
+      "source_id": "EPA_YEARBOOK_1956",
+      "source_sha256": "b443db48013b0a46fc6da01930a3f5f85ed5d0c3955f65d337a1d52d60023f2f",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1956/original/source.pdf",
+      "pdf_page": 20,
+      "printed_page": "8",
+      "printed_page_status": "verified",
+      "table": "10. A megyei jogú városok és megyék területe és népessége",
+      "row": "county and county-status-city rows",
+      "column": "Népesség száma, 1000 fő, 1957. január 1.",
+      "source_variable": "Népesség száma by county/city",
+      "unit": "1000 persons (rounded)",
+      "reference_date": "1957-01-01",
+      "reference_period": null,
+      "date_precision": "day",
+      "reference_date_basis": "table_header",
+      "publication_at": "1958",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "county_and_county_status_city_as_printed",
+      "source_regions": [
+        "19 counties + Budapest + county-status cities as printed"
+      ],
+      "model_regions": null,
+      "boundary_mapping": "not_established: printed counties/cities are not the 20 model regions; no proportional split attempted",
+      "coverage": "present population; printed rows include county-status cities separately from their counties",
+      "price_basis": null,
+      "population_basis": "de facto present population; printed 1957-01-01 administrative boundaries",
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "point_in_time",
+      "footnotes": [
+        "County/city totals require a dated boundary crosswalk."
+      ],
+      "uncertainty": "rounded to 1000; boundary mapping absent",
+      "classification": "blocked",
+      "admission_status": "blocked",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "reconstructed_initial",
+      "purpose": "initial_state",
+      "allowed_uses": [
+        "initial_state"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1956",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1956",
+      "work_id": "EPA_YEARBOOK_1956",
+      "observation_ids": [
+        "obs_1957_01_01_population_national"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": null,
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "county_boundary_crosswalk",
+        "region_sum_closure",
+        "value_reuse_rights"
+      ],
+      "block_reasons": [
+        "no dated mapping from printed counties/cities to the 20 model regions",
+        "summing or proportional splitting would invent a historical distribution"
+      ],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "regional population remains blocked; national total is a separate candidate",
+      "source_year_columns": [
+        1949,
+        1957
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d09_io_1959_method_1960p401",
+      "source_id": "EPA_YEARBOOK_1960",
+      "source_sha256": "12064a8371bbabea6fa5f053b78a0e61847421e01e410ff21587a84ca68f2291",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1960/original/source.pdf",
+      "pdf_page": 401,
+      "printed_page": "383",
+      "printed_page_status": "verified",
+      "table": "Az ágazati kapcsolatok mérlege — method",
+      "row": "A/B variants and aggregation",
+      "column": "method description",
+      "source_variable": "1959 IO: 96 production branches aggregated to 26; A/B import treatment; direct coefficients; inverse matrix",
+      "unit": "method definition; no numeric value transcribed",
+      "reference_date": null,
+      "reference_period": {
+        "start": "1959-01-01",
+        "end": "1959-12-31"
+      },
+      "date_precision": "year",
+      "reference_date_basis": "table_header",
+      "publication_at": "1961",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "Második kiadás (second edition), native title page PDF3",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "1959 observed IO year; methodological and price break versus 1957 explicitly stated",
+      "price_basis": null,
+      "population_basis": null,
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "annual_definition",
+      "footnotes": [
+        "1957 and 1959 IO tables are methodologically and content-wise not directly comparable."
+      ],
+      "uncertainty": "method only; no matrix cells transcribed",
+      "classification": "direct",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "allowed_uses": [
+        "definition_review"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1960",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1960",
+      "work_id": "EPA_YEARBOOK_1960",
+      "observation_ids": [
+        "obs_1959_io_method"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": null,
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "value_reuse_rights",
+        "matrix_cell_verification"
+      ],
+      "block_reasons": [
+        "inverse matrix is not a direct-coefficient matrix",
+        "value coefficients are not a physical recipe",
+        "HOLD pages 405/409/413 not opened"
+      ],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "D09 method review only; no 14x14 physical recipe generated",
+      "source_year_columns": [
+        1959
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d09_io_1972_consolidated_matrix_1973p94",
+      "source_id": "EPA_YEARBOOK_1973",
+      "source_sha256": "729a2d5f1a99ca52d13a803f718c21cfcb35a21e62fd73320fbae8bbcd976a71",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1973/original/source.pdf",
+      "pdf_page": 94,
+      "printed_page": "76",
+      "printed_page_status": "verified",
+      "table": "14. Az ágazati kapcsolatok összevont mérlege (szervezeti elhatárolásban)",
+      "row": "1972 matrix first page",
+      "column": "four-page continuation",
+      "source_variable": "1972 consolidated IO matrix, organizational delimitation",
+      "unit": "million Ft (value matrix); no physical unit",
+      "reference_date": null,
+      "reference_period": {
+        "start": "1972-01-01",
+        "end": "1972-12-31"
+      },
+      "date_precision": "year",
+      "reference_date_basis": "table_header",
+      "publication_at": "1974",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "1972 observed IO; pages 94-97 are one matrix continuation, not four tables",
+      "price_basis": null,
+      "population_basis": null,
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "annual_matrix",
+      "footnotes": [
+        "Pages 94-97 are continuation columns of the same matrix."
+      ],
+      "uncertainty": "internal-validation window; exposed materials cannot be treated as a blind holdout",
+      "classification": "direct",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "candidate_linkage",
+      "purpose": "internal_validation_background",
+      "allowed_uses": [
+        "internal_validation_background"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1973",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1973",
+      "work_id": "EPA_YEARBOOK_1973",
+      "observation_ids": [
+        "obs_1972_io_consolidated_matrix"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": null,
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "value_reuse_rights",
+        "matrix_cell_verification"
+      ],
+      "block_reasons": [
+        "1972 is not a 1957 recipe",
+        "no cell-level transcription performed",
+        "already exposed internal-validation material"
+      ],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "one observation across pages 94-97; not four independent tables",
+      "source_year_columns": [
+        1972
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d10_trade_devizaforint_1957p418",
+      "source_id": "EPA_YEARBOOK_1957",
+      "source_sha256": "abc690994610a1242f0f4523651bc3bcacb7b6c27fedd8741141b82ac3979a63",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1957/original/source.pdf",
+      "pdf_page": 418,
+      "printed_page": "404",
+      "printed_page_status": "verified",
+      "table": "KÜLKERESKEDELEM — Devizaforint, forgalom, paritás",
+      "row": "definitions",
+      "column": "method description",
+      "source_variable": "Devizaforint; direct/re-export trade coverage; border parity; net weight",
+      "unit": "devizaforint and net weight; not a physical commodity quantity",
+      "reference_date": null,
+      "reference_period": {
+        "start": "1957-01-01",
+        "end": "1957-12-31"
+      },
+      "date_precision": "year",
+      "reference_date_basis": "table_header",
+      "publication_at": "1959",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "trade values in devizaforint at border parity; gross/netted labour processing conventions",
+      "price_basis": null,
+      "population_basis": null,
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "annual_definition",
+      "footnotes": [
+        "Trade values are not contract payments or financing records."
+      ],
+      "uncertainty": "definition only; no series transcribed",
+      "classification": "direct",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "allowed_uses": [
+        "definition_review"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1957",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1957",
+      "work_id": "EPA_YEARBOOK_1957",
+      "observation_ids": [
+        "obs_1957_trade_method"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": null,
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "value_reuse_rights",
+        "commodity_mapping"
+      ],
+      "block_reasons": [
+        "devizaforint value trade does not map directly to F2 physical imports/exports"
+      ],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "D10 method review; no model measurement mapping approved",
+      "source_year_columns": [
+        1957
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d10_cpi_method_break_1957p420",
+      "source_id": "EPA_YEARBOOK_1957",
+      "source_sha256": "abc690994610a1242f0f4523651bc3bcacb7b6c27fedd8741141b82ac3979a63",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1957/original/source.pdf",
+      "pdf_page": 420,
+      "printed_page": "406",
+      "printed_page_status": "verified",
+      "table": "A LAKOSSÁG JÖVEDELME, FOGYASZTÁSA ÉS A FOGYASZTÓI ÁRAK — CPI method",
+      "row": "1956→1957 formula change",
+      "column": "method description",
+      "source_variable": "Fogyasztói árindex; 1956-ig chain index vs 1956→1957 geometric mean of current/base-weight indices",
+      "unit": "index method; no numeric value transcribed",
+      "reference_date": null,
+      "reference_period": {
+        "start": "1957-01-01",
+        "end": "1957-12-31"
+      },
+      "date_precision": "year",
+      "reference_date_basis": "table_header",
+      "publication_at": "1959",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "worker/employee and peasant population CPI; chained indices",
+      "price_basis": null,
+      "population_basis": "population groups as defined in the CPI",
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "annual_definition",
+      "footnotes": [
+        "Formula change between 1956 and 1957; chaining to a base year by multiplying chain indices."
+      ],
+      "uncertainty": "method only; OCR formula requires image check",
+      "classification": "direct",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "allowed_uses": [
+        "definition_review"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1957",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1957",
+      "work_id": "EPA_YEARBOOK_1957",
+      "observation_ids": [
+        "obs_1957_cpi_method"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": null,
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "value_reuse_rights",
+        "formula_image_verification"
+      ],
+      "block_reasons": [
+        "no model CPI metric counterpart",
+        "formula must be read from the page image, not OCR"
+      ],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "D10 definition review only; no CPI series or rebasing formula invented",
+      "source_year_columns": [
+        1956,
+        1957
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d10_household_sample_1960p542",
+      "source_id": "EPA_YEARBOOK_1960",
+      "source_sha256": "12064a8371bbabea6fa5f053b78a0e61847421e01e410ff21587a84ca68f2291",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1960/original/source.pdf",
+      "pdf_page": 542,
+      "printed_page": "516",
+      "printed_page_status": "verified",
+      "table": "A LAKOSSÁG JÖVEDELME, FOGYASZTÁSA ÉS FOGYASZTÓI ÁRAK — Háztartásstatisztika",
+      "row": "worker and employee household sample",
+      "column": "method description",
+      "source_variable": "Háztartásstatisztika (munkás és alkalmazott családok) sample",
+      "unit": "sample households; not a national household total",
+      "reference_date": null,
+      "reference_period": {
+        "start": "1960-01-01",
+        "end": "1960-12-31"
+      },
+      "date_precision": "year",
+      "reference_date_basis": "table_header",
+      "publication_at": "1961",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "Második kiadás (second edition), native title page PDF3",
+      "geographic_scope": "population_subgroup_workers_employees",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "sample survey of worker/employee households; not national population or household count",
+      "price_basis": null,
+      "population_basis": "sample households; cannot be expanded without a sampling design",
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "annual_definition",
+      "footnotes": [
+        "Household survey sample; not a census household total."
+      ],
+      "uncertainty": "sample; later period than 1957",
+      "classification": "blocked",
+      "admission_status": "blocked",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "allowed_uses": [
+        "definition_review"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1960",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1960",
+      "work_id": "EPA_YEARBOOK_1960",
+      "observation_ids": [
+        "obs_1960_household_sample"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": null,
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "1957_household_count",
+        "sampling_design",
+        "value_reuse_rights"
+      ],
+      "block_reasons": [
+        "sample household count cannot stand in for national household totals",
+        "1960 survey is not a 1957 observation"
+      ],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "records the household gap explicitly",
+      "source_year_columns": [
+        1960
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d10_comparison_price_1978p370",
+      "source_id": "EPA_YEARBOOK_1978",
+      "source_sha256": "12bfc2b5b42b76caa2f8e5751349a45024ac3c094bae7e1a59118cfdb34f47bc",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1978/original/source.pdf",
+      "pdf_page": 370,
+      "printed_page": null,
+      "printed_page_status": "unknown",
+      "table": "A lakossági jövedelmek és a fogyasztás — comparison prices",
+      "row": "1968→1976 comparison price basis",
+      "column": "method description",
+      "source_variable": "Comparison-price basis change from 1968 prices to 1976 prices",
+      "unit": "method definition; no numeric value transcribed",
+      "reference_date": null,
+      "reference_period": {
+        "start": "1976-01-01",
+        "end": "1976-12-31"
+      },
+      "date_precision": "year",
+      "reference_date_basis": "table_header",
+      "publication_at": "1979",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "1978 volume uses 1976 comparison prices; current-price and comparison-price consumption differ in places",
+      "price_basis": null,
+      "population_basis": "household population as defined by the source",
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "annual_definition",
+      "footnotes": [
+        "The 1978 volume uses 1976 comparison prices instead of the earlier 1968 basis; the source notes that current-price and comparison-price values can differ."
+      ],
+      "uncertainty": "method only; break must be recorded, not spliced",
+      "classification": "direct",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "allowed_uses": [
+        "definition_review"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1978",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1978",
+      "work_id": "EPA_YEARBOOK_1978",
+      "observation_ids": [
+        "obs_1978_comparison_price_break"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": null,
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "value_reuse_rights",
+        "series_rebasing_bridge"
+      ],
+      "block_reasons": [
+        "different comparison-price bases must not be concatenated"
+      ],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "D10 definition review only; no target series rebuilt",
+      "source_year_columns": [
+        1968,
+        1976
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d10_household_consumption_definition_1957p420",
+      "source_id": "EPA_YEARBOOK_1957",
+      "source_sha256": "abc690994610a1242f0f4523651bc3bcacb7b6c27fedd8741141b82ac3979a63",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1957/original/source.pdf",
+      "pdf_page": 420,
+      "printed_page": "406",
+      "printed_page_status": "verified",
+      "table": "A lakosság jövedelme, fogyasztása és a fogyasztói árak — fogyasztás definition",
+      "row": "A fogyasztás tartalma",
+      "column": "method description",
+      "source_variable": "A lakosság fogyasztása: retail purchases, markets, direct producer purchases, own production and institutional consumption",
+      "unit": "method definition; physical quantities and current-price values are distinct",
+      "reference_period": {
+        "start": "1957-01-01",
+        "end": "1957-12-31"
+      },
+      "reference_date": null,
+      "date_precision": "year",
+      "reference_date_basis": "table_header",
+      "publication_at": "1959",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "includes purchases, markets, own production and institutional meals; processed-form quantities included",
+      "price_basis": null,
+      "population_basis": "resident population as defined by the source",
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "annual_definition",
+      "footnotes": [
+        "Not identical to modern SNA household final consumption expenditure."
+      ],
+      "uncertainty": "definition only; category mapping absent",
+      "classification": "direct",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "allowed_uses": [
+        "definition_review"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1957",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1957",
+      "work_id": "EPA_YEARBOOK_1957",
+      "observation_ids": [
+        "obs_h4cand_d10_household_consumption_definition_1957p420"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": "H4A-0 implementation role",
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "value_reuse_rights",
+        "commodity_category_mapping"
+      ],
+      "block_reasons": [],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "D10 definition only; no series transcribed or connected",
+      "source_year_columns": [
+        1957
+      ],
+      "transformation": null
+    },
+    {
+      "candidate_id": "h4cand_d10_per_capita_consumption_1968p370",
+      "source_id": "EPA_YEARBOOK_1968",
+      "source_sha256": "a8d3fa708c00f983b1806fdc77490642f19bf8c0fd6f392fbd228be87ba35716",
+      "source_path": "data/private/hist_vnext_sources/batch02_20261020/yearbooks/1968/original/source.pdf",
+      "pdf_page": 370,
+      "printed_page": "352",
+      "printed_page_status": "verified",
+      "table": "26. Az egy főre jutó összes fogyasztás alakulása fontosabb termékcsoportok szerint",
+      "row": "1960/1966/1967 columns",
+      "column": "current-price Ft and percentage columns",
+      "source_variable": "Per-capita total consumption by product group (1960, 1966, 1967 columns)",
+      "unit": "Ft per capita and percentage; not a physical commodity flow",
+      "reference_period": {
+        "start": "1960-01-01",
+        "end": "1967-12-31"
+      },
+      "reference_date": null,
+      "date_precision": "year",
+      "reference_date_basis": "table_header",
+      "publication_at": "1969",
+      "publication_precision": "year",
+      "available_at": null,
+      "edition": "NOT_VERIFIED",
+      "geographic_scope": "national",
+      "source_regions": [
+        "Magyarország"
+      ],
+      "model_regions": [
+        "national"
+      ],
+      "boundary_mapping": "national_total_matches_model_national",
+      "coverage": "consumption categories include food, clothing, household goods and services; columns are 1960, 1966 and 1967",
+      "price_basis": "current-price Ft columns and percentage columns; percentage columns use comparison prices with a 1960 reference",
+      "population_basis": "source-defined population; denominator not independently reconciled to the 1957 anchor",
+      "sector_scope": null,
+      "import_scope": null,
+      "aggregation": "annual_per_capita_value",
+      "footnotes": [
+        "Current-price Ft columns and percentage-of-1960 columns are different price bases."
+      ],
+      "uncertainty": "current-price per-capita values; not SNA and not a physical quantity",
+      "classification": "direct",
+      "admission_status": "candidate",
+      "runtime_connected": false,
+      "evidence_kind": "statistical_observation",
+      "data_role": "candidate_linkage",
+      "purpose": "definition_review",
+      "allowed_uses": [
+        "definition_review"
+      ],
+      "rights": {
+        "license_status": "unknown",
+        "license_name": null,
+        "terms_locator": null,
+        "evidence_quote": "FILE_SPECIFIC_RIGHTS_NOT_RECHECKED_NO_REDISTRIBUTION_AUTHORIZATION",
+        "checked_at": null,
+        "download_allowed": false,
+        "redistribution_allowed": false,
+        "notes": "local workflow review does not grant copyright or redistribution"
+      },
+      "rights_evidence_ref": "history/HIST_VNEXT/h4_sources/sources.json#sources.EPA_YEARBOOK_1968",
+      "access_approval_ref": "history/HIST_VNEXT/h4_sources/access_register.json#sources.EPA_YEARBOOK_1968",
+      "work_id": "EPA_YEARBOOK_1968",
+      "observation_ids": [
+        "obs_h4cand_d10_per_capita_consumption_1968p370"
+      ],
+      "cited_observation_ids": [],
+      "verified_by": "H4A-0 implementation role",
+      "verification_record_ref": null,
+      "evidence_grade": "C",
+      "missing_fields": [
+        "value_reuse_rights",
+        "commodity_category_mapping"
+      ],
+      "block_reasons": [],
+      "historical_authority_status": "not_verified_by_this_record",
+      "model_rule_status": "not_defined_in_h4a0",
+      "value_ref": null,
+      "h4_scope_note": "D10 definition only; no series transcribed or connected",
+      "source_year_columns": [
+        1960,
+        1966,
+        1967
+      ],
+      "transformation": null
+    }
+  ]
+}

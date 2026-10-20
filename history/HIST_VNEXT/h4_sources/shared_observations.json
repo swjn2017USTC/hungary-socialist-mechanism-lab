@@ -1,0 +1,381 @@
+{
+  "schema_version": "hist_vnext_h4a0_v1",
+  "declaration_only": true,
+  "runtime_connected": false,
+  "notice": "Known common roots are never marked independent. Unknown roots stay null and are not treated as independent.",
+  "records": [
+    {
+      "record_ids": [
+        "h4cand_d08_population_national_1957_01_01_1956p20",
+        "h4cand_d08_population_national_1957_01_01_1957p21_reprint"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1956",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [],
+      "shared_observation_ids": [
+        "obs_1957_01_01_population_national"
+      ],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same 1957-01-01 population table reprinted in the 1957 volume, with boundary revision footnote"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_population_national_1957_01_01_1956p20",
+        "h4cand_d08_housing_stock_national_1956_12_31_1956p279"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1956",
+        "EPA_YEARBOOK_1956"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1956"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_population_national_1957_01_01_1956p20",
+        "h4cand_d08_regional_population_1957_01_01_1956p20"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1956",
+        "EPA_YEARBOOK_1956"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1956"
+      ],
+      "shared_observation_ids": [
+        "obs_1957_01_01_population_national"
+      ],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "regional candidate directly cites the same national observation root"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_population_national_1957_01_01_1957p21_reprint",
+        "h4cand_d08_housing_stock_national_1956_12_31_1957p349_reprint"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_population_national_1957_01_01_1957p21_reprint",
+        "h4cand_d08_regional_population_1957_01_01_1956p20"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1956"
+      ],
+      "shared_work_ids": [],
+      "shared_observation_ids": [
+        "obs_1957_01_01_population_national"
+      ],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "reprint cites the same root directly carried by the regional candidate"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_population_national_1957_01_01_1957p21_reprint",
+        "h4cand_d10_trade_devizaforint_1957p418"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_population_national_1957_01_01_1957p21_reprint",
+        "h4cand_d10_cpi_method_break_1957p420"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_population_national_1957_01_01_1957p21_reprint",
+        "h4cand_d10_household_consumption_definition_1957p420"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_housing_stock_national_1956_12_31_1956p279",
+        "h4cand_d08_housing_stock_national_1956_12_31_1957p349_reprint"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1956",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [],
+      "shared_observation_ids": [
+        "obs_1956_12_31_dwelling_stock_national"
+      ],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same 1956 year-end housing stock reprinted in the 1957 volume"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_housing_stock_national_1956_12_31_1956p279",
+        "h4cand_d08_regional_population_1957_01_01_1956p20"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1956",
+        "EPA_YEARBOOK_1956"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1956"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_housing_stock_national_1956_12_31_1957p349_reprint",
+        "h4cand_d10_trade_devizaforint_1957p418"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_housing_stock_national_1956_12_31_1957p349_reprint",
+        "h4cand_d10_cpi_method_break_1957p420"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_housing_stock_national_1956_12_31_1957p349_reprint",
+        "h4cand_d10_household_consumption_definition_1957p420"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_household_definition_1960_census_p470",
+        "h4cand_d09_io_1959_method_1960p401"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1960",
+        "EPA_YEARBOOK_1960"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1960"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d08_household_definition_1960_census_p470",
+        "h4cand_d10_household_sample_1960p542"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1960",
+        "EPA_YEARBOOK_1960"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1960"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d09_io_1959_method_1960p401",
+        "h4cand_d10_household_sample_1960p542"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1960",
+        "EPA_YEARBOOK_1960"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1960"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d10_trade_devizaforint_1957p418",
+        "h4cand_d10_cpi_method_break_1957p420"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d10_trade_devizaforint_1957p418",
+        "h4cand_d10_household_consumption_definition_1957p420"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    },
+    {
+      "record_ids": [
+        "h4cand_d10_cpi_method_break_1957p420",
+        "h4cand_d10_household_consumption_definition_1957p420"
+      ],
+      "work_ids": [
+        "EPA_YEARBOOK_1957",
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_work_ids": [
+        "EPA_YEARBOOK_1957"
+      ],
+      "shared_observation_ids": [],
+      "unknown_observation_ids": [],
+      "independent": false,
+      "basis": "same work/publication; distinct table observation but not an independent source"
+    }
+  ],
+  "observation_groups": [
+    {
+      "group_id": "grp_1957_population_national",
+      "observation_ids": [
+        "obs_1957_01_01_population_national"
+      ],
+      "candidate_ids": [
+        "h4cand_d08_population_national_1957_01_01_1956p20",
+        "h4cand_d08_population_national_1957_01_01_1957p21_reprint"
+      ],
+      "independent_observations": 1,
+      "note": "two print witnesses, one observation"
+    },
+    {
+      "group_id": "grp_1956_dwelling_stock_national",
+      "observation_ids": [
+        "obs_1956_12_31_dwelling_stock_national"
+      ],
+      "candidate_ids": [
+        "h4cand_d08_housing_stock_national_1956_12_31_1956p279",
+        "h4cand_d08_housing_stock_national_1956_12_31_1957p349_reprint"
+      ],
+      "independent_observations": 1,
+      "note": "two print witnesses, one observation"
+    },
+    {
+      "group_id": "grp_1972_io_matrix",
+      "observation_ids": [
+        "obs_1972_io_consolidated_matrix"
+      ],
+      "candidate_ids": [
+        "h4cand_d09_io_1972_consolidated_matrix_1973p94"
+      ],
+      "independent_observations": 1,
+      "note": "pages 94-97 are four continuation pages of one matrix, not four independent observations"
+    },
+    {
+      "group_id": "grp_1959_io_method",
+      "observation_ids": [
+        "obs_1959_io_method"
+      ],
+      "candidate_ids": [
+        "h4cand_d09_io_1959_method_1960p401"
+      ],
+      "independent_observations": 1,
+      "note": "pages 401-402 are one method statement"
+    }
+  ]
+}

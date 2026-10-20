@@ -1,0 +1,326 @@
+{
+  "schema_version": "hist_vnext_h4a0_v1",
+  "declaration_only": true,
+  "runtime_connected": false,
+  "notice": "Local workflow authorization only; it is not a copyright licence or redistribution grant.",
+  "sources": {
+    "balassa_1982_swp506": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "kenen_1990_wp9079": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "boote_somogyi_1991_ch02": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "boote_somogyi_1991_ch05": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "EPA_YEARBOOK_1956": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "EPA_YEARBOOK_1957": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "EPA_YEARBOOK_1960": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "EPA_YEARBOOK_1968": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "EPA_YEARBOOK_1973": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "EPA_YEARBOOK_1975": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    },
+    "EPA_YEARBOOK_1978": {
+      "local_review": {
+        "allowed": true,
+        "scope": "metadata and targeted non-HOLD pages selected in the intake package",
+        "basis": "2026-10-20 non-HOLD targeted local verification workflow instruction",
+        "reviewed_by": "H4A-0 implementation role",
+        "reviewed_at": "2026-10-20",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md"
+      },
+      "value_use": {
+        "allowed": false,
+        "allowed_uses": [],
+        "reason": "source-specific value-reuse rights not established; candidate remains outside APPROVED_INPUT_SET",
+        "ref": "docs/phases/HIST_VNEXT/H4A-0/REQUESTS.md"
+      },
+      "remote_model_upload": {
+        "allowed": false,
+        "basis": "no upload authorization"
+      },
+      "redistribution": {
+        "allowed": false,
+        "basis": "no redistribution authorization"
+      },
+      "hold_approvals": []
+    }
+  },
+  "access_log": [
+    {
+      "log_id": "H4A0-LOG-001",
+      "source_id": "MULTIPLE",
+      "pages": [],
+      "access_kind": "metadata_and_targeted_non_hold_body",
+      "reader_role": "H4A-0 implementation role",
+      "accessed_at": "2026-10-20",
+      "purpose": "D08-D10 targeted verification and candidate crosswalk",
+      "allowed_use": "local_review_only",
+      "review_reference": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md",
+      "result": "No numeric value admitted; no page image sent to an external model."
+    },
+    {
+      "log_id": "H4A0-LOG-002",
+      "source_id": "EPA_YEARBOOK_1960",
+      "pages": [
+        371,
+        372
+      ],
+      "access_kind": "native_text_only_inadvertent_hold_read",
+      "reader_role": "H4A-0 implementation role",
+      "accessed_at": "2026-10-20",
+      "purpose": "metadata exploration before routing check",
+      "allowed_use": "none",
+      "review_reference": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md#hold-disclosure",
+      "result": "Routing status was checked only after the text dump. No page image, value transcription, candidate, or admission used these pages."
+    },
+    {
+      "log_id": "H4A0-LOG-003",
+      "source_id": "EPA_YEARBOOK_1968",
+      "pages": [
+        367
+      ],
+      "access_kind": "native_text_only_inadvertent_hold_read",
+      "reader_role": "H4A-0 implementation role",
+      "accessed_at": "2026-10-20",
+      "purpose": "metadata exploration before routing check",
+      "allowed_use": "none",
+      "review_reference": "docs/phases/HIST_VNEXT/H4A-0/REPORT.md#hold-disclosure",
+      "result": "No page image, value transcription, candidate, or admission used this page."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": "hist_vnext_h4a0_v1",
+  "declaration_only": true,
+  "runtime_connected": false,
+  "target_initial_at": "1957-01-01",
+  "notice": "No candidate passed the value-use/rights gate in this run. Empty sets are the truthful result.",
+  "initial_state_inputs": [],
+  "measurement_inputs": [],
+  "assumption_inputs": []
+}
