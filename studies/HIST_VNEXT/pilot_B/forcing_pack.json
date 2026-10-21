@@ -1,0 +1,71 @@
+{
+  "binding_hash": "0478afa84659b7a5ae2567fef6e6531cd34d090c94a8dbd55f3c7c8bc5b34e7b",
+  "cmea_energy_price": {
+    "artifact_id": "cmea_energy_price__worldbank_pink_sheet__cmea_five_year_contract__bd89b83eecea__890429cd9d13",
+    "derived_from": [
+      "world_oil_price__worldbank_pink_sheet__1960-01__1985-12__bd89b83eecea__3b647bb3f835"
+    ],
+    "evidence": "reconstructed_historical_forcing",
+    "path": "data/reconstructed/worldbank_pink_sheet/bd89b83eeceadaecb803018c104f76b316d2df3fae28ef7afde48021100c7e11/cmea_energy_price_1975Q1_1985Q4_890429cd9d13471a082991fd0f9b70c65d83bbadf94a6e11da5249ffeca9530d.parquet",
+    "period": {
+      "end": "1985Q4",
+      "frequency": "quarterly",
+      "start": "1975Q1"
+    },
+    "sha256": "19c9b487b34a9756ec007e44b4e975411393215dbf97b17af57b2fe738e5ed48"
+  },
+  "generated_at": "2026-10-07T00:00:00Z",
+  "h4c_note": "Pilot B study copy: official_fx removed; all other admitted bindings copied unchanged.",
+  "period": {
+    "end": "1985Q4",
+    "frequency": "quarterly",
+    "start": "1957Q1"
+  },
+  "profile": "external",
+  "reconstruction_params": {
+    "cmea_base_energy_price": 1.0,
+    "cmea_uncertainty_multiplier": 1.0,
+    "world_oil_reference": 1.63
+  },
+  "reconstruction_params_hash": "100612a368428ca119d6b9cb5da3c6336c4c8b033a3b67db01b83607a8189310",
+  "schema_version": "1",
+  "segments": {
+    "global_usd_rate": {
+      "artifact_id": "global_usd_rate__federalreserve_h15__monthly_to_quarterly__dbdfd78eabd8__5ef2f335372d",
+      "derived_from": [
+        "global_usd_rate__federalreserve_h15__1957-01__1985-12__dbdfd78eabd8__83036936925a"
+      ],
+      "evidence": "observed",
+      "path": "data/observed/external_forcing/federalreserve_h15/dbdfd78eabd810dea8558cd06b858a2a417db3aee5f83d802eb2935c4bdc34a0/global_usd_rate_quarterly_1957Q1_1985Q4_5ef2f335372da42881b08b068e8eb515de9582549d8a9ad6b5d3379b18507fb6.parquet",
+      "period": {
+        "end": "1985Q4",
+        "frequency": "quarterly",
+        "start": "1957Q1"
+      },
+      "sha256": "86578c05e49146968e107b46448802de5b11538a98c1636f6d7fdcd25f0d60cc"
+    },
+    "world_oil_price": {
+      "observed": {
+        "artifact_id": "world_oil_price__worldbank_pink_sheet__monthly_to_quarterly__bd89b83eecea__3cc27aa818fe",
+        "derived_from": [
+          "world_oil_price__worldbank_pink_sheet__1960-01__1985-12__bd89b83eecea__3b647bb3f835"
+        ],
+        "evidence": "observed",
+        "path": "data/observed/external_forcing/worldbank_pink_sheet/bd89b83eeceadaecb803018c104f76b316d2df3fae28ef7afde48021100c7e11/world_oil_price_quarterly_1960Q1_1985Q4_3cc27aa818fe28ce35291500d3b3ef3502a520a6e62b93dd8e2e2fe78b52ed69.parquet",
+        "period": {
+          "end": "1985Q4",
+          "frequency": "quarterly",
+          "start": "1960Q1"
+        },
+        "sha256": "e1381c632823adef70df51d7e7dcbd32d8be975c11cc5128dd5236ef0ebda7bb"
+      },
+      "warmup": {
+        "end": "1959Q4",
+        "evidence": "structural_warmup",
+        "parameter": "oil_warmup_price",
+        "start": "1957Q1"
+      }
+    }
+  },
+  "warning": "material_external_pack_requires_admitted_artifacts"
+}

@@ -1,0 +1,63 @@
+{
+  "aggregation": "per commodity/currency; flows summed over the window; stocks at the end; never sum distinct commodity physical units or currencies",
+  "caveats": [
+    "branch states are model-generated",
+    "no cross-episode welfare difference",
+    "no commodity or currency aggregation",
+    "H3G same-tick household null remains a recorded limitation"
+  ],
+  "channel_boundary": "channel_prices shares one energy index across g01/g02/g03; USD base price uses the first energy slot; only g02 carries trade requests",
+  "episodes": {
+    "post75": "1975Q1..1976Q4 (72-tick warm-up)",
+    "pre75": "1973Q1..1974Q4 (64-tick warm-up)"
+  },
+  "f2_engine_boundaries": {
+    "d3_dynamic_repricing": "NOT_IMPLEMENTED",
+    "d3_import_extinguishment": "NOT_IMPLEMENTED",
+    "import_export_cells": "the study scenario copy declares g02 trade requests before network compilation; warm-up uses zero-request parameters",
+    "rollover": "NOT_IMPLEMENTED",
+    "usd_new_draw": "material.py desired_usd_outlay uses P02 COMMODITY_INDEX; g01..g16 match none, so the probe draws 0"
+  },
+  "first_stage": {
+    "C": "cmea_clearing import payment, g02 import quantity (C_import_quantity_g02), quota remaining/used (C_quota_remaining/C_quota_used), export pending/settled",
+    "R": "opened/received/overdue receivables by currency",
+    "S": "organization_bailout_granted",
+    "USD_probe": "usd_loan_drawn expected 0",
+    "W": "treasury_loan_drawn and treasury_export_outlay"
+  },
+  "trace_fields": [
+    "production",
+    "desired",
+    "ordered",
+    "delivered",
+    "used",
+    "physical_delivery_blocked",
+    "financial_delivery_blocked",
+    "imports by channel",
+    "exports by channel",
+    "household realized/unmet",
+    "stock_close (end of tick)"
+  ],
+  "historical_status": "NOT_ESTABLISHED",
+  "price_index": {
+    "anchor": "1975Q1 = 2.270245328563804",
+    "not_a_historical_conversion": true,
+    "post1975": "raw_quote[t]/raw_quote[1975Q1]",
+    "pre1975": "NaN -> structural prior cmea_base_energy_price=1.0",
+    "version": "h4c-price-index-v1"
+  },
+  "schema_version": "hist_vnext_h4c_measurement_manifest_v1",
+  "units": {
+    "cmea_model_price": "model CMEA units per F2 fuel unit",
+    "commodity": "model commodity unit (g01..g16)",
+    "money_cmea": "model CMEA settlement unit",
+    "money_domestic": "model domestic cash unit",
+    "money_usd": "model USD"
+  },
+  "windows": {
+    "1977_1978": "NOT_RUN",
+    "1979_1985": "NOT_OBSERVED",
+    "later": "next 4 quarters (8Q profile only)",
+    "short": "first 4 quarters"
+  }
+}
