@@ -1,0 +1,258 @@
+{
+  "arms": {
+    "combined": {
+      "decision_commits": 4,
+      "delta_vs_negative_control": {
+        "delivered": 1025.8527644192654,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 0.08280132687650621,
+        "household_realized": -0.0594730995453574,
+        "household_spending": 0.5845084037318884,
+        "physical_blocked": 2985.5813593604253
+      },
+      "status": "EXECUTED",
+      "totals": {
+        "delivered": 98479.83964984208,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 100542.01174441693,
+        "household_realized": 12371.810623678079,
+        "household_spending": 15882.457528394683,
+        "physical_blocked": 265815.65957887186
+      }
+    },
+    "investment_delegated": {
+      "decision_commits": 4,
+      "delta_vs_negative_control": {
+        "delivered": 0.8643627152778208,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": -0.0015399535041069612,
+        "household_realized": 0.001540986108011566,
+        "household_spending": 0.0016177020188479219,
+        "physical_blocked": -2.187488937517628
+      },
+      "status": "EXECUTED",
+      "totals": {
+        "delivered": 97454.85124813809,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 100541.92740313655,
+        "household_realized": 12371.871637763732,
+        "household_spending": 15881.87463769297,
+        "physical_blocked": 262827.8907305739
+      }
+    },
+    "investment_ungranted": {
+      "decision_commits": 0,
+      "delta_vs_negative_control": {
+        "delivered": 0.0,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 0.0,
+        "household_realized": 0.0,
+        "household_spending": 0.0,
+        "physical_blocked": 0.0
+      },
+      "status": "EXECUTED",
+      "totals": {
+        "delivered": 97453.98688542281,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 100541.92894309005,
+        "household_realized": 12371.870096777624,
+        "household_spending": 15881.873019990951,
+        "physical_blocked": 262830.07821951143
+      }
+    },
+    "negative_control": {
+      "decision_commits": 0,
+      "delta_vs_negative_control": {
+        "delivered": 0.0,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 0.0,
+        "household_realized": 0.0,
+        "household_spending": 0.0,
+        "physical_blocked": 0.0
+      },
+      "status": "EXECUTED",
+      "totals": {
+        "delivered": 97453.98688542281,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 100541.92894309005,
+        "household_realized": 12371.870096777624,
+        "household_spending": 15881.873019990951,
+        "physical_blocked": 262830.07821951143
+      }
+    },
+    "price_authorized": {
+      "decision_commits": 4,
+      "delta_vs_negative_control": {
+        "delivered": 25.10430051473668,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 0.08433913407498039,
+        "household_realized": -0.061011939269519644,
+        "household_spending": 0.5828928175396868,
+        "physical_blocked": -11.883647124050185
+      },
+      "status": "EXECUTED",
+      "totals": {
+        "delivered": 97479.09118593755,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 100542.01328222413,
+        "household_realized": 12371.809084838354,
+        "household_spending": 15882.455912808491,
+        "physical_blocked": 262818.1945723874
+      }
+    },
+    "price_fixed": {
+      "decision_commits": 0,
+      "delta_vs_negative_control": {
+        "delivered": 0.0,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 0.0,
+        "household_realized": 0.0,
+        "household_spending": 0.0,
+        "physical_blocked": 0.0
+      },
+      "status": "EXECUTED",
+      "totals": {
+        "delivered": 97453.98688542281,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 100541.92894309005,
+        "household_realized": 12371.870096777624,
+        "household_spending": 15881.873019990951,
+        "physical_blocked": 262830.07821951143
+      }
+    },
+    "procurement_granted": {
+      "decision_commits": 4,
+      "delta_vs_negative_control": {
+        "delivered": 999.8841955501412,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 0.0,
+        "household_realized": 0.0,
+        "household_spending": 0.0,
+        "physical_blocked": 2999.6525866504526
+      },
+      "status": "EXECUTED",
+      "totals": {
+        "delivered": 98453.87108097295,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 100541.92894309005,
+        "household_realized": 12371.870096777624,
+        "household_spending": 15881.873019990951,
+        "physical_blocked": 265829.7308061619
+      }
+    },
+    "procurement_revoked": {
+      "decision_commits": 0,
+      "delta_vs_negative_control": {
+        "delivered": 0.0,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 0.0,
+        "household_realized": 0.0,
+        "household_spending": 0.0,
+        "physical_blocked": 0.0
+      },
+      "status": "EXECUTED",
+      "totals": {
+        "delivered": 97453.98688542281,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 100541.92894309005,
+        "household_realized": 12371.870096777624,
+        "household_spending": 15881.873019990951,
+        "physical_blocked": 262830.07821951143
+      }
+    },
+    "procurement_unknown": {
+      "decision_commits": 0,
+      "delta_vs_negative_control": {
+        "delivered": 0.0,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 0.0,
+        "household_realized": 0.0,
+        "household_spending": 0.0,
+        "physical_blocked": 0.0
+      },
+      "status": "EXECUTED",
+      "totals": {
+        "delivered": 97453.98688542281,
+        "financial_blocked": 0.0,
+        "household_availability_unmet": 100541.92894309005,
+        "household_realized": 12371.870096777624,
+        "household_spending": 15881.873019990951,
+        "physical_blocked": 262830.07821951143
+      }
+    }
+  },
+  "arms_declared": [
+    "negative_control",
+    "procurement_granted",
+    "procurement_revoked",
+    "procurement_unknown",
+    "price_fixed",
+    "price_authorized",
+    "investment_ungranted",
+    "investment_delegated",
+    "combined"
+  ],
+  "arms_executed": [
+    "negative_control",
+    "procurement_granted",
+    "procurement_revoked",
+    "procurement_unknown",
+    "price_fixed",
+    "price_authorized",
+    "investment_ungranted",
+    "investment_delegated",
+    "combined"
+  ],
+  "authority_calendar": {
+    "grant_effective_from": "1967-12-01",
+    "procurement_revoke_effective_from": "1967-12-15",
+    "synthetic": true
+  },
+  "branch": {
+    "branch_completed_ticks": 44,
+    "branch_quarter": "1968Q1",
+    "branch_state_sha256": "5085d82c8e0d9a226e673598f809f1b0e8d6028b2ae39c6a31ce2a1d2d4a1d9c",
+    "historical_status": "NOT_ESTABLISHED",
+    "notice": "model-generated 1968Q1 branch; not a historical initial state",
+    "warmup_until": "1967Q4"
+  },
+  "declared_design": {
+    "investment": {
+      "organization_policy": "first_productive_org",
+      "project_id": "PILOT-A-P1",
+      "requested_amount": 10.0
+    },
+    "price": {
+      "commodity_id": "g14_vehicles_transport_equipment",
+      "factor": 1.1,
+      "fixed_category_commodity_id": "g03_electricity_heat"
+    },
+    "procurement": {
+      "commodity_id": "g14_vehicles_transport_equipment",
+      "organization_policy": "first_org_with_procurement_cell",
+      "quantity": 1000.0
+    }
+  },
+  "historical_status": "NOT_ESTABLISHED",
+  "notes": [
+    "The 1968Q1 branch is a model-generated state from the synthetic historical_f2_replay warm-up; it is not a historical 1968 initial state.",
+    "Quantity, price factor and investment amount are declared experiment settings, not historical estimates.",
+    "The authority calendar is a synthetic pilot calendar, not a historical legal record.",
+    "No target or sealed window value is read."
+  ],
+  "pilot_id": "8be4e4495399117cd8eb3dd2ae76d9ba",
+  "price_regime": {
+    "path": "config/price_regimes/hist_vnext_h4b_v1.json",
+    "sha256": "2f08130f760fdfbccfb685536bd0d50f01dee21d2066592eeb42b27a2a24c696"
+  },
+  "raw_output_root": "outputs/hist-vnext-h4b-pilot-a-final2-20261021T061624Z",
+  "schema_version": "hist_vnext_h4b_pilot_a_v1",
+  "seed": 1729,
+  "selected_organizations": {
+    "investment_org_index": 0,
+    "procurement_org_index": 346
+  },
+  "source_scenario": "historical_f2_replay",
+  "status": "COMPLETED",
+  "window_ticks": 4
+}

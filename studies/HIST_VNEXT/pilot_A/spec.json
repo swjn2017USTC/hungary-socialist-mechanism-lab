@@ -1,0 +1,42 @@
+{
+  "schema_version": "hist_vnext_h4b_pilot_a_v1",
+  "source_scenario": "historical_f2_replay",
+  "seed": 1729,
+  "warmup_until": "1967Q4",
+  "branch_quarter": "1968Q1",
+  "window_ticks": 4,
+  "declared_design": {
+    "procurement": {
+      "commodity_id": "g14_vehicles_transport_equipment",
+      "quantity": 1000.0,
+      "organization_policy": "first_org_with_procurement_cell"
+    },
+    "price": {
+      "commodity_id": "g14_vehicles_transport_equipment",
+      "factor": 1.1,
+      "fixed_category_commodity_id": "g03_electricity_heat"
+    },
+    "investment": {
+      "requested_amount": 10.0,
+      "project_id": "PILOT-A-P1",
+      "organization_policy": "first_productive_org"
+    }
+  },
+  "arms": [
+    "negative_control",
+    "procurement_granted",
+    "procurement_revoked",
+    "procurement_unknown",
+    "price_fixed",
+    "price_authorized",
+    "investment_ungranted",
+    "investment_delegated",
+    "combined"
+  ],
+  "notes": [
+    "The 1968Q1 branch is a model-generated state from the synthetic historical_f2_replay warm-up; it is not a historical 1968 initial state.",
+    "Quantity, price factor and investment amount are declared experiment settings, not historical estimates.",
+    "The authority calendar is a synthetic pilot calendar, not a historical legal record.",
+    "No target or sealed window value is read."
+  ]
+}
