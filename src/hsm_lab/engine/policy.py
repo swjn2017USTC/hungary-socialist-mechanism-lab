@@ -24,13 +24,20 @@ from hsm_lab.contract.households import (
     HouseholdCatalog,
     HouseholdParameters,
     compile_household_catalog,
+    household_axis,
 )
 from hsm_lab.contract.material import (
     MaterialParameters,
+    catalog_for_commodities,
 )
 from hsm_lab.contract.politics import ExternalWorldSlice, PolicyVector
 
-__all__ = ["EffectivePolicy", "TickControls", "compile_effective_policy"]
+__all__ = [
+    "EffectivePolicy",
+    "TickControls",
+    "compile_effective_policy",
+    "compile_price_override",
+]
 
 
 @dataclass(frozen=True)
@@ -48,6 +55,10 @@ class TickControls:
     # procurement hub's demand cells for the commodity; it never writes
     # stocks or accounts directly.
     procurement_requests: tuple[tuple[int, int, float], ...] | None = None
+    # Per-organization approved capacity increments for this tick:
+    # ``(organization_idx, capacity_units)``.  The kernel caps ``new_request``
+    # for listed organizations; cash/production gates still apply.
+    investment_approvals: tuple[tuple[int, float], ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -74,6 +85,45 @@ def _household_parent_channels(
         if commodity_id in COMMODITY_INDEX:
             mask[COMMODITY_INDEX[commodity_id]] = True
     return mask
+
+
+def compile_price_override(
+    base_material: MaterialParameters,
+    base_household: HouseholdParameters,
+    *,
+    commodity_index: int,
+    price: float,
+    commodity_ids: tuple[str, ...],
+) -> tuple[MaterialParameters, HouseholdCatalog]:
+    """Return material parameters and a recompiled catalog with one price set.
+
+    This is the real price bridge used by the execution adapter: it changes only
+    the named commodity's administered price and rebuilds the household catalog
+    from the overridden material parameters.  No global scalar is involved.
+    """
+    if commodity_index < 0 or commodity_index >= len(base_material.prices):
+        raise ConfigError(f"commodity_index {commodity_index} is outside the price vector")
+    value = float(price)
+    if value < 0.0 or not np.isfinite(value):
+        raise ConfigError("price override must be finite and non-negative")
+    prices = list(base_material.prices)
+    prices[commodity_index] = value
+    material_update: dict[str, object] = {"prices": prices}
+    material_catalog = catalog_for_commodities(tuple(commodity_ids))
+    commodity_id = commodity_ids[commodity_index]
+    if commodity_id in material_catalog.with_role("food_raw"):
+        # Every raw-food cell is priced from ``food_raw_price``, not from the
+        # commodity's standard vector slot; both must move together.
+        material_update["food_raw_price"] = value
+    material = base_material.model_copy(update=material_update)
+    household_catalog = compile_household_catalog(
+        base_household,
+        material,
+        tuple(commodity_ids),
+        axis=household_axis(material_catalog.catalog_id),
+        material_index=material_catalog.index,
+    )
+    return material, household_catalog
 
 
 def compile_effective_policy(

@@ -31,22 +31,29 @@ second mechanism.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from hsm_lab.contract.base import ConfigError
 from hsm_lab.contract.material import (
     PURPOSE_CODES,
     STAGE_CODES,
     RoutePurpose,
     commodity_spec,
+    get_catalog,
 )
+from hsm_lab.engine.policy import compile_price_override
+from hsm_lab.institutions.authority import authority_at
 from hsm_lab.institutions.decisions import (
     Decision,
+    InvestmentDecision,
+    PriceProposalDecision,
     ProcurementChoiceKind,
     ProcurementDecision,
 )
+from hsm_lab.institutions.price_regimes import PriceRegime
 from hsm_lab.institutions.proposal_validation import ValidationResult
 
 if TYPE_CHECKING:
@@ -165,6 +172,7 @@ def _base_controls(
         central_target=None,
         policy=None,
         procurement_requests=None,
+        investment_approvals=None,
     )
 
 
@@ -172,10 +180,10 @@ def _with_procurement_request(
     controls: TickControls,
     request: tuple[int, int, float],
 ) -> TickControls:
-    from hsm_lab.engine.policy import TickControls
 
     existing = controls.procurement_requests or ()
-    return TickControls(
+    return replace(
+        controls,
         material_parameters=controls.material_parameters,
         household_parameters=controls.household_parameters,
         household_catalog=controls.household_catalog,
@@ -277,6 +285,360 @@ def _restore_state(state: MaterialState, snapshot: MaterialState) -> None:
         setattr(state, field_name, copy.deepcopy(getattr(snapshot, field_name)))
 
 
+def _require_authority(
+    decision: Decision,
+    *,
+    permission: str,
+    authority_calendar: Any | None,
+    geographic_id: str,
+) -> str | None:
+    """Return an error reason unless the declared authority grants permission."""
+    if authority_calendar is None:
+        return "no authority calendar supplied; the authority-bound bridge fails closed"
+    result = authority_at(
+        authority_calendar,
+        organization_id=decision.organization_id,
+        sector_id=decision.sector_id,
+        geographic_id=geographic_id,
+        permission=permission,
+        decision_at=decision.decision_at,
+    )
+    if result.status != "granted":
+        return f"{permission} authority is {result.status}: {result.reason}"
+    return None
+
+
+def _run_controls_tick(
+    state: MaterialState,
+    forcing: MaterialForcing,
+    parameters: Any,
+    network: MaterialNetwork,
+    controls: Any,
+    opening: Any,
+    before: MaterialState,
+) -> tuple[MaterialTickFlows | None, str | None]:
+    """Run one tick under controls and enforce the invariant gate with rollback."""
+    from hsm_lab.engine import accounting
+    from hsm_lab.engine.material import tick_material
+
+    try:
+        flows = tick_material(state, forcing, parameters, network, controls=controls)
+        summary = accounting.check_material_invariants(
+            opening, state, flows, parameters, network, controls=controls
+        )
+    except Exception as exc:  # noqa: BLE001 - failure must roll back the state
+        _restore_state(state, before)
+        return None, f"tick or invariant gate failed: {exc}"
+    if (
+        summary.max_material_abs_residual >= 1e-6
+        or summary.max_finance_abs_residual >= 1e-6
+    ):
+        _restore_state(state, before)
+        return None, "material/financial invariant gate rejected the quarter"
+    return flows, None
+
+
+def _baseline_flows(
+    state: MaterialState,
+    forcing: MaterialForcing,
+    parameters: Any,
+    network: MaterialNetwork,
+    controls: Any,
+) -> MaterialTickFlows | None:
+    import copy
+
+    from hsm_lab.engine.material import tick_material
+
+    try:
+        return tick_material(
+            copy.deepcopy(state), forcing, parameters, network, controls=controls
+        )
+    except Exception:  # noqa: BLE001 - a failed baseline is reported as no baseline
+        return None
+
+
+def _commit_price(
+    decision: PriceProposalDecision,
+    *,
+    state: MaterialState,
+    forcing: MaterialForcing,
+    parameters: Any,
+    network: MaterialNetwork,
+    controls: Any,
+    tick: int,
+    quarter: str,
+    authority_calendar: Any | None,
+    price_regime: PriceRegime | None,
+    geographic_id: str,
+) -> ExecutionResult:
+    import copy
+
+    from hsm_lab.engine.state import capture_material_stocks
+
+    if price_regime is None:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason="no declared price regime supplied; price bridge fails closed",
+        )
+    try:
+        rule = price_regime.rule_for(decision.commodity_id)
+    except ConfigError as exc:
+        return ExecutionResult(
+            decision_id=decision.decision_id, is_committed=False, reason=str(exc)
+        )
+    authority_error = _require_authority(
+        decision,
+        permission="price_setting",
+        authority_calendar=authority_calendar,
+        geographic_id=geographic_id,
+    )
+    if authority_error is not None:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason=authority_error,
+        )
+    if rule.regime == "fixed":
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason=(
+                f"price category {rule.category_id!r} is fixed; "
+                "no proposal is admissible"
+            ),
+        )
+    commodity_ids = tuple(str(value) for value in network.commodity_ids)
+    try:
+        commodity_index = commodity_ids.index(decision.commodity_id)
+    except ValueError:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason="commodity is not in the material network",
+        )
+    old_price = float(parameters.prices[commodity_index])
+    try:
+        new_material, catalog = compile_price_override(
+            parameters,
+            network.household_parameters,
+            commodity_index=commodity_index,
+            price=float(decision.proposed_price),
+            commodity_ids=commodity_ids,
+        )
+    except ConfigError as exc:
+        return ExecutionResult(
+            decision_id=decision.decision_id, is_committed=False, reason=str(exc)
+        )
+    new_controls = replace(
+        controls,
+        material_parameters=new_material,
+        household_catalog=catalog,
+    )
+    baseline_flows = _baseline_flows(state, forcing, parameters, network, controls)
+    before = copy.deepcopy(state)
+    opening = capture_material_stocks(state)
+    flows, error = _run_controls_tick(
+        state, forcing, new_material, network, new_controls, opening, before
+    )
+    if error is not None or flows is None:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason=error or "price tick produced no flows",
+            trace=(
+                ("tick", tick),
+                ("quarter", quarter),
+                ("commodity_id", decision.commodity_id),
+                ("control", "price_override"),
+                ("binding_status", "rejected"),
+            ),
+        )
+    state.completed_ticks += 1
+    new_price = float(new_material.prices[commodity_index])
+    baseline_delivered = float(baseline_flows.delivered.sum()) if baseline_flows else 0.0
+    return ExecutionResult(
+        decision_id=decision.decision_id,
+        is_committed=True,
+        flows=flows,
+        trace=(
+            ("tick", tick),
+            ("quarter", quarter),
+            ("control", "price_override"),
+            ("control_applied", True),
+            ("category_id", rule.category_id),
+            ("regime", rule.regime),
+            ("commodity_id", decision.commodity_id),
+            ("commodity_index", commodity_index),
+            ("old_price", old_price),
+            ("new_price", new_price),
+            ("price_ratio", (new_price / old_price) if old_price > 0.0 else None),
+            ("baseline_delivered", baseline_delivered),
+            ("decision_delivered", float(flows.delivered.sum())),
+            ("binding_status", "changed" if new_price != old_price else "nonbinding"),
+        ),
+    )
+
+
+def _role_index(network: MaterialNetwork, role: str) -> int:
+    catalog = get_catalog(str(network.catalog_id))
+    commodity_ids = tuple(str(value) for value in network.commodity_ids)
+    for commodity_id in catalog.with_role(role):
+        if commodity_id in commodity_ids:
+            return commodity_ids.index(commodity_id)
+    return -1
+
+
+def _commit_investment(
+    decision: InvestmentDecision,
+    *,
+    state: MaterialState,
+    forcing: MaterialForcing,
+    parameters: Any,
+    network: MaterialNetwork,
+    controls: Any,
+    tick: int,
+    quarter: str,
+    organization_index: Mapping[str, int] | None,
+    authority_calendar: Any | None,
+    geographic_id: str,
+) -> ExecutionResult:
+    import copy
+
+    from hsm_lab.engine.state import capture_material_stocks
+
+    authority_error = _require_authority(
+        decision,
+        permission="investment_approval",
+        authority_calendar=authority_calendar,
+        geographic_id=geographic_id,
+    )
+    if authority_error is not None:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason=authority_error,
+        )
+    try:
+        organization_index_value = _resolve_organization_index(
+            decision, state, organization_index
+        )
+    except KeyError as exc:
+        return ExecutionResult(
+            decision_id=decision.decision_id, is_committed=False, reason=str(exc)
+        )
+    capital_index = _role_index(network, "capital")
+    construction_index = _role_index(network, "construction")
+    capital_unit = float(parameters.capacity_capital_goods_per_unit)
+    construction_unit = float(parameters.capacity_construction_per_unit)
+    if capital_unit > 0.0 and capital_index < 0:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason="network has no capital commodity for investment pricing",
+        )
+    if construction_unit > 0.0 and construction_index < 0:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason="network has no construction commodity for investment pricing",
+        )
+    unit_cost = 0.0
+    if capital_index >= 0:
+        unit_cost += capital_unit * float(parameters.prices[capital_index])
+    if construction_index >= 0:
+        unit_cost += construction_unit * float(parameters.prices[construction_index])
+    if unit_cost <= 0.0:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason="investment unit cost is not positive; approval cannot be sized",
+        )
+    requested_amount = 0.0 if decision.kind == "withdraw" else float(
+        decision.requested_amount
+    )
+    approved_capacity = requested_amount / unit_cost
+    new_controls = replace(
+        controls,
+        investment_approvals=((organization_index_value, approved_capacity),),
+    )
+    baseline_flows = _baseline_flows(state, forcing, parameters, network, controls)
+    before = copy.deepcopy(state)
+    approved_before = float(state.organization_project_approved[organization_index_value])
+    capacity_before = float(state.organization_capacity[organization_index_value])
+    opening = capture_material_stocks(state)
+    flows, error = _run_controls_tick(
+        state, forcing, parameters, network, new_controls, opening, before
+    )
+    if error is not None or flows is None:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason=error or "investment tick produced no flows",
+            trace=(
+                ("tick", tick),
+                ("quarter", quarter),
+                ("organization_id", decision.organization_id),
+                ("control", "investment_approvals"),
+                ("binding_status", "rejected"),
+            ),
+        )
+    state.completed_ticks += 1
+    approved_after = float(state.organization_project_approved[organization_index_value])
+    capacity_after = float(state.organization_capacity[organization_index_value])
+    return ExecutionResult(
+        decision_id=decision.decision_id,
+        is_committed=True,
+        flows=flows,
+        trace=(
+            ("tick", tick),
+            ("quarter", quarter),
+            ("control", "investment_approvals"),
+            ("control_applied", True),
+            ("organization_id", decision.organization_id),
+            ("organization_index", organization_index_value),
+            ("project_id", decision.project_id),
+            ("requested_amount", requested_amount),
+            ("unit_cost", unit_cost),
+            ("approved_capacity", approved_capacity),
+            ("approved_open_before", approved_before),
+            ("approved_open_after", approved_after),
+            ("capacity_before", capacity_before),
+            ("capacity_after", capacity_after),
+            (
+                "baseline_delivered",
+                float(baseline_flows.delivered.sum()) if baseline_flows else 0.0,
+            ),
+            ("decision_delivered", float(flows.delivered.sum())),
+            (
+                "baseline_investment_requested",
+                float(
+                    baseline_flows.organization_investment_requested[organization_index_value]
+                )
+                if baseline_flows is not None
+                else 0.0,
+            ),
+            (
+                "baseline_investment_approved",
+                float(
+                    baseline_flows.organization_investment_approved[organization_index_value]
+                )
+                if baseline_flows is not None
+                else 0.0,
+            ),
+            (
+                "investment_requested",
+                float(flows.organization_investment_requested[organization_index_value]),
+            ),
+            (
+                "investment_approved",
+                float(flows.organization_investment_approved[organization_index_value]),
+            ),
+            ("binding_status", "approved" if approved_capacity > 0.0 else "withdrawn"),
+        ),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Main commit function
 # ---------------------------------------------------------------------------
@@ -292,6 +654,9 @@ def commit_proposal(
     controls: TickControls | None = None,
     *,
     organization_index: Mapping[str, int] | None = None,
+    authority_calendar: Any | None = None,
+    price_regime: PriceRegime | None = None,
+    geographic_id: str = "",
 ) -> ExecutionResult:
     """Commit one validated decision through ``TickControls`` and one tick.
 
@@ -360,16 +725,6 @@ def commit_proposal(
             is_committed=False,
             reason="decision payload does not match the validated payload",
         )
-    if type(decision) is not ProcurementDecision:
-        return ExecutionResult(
-            decision_id=decision.decision_id,
-            is_committed=False,
-            reason=(
-                "no existing TickControls mapping for this decision type; "
-                "the minimal H2B bridge currently supports procurement requests"
-            ),
-        )
-
     tick = int(state.completed_ticks)
     quarters = list(forcing.quarters)
     if tick < 0 or tick >= len(quarters):
@@ -387,6 +742,42 @@ def commit_proposal(
                 f"decision quarter {decision.quarter!r} does not match the "
                 f"kernel quarter {expected_quarter!r}"
             ),
+        )
+
+    base = _base_controls(parameters, network, controls)
+    if type(decision) is PriceProposalDecision:
+        return _commit_price(
+            decision,
+            state=state,
+            forcing=forcing,
+            parameters=parameters,
+            network=network,
+            controls=base,
+            tick=tick,
+            quarter=expected_quarter,
+            authority_calendar=authority_calendar,
+            price_regime=price_regime,
+            geographic_id=geographic_id,
+        )
+    if type(decision) is InvestmentDecision:
+        return _commit_investment(
+            decision,
+            state=state,
+            forcing=forcing,
+            parameters=parameters,
+            network=network,
+            controls=base,
+            tick=tick,
+            quarter=expected_quarter,
+            organization_index=organization_index,
+            authority_calendar=authority_calendar,
+            geographic_id=geographic_id,
+        )
+    if type(decision) is not ProcurementDecision:
+        return ExecutionResult(
+            decision_id=decision.decision_id,
+            is_committed=False,
+            reason="no TickControls mapping for this decision type",
         )
 
     try:

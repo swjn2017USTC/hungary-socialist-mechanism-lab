@@ -1605,6 +1605,28 @@ def _tick_material_impl(
         np.asarray(state.organization_capacity, dtype=np.float64) * hunger,
         0.0,
     )
+    approvals = getattr(controls, "investment_approvals", None) if controls is not None else None
+    if approvals:
+        approved_mask = np.zeros(org_count, dtype=bool)
+        approved_capacity = np.zeros(org_count, dtype=np.float64)
+        for raw_index, raw_capacity in approvals:
+            org_index = int(raw_index)
+            capacity = float(raw_capacity)
+            _require(
+                bool(0 <= org_index < org_count),
+                "investment approval organization index is outside the state",
+            )
+            _require(
+                bool(np.isfinite(capacity) and capacity >= 0.0),
+                "investment approval capacity must be finite and non-negative",
+            )
+            approved_mask[org_index] = True
+            approved_capacity[org_index] += capacity
+        new_request = np.where(
+            approved_mask,
+            np.minimum(new_request, approved_capacity),
+            new_request,
+        )
 
     capital_unit = float(parameters.capacity_capital_goods_per_unit)
     construction_unit = float(parameters.capacity_construction_per_unit)

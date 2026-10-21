@@ -1,0 +1,118 @@
+{
+  "approval": {
+    "path": "docs/phases/HIST_VNEXT/H4A-1/EXPERIMENT_INPUT_APPROVAL.json",
+    "sha256": "c322f7bbc5cbc86da9eadc2fed36535152c5bc9efcd29b3d9f0cdb9ec9c450fc"
+  },
+  "consumed_by_model": [
+    {
+      "assumption_id": "h4exp_inherited_persons",
+      "basis": "inherited_baseline_synthetic",
+      "run_id": "eeaa83290e47537997a53eae27df91da",
+      "setting_id": "low",
+      "target_field": "household_initial.counties[].persons_total",
+      "unit": "persons"
+    },
+    {
+      "assumption_id": "h4exp_inherited_households",
+      "basis": "inherited_baseline_synthetic",
+      "run_id": "eeaa83290e47537997a53eae27df91da",
+      "setting_id": "low",
+      "target_field": "household_initial.counties[].household_total",
+      "unit": "households"
+    },
+    {
+      "assumption_id": "h4exp_dwelling_ratio",
+      "basis": "explicit_experiment_design",
+      "run_id": "eeaa83290e47537997a53eae27df91da",
+      "setting_id": "low",
+      "target_field": "material_initial.dwelling_per_person",
+      "unit": "dwellings/person"
+    },
+    {
+      "assumption_id": "h4exp_inherited_persons",
+      "basis": "inherited_baseline_synthetic",
+      "run_id": "c0e4a26c916085f4bb9bf39cf1de2cb7",
+      "setting_id": "baseline",
+      "target_field": "household_initial.counties[].persons_total",
+      "unit": "persons"
+    },
+    {
+      "assumption_id": "h4exp_inherited_households",
+      "basis": "inherited_baseline_synthetic",
+      "run_id": "c0e4a26c916085f4bb9bf39cf1de2cb7",
+      "setting_id": "baseline",
+      "target_field": "household_initial.counties[].household_total",
+      "unit": "households"
+    },
+    {
+      "assumption_id": "h4exp_dwelling_ratio",
+      "basis": "explicit_experiment_design",
+      "run_id": "c0e4a26c916085f4bb9bf39cf1de2cb7",
+      "setting_id": "baseline",
+      "target_field": "material_initial.dwelling_per_person",
+      "unit": "dwellings/person"
+    },
+    {
+      "assumption_id": "h4exp_inherited_persons",
+      "basis": "inherited_baseline_synthetic",
+      "run_id": "ce4fd14e513fbd26ee2e916f06bc98af",
+      "setting_id": "high",
+      "target_field": "household_initial.counties[].persons_total",
+      "unit": "persons"
+    },
+    {
+      "assumption_id": "h4exp_inherited_households",
+      "basis": "inherited_baseline_synthetic",
+      "run_id": "ce4fd14e513fbd26ee2e916f06bc98af",
+      "setting_id": "high",
+      "target_field": "household_initial.counties[].household_total",
+      "unit": "households"
+    },
+    {
+      "assumption_id": "h4exp_dwelling_ratio",
+      "basis": "explicit_experiment_design",
+      "run_id": "ce4fd14e513fbd26ee2e916f06bc98af",
+      "setting_id": "high",
+      "target_field": "material_initial.dwelling_per_person",
+      "unit": "dwellings/person"
+    }
+  ],
+  "declaration": {
+    "path": "config/initial_state/hist_vnext_h4_v1/experiment_inputs.json",
+    "sha256": "e564786bbcd1eafbd23fd94b3d2bda87a46743e16fba7b800203518c0156a0a5"
+  },
+  "experiment_id": "h4exp_synthetic_dwelling_sensitivity_v1",
+  "historical_inputs_admitted": 0,
+  "historical_status": "NOT_ESTABLISHED",
+  "initial_state_notice": "The 1957 synthetic baseline scenario is copied and the approved experiment assumptions are applied; this is not a historical 1957 initial state.",
+  "measurement_notice": "Measurements are model-internal and have no historical comparison; historical_status remains NOT_ESTABLISHED.",
+  "runs": {
+    "baseline": {
+      "completed_ticks": 4,
+      "deterministic_replay_digest": "0d360553a9066dc60515bffd34abae80b5f556ed188609f0063ba6fd73e9fa03",
+      "measurement": "outputs/hist-vnext-h4a-runtime-final2-20261021T034526Z/baseline/measurement.json",
+      "run_dir": "outputs/hist-vnext-h4a-runtime-final2-20261021T034526Z/baseline",
+      "run_id": "c0e4a26c916085f4bb9bf39cf1de2cb7",
+      "status": "completed"
+    },
+    "high": {
+      "completed_ticks": 4,
+      "deterministic_replay_digest": "f8db21ad7c9f73d704fb395c1ff39948eeae29586c3c988b7c9f6995b7d6d501",
+      "measurement": "outputs/hist-vnext-h4a-runtime-final2-20261021T034526Z/high/measurement.json",
+      "run_dir": "outputs/hist-vnext-h4a-runtime-final2-20261021T034526Z/high",
+      "run_id": "ce4fd14e513fbd26ee2e916f06bc98af",
+      "status": "completed"
+    },
+    "low": {
+      "completed_ticks": 4,
+      "deterministic_replay_digest": "c48ea965a7aad38f3b64aef4c3f25eb9c7a5f21f5b4d0b04829a95ca47d284f3",
+      "measurement": "outputs/hist-vnext-h4a-runtime-final2-20261021T034526Z/low/measurement.json",
+      "run_dir": "outputs/hist-vnext-h4a-runtime-final2-20261021T034526Z/low",
+      "run_id": "eeaa83290e47537997a53eae27df91da",
+      "status": "completed"
+    }
+  },
+  "runtime_connected": true,
+  "schema_version": "hist_vnext_h4a_runtime_v1",
+  "target_initial_at": "1957-01-01"
+}

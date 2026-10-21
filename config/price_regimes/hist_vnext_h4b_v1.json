@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "categories": [
+    {
+      "category_id": "energy_and_housing_services_fixed",
+      "commodity_ids": [
+        "g01_solid_fuels",
+        "g02_oil_gas_fuels",
+        "g03_electricity_heat",
+        "g16_housing_public_services"
+      ],
+      "regime": "fixed"
+    },
+    {
+      "category_id": "industry_and_consumer_goods_authorized",
+      "commodity_ids": [
+        "g04_basic_metals_materials",
+        "g05_chemicals_fertilizer",
+        "g06_machinery_capital",
+        "g07_construction",
+        "g08_agricultural_raw",
+        "g09_basic_food",
+        "g10_animal_food",
+        "g11_textiles_footwear",
+        "g12_household_nondurables",
+        "g13_household_durables",
+        "g14_vehicles_transport_equipment",
+        "g15_market_services"
+      ],
+      "regime": "authorized_adjustment"
+    }
+  ]
+}
