@@ -823,6 +823,7 @@ def _tick_material_impl(
     treasury_housing_payable: float | None = None,
     export_receivable_policy: ExportReceivablePolicy | None = None,
     cmea_clearing_policy: CmeaClearingPolicy | None = None,
+    second_economy_trace: dict[str, Any] | None = None,
 ) -> MaterialTickFlows:
     """Advance the material economy by one admitted quarter (plan section 3).
 
@@ -1193,7 +1194,7 @@ def _tick_material_impl(
     region_persons = np.bincount(hh_region, weights=hh_weight * hh_size, minlength=region_count)
 
     # --- P03 household demand, frozen for the whole quarter (C1) -----------
-    plan_household_time(state, household_parameters)
+    plan_household_time(state, household_parameters, network=network, controls=controls)
     desired_h = form_household_demand(state, household_parameters, catalog)
     durable_owned_open = np.asarray(state.household_durable_owned, dtype=np.float64)
     desired_durable = durable_desire(state, household_parameters)
@@ -1282,6 +1283,22 @@ def _tick_material_impl(
         labor_cap[plot_rows] = np.asarray(state.plot_labor_budget, dtype=np.float64)[
             plot_regions
         ] / float(plot_recipe.plot_labor_per_activity)
+        if getattr(network, "f2_marker", None) is not None:
+            # F2 opportunity cost: plot activity may not use hours the
+            # household planner did not actually reserve.  The legacy plot
+            # budget is untouched for every non-F2 caller.
+            reserved_plot = np.bincount(
+                np.asarray(state.household_region, dtype=np.int64),
+                weights=(
+                    np.asarray(state.household_weight, dtype=np.float64)
+                    * np.asarray(state.household_reserved_plot_hours, dtype=np.float64)
+                ),
+                minlength=region_count,
+            )
+            plot_hour_cap = reserved_plot[plot_regions] / float(
+                household_parameters.time.plot_hours_per_activity
+            )
+            labor_cap[plot_rows] = np.minimum(labor_cap[plot_rows], plot_hour_cap)
     local_target = np.maximum(
         np.minimum(float(parameters.utilization) * capacity * season, labor_cap),
         0.0,
@@ -4194,7 +4211,9 @@ def _tick_material_impl(
             cell = int(retail_map[r, g])
             if cell >= 0:
                 flows.retail_available[r, g] = max(retail_open_stock[cell], 0.0)
-    settle_second_economy(state, flows, network, household_parameters, price_net)
+    settle_second_economy(
+        state, flows, network, household_parameters, price_net, trace=second_economy_trace
+    )
     allocation_opening = capture_material_stocks(state)
     # restore the true opening boundary for the household step's lagged terms
     allocation_opening.household_durable_owned = durable_owned_open.copy()
@@ -4275,7 +4294,7 @@ def _tick_material_impl(
         flows.expired_services = float(leftovers.sum())
         state.stock_value[ephemeral_cells] = 0.0
 
-    second_expiry(state, network)
+    second_expiry(state, network, trace=second_economy_trace)
 
     export_delivered_cmea = np.zeros(g_count, dtype=np.float64)
     export_delivered_convertible = np.zeros(g_count, dtype=np.float64)
@@ -4521,6 +4540,7 @@ def tick_material(
     treasury_housing_payable: float | None = None,
     export_receivable_policy: ExportReceivablePolicy | None = None,
     cmea_clearing_policy: CmeaClearingPolicy | None = None,
+    second_economy_trace: dict[str, Any] | None = None,
 ) -> MaterialTickFlows:
     """Public kernel entry point.
 
@@ -4549,6 +4569,7 @@ def tick_material(
             treasury_housing_payable=treasury_housing_payable,
             export_receivable_policy=None,
             cmea_clearing_policy=None,
+            second_economy_trace=second_economy_trace,
         )
     snapshot = copy.deepcopy(state)
     try:
@@ -4569,6 +4590,7 @@ def tick_material(
             treasury_housing_payable=treasury_housing_payable,
             export_receivable_policy=export_receivable_policy,
             cmea_clearing_policy=cmea_clearing_policy,
+            second_economy_trace=second_economy_trace,
         )
     except BaseException:
         for field_name in state.__dataclass_fields__:

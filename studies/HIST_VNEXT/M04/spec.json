@@ -1,0 +1,131 @@
+{
+  "schema_version": "hist_vnext_h5b_m04_v1",
+  "phase_id": "H5B",
+  "mechanism_id": "M4",
+  "study_id": "M04",
+  "document": "H5B M04 preregistration: structural experiment on the read-only F2 second-economy branch with three tolerance arms (0.0, 0.5, 1.0).  Historical identification and calibration status remain UNIDENTIFIED; only first-stage structural effects (formal vs informal competition, opportunity cost in household time, joint material + cash closure) are measured.  No historical source is admitted; the F2 axis is declared, not identified.",
+  "status_scope": "COMMITTABLE_WITH_PROMOTION_BAR",
+  "legacy_card": {
+    "path": "config/p06/cards/M4.json",
+    "sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+    "verbatim": true,
+    "hypothesis": "the second economy is net stabilising or net eroding for the formal system.",
+    "falsification_criterion": "tolerance changes move neither the household availability gap nor the formal sector's delivery metrics.",
+    "manipulated_variables": [
+      "policy.second_economy_tolerance",
+      "policy.private_autonomy"
+    ],
+    "controlled_variables": [
+      "formal-sector parameters",
+      "external history",
+      "seed"
+    ],
+    "metrics": [
+      "aggregates.plot_self_use/plot_market_sales",
+      "household_budgets.plot_income_formal/plot_income_direct",
+      "formal household_availability_unmet",
+      "departments.service_use_household"
+    ],
+    "result_categories": [
+      "SUPPORTED",
+      "CONDITIONAL",
+      "WEAK",
+      "REJECTED",
+      "UNIDENTIFIED"
+    ],
+    "minimum_replicates": 3,
+    "calibrated_parameter_dependencies": [
+      "p04_culture_prior"
+    ]
+  },
+  "source": {
+    "scenario_id": "historical_f2_replay",
+    "path": "config/scenarios/historical_f2_replay.json",
+    "sha256": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c",
+    "typed_copy_only": [
+      "scenario_id",
+      "households",
+      "ticks",
+      "seed",
+      "forcing_bindings"
+    ],
+    "never_mutated": [
+      "material_initial",
+      "material_parameters",
+      "household_parameters",
+      "household_initial",
+      "organization_recipe",
+      "technologies",
+      "routes",
+      "region_ids",
+      "commodities",
+      "stochastic",
+      "forcing_pack"
+    ]
+  },
+  "recipe": {
+    "schema_version": "hist_vnext_second_economy_f2_v1",
+    "recipe_id": "hist-vnext-m04-nonplot-v1",
+    "input_coefficients": [
+      ["g02_oil_gas_fuels", 0.02],
+      ["g04_basic_metals_materials", 0.03]
+    ],
+    "output_coefficients": [
+      ["g11_textiles_footwear", 0.10],
+      ["g15_market_services", 0.25]
+    ],
+    "hours_per_activity": 4.0,
+    "capacity_per_participating_worker": 10.0,
+    "role": "latent_parameter",
+    "evidence_status": "structural_assumption",
+    "calibration_status": "not_calibrated"
+  },
+  "research_contract": {
+    "path": "config/research_contract.json",
+    "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82"
+  },
+  "run": {
+    "households": 1000,
+    "ticks_profile": 4,
+    "ticks_study": 16,
+    "seeds": [1729, 1730, 1731],
+    "memory_only": true,
+    "forcing_pack": "data/fixtures/p02_material_synthetic_pack.json"
+  },
+  "policy": {
+    "fixed": {
+      "plan_utilization": 1.0,
+      "enterprise_autonomy": 0.1,
+      "second_economy_tolerance_arm": [0.0, 0.5, 1.0],
+      "private_autonomy": 0.5,
+      "welfare_provision": 0.5
+    }
+  },
+  "arms": [
+    {
+      "arm_id": "tolerance_0",
+      "second_economy_tolerance": 0.0
+    },
+    {
+      "arm_id": "tolerance_05",
+      "second_economy_tolerance": 0.5
+    },
+    {
+      "arm_id": "tolerance_1",
+      "second_economy_tolerance": 1.0
+    }
+  ],
+  "seed_policy": "per_seed_initial_pool_shared_across_arms",
+  "completion_rule": "status is COMPLETED only for the full 3 seeds x 3 arms design at 16 ticks; the 4Q profile is structural-only evidence.  Any conservation failure, baseline collapse or invariant breach stops the run and records the failing seed/arm/tick.",
+  "no_posterior_search": "No additional mechanism cards, source scenarios, post-hoc parameter search or ad-hoc recipe adjustments are permitted in this study.",
+  "first_stage_adjudication": {
+    "support_code": "FIRST_STAGE_SUPPORTED",
+    "null_code": "FIRST_STAGE_NULL",
+    "unknown_code": "STRUCTURAL_UNDETERMINED",
+    "fail_code": "INVARIANT_VIOLATED"
+  },
+  "historical_identification": {
+    "status": "UNIDENTIFIED",
+    "reason": "no admitted primary source for F2 second-economy output series, no calibration of M4 priors."
+  }
+}

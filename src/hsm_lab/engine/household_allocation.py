@@ -57,6 +57,7 @@ def allocate_household_baskets(
 ) -> None:
     """Ration the desired basket across every channel and settle all flows."""
     catalog: HouseholdCatalog = network.household_catalog
+    is_f2 = getattr(network, "f2_marker", None) is not None
     h_count = len(catalog.household_good_ids)
     region = np.asarray(state.household_region, dtype=np.int64)
     weight = np.asarray(state.household_weight, dtype=np.float64)
@@ -79,8 +80,13 @@ def allocate_household_baskets(
         + np.asarray(flows.household_plot_income_formal, dtype=np.float64)
         + np.asarray(household_deferred_open, dtype=np.float64)
         - np.asarray(flows.household_plot_input_funding, dtype=np.float64)
-        - np.asarray(flows.household_second_input_funding, dtype=np.float64)
     )
+    if not is_f2:
+        # The legacy F1 branch keeps its historical treatment of second-input
+        # funding in the receipts budget.  F2 settle debits household cash
+        # before allocation, so the F2 branch must not subtract the same
+        # funding a second time.
+        income -= np.asarray(flows.household_second_input_funding, dtype=np.float64)
     base_income_budget, budget, savings_reentry_cap = _household_budget_with_savings(
         pre_purchase_cash, income, savings_reentry_fraction
     )
@@ -240,6 +246,42 @@ def allocate_household_baskets(
     substitution_target_units = np.zeros((n, len(catalog.substitution_ids)), dtype=np.float64)
     goal_credit = realized.copy()
     substitution_spend = np.zeros(n, dtype=np.float64)
+    formal_sub_h = np.zeros((n, h_count), dtype=np.float64)
+    second_sub_h = np.zeros((n, h_count), dtype=np.float64)
+    if is_f2:
+        # F2 keeps formal and second-economy target sources separate.  Every
+        # substitution consumes one of them exactly once, so four durable
+        # shortages cannot share a single repair-service shelf.
+        formal_room = np.maximum(
+            formal_avail
+            - np.stack(
+                [
+                    np.bincount(
+                        region,
+                        weights=weight * formal_bought[:, h],
+                        minlength=region_count,
+                    )
+                    for h in range(h_count)
+                ],
+                axis=1,
+            ),
+            0.0,
+        )
+        second_room = np.maximum(
+            second_avail
+            - np.stack(
+                [
+                    np.bincount(
+                        region,
+                        weights=weight * second_bought[:, h],
+                        minlength=region_count,
+                    )
+                    for h in range(h_count)
+                ],
+                axis=1,
+            ),
+            0.0,
+        )
     for q in range(len(catalog.substitution_ids)):
         source_h = int(catalog.substitute_source_h[q])
         target_h = int(catalog.substitute_target_h[q])
@@ -249,30 +291,76 @@ def allocate_household_baskets(
         if not np.any(unmet > 0.0):
             continue
         demand_region = np.bincount(region, weights=weight * unmet, minlength=region_count)
-        room_region = np.maximum(
-            available[:, target_h]
-            - np.bincount(region, weights=weight * realized[:, target_h], minlength=region_count),
-            0.0,
-        )
+        if is_f2:
+            room_region = formal_room[:, target_h] + second_room[:, target_h]
+        else:
+            room_region = np.maximum(
+                available[:, target_h]
+                - np.bincount(
+                    region, weights=weight * realized[:, target_h], minlength=region_count
+                ),
+                0.0,
+            )
         allowed_region = np.minimum(demand_region * ratio, room_region)
         factor = np.where(
             demand_region > 0.0, allowed_region / np.maximum(demand_region * ratio, eps), 0.0
         )
         substituted = unmet * ratio * factor[region]
-        # budget: the substituted target units must be payable from the plan
-        budget_left = np.maximum(planned_spending - realized @ price_h, 0.0)
-        pay_region = np.bincount(
-            region, weights=weight * substituted * price_h[target_h], minlength=region_count
-        )
-        cash_region = np.bincount(region, weights=weight * budget_left, minlength=region_count)
-        pay_factor = np.where(
-            pay_region > 0.0, np.minimum(1.0, cash_region / np.maximum(pay_region, eps)), 1.0
-        )
-        substituted = substituted * pay_factor[region]
+        if is_f2:
+            # Per-household budget cap before regional rationing: a household
+            # cannot spend more than its remaining planned budget.
+            budget_left = np.maximum(
+                planned_spending - realized @ price_h - plot_direct_spend - substitution_spend,
+                0.0,
+            )
+            if price_h[target_h] > 0.0:
+                substituted = np.minimum(substituted, budget_left / price_h[target_h])
+            got_region = np.bincount(
+                region, weights=weight * substituted, minlength=region_count
+            )
+            avail_factor = np.where(
+                got_region > 0.0,
+                np.minimum(1.0, room_region / np.maximum(got_region, eps)),
+                0.0,
+            )
+            substituted = substituted * avail_factor[region]
+            got_region = np.bincount(
+                region, weights=weight * substituted, minlength=region_count
+            )
+            formal_units_region = np.minimum(got_region, formal_room[:, target_h])
+            second_units_region = np.maximum(got_region - formal_units_region, 0.0)
+            share = np.divide(
+                substituted,
+                got_region[region],
+                out=np.zeros_like(substituted),
+                where=got_region[region] > 0.0,
+            )
+            formal_sub = formal_units_region[region] * share
+            second_sub = second_units_region[region] * share
+            formal_room[:, target_h] = np.maximum(
+                formal_room[:, target_h] - formal_units_region, 0.0
+            )
+            second_room[:, target_h] = np.maximum(
+                second_room[:, target_h] - second_units_region, 0.0
+            )
+            formal_sub_h[:, target_h] += formal_sub
+            second_sub_h[:, target_h] += second_sub
+            substitution_spend += (formal_sub + second_sub) * price_h[target_h]
+        else:
+            # budget: the substituted target units must be payable from the plan
+            budget_left = np.maximum(planned_spending - realized @ price_h, 0.0)
+            pay_region = np.bincount(
+                region, weights=weight * substituted * price_h[target_h], minlength=region_count
+            )
+            cash_region = np.bincount(region, weights=weight * budget_left, minlength=region_count)
+            pay_factor = np.where(
+                pay_region > 0.0, np.minimum(1.0, cash_region / np.maximum(pay_region, eps)), 1.0
+            )
+            substituted = substituted * pay_factor[region]
+            substitution_spend += substituted * price_h[target_h]
         substitution[:, q] = substituted / ratio
         substitution_target_units[:, q] = substituted
         goal_credit[:, source_h] += substituted * credit / ratio
-        substitution_spend += substituted * price_h[target_h]
         # D3: the substituted source units are relieved -- do not re-count them
         # in the residual availability gap / queue hours.
         availability_unmet[:, source_h] = np.maximum(
@@ -282,8 +370,13 @@ def allocate_household_baskets(
     # physical realised units include the substituted target units; the target's
     # own goal credit is untouched (a substitute never upgrades its own goal).
     substitution_h = np.zeros((n, h_count), dtype=np.float64)
-    for q in range(len(catalog.substitution_ids)):
-        substitution_h[:, int(catalog.substitute_target_h[q])] += substitution_target_units[:, q]
+    if is_f2:
+        substitution_h = formal_sub_h + second_sub_h
+    else:
+        for q in range(len(catalog.substitution_ids)):
+            substitution_h[:, int(catalog.substitute_target_h[q])] += substitution_target_units[
+                :, q
+            ]
     realized = realized + substitution_h
     # D2: plot self-use is real household consumption and belongs in the
     # H-level realised basket and goal credit that welfare/entitlement consume.
@@ -292,6 +385,13 @@ def allocate_household_baskets(
 
     formal_spend = formal_bought @ price_h
     second_spend = second_bought @ price_h
+    if is_f2:
+        formal_purchase_h = formal_bought + formal_sub_h
+        second_purchase_h = second_bought + second_sub_h
+    else:
+        formal_purchase_h = formal_bought
+        second_purchase_h = second_bought
+    second_spend_total = second_purchase_h @ price_h
     spending = formal_spend + second_spend + substitution_spend + plot_direct_spend
 
     # --- physical stock drawdown --------------------------------------------
@@ -299,26 +399,53 @@ def allocate_household_baskets(
         g = int(parent[h])
         if g < 0:
             continue
-        consumed_region = (
-            np.bincount(region, weights=weight * formal_bought[:, h], minlength=region_count)
-            * equity[h]
-        )
-        flows.retail_sales[:, g] += consumed_region
-        if g in second_outputs:
-            consumed_second = (
+        if is_f2:
+            consumed_region = (
                 np.bincount(
                     region,
-                    weights=weight * (second_bought[:, h] + substitution_h[:, h]),
+                    weights=weight * formal_purchase_h[:, h],
                     minlength=region_count,
                 )
                 * equity[h]
             )
-            second_pool[:, g] = np.maximum(second_pool[:, g] - consumed_second, 0.0)
-        elif np.any(substitution_h[:, h] > 0.0):
-            flows.retail_sales[:, g] += (
-                np.bincount(region, weights=weight * substitution_h[:, h], minlength=region_count)
+            flows.retail_sales[:, g] += consumed_region
+            if g in second_outputs:
+                consumed_second = (
+                    np.bincount(
+                        region,
+                        weights=weight * second_purchase_h[:, h],
+                        minlength=region_count,
+                    )
+                    * equity[h]
+                )
+                second_pool[:, g] = np.maximum(second_pool[:, g] - consumed_second, 0.0)
+        else:
+            consumed_region = (
+                np.bincount(
+                    region, weights=weight * formal_bought[:, h], minlength=region_count
+                )
                 * equity[h]
             )
+            flows.retail_sales[:, g] += consumed_region
+            if g in second_outputs:
+                consumed_second = (
+                    np.bincount(
+                        region,
+                        weights=weight * (second_bought[:, h] + substitution_h[:, h]),
+                        minlength=region_count,
+                    )
+                    * equity[h]
+                )
+                second_pool[:, g] = np.maximum(second_pool[:, g] - consumed_second, 0.0)
+            elif np.any(substitution_h[:, h] > 0.0):
+                flows.retail_sales[:, g] += (
+                    np.bincount(
+                        region,
+                        weights=weight * substitution_h[:, h],
+                        minlength=region_count,
+                    )
+                    * equity[h]
+                )
     # Retail cells release exactly the parent-equivalent household sales through
     # their own edges (matches the material ledger's edge-based continuity).
     # Aggregate cap: the per-channel availability is capped above, but summing
@@ -355,17 +482,34 @@ def allocate_household_baskets(
     # --- second-economy sale receipts to the participating cohort ------------
     participant = np.asarray(state.household_second_participating, dtype=bool)
     working = np.asarray(state.household_working_adults, dtype=np.float64)
-    cap_person = np.bincount(
-        region[participant], weights=(weight * working)[participant], minlength=region_count
+    sale_region = np.bincount(
+        region, weights=weight * second_spend_total, minlength=region_count
     )
-    sale_region = np.bincount(region, weights=weight * second_spend, minlength=region_count)
     receipt = np.zeros(n, dtype=np.float64)
-    for r in range(region_count):
-        if sale_region[r] <= 0.0 or cap_person[r] <= 0.0:
-            continue
-        mask = (region == r) & participant
-        if mask.any():
-            receipt[mask] = sale_region[r] * (weight[mask] * working[mask]) / cap_person[r]
+    if is_f2:
+        # The cohort is fixed (participants with working adults); the state-unit
+        # share is working_i / sum_cohort(weight*working), so
+        # sum(weight_i * receipt_i) == sale_region exactly.
+        cohort = participant & (working > 0.0)
+        cap_person = np.bincount(
+            region[cohort], weights=(weight * working)[cohort], minlength=region_count
+        )
+        for r in range(region_count):
+            if sale_region[r] <= 0.0 or cap_person[r] <= 0.0:
+                continue
+            mask = (region == r) & cohort
+            if mask.any():
+                receipt[mask] = sale_region[r] * working[mask] / cap_person[r]
+    else:
+        cap_person = np.bincount(
+            region[participant], weights=(weight * working)[participant], minlength=region_count
+        )
+        for r in range(region_count):
+            if sale_region[r] <= 0.0 or cap_person[r] <= 0.0:
+                continue
+            mask = (region == r) & participant
+            if mask.any():
+                receipt[mask] = sale_region[r] * (weight[mask] * working[mask]) / cap_person[r]
 
     total_receipt = receipt + plot_direct_receipt
     state.household_cash = (
@@ -405,11 +549,11 @@ def allocate_household_baskets(
     flows.household_realized_h = realized
     flows.household_budget_unmet_h = np.maximum(desired - affordable, 0.0)
     flows.household_availability_unmet_h = availability_unmet
-    flows.household_formal_h = formal_bought
+    flows.household_formal_h = formal_purchase_h if is_f2 else formal_bought
     flows.household_plot_self_h = plot_self
     flows.household_plot_market_h = plot_market_h
     flows.household_self_use = plot_self_value
-    flows.household_second_h = second_bought
+    flows.household_second_h = second_purchase_h if is_f2 else second_bought
     flows.household_goal_credit_h = goal_credit
     flows.household_substitution = substitution
     flows.household_savings_draw = np.minimum(
@@ -485,19 +629,41 @@ def allocate_household_baskets(
             flows.delivered[demand_is_hh] = delivered[demand_is_hh]
             flows.used[demand_is_hh] = delivered[demand_is_hh]
 
+    if is_f2:
+        from hsm_lab.institutions.second_economy_f2_adapter import (
+            append_f2_direct_sale_journal,
+        )
+
+        ledger_purchases = formal_purchase_h
+        ledger_second_spend = second_spend_total
+    else:
+        ledger_purchases = formal_bought + substitution_h
+        ledger_second_spend = second_spend
     _settle_ledger(
         state,
         flows,
         network,
         region,
         weight,
-        formal_bought + substitution_h,
+        ledger_purchases,
         price_h,
-        second_spend,
+        ledger_second_spend,
         receipt,
         plot_direct_spend,
         plot_direct_receipt,
     )
+    if is_f2:
+        # Per-household buyer/seller matching for the direct second-economy
+        # sales; this only appends journal legs (the cash/bank movement was
+        # already netted in ``_settle_ledger``).
+        append_f2_direct_sale_journal(
+            state,
+            flows,
+            region=region,
+            weight=weight,
+            buyer_amount=second_spend_total,
+            seller_amount=receipt,
+        )
 
 
 def _settle_ledger(

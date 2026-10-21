@@ -1,17 +1,8 @@
 """P03 second economy: aggregate per-county informal production (plan G).
 
-One aggregate second-economy activity per region, owned by its participating
-households.  Participants reserve labour hours, the aggregate buys real inputs
-from the regional formal stock (paying cash), produces real light goods,
-services and construction into a per-region second-economy pool, and any
-household -- participant or not -- can buy from that pool.  Sale receipts flow
-back to the participating cohort as deferred income.
-
-Scope note (documented in P03_REPORT): this is the *mechanism nucleus*
-implementation.  It reproduces the plan's income + availability channel without
-the full network-cell/route integration of G1/G2, so the second-economy pool is
-a separate state array whose continuity is checked explicitly rather than
-through the shared stock-cell catalog.
+This module dispatches to the H5B F2 adapter (``second_economy_f2_adapter``)
+when the active network carries the F2 marker; otherwise it runs the legacy
+P03 settled path unchanged.
 """
 
 from __future__ import annotations
@@ -32,8 +23,45 @@ _SELLING_POOLS = (
 )
 
 
-def plan_household_time(state: MaterialState, parameters: HouseholdParameters) -> None:
-    """Reserve plot and second-economy labour hours from each household's budget (G3)."""
+_F2_MARKER = "hist_vnext_f2_second_economy_v1"
+
+
+def _f2_recipe(network: Any):
+    if getattr(network, "f2_marker", None) == _F2_MARKER:
+        recipe = getattr(network, "second_economy_f2_recipe", None)
+        if recipe is not None:
+            return recipe
+    return None
+
+
+def plan_household_time(
+    state: MaterialState,
+    parameters: HouseholdParameters,
+    *,
+    network: Any = None,
+    controls: Any = None,
+) -> None:
+    """Reserve plot and second-economy labour hours from each household's budget (G3).
+
+    When ``network`` carries an F2 recipe the planner dispatches to the F2
+    adapter which uses the raw ``second_economy_tolerance`` from
+    ``controls.policy`` (1.0 if no controls are passed).  Old callers that pass
+    only ``state``/``parameters`` keep running through the legacy P03 logic.
+    """
+    if network is not None:
+        recipe = _f2_recipe(network)
+        if recipe is not None:
+            raw_tolerance = 1.0
+            if controls is not None and getattr(controls, "policy", None) is not None:
+                raw_tolerance = float(
+                    getattr(controls.policy, "second_economy_tolerance", 1.0)
+                )
+            from hsm_lab.institutions.second_economy_f2_adapter import (
+                plan_f2_household_time as _plan_f2,
+            )
+
+            _plan_f2(state, parameters, tolerance=raw_tolerance)
+            return
     time = parameters.time
     working = np.asarray(state.household_working_adults, dtype=np.float64)
     participating = np.asarray(state.household_plot_participating, dtype=bool)
@@ -75,8 +103,33 @@ def settle_second_economy(
     network: Any,
     parameters: HouseholdParameters,
     price_net: np.ndarray,
+    *,
+    trace: dict[str, Any] | None = None,
 ) -> None:
-    """Buy inputs, produce output into the regional pool, and pay the sellers (G)."""
+    """Buy inputs, produce output into the regional pool, and pay the sellers (G).
+
+    The F2 opt-in path uses named-commodity coefficients, named output lines
+    and real bank-sheet migration.  Old P03 path keeps the P02 8-axis index.
+    """
+    recipe = _f2_recipe(network)
+    if recipe is not None:
+        from hsm_lab.institutions.second_economy_f2_adapter import (
+            settle_f2_second_economy as _settle_f2,
+        )
+
+        _settle_f2(state, flows, network, parameters, price_net, trace=trace)
+        return
+    _settle_legacy(state, flows, network, parameters, price_net)
+
+
+def _settle_legacy(
+    state: MaterialState,
+    flows: MaterialTickFlows,
+    network: Any,
+    parameters: HouseholdParameters,
+    price_net: np.ndarray,
+) -> None:
+    """Legacy P03 settle path (P02 8-axis, double-weight known bug retained)."""
     recipe = parameters.second_economy
     region = np.asarray(state.household_region, dtype=np.int64)
     weight = np.asarray(state.household_weight, dtype=np.float64)
@@ -104,7 +157,6 @@ def settle_second_economy(
     if not np.any(target > 0.0) or not network.second_input_commodities:
         return
 
-    # Regional availability of each declared second-economy input.
     cell_region = np.asarray(network.cell_region, dtype=np.int64)
     cell_commodity = np.asarray(network.cell_commodity, dtype=np.int64)
     cell_pool = np.asarray(network.cell_pool, dtype=np.int64)
@@ -131,7 +183,6 @@ def settle_second_economy(
     if not np.any(realized > 0.0):
         return
 
-    # Input purchase: participants fund, sellers (cell owners) receive.
     payment_region = np.zeros(region_count, dtype=np.float64)
     region_cash = np.bincount(region, weights=weight * household_cash, minlength=region_count)
     for g in network.second_input_commodities:
@@ -139,7 +190,6 @@ def settle_second_economy(
         if axis_index >= 0:
             payment_region += realized * recipe.input_coefficients[axis_index] * float(price_net[g])
 
-    # Fund from participating households, scaled by available regional cash.
     allowed = np.divide(
         np.maximum(region_cash, 0.0),
         payment_region,
@@ -159,8 +209,6 @@ def settle_second_economy(
             continue
         cohort = cap_person[r]
         input_funding[mask] = funded_region[r] * (weight[mask] * working[mask]) / cohort
-    # A household may never fund more than its own cash: the regional pool is
-    # shared but the debit is individual, so cap and rescale the realised buy.
     input_funding = np.minimum(input_funding, np.maximum(household_cash, 0.0))
     region_actual = np.bincount(
         region[participant], weights=(weight * input_funding)[participant], minlength=region_count
@@ -174,7 +222,6 @@ def settle_second_economy(
     realized = realized * np.minimum(ratio, 1.0)
     household_cash = household_cash - input_funding
 
-    # Pay the sellers (cell owners); Treasury for import cells.
     seller_credit = np.zeros(int(state.organization_id.shape[0]), dtype=np.float64)
     treasury_credit = 0.0
     for g in network.second_input_commodities:
@@ -208,7 +255,7 @@ def settle_second_economy(
                 owner_id = int(np.asarray(network.cell_owner_id)[cell])
                 kind = int(np.asarray(network.cell_owner_kind)[cell])
                 value = amount * float(price_net[g])
-                if kind == 0:  # organization
+                if kind == 0:
                     seller_credit[owner_id] += value
                 else:
                     treasury_credit += value
@@ -222,7 +269,6 @@ def settle_second_economy(
     if treasury_credit > 0.0:
         state.treasury_deposit = float(state.treasury_deposit) + treasury_credit
 
-    # Produce outputs into the regional second-economy pool.
     pool = np.zeros((region_count, g_count), dtype=np.float64)
     for g in network.second_output_commodities:
         axis_index = COMMODITY_INDEX.get(axis[g], -1)
@@ -232,7 +278,6 @@ def settle_second_economy(
 
     flows.household_second_input_funding += input_funding
 
-    # Journal: aggregated household debit -> organization/treasury credit.
     represented = float((weight * input_funding).sum())
     if represented > 0.0:
         bank_count = int(np.asarray(state.bank_reserves).shape[0])
@@ -262,8 +307,17 @@ def settle_second_economy(
             )
 
 
-def second_expiry(state: MaterialState, network: Any) -> None:
+def second_expiry(
+    state: MaterialState, network: Any, *, trace: dict[str, Any] | None = None
+) -> None:
     """Non-stockable second-economy services expire at the end of the quarter (G6)."""
+    if _f2_recipe(network) is not None:
+        from hsm_lab.institutions.second_economy_f2_adapter import (
+            expire_f2_second_economy as _expire_f2,
+        )
+
+        _expire_f2(state, network, trace=trace)
+        return
     services_g = (
         network.commodity_ids.index("services_transport")
         if ("services_transport" in network.commodity_ids)

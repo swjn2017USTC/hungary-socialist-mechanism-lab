@@ -1,0 +1,145 @@
+{
+  "schema_version": "hist_vnext_h5b_m04_v1",
+  "phase_id": "H5B",
+  "mechanism_id": "M4",
+  "study_id": "M04",
+  "document": "H5B evidence manifest; hashes bind the committable source, test, study and phase-report bytes. The manifest excludes itself and the verification output directory to avoid a hash cycle.",
+  "artefacts": [
+    {
+      "path": "studies/HIST_VNEXT/M04/spec.json",
+      "sha256": "a01da0079f59c140225c3de6d4aa8c9ec0ecaab7c0fe218147f016d557c44eb8"
+    },
+    {
+      "path": "studies/HIST_VNEXT/M04/runner.py",
+      "sha256": "d0ded93c44853754fe7aedd55a1e8420c2edfdb2e98aaef718ee761be3c87a7c"
+    },
+    {
+      "path": "studies/HIST_VNEXT/M04/REPORT.md",
+      "sha256": "be271d6d46f762a56246aaaa4d422f6c72502f03ffa998c603ab6a4fe2a001c0"
+    },
+    {
+      "path": "studies/HIST_VNEXT/M04/PLAN.md",
+      "sha256": "f8f8c9f721eac86c618909abb792e275fcd0c33a6fa850ec7f18bbaa17b68519"
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5B/PLAN.md",
+      "sha256": "f8f8c9f721eac86c618909abb792e275fcd0c33a6fa850ec7f18bbaa17b68519"
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5B/REPORT.md",
+      "sha256": "be271d6d46f762a56246aaaa4d422f6c72502f03ffa998c603ab6a4fe2a001c0"
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5B/REVIEW.md",
+      "sha256": "2b45a22fb499c89027c252fa3b4a8f001da58b2445b1556718ec99f610cbf377"
+    },
+    {
+      "path": "tests/test_hist_second_economy_f2.py",
+      "sha256": "520050d0448ad3143cebcec275df447ca408bcecf39748811b0c4b887cb3dce0"
+    },
+    {
+      "path": "src/hsm_lab/institutions/second_economy_f2_adapter.py",
+      "sha256": "2b43fb4871ace2f2dadd35f4f6949627a300477d922bb979403dc7ce0f00487d"
+    },
+    {
+      "path": "src/hsm_lab/engine/second_economy.py",
+      "sha256": "65783c26cb8fc1cbc4f70acdbfd5f5a3494c7758c6bd6f44d2c73f4d41f2272f"
+    },
+    {
+      "path": "src/hsm_lab/engine/material.py",
+      "sha256": "1076777e12febeddebb20d697256f1688853f982da262e8f481b8563a0701316"
+    },
+    {
+      "path": "src/hsm_lab/engine/household_allocation.py",
+      "sha256": "2867539087ba2f47956520554eeb8c9b14113705c969ae905f9861d247074d78"
+    }
+  ],
+  "protected_hashes": {
+    "BASELINE.md": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+    "config/research_contract.json": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+    "uv.lock": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+    "config/p06/cards/M4.json": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+    "config/scenarios/historical_f2_replay.json": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c"
+  },
+  "statistical_summary": {
+    "study_mode": "3 seeds x 3 arms x 16 ticks",
+    "admitted_ticks": 144,
+    "failed_ticks": 0,
+    "max_f2_pool_residual": 1.14e-13,
+    "max_f2_input_residual": 1.42e-14,
+    "arms": {
+      "tolerance_0": {
+        "status": "COMPLETED"
+      },
+      "tolerance_05": {
+        "status": "COMPLETED"
+      },
+      "tolerance_1": {
+        "status": "COMPLETED"
+      }
+    },
+    "first_stage": "tolerance_0 < tolerance_05 < tolerance_1 in every seed; full arm saturates the 10-activities/worker capacity ceiling"
+  },
+  "failures": [],
+  "process_failures": [
+    {
+      "stage": "implementation-first-session",
+      "status": "timeout",
+      "exit_code": -9,
+      "wall_s": 3600.084,
+      "log": "runs/impl/usage.json",
+      "affected_interval": "2026-10-21 23:54:34 to 00:12:22 (scheduler completion of engine hooks, allocator branch, tests, runner, spec, report before round-1 review)",
+      "resolution": "round-1 review inspected the resulting bytes; checker hardening applied in logged MiniMax-M3 session runs/fix-impl; round-2 repairs (funding/journal anchor, report number, runner evidence/spec binding, provenance, REVIEW, hygiene), round-3 repair (zero-trace/fail-fast; superseded 96/144 regression retained in REVIEW), and round-4 repairs (completion guard, provenance text) were applied by the scheduler and are disclosed in REPORT \u00a77.1"
+    }
+  ],
+  "model_usage": {
+    "implementation_first_session": {
+      "provider_model": [
+        "minimax-code-cn",
+        "MiniMax-M3"
+      ],
+      "status": "timeout (partial, session killed)",
+      "assistant_usages": 408,
+      "input": 385629,
+      "output": 214669,
+      "cacheRead": 82828226,
+      "totalTokens": 83428524,
+      "cost_total": 5.3429851
+    },
+    "repair_session_round1": {
+      "provider_model": [
+        "minimax-code-cn",
+        "MiniMax-M3"
+      ],
+      "status": "ok",
+      "assistant_turns": 91,
+      "input": 146233,
+      "output": 67563,
+      "cacheRead": 9207860,
+      "totalTokens": 9421656,
+      "cost_total": 0.6774171
+    }
+  },
+  "reviewer_field": {
+    "review_present": true,
+    "review_path": "docs/phases/HIST_VNEXT/H5B/REVIEW.md",
+    "round1": "PATCH",
+    "round2": "PATCH",
+    "round3": "PATCH",
+    "round4": "PATCH",
+    "round5": "PASS",
+    "notes": "Round-5 independent review PASS; rounds 1\u20134 PATCH texts preserved verbatim."
+  },
+  "evidence_outputs": {
+    "root": "outputs/hist-vnext-h5b-20261021T145305Z",
+    "reproduce": "reproduce-final/",
+    "profile": "profile4-final/",
+    "study": "study16-final/",
+    "verification": "verification-final/"
+  },
+  "commit_boundary": {
+    "head_pre": "a3ad69cd65f5f4bb02e2b9bf83b2018bad4b260e",
+    "head_post": "NOT_COMMITTED_YET",
+    "review_pass": "PASS (round 5, independent phase-reviewer)"
+  }
+}
