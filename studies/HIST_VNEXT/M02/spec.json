@@ -1,0 +1,347 @@
+{
+  "schema_version": "hist_vnext_h5a_a1_m02_v1",
+  "phase_id": "H5A-A1",
+  "mechanism_id": "M2",
+  "study_id": "M02",
+  "document": "H5A-A1 preregistration for the M2 soft-budget / investment-hunger enterprise-chain experiment. It is an explicitly synthetic structural experiment on the read-only Intermediate-8 branch; it does not restore the Hungarian F2 replay and it cannot promote any historical status.",
+  "status_scope": "COMMITTABLE_WITH_PROMOTION_BAR",
+  "legacy_card": {
+    "path": "config/p06/cards/M2.json",
+    "sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+    "verbatim": true,
+    "hypothesis": "soft budget plus investment hunger is sufficient to sustain systemic shortage independently of the demand regime.",
+    "falsification_criterion": "with hardness raised and credit cut, the shortage metrics do not fall.",
+    "manipulated_variables": [
+      "policy.budget_hardness",
+      "policy.credit_fraction",
+      "bailout_envelope_fraction",
+      "credit_envelope_fraction"
+    ],
+    "controlled_variables": [
+      "demand shocks",
+      "external history",
+      "seed"
+    ],
+    "metrics": [
+      "tick_diagnostics.bottleneck_demand_count",
+      "aggregates.undelivered share",
+      "organization_diagnostics.credit_drawn/shortage_expectation_mean",
+      "commodity_circuit.stock_close"
+    ],
+    "result_categories": [
+      "SUPPORTED",
+      "CONDITIONAL",
+      "WEAK",
+      "REJECTED",
+      "UNIDENTIFIED"
+    ],
+    "minimum_replicates": 3,
+    "calibrated_parameter_dependencies": []
+  },
+  "source": {
+    "scenario_id": "intermediate8",
+    "path": "config/scenarios/intermediate8.json",
+    "sha256": "07b0a1fada377bfa8782f83fb3cdda7b08f88add58d608fddee18becb69df94b",
+    "typed_copy_only": [
+      "households",
+      "ticks",
+      "seed"
+    ],
+    "never_mutated": [
+      "material_initial",
+      "material_parameters",
+      "household_parameters",
+      "organization_recipe",
+      "technologies",
+      "routes",
+      "region_ids",
+      "commodities",
+      "stochastic"
+    ]
+  },
+  "run": {
+    "households": 1000,
+    "ticks": 4,
+    "window": {
+      "start": "1957Q1",
+      "end": "1957Q4",
+      "quarters": [
+        "1957Q1",
+        "1957Q2",
+        "1957Q3",
+        "1957Q4"
+      ]
+    },
+    "warmup_quarters": 0,
+    "auto_extension": false,
+    "seeds": [
+      1729,
+      1730,
+      1731
+    ],
+    "seed_role": "household-heterogeneity robustness over the stochastic initial draw; NOT independent historical samples and NOT enterprise-decision noise. Seed count is never used to manufacture significance."
+  },
+  "demand_regimes": {
+    "base": {
+      "rule": "identity",
+      "description": "All original HouseholdParameters from the read-only intermediate8 scenario."
+    },
+    "reduced": {
+      "rule": "half_base_floored_at_minimum",
+      "description": "For every household-good channel h: base_per_equivalent_person[h] = max(original_minimum_per_equivalent_person[h], 0.5 * original_base_per_equivalent_person[h]). minimum_per_equivalent_person is unchanged for every channel. All other demand parameters are unchanged.",
+      "original_base_per_equivalent_person": [
+        0.4,
+        1.5,
+        0.25,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.2,
+        0.0,
+        0.0
+      ],
+      "original_minimum_per_equivalent_person": [
+        0.2,
+        1.5,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "status": "preregistered_design_setting_not_a_historical_estimate"
+  },
+  "policy": {
+    "budget": {
+      "soft": {
+        "budget_hardness": 0.0,
+        "credit_fraction": 0.5
+      },
+      "hard": {
+        "budget_hardness": 1.0,
+        "credit_fraction": 0.0
+      },
+      "credit_cut": {
+        "budget_hardness": 0.0,
+        "credit_fraction": 0.0
+      },
+      "rescue_cut": {
+        "budget_hardness": 1.0,
+        "credit_fraction": 0.5
+      }
+    },
+    "budget_design_note": "soft/hard is a JOINT intervention on two policy coordinates. budget_hardness maps onto bailout_envelope_fraction = base * (1 - hardness) and credit_fraction maps onto credit_envelope_fraction. The budget effect may never be called a pure hardness effect; the credit_cut and rescue_cut arms exist to decompose the joint contrast.",
+    "investment_intensity": {
+      "low": 1.0,
+      "high": 2.0
+    },
+    "investment_mapping_note": "investment_intensity scales material_parameters.hunger_base by the declared factor: 1.0 -> original hunger_base, 2.0 -> doubled. hunger_bailout and hunger_shortage are unchanged.",
+    "fixed": {
+      "central_target": null,
+      "investment_approvals": null,
+      "policy_construction": "default_initial_policy(scenario).patch(...) then PolicyVector validation; model_copy is never used to set a policy coordinate"
+    },
+    "bounds_note": "POLICY_BOUNDS investment_intensity = (0.0, 2.0). Any spec value outside the declared bounds is rejected before the model is initialised."
+  },
+  "arms": [
+    {
+      "name": "soft_low_base",
+      "budget": "soft",
+      "intensity": "low",
+      "regime": "base",
+      "mediator": null,
+      "role": "main_baseline"
+    },
+    {
+      "name": "hard_low_base",
+      "budget": "hard",
+      "intensity": "low",
+      "regime": "base",
+      "mediator": null,
+      "role": "main"
+    },
+    {
+      "name": "soft_high_base",
+      "budget": "soft",
+      "intensity": "high",
+      "regime": "base",
+      "mediator": null,
+      "role": "main"
+    },
+    {
+      "name": "hard_high_base",
+      "budget": "hard",
+      "intensity": "high",
+      "regime": "base",
+      "mediator": null,
+      "role": "main"
+    },
+    {
+      "name": "soft_low_reduced",
+      "budget": "soft",
+      "intensity": "low",
+      "regime": "reduced",
+      "mediator": null,
+      "role": "main_baseline"
+    },
+    {
+      "name": "hard_low_reduced",
+      "budget": "hard",
+      "intensity": "low",
+      "regime": "reduced",
+      "mediator": null,
+      "role": "main"
+    },
+    {
+      "name": "soft_high_reduced",
+      "budget": "soft",
+      "intensity": "high",
+      "regime": "reduced",
+      "mediator": null,
+      "role": "main"
+    },
+    {
+      "name": "hard_high_reduced",
+      "budget": "hard",
+      "intensity": "high",
+      "regime": "reduced",
+      "mediator": null,
+      "role": "main"
+    },
+    {
+      "name": "credit_cut_high_base",
+      "budget": "credit_cut",
+      "intensity": "high",
+      "regime": "base",
+      "mediator": "credit_cut",
+      "role": "competing_mediator"
+    },
+    {
+      "name": "rescue_cut_high_base",
+      "budget": "rescue_cut",
+      "intensity": "high",
+      "regime": "base",
+      "mediator": "rescue_cut",
+      "role": "competing_mediator"
+    },
+    {
+      "name": "credit_cut_high_reduced",
+      "budget": "credit_cut",
+      "intensity": "high",
+      "regime": "reduced",
+      "mediator": "credit_cut",
+      "role": "competing_mediator"
+    },
+    {
+      "name": "rescue_cut_high_reduced",
+      "budget": "rescue_cut",
+      "intensity": "high",
+      "regime": "reduced",
+      "mediator": "rescue_cut",
+      "role": "competing_mediator"
+    },
+    {
+      "name": "placebo_soft_low_base",
+      "budget": "soft",
+      "intensity": "low",
+      "regime": "base",
+      "mediator": null,
+      "role": "placebo_negative_control",
+      "placebo_of": "soft_low_base"
+    }
+  ],
+  "placebo_note": "placebo_soft_low_base is bit-identical in treatment to soft_low_base and differs only in its arm label. Its comparison, final-state and journal digests MUST equal the base arm's; any difference is a defect, not a finding.",
+  "h0b_registration": {
+    "record_id": "H0B-M02",
+    "overlay_path": "studies/HIST_VNEXT/declarations/research_status_overlay.json",
+    "registration_status_changed": false,
+    "mapped_counters": [
+      {
+        "card_metric": "tick_diagnostics.bottleneck_demand_count",
+        "h0b_state": "mapped",
+        "h0b_observability": "observable",
+        "study_use": "diagnostic_only",
+        "study_note": "Exported per quarter, but a single count column may never by itself support a mechanism conclusion."
+      }
+    ],
+    "blocked_metrics": [
+      {
+        "card_metric": "aggregates.undelivered share",
+        "h0b_state": "blocked",
+        "h0b_block_reason": "no declared denominator",
+        "study_treatment": "superseded_by_axis_scoped_gap_ratios",
+        "study_note": "Replaced by commodity+stage+purpose scoped gross and funded gap ratios that export numerator, denominator and unit explicitly. A zero denominator returns value=null with status=ZERO_DENOMINATOR; a missing axis returns BLOCKED_METRIC. Neither is zero-filled."
+      },
+      {
+        "card_metric": "organization_diagnostics.credit_drawn/shortage_expectation_mean",
+        "h0b_state": "blocked",
+        "h0b_block_reason": "separator undeclared; the composite is not a defined quantity",
+        "study_treatment": "split_into_two_independent_sequences",
+        "study_note": "credit_drawn and shortage_expectation_mean are exported as two separate per-organization and aggregate sequences. No slash composite is computed and no meaning is guessed for it."
+      },
+      {
+        "card_metric": "commodity_circuit.stock_close",
+        "h0b_state": "blocked",
+        "h0b_block_reason": "no producer; the named axis does not exist",
+        "study_treatment": "superseded_by_state_cell_stock_sum",
+        "study_note": "Closing stock is reported as a sum over the actual (commodity, stage) stock cells read from the state, with its source named. No commodity_circuit quantity is fabricated."
+      }
+    ],
+    "new_metrics": [
+      {
+        "id": "m02.gross_gap_ratio",
+        "level": "study_level",
+        "definition": "sum(ordered_gross - delivered) / sum(ordered_gross), grouped by commodity+stage+purpose."
+      },
+      {
+        "id": "m02.funded_gap_ratio",
+        "level": "study_level",
+        "definition": "sum(ordered - delivered) / sum(ordered), grouped by commodity+stage+purpose."
+      },
+      {
+        "id": "m02.investment_request_unconstrained",
+        "level": "study_level",
+        "definition": "Organization capacity times investment hunger recomputed independently from the opening state and the effective parameters; never read from the capped flows field."
+      },
+      {
+        "id": "m02.investment_installed_capacity",
+        "level": "study_level",
+        "definition": "organization_investment_completed: capacity units installed this quarter, not ordered capacity and not newly added stock."
+      },
+      {
+        "id": "m02.household_desired_weighted",
+        "level": "study_level",
+        "definition": "Household desired quantity summed with real household weight, reported per household-good channel and per commodity. Heterogeneous physical units are never pooled into a single welfare total."
+      }
+    ]
+  },
+  "falsification_rule": {
+    "statement": "with hardness raised and credit cut, the shortage metrics do not fall.",
+    "tested_as": "budget contrast Y(soft,H) - Y(hard,H) on the pre-registered axis-scoped gap ratios, per demand regime and per seed, plus the credit_cut and rescue_cut decomposition.",
+    "conditions_for_reading": "A budget contrast is only readable when the budget first stage is binding: credit drawn must actually differ between the compared arms, and the rescue leg must either bind or be reported NONBINDING.",
+    "not_claimed": "Four quarters of a synthetic branch cannot establish the card's sufficiency claim, and no result here can raise the historical identification status."
+  },
+  "first_stage_adjudication": {
+    "budget": "Does the budget regime actually move credit_drawn and bailout_granted?",
+    "investment": "Does investment_intensity move unconstrained request, approval, investment-purpose procurement and installed capacity?",
+    "demand_regime": "Does the reduced regime move the real weighted household desired quantity?"
+  },
+  "null_reason_codes": [
+    "BINDING",
+    "NONBINDING",
+    "NO_FUNDS",
+    "NO_SOURCE_OR_ROUTE",
+    "ZERO_OUTPUT",
+    "NOT_APPLICABLE",
+    "BLOCKED_BASELINE_COLLAPSE"
+  ],
+  "completion_rule": "status is COMPLETED only for the full 3 seeds x 13 arms design; any seed or arm subset is PARTIAL; any conservation failure, baseline collapse or invariant breach stops the run and records the failing seed/arm/tick.",
+  "no_posterior_search": "No additional mechanism cards, source scenarios or post-hoc parameter search are permitted in this study."
+}

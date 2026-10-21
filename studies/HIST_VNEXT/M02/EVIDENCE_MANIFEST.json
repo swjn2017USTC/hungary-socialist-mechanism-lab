@@ -1,0 +1,1081 @@
+{
+  "schema_version": "hist_vnext_h5a_a1_m02_evidence_v1",
+  "phase_id": "H5A-A1",
+  "study_id": "M02",
+  "mechanism_id": "M2",
+  "document": "Commit table evidence manifest for the H5A-A1 M2 enterprise-chain experiment. It lists only committable repository paths and their SHA-256, plus statistical summaries and run-resource references. It contains no raw archival material, no restricted source text and no run output bytes.",
+  "status": "COMPLETED",
+  "status_reason": "full preregistered 3 seeds x 13 arms x 4 quarters executed",
+  "commit_table": [
+    {
+      "path": "experiments/hist_enterprise.py",
+      "sha256": "1f775f24026ad416e8ac529f8d3cc245822164e347369d1e1744fcff8e0d87ac",
+      "kind": "new",
+      "description": "M2 study runner: run_m02_study plus its CLI; drives the existing material chain only and adds no engine, state, storage, config or scenario change."
+    },
+    {
+      "path": "tests/test_hist_enterprise_mechanisms.py",
+      "sha256": "b56d5c5896e06053ae17e2e0c110914184ad236119c5e1edfacea50dcbb12fed",
+      "kind": "new",
+      "description": "Consumer-visible guards over the real tiny engine and the real study runner: joint budget decomposition, arm order, failure restore, low-level rescue null, collapse criterion, two-level structural verdict, stock_close export, cash/procurement NOT_RUN disclosure, account-directory legality, out-of-bounds intensity refusal."
+    },
+    {
+      "path": "studies/HIST_VNEXT/M02/spec.json",
+      "sha256": "35b5b7ffc622193c26e9be0ca74c75e14dfe444294ae28513fb803fe849bd78b",
+      "kind": "new",
+      "description": "Preregistration: 13 arms, two demand regimes, window, seeds, H0B mapping. Unchanged since the preregistration freeze; the fix round altered no scientific content."
+    },
+    {
+      "path": "studies/HIST_VNEXT/M02/REPORT.md",
+      "sha256": "a830ff4b7859d5e0b822d494b90ac3c72da7da05907d65330280b80d30718bcf",
+      "kind": "new",
+      "description": "Final report on the COMPLETED 3-seed x 13-arm x 4-quarter run: design exposure, per-seed per-arm numbers, three first stages adjudicated separately, both-level axis-scoped contrasts, three-axis verdicts, explicit NOT_RUN items, regression evidence, rollback."
+    },
+    {
+      "path": "studies/HIST_VNEXT/M02/REVIEW.md",
+      "sha256": "26fe24c77f21cbb865226bfb848a165c24267ac36b1995e4705e416149eebd5b",
+      "kind": "new",
+      "description": "Independent phase-reviewer verdict (PASS) and full evidence text; written verbatim by the scheduler from the reviewer return."
+    },
+    {
+      "path": "studies/HIST_VNEXT/M02/PLAN.md",
+      "sha256": "1ae544a61e2ed03dc625d1351e62229fc1d892d7c4d79866e41698158bb0768d",
+      "kind": "pre_existing",
+      "description": "Frozen execution contract copied by the scheduler. Read-only; not modified by this delivery."
+    },
+    {
+      "path": "studies/HIST_VNEXT/M02/EVIDENCE_MANIFEST.json",
+      "sha256": "SELF_EXCLUDED",
+      "kind": "new",
+      "description": "This file. Its own SHA is deliberately not recorded here."
+    }
+  ],
+  "input_identity": {
+    "legacy_card": {
+      "path": "config/p06/cards/M2.json",
+      "sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+      "matches_plan_frozen_hash": true
+    },
+    "source_scenario": {
+      "path": "config/scenarios/intermediate8.json",
+      "sha256": "07b0a1fada377bfa8782f83fb3cdda7b08f88add58d608fddee18becb69df94b",
+      "matches_plan_frozen_hash": true
+    },
+    "opening_state_shared_by_all_arms": true,
+    "opening_state_shared_by_all_arms_evidence": "per_arm[*].opening_state_digest is a single distinct value per seed across all 13 arms in study-final/results.json",
+    "per_seed": [
+      {
+        "seed": 1729,
+        "households": 1000,
+        "quarters": [
+          "1957Q1",
+          "1957Q2",
+          "1957Q3",
+          "1957Q4"
+        ],
+        "opening_state_sha256": "3107888b4d9ebe55c6c9573be0ee8af563019fb50a0991a1a5a0b701c11b0138",
+        "network_sha256": "2c29efb0dbe91145a089632f6b99d653e257f420b2f984093099d5cd9a571000",
+        "forcing_sha256": "7c5bfc06cc32fcd4b13d4f8a92293213c927825c174a63db60a03fd3c9d9149d",
+        "account_directory_sha256": "da9078d9a6b96501f3a610eccf9fdc90628449799cc81276940568d064457a8d",
+        "account_count": 3841,
+        "scenario_sha256": "07b0a1fada377bfa8782f83fb3cdda7b08f88add58d608fddee18becb69df94b",
+        "card_sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589"
+      },
+      {
+        "seed": 1730,
+        "households": 1000,
+        "quarters": [
+          "1957Q1",
+          "1957Q2",
+          "1957Q3",
+          "1957Q4"
+        ],
+        "opening_state_sha256": "cabe34326b29d4b38e36c8923a29381f90be948599cb38a6e339aa72ce645484",
+        "network_sha256": "b518c825a2bebdbc65b5cc1add76d44a50e3416b074284808a4eb5bfd09869f3",
+        "forcing_sha256": "7c5bfc06cc32fcd4b13d4f8a92293213c927825c174a63db60a03fd3c9d9149d",
+        "account_directory_sha256": "da9078d9a6b96501f3a610eccf9fdc90628449799cc81276940568d064457a8d",
+        "account_count": 3841,
+        "scenario_sha256": "07b0a1fada377bfa8782f83fb3cdda7b08f88add58d608fddee18becb69df94b",
+        "card_sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589"
+      },
+      {
+        "seed": 1731,
+        "households": 1000,
+        "quarters": [
+          "1957Q1",
+          "1957Q2",
+          "1957Q3",
+          "1957Q4"
+        ],
+        "opening_state_sha256": "4601e0c9846b01453da80543246617de7fda5691e6b1ce97cc33f5c9d99be680",
+        "network_sha256": "b798b939ee11579018cc22efd91e3fd6bdecab10657fbe384661137b4830bf88",
+        "forcing_sha256": "7c5bfc06cc32fcd4b13d4f8a92293213c927825c174a63db60a03fd3c9d9149d",
+        "account_directory_sha256": "da9078d9a6b96501f3a610eccf9fdc90628449799cc81276940568d064457a8d",
+        "account_count": 3841,
+        "scenario_sha256": "07b0a1fada377bfa8782f83fb3cdda7b08f88add58d608fddee18becb69df94b",
+        "card_sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589"
+      }
+    ]
+  },
+  "statistical_summary": {
+    "level": "VERIFIED_BY_RUN",
+    "status": "COMPLETED",
+    "status_reason": "full preregistered design executed",
+    "ticks_executed": 156,
+    "arm_seeds_executed": 39,
+    "arms_executed": 13,
+    "seeds_executed": [
+      1729,
+      1730,
+      1731
+    ],
+    "conservation": {
+      "max_material_tolerance_ratio": 0.03910827217608296,
+      "max_finance_tolerance_ratio": 0.0004547473508864434,
+      "gate": "<= 1 on both, per quarter",
+      "ticks_passed": 156,
+      "ticks_failed": 0,
+      "material_clock_advanced_per_quarter": 1,
+      "clock_evidence": "every arm-seed executed tick 0,1,2,3 against 1957Q1..1957Q4 with no duplicate or skipped (seed, arm, quarter, tick) key"
+    },
+    "unconstrained_request_recheck_max_abs_diff": 0.0,
+    "account_legality": {
+      "ticks_checked": 156,
+      "journal_legs_checked": 2616002,
+      "invalid_legs": 0,
+      "invalid_account_ids": 0,
+      "status_all_ticks": "OK",
+      "account_touches_total": 433774,
+      "account_directory_sha256": "da9078d9a6b96501f3a610eccf9fdc90628449799cc81276940568d064457a8d",
+      "account_count_per_seed": 3841
+    },
+    "placebo_equivalence": {
+      "placebo": "placebo_soft_low_base",
+      "target": "soft_low_base",
+      "seeds_passing": 3,
+      "comparison_digest_equal": true,
+      "scientific_digest_equal": true,
+      "final_state_digest_equal": true,
+      "journal_digest_equal": true,
+      "per_seed_comparison_digests": {
+        "1729": "092b8efe8caad716d072a1ff658afae36bef7d86f197110f4fcbb8a8b662a284",
+        "1730": "0f067625aa9fc25066c74f50a06c8a1d6b1052e1021c3bd73b0b5c19c12d38e8",
+        "1731": "0a2c56f044e1ddee0935424f6f708452c2bf85c41bb43fbbe134151d256858c6"
+      }
+    },
+    "rescue_cut_equals_soft_high": {
+      "base": true,
+      "reduced": true,
+      "all_seeds": true,
+      "note": "digest-identical in all three seeds and both regimes: the hardness coordinate alone is inert on this branch"
+    },
+    "credit_zero_arm_seeds": {
+      "arm_seeds": 18,
+      "arms": [
+        "credit_cut_high_base",
+        "credit_cut_high_reduced",
+        "hard_high_base",
+        "hard_high_reduced",
+        "hard_low_base",
+        "hard_low_reduced"
+      ],
+      "note": "credit_drawn exactly 0 on every seed in all four hard arms and both credit_cut arms"
+    },
+    "bailout_granted_arm_seeds": {
+      "count": 6,
+      "arms": [
+        "credit_cut_high_base",
+        "credit_cut_high_reduced"
+      ],
+      "values_by_seed": {
+        "credit_cut_high_base": {
+          "1729": 24261.197022412955,
+          "1730": 24321.626739,
+          "1731": 24265.110965
+        },
+        "credit_cut_high_reduced": {
+          "1729": 25866.6658682293,
+          "1730": 25916.790029,
+          "1731": 25879.316901
+        }
+      },
+      "arms_with_zero_bailout_grant": [
+        "hard_high_base",
+        "hard_high_reduced",
+        "hard_low_base",
+        "hard_low_reduced",
+        "placebo_soft_low_base",
+        "rescue_cut_high_base",
+        "rescue_cut_high_reduced",
+        "soft_high_base",
+        "soft_high_reduced",
+        "soft_low_base",
+        "soft_low_reduced"
+      ],
+      "bailout_granted_zero_in_every_other_arm": true
+    },
+    "budget_first_stage": {
+      "records": 12,
+      "credit_leg": "BINDING in all 12 records (3 seeds x 2 regimes x 2 levels)",
+      "rescue_leg": "NONBINDING (ZERO_OUTPUT) in all 12 records",
+      "joint_budget_leg": "BINDING in all 12 records",
+      "credit_leg_nonbinding_records": 0,
+      "rescue_leg_nonbinding_records": 12,
+      "joint_leg_nonbinding_records": 0,
+      "low_level_rescue_and_credit_cut_fields": "None by construction: the decomposition exists only at the high investment setting, and no high-level arm is borrowed for a low-level record",
+      "joint_effect_note": "soft/hard is a JOINT credit + hardness intervention; no quantity here may be called a pure hardness effect",
+      "credit_drawn_soft_by_seed_regime_level": {
+        "1729": {
+          "base": {
+            "low": 254423.50024859566,
+            "high": 272142.6186892515
+          },
+          "reduced": {
+            "low": 215052.88558873502,
+            "high": 235622.7041983535
+          }
+        },
+        "1730": {
+          "base": {
+            "low": 252870.86220552796,
+            "high": 272084.814992519
+          },
+          "reduced": {
+            "low": 215684.5208878625,
+            "high": 235823.12173245207
+          }
+        },
+        "1731": {
+          "base": {
+            "low": 254245.963351762,
+            "high": 272852.8946520949
+          },
+          "reduced": {
+            "low": 215963.28359902537,
+            "high": 235643.42141776602
+          }
+        }
+      }
+    },
+    "investment_first_stage": {
+      "records": 12,
+      "status": "BINDING in all 12 records (3 seeds x 2 regimes x 2 budget levels)",
+      "soft": {
+        "delta_request_unconstrained": {
+          "1729": 23904.5652,
+          "1730": 23904.5652,
+          "1731": 23904.5652
+        },
+        "delta_approved": {
+          "1729": {
+            "base": 23977.7114,
+            "reduced": 23982.1787
+          },
+          "1730": {
+            "base": 23977.7724,
+            "reduced": 23982.1764
+          },
+          "1731": {
+            "base": 23977.7349,
+            "reduced": 23982.1404
+          }
+        },
+        "delta_installed_capacity": {
+          "1729": {
+            "base": 17323.8538,
+            "reduced": 17324.4437
+          },
+          "1730": {
+            "base": 17323.8525,
+            "reduced": 17324.4423
+          },
+          "1731": {
+            "base": 17323.8533,
+            "reduced": 17324.4431
+          }
+        }
+      },
+      "hard": {
+        "delta_request_unconstrained": {
+          "1729": {
+            "base": 23242.8304,
+            "reduced": 23213.5866
+          },
+          "1730": {
+            "base": 23242.8267,
+            "reduced": 23213.8549
+          },
+          "1731": {
+            "base": 23242.8242,
+            "reduced": 23213.7276
+          }
+        },
+        "delta_approved": {
+          "1729": {
+            "base": 11009.9339,
+            "reduced": 9050.5346
+          },
+          "1730": {
+            "base": 10994.8213,
+            "reduced": 9016.8478
+          },
+          "1731": {
+            "base": 10927.7134,
+            "reduced": 9074.3647
+          }
+        },
+        "delta_installed_capacity": {
+          "1729": {
+            "base": 6828.2739,
+            "reduced": 6584.5667
+          },
+          "1730": {
+            "base": 6821.6629,
+            "reduced": 6562.7311
+          },
+          "1731": {
+            "base": 6799.5248,
+            "reduced": 6600.9785
+          }
+        }
+      }
+    },
+    "demand_regime_first_stage": {
+      "records": 18,
+      "status": "BINDING in all 18 records (3 seeds x 6 budget/level combinations)",
+      "differing_household_desired_channels": [
+        "energy",
+        "higher_value_food",
+        "light_goods",
+        "passenger_car",
+        "personal_services",
+        "refrigerator",
+        "repair_services",
+        "television",
+        "washing_machine"
+      ],
+      "differing_channel_count": 9,
+      "window_weighted_desired_total": {
+        "1729": {
+          "base": 215062.9156,
+          "reduced": 155477.3999
+        },
+        "1730": {
+          "base": 214976.3576,
+          "reduced": 155390.3975
+        },
+        "1731": {
+          "base": 215032.4034,
+          "reduced": 155443.918
+        }
+      },
+      "window_weighted_realized_total": {
+        "1729": {
+          "base": 129976.2199,
+          "reduced": 113705.4366
+        },
+        "1730": {
+          "base": 130286.6244,
+          "reduced": 114049.5028
+        },
+        "1731": {
+          "base": 130281.7744,
+          "reduced": 113924.6242
+        }
+      }
+    },
+    "axis_scoped_budget_contrast": {
+      "levels_adjudicated": [
+        "low",
+        "high"
+      ],
+      "readable_axis_metrics_per_seed_per_level": 48,
+      "distinct_commodity_stage_purpose_axes": 24,
+      "readable_contrasts_per_regime": 6,
+      "readable_contrasts_by_level": {
+        "low": 3,
+        "high": 3
+      },
+      "non_falling_per_seed": {
+        "base": {
+          "low": 45,
+          "high": 46
+        },
+        "reduced": {
+          "low": 48,
+          "high": 46
+        }
+      },
+      "non_falling_identical_across_all_three_seeds": true,
+      "falling_axes": {
+        "base_low": [
+          "energy|standard|private_plot|gross_gap",
+          "energy|standard|private_plot|funded_gap",
+          "food|raw|intermediate|funded_gap"
+        ],
+        "base_high": [
+          "durable_goods|standard|housing|gross_gap",
+          "durable_goods|standard|housing|funded_gap"
+        ],
+        "reduced_low": [],
+        "reduced_high": [
+          "durable_goods|standard|housing|gross_gap",
+          "durable_goods|standard|housing|funded_gap"
+        ]
+      },
+      "zero_contrast_axes_count": {
+        "low": 4,
+        "high": 2
+      },
+      "zero_contrast_treatment": "counted as non-falling (the gap did not move), never dropped",
+      "vector_retention": "the full per-seed, per-level, per-axis vector is kept in results.json -> contrasts.by_seed_and_regime[*].axis_scoped_budget_contrast; no column was selected after the fact"
+    },
+    "difference_in_differences": {
+      "definition": "budget_contrast_high - budget_contrast_low, per seed and per regime",
+      "credit_drawn_total": {
+        "1729": {
+          "base": 17719.1184,
+          "reduced": 20569.8186
+        },
+        "1730": {
+          "base": 19213.9528,
+          "reduced": 20138.6008
+        },
+        "1731": {
+          "base": 18606.9313,
+          "reduced": 19680.1378
+        }
+      },
+      "investment_approved_total": {
+        "1729": {
+          "base": 12967.7775,
+          "reduced": 14931.6441
+        },
+        "1730": {
+          "base": 12982.9511,
+          "reduced": 14965.3286
+        },
+        "1731": {
+          "base": 13050.0215,
+          "reduced": 14907.7757
+        }
+      },
+      "investment_installed_capacity_total": {
+        "1729": {
+          "base": 10495.5799,
+          "reduced": 10739.877
+        },
+        "1730": {
+          "base": 10502.1896,
+          "reduced": 10761.7111
+        },
+        "1731": {
+          "base": 10524.3285,
+          "reduced": 10723.4645
+        }
+      },
+      "investment_request_unconstrained_total": {
+        "1729": {
+          "base": 661.7348,
+          "reduced": 690.9786
+        },
+        "1730": {
+          "base": 661.7385,
+          "reduced": 690.7103
+        },
+        "1731": {
+          "base": 661.741,
+          "reduced": 690.8376
+        }
+      },
+      "activity_realized_total": {
+        "1729": {
+          "base": 77212.5692,
+          "reduced": 59343.284
+        },
+        "1730": {
+          "base": 77188.3313,
+          "reduced": 59518.4279
+        },
+        "1731": {
+          "base": 77139.4842,
+          "reduced": 58990.7047
+        }
+      },
+      "bailout_granted_total": {
+        "1729": {
+          "base": 0.0,
+          "reduced": 0.0
+        },
+        "1730": {
+          "base": 0.0,
+          "reduced": 0.0
+        },
+        "1731": {
+          "base": 0.0,
+          "reduced": 0.0
+        }
+      }
+    },
+    "triple_difference": {
+      "definition": "(BC(base, high) - BC(base, low)) - (BC(reduced, high) - BC(reduced, low)) = DiD(base) - DiD(reduced), where BC is the budget contrast Y(soft) - Y(hard)",
+      "regime_interaction_definition": "BC(base, high) - BC(reduced, high)",
+      "credit_drawn_total": {
+        "1729": -2850.7002,
+        "1730": -924.6481,
+        "1731": -1073.2065
+      },
+      "investment_approved_total": {
+        "1729": -1963.8666,
+        "1730": -1982.3775,
+        "1731": -1857.7542
+      },
+      "investment_installed_capacity_total": {
+        "1729": -244.2971,
+        "1730": -259.5216,
+        "1731": -199.136
+      },
+      "investment_request_unconstrained_total": {
+        "1729": -29.2438,
+        "1730": -28.9718,
+        "1731": -29.0967
+      },
+      "activity_realized_total": {
+        "1729": 17869.2851,
+        "1730": 17669.9034,
+        "1731": 18148.7795
+      },
+      "bailout_granted_total": {
+        "1729": 0.0,
+        "1730": 0.0,
+        "1731": 0.0
+      },
+      "bailout_requested_total": {
+        "1729": 2895.7315,
+        "1730": 2907.0432,
+        "1731": 2889.7839
+      },
+      "inference_note": "point values only; a four-quarter window over three robustness seeds supports no confidence interval and the seed count is never used to manufacture significance"
+    },
+    "gap_rows": {
+      "total_rows": 8424,
+      "row_basis": "216 declared commodity+stage+purpose axes x 39 arm-seeds",
+      "observed_rows": 936,
+      "blocked_metric_rows": 7488,
+      "observed_metric_values": 1872,
+      "blocked_metric_values": 14976,
+      "zero_denominator": 0,
+      "zero_denominator_note": "No observed axis had a zero denominator on this branch. The ZERO_DENOMINATOR path is covered by a permanent real tiny-engine test that produces both statuses from a real run."
+    },
+    "representative_axis_gaps_seed_1729_base_soft_high_to_hard_high": {
+      "capital_goods|standard|investment": {
+        "gross": [
+          0.1597,
+          0.5564
+        ],
+        "funded": [
+          0.1547,
+          0.1877
+        ]
+      },
+      "construction|standard|investment": {
+        "gross": [
+          0.0289,
+          0.5859
+        ],
+        "funded": [
+          0.0226,
+          0.2472
+        ]
+      },
+      "consumer_goods|standard|procurement": {
+        "gross": [
+          0.3696,
+          0.6844
+        ],
+        "funded": [
+          0.2078,
+          0.5704
+        ]
+      },
+      "food|ready|retail": {
+        "gross": [
+          0.2544,
+          0.5918
+        ],
+        "funded": [
+          0.2543,
+          0.5864
+        ]
+      },
+      "durable_goods|standard|housing": {
+        "gross": [
+          0.0481,
+          0.0
+        ],
+        "funded": [
+          0.0481,
+          0.0
+        ]
+      }
+    },
+    "verdicts": {
+      "technical": {
+        "verdict": "PASS",
+        "level": "VERIFIED_BY_RUN"
+      },
+      "structural_base": {
+        "verdict": "REJECTED",
+        "level": "VERIFIED_BY_RUN",
+        "levels_adjudicated": [
+          "low",
+          "high"
+        ]
+      },
+      "structural_reduced": {
+        "verdict": "REJECTED",
+        "level": "VERIFIED_BY_RUN",
+        "levels_adjudicated": [
+          "low",
+          "high"
+        ]
+      },
+      "structural_scope": "a conditional counter-result for THIS model in THIS window on the synthetic Intermediate-8 branch; it is not a historical conclusion and carries no historical weight",
+      "competing_mediator": "under hard and credit_cut the fall in approvals, installed capacity and realized activity reflects lost funds (credit drawn falls to exactly 0), not greater resource efficiency; it must not be read as M2 holding historically",
+      "historical": {
+        "identification_status": "UNIDENTIFIED",
+        "historical_support": "NOT_ESTABLISHED",
+        "level": "NOT_RUN",
+        "reason": "no admitted enterprise archive or independent shortage observation was used; a synthetic structural run cannot promote the historical verdict"
+      },
+      "f2_generalisation": {
+        "status": "NOT_RUN",
+        "level": "NOT_RUN"
+      },
+      "supported": false,
+      "supported_note": "SUPPORTED is not reachable from a four-quarter synthetic window; the card's sufficiency claim is about sustained, regime-independent shortage"
+    },
+    "bottleneck_demand_count": {
+      "role": "diagnostic_only",
+      "note": "Exported per quarter as the single H0B-mapped counter; no verdict in this manifest depends on it"
+    },
+    "shortage_and_bailout_expectation": {
+      "shortage_expectation_mean_final_quarter": 0.0,
+      "shortage_expectation_mean_final_quarter_note": "0.0 in all 39 arm-seeds",
+      "bailout_expectation_mean_final_quarter": 0.157412109375,
+      "bailout_expectation_mean_final_quarter_exceptions": {
+        "credit_cut_high_base": {
+          "1729": 0.20965238783414697,
+          "1730": 0.2096517195936968,
+          "1731": 0.20965293042224029
+        },
+        "credit_cut_high_reduced": {
+          "1729": 0.2192727025474823,
+          "1730": 0.2192718240212354,
+          "1731": 0.21927157071174241
+        }
+      },
+      "treatment": "two independent sequences; no slash composite is computed and no meaning is guessed"
+    }
+  },
+  "failed_seeds": [],
+  "failed_arms": [],
+  "run_directory": {
+    "path": "outputs/hist-vnext-h5a-a1-20261021T100007Z/",
+    "committed": false,
+    "note": "Run outputs are deliberately not committed. Only their SHA-bound references are recorded here.",
+    "primary": {
+      "name": "study-final",
+      "status": "COMPLETED",
+      "status_reason": "full preregistered design executed",
+      "ticks_executed": 156,
+      "manifest_sha256": "673bff2bb7f4bb8202f3bffdcf019a9a242cc36bc01103dde7d1d45b19c583aa",
+      "artifacts": {
+        "account_directory.json": {
+          "sha256": "07cc051d01b2154b976fef116e753b2515402cfdd58d6d11b7695a76bda7a634",
+          "bytes": "685568"
+        },
+        "demand_by_axis.parquet": {
+          "sha256": "46e38be8a28b1e91ab4b58e282a9fb59ca7e1599d5db35a17a1554345a75aff4",
+          "bytes": "905555"
+        },
+        "gap_summary.json": {
+          "sha256": "4c95be37dc65652296a14345faaad2ddf2446c2630707e027adf3b477acb764d",
+          "bytes": "3975245"
+        },
+        "input_identity.json": {
+          "sha256": "faaecd33011be97fbd21991938549980b648a26e2f06f85bfe509f59a2f892de",
+          "bytes": "1862"
+        },
+        "journal.parquet": {
+          "sha256": "797132c9dc81ac21c0d7d3dcef02d3c45fee08370fdbd82433bac6c4673974c8",
+          "bytes": "12775671"
+        },
+        "organization_investment_credit_wip.parquet": {
+          "sha256": "a2071915c382c3aedee79e8156736d0a6d3174a9e0a96dee8ed551bcba59a65b",
+          "bytes": "2038477"
+        },
+        "resources.json": {
+          "sha256": "88e3f84f6f84a9a7024c20cef1e85d00ccc4593035ff9cf7eaa0edc03e4ad0d9",
+          "bytes": "429"
+        },
+        "results.json": {
+          "sha256": "0c636247b8600309d687b5928e8b93cd87b0d36b47a4c674e419ae062d1b6ea8",
+          "bytes": "2128498"
+        },
+        "spec.json": {
+          "sha256": "35b5b7ffc622193c26e9be0ca74c75e14dfe444294ae28513fb803fe849bd78b",
+          "bytes": "12633"
+        },
+        "trace.jsonl": {
+          "sha256": "c137fe6bf158f1ba5986ae268de04d7e4866fdb93f3e6cca19cf58bc956ed6ea",
+          "bytes": "2033045"
+        }
+      }
+    },
+    "other_runs": [
+      {
+        "name": "study-fix",
+        "status": "COMPLETED",
+        "ticks_executed": 156,
+        "role": "first complete run after the fix round",
+        "manifest_sha256": "0c64ece5aaedc28ab27a53d5f531fa64d1b21521dbb71eeb82fecbe08083ed11",
+        "artifacts": {
+          "account_directory.json": "07cc051d01b2154b976fef116e753b2515402cfdd58d6d11b7695a76bda7a634",
+          "demand_by_axis.parquet": "46e38be8a28b1e91ab4b58e282a9fb59ca7e1599d5db35a17a1554345a75aff4",
+          "gap_summary.json": "4c95be37dc65652296a14345faaad2ddf2446c2630707e027adf3b477acb764d",
+          "input_identity.json": "faaecd33011be97fbd21991938549980b648a26e2f06f85bfe509f59a2f892de",
+          "journal.parquet": "797132c9dc81ac21c0d7d3dcef02d3c45fee08370fdbd82433bac6c4673974c8",
+          "organization_investment_credit_wip.parquet": "a2071915c382c3aedee79e8156736d0a6d3174a9e0a96dee8ed551bcba59a65b",
+          "resources.json": "3b055a7c3d36f8237b4af00443814fa98d7ab221c9260b05394423cfaa578b22",
+          "results.json": "87bfa89c60721990a7033d4319b190ac6a20b1bc37d0750bacf4cb36ad7fe242",
+          "spec.json": "35b5b7ffc622193c26e9be0ca74c75e14dfe444294ae28513fb803fe849bd78b",
+          "trace.jsonl": "c137fe6bf158f1ba5986ae268de04d7e4866fdb93f3e6cca19cf58bc956ed6ea"
+        },
+        "comparison_to_primary": "39/39 arm-seeds equal on comparison, scientific, final-state and journal digests"
+      },
+      {
+        "name": "profile-fix",
+        "status": "PARTIAL",
+        "ticks_executed": 52,
+        "role": "1 seed x 13 arms x 4 quarters profile after the fix round",
+        "manifest_sha256": "1cf16e099d31e6b62d8bd2fddd2117962bc0d5cb3a0acd4fa158c325dd2a5b07",
+        "artifacts": {
+          "account_directory.json": "876d4a8ea8baff7bd0909dc369a7d9e7fa3f052603ac561d4405aaf74c3acbdb",
+          "demand_by_axis.parquet": "3301a47a9bb9789c1ddf4ef4930f8c436de402ff14809fae336849028a01b0ce",
+          "gap_summary.json": "228bc4bdb8d87716fe9dbbd30a11bbd78c3cee08a61813784223d9c5a53c1223",
+          "input_identity.json": "d880406d8d9c048ecf9f826eaf0ab5835c9bee4bda4f48910a91a65a02f1c904",
+          "journal.parquet": "0adf8f403c612a2703ee35fda5478b3b93f530ba2ee14665abb2d794ab3fb6ce",
+          "organization_investment_credit_wip.parquet": "75fc68e7c4206fe0666e6150aaa0a0df0b1d4e02fca73eecb03fa77b564e257d",
+          "resources.json": "f96605c283f43e4d47fd31286668b4b4d325b2f93e6e3d6e41ef09fde5337d83",
+          "results.json": "77b8c94f1b7f618fc601528a41aa6148d847f0bbfc90cc5bfbbdf366d7cf0b55",
+          "spec.json": "35b5b7ffc622193c26e9be0ca74c75e14dfe444294ae28513fb803fe849bd78b",
+          "trace.jsonl": "5f848bdfbbf8f64960d0a9f8f7620cb5ddd2faa52ed99236856508fc418d962a"
+        }
+      }
+    ],
+    "legacy_and_deterministic_runs": [
+      {
+        "dir": "C0",
+        "scenario_id": "historical_f2_replay",
+        "seed": 1729,
+        "completed_ticks": 116,
+        "status": "completed",
+        "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+        "deterministic_replay_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+        "manifest_sha256": "0fd413488925315cf434b858c1fe081b3fadbc990a9878f5d6ddc89382357229"
+      },
+      {
+        "dir": "C1",
+        "scenario_id": "historical_f2_trade_scenario",
+        "seed": 1729,
+        "completed_ticks": 116,
+        "status": "completed",
+        "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+        "deterministic_replay_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+        "manifest_sha256": "a9f05d579d55c9fd86779934e985b89764c8c34e2184b24cb3ca01ccce1fc9ef"
+      },
+      {
+        "dir": "C0a",
+        "scenario_id": "historical_f2_replay",
+        "seed": 1729,
+        "completed_ticks": 116,
+        "status": "completed",
+        "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+        "deterministic_replay_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+        "manifest_sha256": "2b88cfff209909ae9f51511573b391a9b48300cd213d6f6e11a20df82dfd72d8"
+      },
+      {
+        "dir": "C0b",
+        "scenario_id": "historical_f2_replay",
+        "seed": 1729,
+        "completed_ticks": 116,
+        "status": "completed",
+        "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+        "deterministic_replay_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+        "manifest_sha256": "2b88cfff209909ae9f51511573b391a9b48300cd213d6f6e11a20df82dfd72d8"
+      },
+      {
+        "dir": "C1a",
+        "scenario_id": "historical_f2_trade_scenario",
+        "seed": 1729,
+        "completed_ticks": 116,
+        "status": "completed",
+        "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+        "deterministic_replay_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+        "manifest_sha256": "9dcebdf82fdcb9dd16d747f5a7b320700934dd9a29c7b14d7af28f56ca5e8301"
+      },
+      {
+        "dir": "C1b",
+        "scenario_id": "historical_f2_trade_scenario",
+        "seed": 1729,
+        "completed_ticks": 116,
+        "status": "completed",
+        "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+        "deterministic_replay_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+        "manifest_sha256": "9dcebdf82fdcb9dd16d747f5a7b320700934dd9a29c7b14d7af28f56ca5e8301"
+      }
+    ],
+    "session_logs": {
+      "impl/model-usage.json": "11e38efc473f1339aa3e0543f30b7574650fc92e0f9b902a5660de635aab6f91",
+      "impl/regression-summary.json": "1cdfd9a80526aaf5ce754e4a016a246b351f5136ec2f1228581b85b89a215c2a",
+      "impl/report-data.json": "257b64d06b773b05816e9ac7ff939c5a7d13efae7d73a60e09dd05cd8ef5584c",
+      "impl/final-regression.sh": "608c83e5dc66dad5946fdef46bfd485e1f4ffb8d0e6b7b5bd471531eafa247bf",
+      "impl/study-final.stdout.json": "622aaffbf13c4473f57e40d64ba9c3f05d7c832df914734a210f81e68321a1d7",
+      "impl/fix-study.stdout.json": "622aaffbf13c4473f57e40d64ba9c3f05d7c832df914734a210f81e68321a1d7",
+      "impl/fix-profile.stdout.json": "65378505274304fce96ecf6841850a05de433b1851527d9213b42465cee24238",
+      "impl/fix-pytest.stdout.txt": "0381a248bf24d7fc7b296b07d2dc06c34418d7947490e091196d8b6bf2527609",
+      "impl/final/pytest-directed.stdout": "b721a29b3c6822f11b834cb86110552e568085f67abebd0a6ec0f81c95ef088a",
+      "impl/final/pytest-full.stdout": "76ee0c5c8ca2a9e21c5367d5950bf1f14dff0345ea78eedf286c19a74d139edd",
+      "impl/final/baseline.stdout": "4d1c94478e3c1540bd33cb868e32534120c4c4489ab2f6618cd1f620581262e3",
+      "impl/final/identity.stdout": "2ac365ad04c423247a1b2013abd64a12a70d7ea7fd67a0f7253e08b717b1d8a3",
+      "impl/final/protection-after.txt": "2849e777b72ce86cfd3f721d620a5dfbfd0eb74ded9bc9c3d1627a218cfff42f",
+      "impl/final/summary.txt": "1ce037b75f98270230d86e385e8bfc12e3155e96535e05f8e9d6741ba01f0de0"
+    },
+    "review_runs": {
+      "task_id": "PrivateWildfowl",
+      "reviewer_model": "minimax-code-cn/MiniMax-M3:high",
+      "verdict": "PASS",
+      "positive": "outputs/h5a-a1-review-20261021T200000Z/positive",
+      "negative": "outputs/h5a-a1-review-20261021T200000Z/negative",
+      "review_record": "studies/HIST_VNEXT/M02/REVIEW.md",
+      "review_record_sha256": "26fe24c77f21cbb865226bfb848a165c24267ac36b1995e4705e416149eebd5b",
+      "note": "Reviewer-created, not committed; listed for audit only."
+    }
+  },
+  "verification_run": {
+    "pytest_directed": {
+      "command": "pytest tests/test_hist_enterprise_mechanisms.py tests/test_material.py tests/test_hist_procurement_credit.py tests/test_hist_price_investment_execution.py tests/test_hist_semantic_registry.py",
+      "exit_code": 0,
+      "summary": "168 passed in 10.33s"
+    },
+    "pytest_hist_enterprise_only": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_hist_enterprise_mechanisms.py",
+      "exit_code": 0,
+      "summary": "31 passed in 8.73s",
+      "log": "outputs/hist-vnext-h5a-a1-20261021T100007Z/impl/final-docs/"
+    },
+    "pytest_full": {
+      "command": "pytest -q -p no:cacheprovider",
+      "exit_code": 0,
+      "summary": "1759 passed, 180 warnings in 194.98s (0:03:14)"
+    },
+    "ruff": {
+      "command": "ruff check --no-cache src tests experiments",
+      "exit_code": 0,
+      "summary": "All checks passed!",
+      "fixed_this_round": "tests/test_hist_enterprise_mechanisms.py:384 F821 Undefined name 'Any' - missing typing import; added 'from typing import Any'",
+      "log": "outputs/hist-vnext-h5a-a1-20261021T100007Z/impl/final-docs/"
+    },
+    "baseline_verify": {
+      "command": "hsm baseline verify --json",
+      "exit_code": 0,
+      "status": "ok",
+      "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f"
+    },
+    "lock_check": {
+      "command": "uv lock --check --offline",
+      "exit_code": 0
+    },
+    "legacy_regression": {
+      "runs": 6,
+      "completed_ticks_each": 116,
+      "status": "completed",
+      "parameter_hash_matches_frozen": true,
+      "deterministic_replay_digest_matches_frozen": true,
+      "diff_C0a_C0b": "empty",
+      "diff_C1a_C1b": "empty",
+      "verify_run_identity_passes": 6
+    },
+    "study_reproduction": {
+      "study_fix_vs_study_final": {
+        "arms_compared": 39,
+        "comparison_digest_equal": 39,
+        "scientific_digest_equal": 39,
+        "final_state_digest_equal": 39,
+        "journal_digest_equal": 39
+      },
+      "pre_fix_vs_post_fix": {
+        "arms_compared": 39,
+        "comparison_digest_equal": 39,
+        "final_state_digest_equal": 39,
+        "journal_digest_equal": 39,
+        "scientific_digest_equal": 0,
+        "scientific_digest_note": "the fix round added trace fields (stock_close, finance_trace, journal_account_check, controls_binding) which are inside the scientific digest but outside the comparison, final-state and journal digests; those three are unchanged"
+      }
+    },
+    "red_before_green_after": {
+      "log_directory": "outputs/hist-vnext-h5a-a1-20261021T100007Z/impl/red-before-fix/",
+      "guards": [
+        "arm-order",
+        "halt-restore",
+        "low-rescue",
+        "two-level-verdict",
+        "account-check"
+      ],
+      "note": "each new guard has a fail-before log from a real mutation of the runner and a green log with the guard restored"
+    }
+  },
+  "not_run": [
+    "checkpoint-resume replay",
+    "git push",
+    "A2, A3, M5 and M11 work: not started, no directory or spec created",
+    "finance cash_available_for_goods, credit_approval_caps, input_order_cost, old_project_cost, new_investment_request_cost and input_credit_earmarked: NOT_RUN on all 156 ticks because procurement_trace is readable only on the engine's H3B bank-lender path; passing caps would switch the journal account path and break the preregistered comparison, final-state and journal digests. The legacy Treasury-credit journal is kept, the six org parquet columns are null (not 0), and trace finance_trace.status is NOT_RUN. Nothing here is measured, estimated or imputed."
+  ],
+  "resources": {
+    "study_final_wall_seconds": 10.581,
+    "study_final_max_rss_bytes": 308658176,
+    "study_final_rows_written": {
+      "trace": 156,
+      "journal": 2616002,
+      "organization": 31200,
+      "demand": 33696
+    },
+    "profile_fix_wall_seconds": 3.609,
+    "profile_fix_max_rss_bytes": 270876672,
+    "profile_fix_rows_written": {
+      "trace": 52,
+      "journal": 872307,
+      "organization": 10400,
+      "demand": 11232
+    },
+    "platform": "macOS-26.5-arm64-arm-64bit",
+    "python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+    "model_usage": {
+      "probe": {
+        "assistant_messages": 1,
+        "input": 1877,
+        "output": 15,
+        "cacheRead": 128,
+        "totalTokens": 2020,
+        "cost_total": 0.00058878
+      },
+      "impl": {
+        "assistant_messages": 127,
+        "input": 229308,
+        "output": 132175,
+        "cacheRead": 16544739,
+        "totalTokens": 16906222,
+        "cost_total": 1.2200867400000002
+      },
+      "fix": {
+        "assistant_messages": 141,
+        "input": 219298,
+        "output": 115332,
+        "cacheRead": 21095970,
+        "totalTokens": 21430600,
+        "cost_total": 1.4699459999999998
+      },
+      "docs": {
+        "assistant_messages": 50,
+        "input": 148873,
+        "output": 29187,
+        "cacheRead": 4212290,
+        "totalTokens": 4390350,
+        "cost_total": 0.332424,
+        "note": "partial reading of the live docs session log taken while that session was still executing; a lower bound, not a final total"
+      }
+    },
+    "model_usage_reason": "The runner itself makes no model calls (study-final/resources.json reports model_usage NOT_MEASURED for exactly that reason). Token and cost accounting above belongs to the calling orchestration sessions and is read from their JSON event logs. No figure was invented to fill an unreadable field."
+  },
+  "protection_checks": {
+    "BASELINE.md": {
+      "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+      "matches_plan_frozen_hash": true
+    },
+    "config/research_contract.json": {
+      "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+      "matches_plan_frozen_hash": true
+    },
+    "uv.lock": {
+      "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+      "matches_plan_frozen_hash": true
+    },
+    "config/p06/cards/M2.json": {
+      "sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+      "matches_plan_frozen_hash": true
+    },
+    "config/scenarios/intermediate8.json": {
+      "sha256": "07b0a1fada377bfa8782f83fb3cdda7b08f88add58d608fddee18becb69df94b",
+      "matches_plan_frozen_hash": true
+    },
+    "studies/M02/study_decl.json": {
+      "sha256": "c8d1e91c4d84237be9d21e696b87437cba73e530ff537e67dfe46680b13aa538",
+      "matches_pre_run_snapshot": true
+    },
+    "studies/HIST_VNEXT/declarations/research_status_overlay.json": {
+      "sha256": "d5e256e1dfd02b4d176a5d5131592f33c054008a6b644fecb15b427060cbe1a6",
+      "matches_pre_run_snapshot": true,
+      "note": "Read only. The H0B registration for M02 was not modified: one mapped counter stays mapped, three metrics stay blocked."
+    },
+    "protection_diff_against_pre_run_snapshot": "empty",
+    "user_dirty_files": {
+      "policy": "Not touched, not reset, not staged. .omp/config.yml, docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md and docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md remain in their original modified state, and every pre-existing untracked file remains untracked.",
+      "docs_05_sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+      "docs_06_sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+      "modified_by_this_delivery": []
+    },
+    "scope": {
+      "files_added_by_implementation": 4,
+      "files_added_list": [
+        "experiments/hist_enterprise.py",
+        "tests/test_hist_enterprise_mechanisms.py",
+        "studies/HIST_VNEXT/M02/spec.json",
+        "studies/HIST_VNEXT/M02/REPORT.md",
+        "studies/HIST_VNEXT/M02/EVIDENCE_MANIFEST.json"
+      ],
+      "files_added_count": 5,
+      "files_modified_in_docs_round": [
+        "tests/test_hist_enterprise_mechanisms.py",
+        "studies/HIST_VNEXT/M02/REPORT.md",
+        "studies/HIST_VNEXT/M02/EVIDENCE_MANIFEST.json"
+      ],
+      "files_modified_outside_whitelist": 0,
+      "engine_state_storage_config_scenarios_touched": false,
+      "docs_phase_exports_created": false,
+      "M05_or_M11_directories_created": false,
+      "git_operations_performed": "none: no add, commit, push, reset, checkout, stash or clean"
+    },
+    "restricted_data_access": {
+      "data_raw": "not read",
+      "data_observed": "not read",
+      "data_reconstructed": "not read",
+      "data_assumptions": "not read",
+      "data_private": "not read",
+      "target_or_sealed_window": "not accessed"
+    },
+    "rollback": "Disabling this study requires only removing the experiments.hist_enterprise entry point (plus its test module and the M02 documents, or simply not calling run_m02_study). engine/, state/, storage/, config/ and scenarios/ are unchanged."
+  },
+  "review": {
+    "reviewer": "phase-reviewer",
+    "reviewer_task_id": "PrivateWildfowl",
+    "reviewer_model": "minimax-code-cn/MiniMax-M3:high",
+    "reviewer_is_implementer": false,
+    "verdict": "PASS",
+    "status": "PASS",
+    "review_record": "studies/HIST_VNEXT/M02/REVIEW.md",
+    "review_record_sha256": "26fe24c77f21cbb865226bfb848a165c24267ac36b1995e4705e416149eebd5b",
+    "independent_reruns": "outputs/h5a-a1-review-20261021T200000Z/{positive,negative}/",
+    "note": "Independent reviewer recomputed hashes, inspected the real study artifacts, and re-ran a 1-seed positive example and a rescue-only/zero-denominator negative example in a fresh directory. Verdict PASS with no PATCH/REDESIGN items. The review still leaves the historical and sufficiency verdicts UNIDENTIFIED/NOT_RUN and does not approve A2/A3."
+  }
+}
