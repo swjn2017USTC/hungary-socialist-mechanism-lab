@@ -62,6 +62,16 @@ def canonical_digest(value: Any) -> str:
     return hashlib.sha256(canonical_json(value)).hexdigest()
 
 
+def content_addressed_run_id(payload: dict[str, Any]) -> str:
+    """Return a deterministic 32-hex run id from declared run identity.
+
+    The id intentionally excludes wall-clock time, output directory, and process
+    ids.  It is opt-in: the default runner still uses a random uuid so legacy
+    provenance semantics are unchanged.
+    """
+    return canonical_digest(payload)[:32]
+
+
 def capture_environment() -> dict[str, Any]:
     dependency_versions = {}
     for name in TRACKED_DEPENDENCIES:
@@ -294,8 +304,13 @@ def manifest_preamble(
     initial_ensemble_hash: str | None = None,
     inference_snapshot_hash: str | None = None,
     target_split_hash: str | None = None,
+    started_at: datetime | None = None,
 ) -> RunManifest:
-    """Assemble the status=running manifest right after the run directory exists."""
+    """Assemble the status=running manifest right after the run directory exists.
+
+    ``started_at`` is injectable so a deterministic-identity run can use a fixed
+    clock.  ``None`` preserves the legacy wall-clock behavior.
+    """
     env = capture_environment()
     git = capture_git(root)
     return RunManifest(
@@ -308,7 +323,7 @@ def manifest_preamble(
         inference_snapshot_hash=inference_snapshot_hash,
         target_split_hash=target_split_hash,
         status="running",
-        started_at=datetime.now(UTC),
+        started_at=started_at if started_at is not None else datetime.now(UTC),
         baseline_version=contract.baseline_version,
         baseline_hash=baseline_hash,
         git_commit=git["git_commit"],
@@ -351,6 +366,7 @@ def finalize_manifest(
     failure_message: str | None = None,
     completed_ticks: int | None = None,
     last_completed_quarter: str | None = None,
+    finished_at: datetime | None = None,
 ) -> RunManifest:
     """Return the terminal manifest with evidence fields filled in.
 
@@ -362,7 +378,7 @@ def finalize_manifest(
     return running.model_copy(
         update={
             "status": status,
-            "finished_at": datetime.now(UTC),
+            "finished_at": finished_at if finished_at is not None else datetime.now(UTC),
             "failure_message": failure_message,
             "output_hashes": dict(output_hashes),
             "rng_draws_count": rng_draws_count,

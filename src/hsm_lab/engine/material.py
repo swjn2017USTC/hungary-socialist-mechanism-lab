@@ -54,6 +54,7 @@ import struct
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass, fields
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
@@ -156,6 +157,7 @@ from hsm_lab.provenance.manifest import (
     compute_lock_hash,
     compute_parameter_hash,
     compute_scenario_hash,
+    content_addressed_run_id,
     finalize_manifest,
     hash_output_tree,
     manifest_preamble,
@@ -5151,6 +5153,22 @@ def _build_summary(
     return summary
 
 
+def _parse_fixed_clock(value: str | None) -> datetime:
+    """Parse the opt-in deterministic clock; timezone is mandatory."""
+    text = "1970-01-01T00:00:00Z" if value is None else value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError as exc:
+        raise ConfigError(
+            f"--fixed-clock must be an ISO-8601 timestamp, got {value!r}"
+        ) from exc
+    if parsed.tzinfo is None:
+        raise ConfigError("--fixed-clock must include a timezone (e.g. Z or +00:00)")
+    return parsed.astimezone(UTC)
+
+
 def run_material(
     spec: ScenarioSpec,
     output_dir: Path,
@@ -5160,8 +5178,16 @@ def run_material(
     until: Quarter | str | None = None,
     checkpoint_every: int = 0,
     resume_from: Path | None = None,
+    deterministic_identity: bool = False,
+    fixed_clock: str | None = None,
 ) -> RunManifest:
-    """Run Intermediate-8 material simulation into a fresh output directory."""
+    """Run Intermediate-8 material simulation into a fresh output directory.
+
+    ``deterministic_identity`` is opt-in.  It derives the run id from declared
+    content, injects a fixed clock, zeroes timing-only summary fields, and
+    writes ``trajectory_tables/`` instead of the non-reproducible DuckDB file.
+    The default path is unchanged.
+    """
     from hsm_lab.storage.checkpoint import (
         checkpoint_dir,
         load_material_checkpoint,
@@ -5180,6 +5206,9 @@ def run_material(
     spec.validate_for_run(contract)  # refuses research_full, pins profile gates
     if checkpoint_every < 0:
         raise ConfigError("checkpoint_every must be non-negative")
+    if fixed_clock is not None and not deterministic_identity:
+        raise ConfigError("--fixed-clock requires --deterministic-identity")
+    fixed_time = _parse_fixed_clock(fixed_clock) if deterministic_identity else None
 
     # ---------------- preflight (before any output exists) ----------------
     preflight_started = time.perf_counter()
@@ -5232,7 +5261,46 @@ def run_material(
             f"output directory {output_dir} already exists; refusing to overwrite any previous run"
         )
 
-    run_id = uuid4().hex
+    if deterministic_identity:
+        resume_ref = None
+        if resume_from is not None:
+            try:
+                resume_ref = Path(resume_from).resolve().relative_to(root.resolve()).as_posix()
+            except ValueError as exc:
+                raise ConfigError(
+                    "deterministic identity requires --resume to lie inside the repository"
+                ) from exc
+        run_id = content_addressed_run_id(
+            {
+                "scheme": "material-deterministic-identity-v1",
+                "run_kind": MATERIAL_RUN_KIND,
+                "engine_version": MATERIAL_ENGINE_VERSION,
+                "scenario_hash": compute_scenario_hash(spec),
+                "parameter_hash": parameter_hash,
+                "initial_recipe_hash": initial_recipe_hash,
+                "input_artifact_hashes": dict(sorted(forcing.input_artifact_hashes.items())),
+                "baseline_hash": baseline_hash,
+                "lock_hash": lock_hash,
+                "seed": spec.seed,
+                "households": spec.households,
+                "enterprises": spec.enterprises,
+                "organizations": spec.organizations,
+                "ticks": spec.ticks,
+                "commodity_ids": list(spec.commodities),
+                "region_ids": list(spec.region_ids),
+                "output_policy": spec.output_policy.value,
+                "fixed_clock": fixed_time.isoformat(),
+                "until": str(until) if until is not None else None,
+                "checkpoint_every": checkpoint_every,
+                "parent_run_id": parent_run_id or None,
+                "resume_completed_ticks": (
+                    resume_state.completed_ticks if resume_state is not None else 0
+                ),
+            }
+        )
+    else:
+        resume_ref = str(resume_from) if resume_from is not None else None
+        run_id = uuid4().hex
     # P05 §195: ontology/fidelity/retention and the sealed target split are
     # declared explicitly and kept out of the replay behaviour digest.
     running = manifest_preamble(
@@ -5247,7 +5315,8 @@ def run_material(
         initial_recipe_hash=initial_recipe_hash,
         engine_version=MATERIAL_ENGINE_VERSION,
         parent_run_id=parent_run_id or None,
-        resumed_from_checkpoint=str(resume_from) if resume_from is not None else None,
+        resumed_from_checkpoint=resume_ref,
+        started_at=fixed_time,
         **p05_manifest_fields(root, spec),
     )
     output_dir.mkdir(parents=True)
@@ -5488,7 +5557,11 @@ def run_material(
 
         write_started = time.perf_counter()
         frames = history_frames(history)
-        write_material_tables(output_dir, frames)
+        write_material_tables(
+            output_dir,
+            frames,
+            deterministic_identity=deterministic_identity,
+        )
         final_stock = np.bincount(
             cell_commodity,
             weights=np.asarray(state.stock_value, dtype=np.float64),
@@ -5566,6 +5639,11 @@ def run_material(
         }
         for phase, seconds in phase_totals.items():
             performance[f"{phase}_wall_s"] = float(seconds)
+        if deterministic_identity:
+            for key in list(performance):
+                if key.endswith("_wall_s") or key == "cpu_s":
+                    performance[key] = 0.0
+            performance["deterministic_identity"] = True
         summary = _build_summary(
             run_id=run_id,
             spec=spec,
@@ -5578,7 +5656,9 @@ def run_material(
             input_artifact_hashes=dict(forcing.input_artifact_hashes),
             performance={
                 **performance,
-                "write_wall_s": time.perf_counter() - write_started,
+                "write_wall_s": (
+                    0.0 if deterministic_identity else time.perf_counter() - write_started
+                ),
             },
             checkpoint_paths=checkpoint_paths,
             research_warnings=list(contract.research_warnings),
@@ -5632,6 +5712,7 @@ def run_material(
             deterministic_replay_digest=history.digest_chain,
             completed_ticks=boundary,
             last_completed_quarter=(str(spec.start.advance(boundary - 1)) if boundary else None),
+            finished_at=fixed_time,
         )
         write_manifest_atomic(output_dir, final)
         return final
@@ -5651,6 +5732,7 @@ def run_material(
             failure_message=f"{type(exc).__name__}: {exc}",
             completed_ticks=boundary,
             last_completed_quarter=(str(spec.start.advance(boundary - 1)) if boundary else None),
+            finished_at=fixed_time,
         )
         try:
             write_manifest_atomic(output_dir, failed)

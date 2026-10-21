@@ -95,6 +95,23 @@ def write_summary(summary: dict[str, Any], directory: Path) -> Path:
     return path
 
 
+def write_trajectory_tables(
+    directory: Path,
+    tables: dict[str, pl.DataFrame],
+) -> Path:
+    """Write one Parquet file per trajectory table (deterministic bytes).
+
+    DuckDB's single-file format embeds non-content metadata, so it cannot be
+    byte-reproduced even when every logical table is identical.  The verifier
+    already accepts ``trajectory_tables/`` as an equivalent trajectory store.
+    """
+    tables_dir = directory / "trajectory_tables"
+    tables_dir.mkdir(parents=True, exist_ok=False)
+    for name, frame in tables.items():
+        frame.write_parquet(tables_dir / f"{name}.parquet")
+    return tables_dir
+
+
 def write_duckdb(
     directory: Path,
     tables: dict[str, pl.DataFrame],

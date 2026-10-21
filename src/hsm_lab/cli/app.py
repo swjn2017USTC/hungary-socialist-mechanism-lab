@@ -842,6 +842,16 @@ def run(
         "--resume",
         help="Material checkpoint directory to resume from.",
     ),
+    deterministic_identity: bool = typer.Option(
+        False,
+        "--deterministic-identity",
+        help="Content-addressed run id, fixed clock and byte-stable trajectory tables.",
+    ),
+    fixed_clock: str | None = typer.Option(
+        None,
+        "--fixed-clock",
+        help="ISO-8601 clock for deterministic identity (default 1970-01-01T00:00:00Z).",
+    ),
     socioverse: bool = typer.Option(
         False,
         "--socioverse",
@@ -873,6 +883,8 @@ def run(
             "--until": until,
             "--checkpoint-every": checkpoint_every if checkpoint_every else None,
             "--resume": resume,
+            "--deterministic-identity": deterministic_identity if deterministic_identity else None,
+            "--fixed-clock": fixed_clock,
             "--socioverse": socioverse if socioverse else None,
         }
         if spec.kind == "smoke":
@@ -943,6 +955,11 @@ def run(
             registry = DataRegistry.load(root, allowed_commodities=spec.commodities)
             target_dir = _fresh_output_dir(output_dir, "run")
             if spec.politics is not None:
+                if deterministic_identity or fixed_clock is not None:
+                    raise ConfigError(
+                        "--deterministic-identity/--fixed-clock currently apply only to "
+                        "material runs without the political layer"
+                    )
                 if socioverse:
                     from hsm_lab.integrations.socioverse import run_political_socioverse
 
@@ -976,6 +993,8 @@ def run(
                     until=until,
                     checkpoint_every=checkpoint_every,
                     resume_from=resume,
+                    deterministic_identity=deterministic_identity,
+                    fixed_clock=fixed_clock,
                 )
             paused = manifest.status == "paused"
             payload = {

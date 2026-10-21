@@ -57,7 +57,7 @@ from hsm_lab.engine.state import (
     owner_kind_code,
 )
 from hsm_lab.provenance.manifest import canonical_json
-from hsm_lab.storage.output import write_duckdb
+from hsm_lab.storage.output import write_duckdb, write_trajectory_tables
 from hsm_lab.storage.political_output import (
     INFORMATION_COLUMNS,
     INFORMATION_QUARTERS,
@@ -1415,12 +1415,24 @@ def history_frames(history: MaterialHistory) -> dict[str, pl.DataFrame]:
     }
 
 
-def write_material_tables(output_dir: Path, frames: dict[str, pl.DataFrame]) -> dict[str, Path]:
-    """Write all compact Parquet files and the DuckDB trajectory file."""
+def write_material_tables(
+    output_dir: Path,
+    frames: dict[str, pl.DataFrame],
+    *,
+    deterministic_identity: bool = False,
+) -> dict[str, Path]:
+    """Write all compact Parquet files and the trajectory store.
+
+    The default writes ``trajectory.duckdb`` exactly as before.  Deterministic
+    identity writes byte-stable ``trajectory_tables/<table>.parquet`` instead.
+    """
     paths: dict[str, Path] = {}
     for name in TABLES:
         path = output_dir / f"{name}.parquet"
         frames[name].write_parquet(path)
         paths[name] = path
-    write_duckdb(output_dir, frames)
+    if deterministic_identity:
+        write_trajectory_tables(output_dir, frames)
+    else:
+        write_duckdb(output_dir, frames)
     return paths
