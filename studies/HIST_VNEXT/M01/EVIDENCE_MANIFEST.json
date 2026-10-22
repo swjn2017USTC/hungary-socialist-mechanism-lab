@@ -1,0 +1,222 @@
+{
+  "schema_version": "hist_vnext_h5c_m01_evidence_v1",
+  "phase_id": "H5C",
+  "mechanism_id": "M1",
+  "study_id": "M01",
+  "generated_at_utc": "2026-10-22T06:28:37.262049+00:00",
+  "head": "8ab4a20ad4920bb631302b0f8ca519a761ee8afa",
+  "branch": "codex/audit-hsm-vnext-2026-10-11",
+  "committed_files": [
+    {
+      "path": "studies/HIST_VNEXT/M01/PLAN.md",
+      "sha256": "ce6cb635c04bc3fe24c6f6deccc3938fd04a50f829b840aa3b12473620c25cf0",
+      "bytes": 32836
+    },
+    {
+      "path": "studies/HIST_VNEXT/M01/spec.json",
+      "sha256": "6550f1476e9ee3eaf7d00b06d206e73ee130ef0992e53e05a51468a15d3177fc",
+      "bytes": 6669
+    },
+    {
+      "path": "studies/HIST_VNEXT/M01/runner.py",
+      "sha256": "ffbcbb34d338c91d1a6104bdf38bbd0e1f8ffb25e9e3d2b427111fc79d492e35",
+      "bytes": 115316
+    },
+    {
+      "path": "studies/HIST_VNEXT/M01/expectations_adapter.py",
+      "sha256": "9d410fe06239012ebd4bad9b05ade1edd8a810341f57c2aad0493c5a8c7ef47d",
+      "bytes": 4069
+    },
+    {
+      "path": "studies/HIST_VNEXT/M01/REPORT.md",
+      "sha256": "91d97b24cef9987736239fb4e5037b182a0e0f11ff0e0eec240e6c264d6cae73",
+      "bytes": 16955
+    },
+    {
+      "path": "studies/HIST_VNEXT/M01/REVIEW.md",
+      "sha256": "f10e80b4ae9c5b82dc905542de0cc0780aab851c453028b55f548620fbc20cc3",
+      "bytes": 26089
+    },
+    {
+      "path": "tests/test_hist_ratchet_matched.py",
+      "sha256": "52682d4f7bf663b8589989447837b2c11bc154c64a41b29e6347d85cab55a0a6",
+      "bytes": 16315
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5C/PLAN.md",
+      "sha256": "ce6cb635c04bc3fe24c6f6deccc3938fd04a50f829b840aa3b12473620c25cf0",
+      "bytes": 32836
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5C/REPORT.md",
+      "sha256": "91d97b24cef9987736239fb4e5037b182a0e0f11ff0e0eec240e6c264d6cae73",
+      "bytes": 16955
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5C/REVIEW.md",
+      "sha256": "f10e80b4ae9c5b82dc905542de0cc0780aab851c453028b55f548620fbc20cc3",
+      "bytes": 26089
+    }
+  ],
+  "excludes_self": "studies/HIST_VNEXT/M01/EVIDENCE_MANIFEST.json",
+  "plan_sha256": "ce6cb635c04bc3fe24c6f6deccc3938fd04a50f829b840aa3b12473620c25cf0",
+  "spec_sha256": "6550f1476e9ee3eaf7d00b06d206e73ee130ef0992e53e05a51468a15d3177fc",
+  "review_sha256": "f10e80b4ae9c5b82dc905542de0cc0780aab851c453028b55f548620fbc20cc3",
+  "protected_sha256": {
+    "BASELINE.md": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+    "config/research_contract.json": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+    "uv.lock": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+    "config/p06/cards/M1.json": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d"
+  },
+  "evidence": {
+    "study": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/study5/study.json",
+      "sha256": "89b3d6619bb5d1b2eb016f75d9958bb2c9e546675fea4fc2b25545de37bde389",
+      "bytes": 676031
+    },
+    "study_manifest": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/study5/manifest.json",
+      "sha256": "5be57dddf328677d6c8314a626405e25926088f845d684c0121b6359b871aee8",
+      "bytes": 418737
+    },
+    "profile": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/profile-final3/study.json",
+      "sha256": "4f86ad60b4b037e4b9a9e6dc528792d3857ebc9ea853886f36dc99318a75eb6f",
+      "bytes": 229341
+    },
+    "profile_manifest": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/profile-final3/manifest.json",
+      "sha256": "4bbe4ddb6d69b0b8e0e8870d81575de6e110cd3ce393c98138e5bf1e9ed87e7e",
+      "bytes": 139805
+    },
+    "reproduce": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/reproduce-final3/counterexamples.json",
+      "sha256": "da528fa72a7727be3ff4b0d0756458f4e401d87c5ce3785de084bbf80fe3ba5d",
+      "bytes": 4182
+    },
+    "reproduce_manifest": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/reproduce-final3/manifest.json",
+      "sha256": "6775a660c391ed67deedea20ab99814cf922a2c3382738ea2c94099e1a1241cc",
+      "bytes": 6391
+    },
+    "c0_c1_identity": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/C0-C1-identity.json",
+      "sha256": "84c324a966aede6cea358fbe86bc8d8119786c739e129fe2f6aaecfed73a0774",
+      "bytes": 635
+    },
+    "f1_before_manifest": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/F1-before/manifest.json",
+      "sha256": "4b1c920170513934bcce2d60b49f14b74d96c6683511a9a06ba5d3c225cf9ef5",
+      "bytes": 7609
+    },
+    "c0_manifest": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/C0/manifest.json",
+      "sha256": "dda68571ea740c490b996cec89383a4d187c6066a2a686b5b6d1e0eb62cfebf3",
+      "bytes": 5571
+    },
+    "c1_manifest": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/C1/manifest.json",
+      "sha256": "8e899c2e0eb6bb5103fc5a3164fdead2ffd7c8e5bd04089775971d63be9ea1d5",
+      "bytes": 5571
+    },
+    "pytest": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/pytest-final4/usage.json",
+      "sha256": "5528fa2995967046fe80d9c65e40f82415b11b6c9a7ae04c69bc8a1ce5b1026f",
+      "bytes": 1239
+    },
+    "pytest_stdout": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/pytest-final4/stdout.log",
+      "sha256": "52091fb154e54e8c34f064dd4c3b72cbac29fb3427e2ba7035b889e87dd7662a",
+      "bytes": 3530
+    },
+    "verify_study": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/verify-study5b/usage.json",
+      "sha256": "ce56b5e36e561c1df07eff6c4d398fb2b674a9f68a008645454f09e94aa9014c",
+      "bytes": 1368
+    },
+    "verify_profile": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/verify-profile-final3b/usage.json",
+      "sha256": "bda5566f390c2c8a8f4033d586911f2801550e439b967846de316c12c21813ed",
+      "bytes": 1392
+    },
+    "review_round_1": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/review-gpt/stdout.log",
+      "sha256": "049b2527b123a6912daae646313dba45eb73916b874385066610d80714d032d1",
+      "bytes": 3532514
+    },
+    "review_round_2": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/review-gpt2/stdout.log",
+      "sha256": "374809daba8c467d2a8bcdb7998bcca01606e1b8527576b8df05de1842a42605",
+      "bytes": 3821753
+    },
+    "review_round_3": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/review-gpt3/stdout.log",
+      "sha256": "1f817a076a19f62d843aec77af3322b37b97a1ab9c5f144747ea92cba4065a93",
+      "bytes": 3694892
+    },
+    "review_round_4": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/review-gpt4/stdout.log",
+      "sha256": "298a180e0b3b4bdc4bf29de960decbe6dee5a67fc2f2e9a93b97aad515220b86",
+      "bytes": 2610940
+    },
+    "review_round_5": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/review-gpt5/stdout.log",
+      "sha256": "2abfd6660a09e4194c251a2381a800a2bddaba6bde0b798a6883baa690b50601",
+      "bytes": 2176861
+    },
+    "review_round_6": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/review-gpt6/stdout.log",
+      "sha256": "37861085d5da1304cfc4a55142ab3eb881f703b806184a713f575da34f9ea6ec",
+      "bytes": 2239540
+    },
+    "review_round_7": {
+      "path": "outputs/hist-vnext-h5c-20261022T051501Z/runs/review-gpt7/stdout.log",
+      "sha256": "e851a5a4bb553fa4f60bbce009b6405e54127fac98a8f7e443e6972316f29d97",
+      "bytes": 1233119
+    }
+  },
+  "study": {
+    "technical_status": "PASS",
+    "reference_first_stage": "PASS",
+    "cut_first_stage": "PASS",
+    "political_measurability": "PASS",
+    "arms": 78,
+    "seeds": [
+      1729,
+      1730,
+      1731
+    ],
+    "failed_seeds": [],
+    "failures": [],
+    "historical_status": "UNIDENTIFIED",
+    "lever_status": {
+      "import_cut": "CONDITIONAL_CARRIED_REFERENCE_EFFECT",
+      "income_cut": "CONDITIONAL_CARRIED_REFERENCE_EFFECT",
+      "welfare_cut": "UNIDENTIFIED"
+    },
+    "main_strength": 0.1
+  },
+  "tests": {
+    "focused": "9 passed",
+    "directed": "136 passed",
+    "full": "1812 passed, 180 warnings, 198.84 s",
+    "ruff": "clean",
+    "lock": "ok",
+    "baseline": "ok"
+  },
+  "c0_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+  "c1_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+  "review": {
+    "final_verdict": "PASS",
+    "rounds": 7,
+    "model": "openai-codex/gpt-6.1-sol:high (explicit fallback; M3 429)",
+    "review_md": {
+      "path": "studies/HIST_VNEXT/M01/REVIEW.md",
+      "sha256": "f10e80b4ae9c5b82dc905542de0cc0780aab851c453028b55f548620fbc20cc3",
+      "bytes": 26089
+    }
+  },
+  "outputs_committed": false,
+  "pushed": false,
+  "blocked": false
+}

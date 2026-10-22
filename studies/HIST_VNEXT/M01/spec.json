@@ -1,0 +1,195 @@
+{
+  "schema_version": "hist_vnext_h5c_m01_v1",
+  "phase_id": "H5C",
+  "mechanism_id": "M1",
+  "study_id": "M01",
+  "document": "H5C M01 preregistration: a same-quarter, same-cash, same-supply controlled-state transplant that compares three carried reference histories under one identical one-quarter cut.  The design replaces the legacy 1961Q1-versus-1967Q1 cross-year comparison.  The historical status stays UNIDENTIFIED; no D14 series is admitted.",
+  "status_scope": "COMMITTABLE_WITH_PROMOTION_BAR",
+  "legacy_card": {
+    "path": "config/p06/cards/M1.json",
+    "sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+    "verbatim": true,
+    "hypothesis": "consecutive consumption improvement raises the political cost of a later welfare/real-income cut nonlinearly, so an equal cut provokes a larger response after a long improvement run than early in the window.",
+    "manipulated_variables": [
+      "policy.welfare_provision one-shot cut of equal size applied at 1961Q1 vs 1967Q1",
+      "policy.consumer_import_factor as a second real-income lever"
+    ],
+    "controlled_variables": [
+      "external history and the intervention files",
+      "seed",
+      "the remaining policy vector"
+    ],
+    "metrics": [
+      "household_consumption",
+      "household_budgets.spending",
+      "opposition_regions.weighted_grievance",
+      "political_quarters.policy_welfare_provision",
+      "forced_saving"
+    ],
+    "falsification_criterion": "the late cut's response in the grievance/consumption metrics is not larger than the early cut's by the declared margin.",
+    "minimum_replicates": 3,
+    "result_categories": [
+      "SUPPORTED",
+      "CONDITIONAL",
+      "WEAK",
+      "REJECTED",
+      "UNIDENTIFIED"
+    ],
+    "calibrated_parameter_dependencies": [
+      "p04_coalition_prior",
+      "p04_observation_prior"
+    ]
+  },
+  "revised_design": {
+    "reason": "the legacy card compares 1961Q1 with 1967Q1, so calendar quarter, cash, supply, external history and the remaining policy vector are not held fixed; the observed difference cannot be attributed to the carried improvement history.",
+    "replacement": "controlled-state transplant do(memory) on the p04_replay F1/Intermediate-8 synthetic structure at one treatment quarter.",
+    "not_a_historical_observation": true,
+    "not_a_native_fork": true,
+    "old_card_metrics_preserved": true,
+    "level": "study_level"
+  },
+  "source": {
+    "scenario_id": "p04_replay",
+    "path": "config/scenarios/p04_replay.json",
+    "typed_copy_only": [
+      "scenario_id",
+      "ticks",
+      "seed"
+    ],
+    "synthetic_scenario_id": "hist_vnext_h5c_m01_synthetic",
+    "never_mutated": [
+      "material_initial",
+      "material_parameters",
+      "household_parameters",
+      "household_initial",
+      "organization_recipe",
+      "technologies",
+      "routes",
+      "region_ids",
+      "commodities",
+      "politics",
+      "forcing_pack",
+      "external_pack"
+    ],
+    "f1_intermediate8_not_f2": true
+  },
+  "design": {
+    "kind": "controlled-state transplant / do(memory)",
+    "ticks": 8,
+    "warmup_ticks": 4,
+    "treatment_tick": 4,
+    "treatment_quarter": "1958Q1",
+    "seeds": [
+      1729,
+      1730,
+      1731
+    ],
+    "histories": {
+      "one_jump": [
+        0.5,
+        0.5,
+        0.5,
+        0.9
+      ],
+      "two_steps": [
+        0.5,
+        0.5,
+        0.7,
+        0.9
+      ],
+      "four_steps": [
+        0.6,
+        0.7,
+        0.8,
+        0.9
+      ]
+    },
+    "formation_ratchet_strengths": [
+      0.1,
+      0.0
+    ],
+    "cuts": {
+      "no_cut": null,
+      "income_cut": {
+        "coordinate": "wage_factor",
+        "default": 1.0,
+        "value": 0.9
+      },
+      "welfare_cut": {
+        "coordinate": "welfare_provision",
+        "default": 0.5,
+        "value": 0.4
+      },
+      "import_cut": {
+        "coordinate": "consumer_import_factor",
+        "default": 1.0,
+        "value": 0.8
+      }
+    },
+    "budget_only_controls": [
+      "no_cut",
+      "income_cut"
+    ],
+    "arms_per_seed": 26,
+    "arms_total": 78,
+    "transplant_fields": [
+      "household_expectation[:, real_consumption]",
+      "household_improvement_streak[:, real_consumption]",
+      "household_consumption_reference[:, :]"
+    ],
+    "frozen_not_transplanted": [
+      "grievance",
+      "compliance",
+      "entitlement",
+      "last income/consumption",
+      "inventory",
+      "cash",
+      "population",
+      "durables/backlog",
+      "housing",
+      "political state"
+    ],
+    "synthetic_experience_inputs": {
+      "rule": "realized acquisition per channel = initial household_consumption_reference * e/(1-e)",
+      "produced_by_economic_ledger": false,
+      "installed_in_forcing_or_actor_observation": false
+    },
+    "single_mechanism": "src/hsm_lab/engine/household_welfare.py:update_household_expectations",
+    "no_parallel_ratchet": true
+  },
+  "metrics": {
+    "level": "study_level",
+    "consumption_units": "synthetic_physical_unit:<commodity_id>",
+    "currency": "p02_domestic_currency",
+    "grievance": "opposition_regions.weighted_grievance and household_weight-weighted national aggregate",
+    "expectations": "household_expectation[:, real_consumption]",
+    "budget": "household_budgets.spending/forced_saving/budget_available",
+    "first_stage": [
+      "household_budgets.pre_purchase_wages/late_wage_payment",
+      "national_accounts.convertible_imports/imports",
+      "household_entitlement[:, welfare]"
+    ],
+    "contract_gap": "information_quarters truth where feature_id=contract_gap",
+    "zero_policy": "a numeric zero requires a real non-empty row; empty/missing tables are failures",
+    "float_detection": {
+      "atol": 1e-10,
+      "rtol": 1e-08,
+      "note": "numeric zero detection only; not an economic minimum effect"
+    },
+    "economic_margin": "UNIDENTIFIED",
+    "p_values": "not computed and cannot promote a historical claim"
+  },
+  "statistics": {
+    "R": "Y_cut - Y_no_cut",
+    "main_contrast_D": "R(four_steps) - R(one_jump), reported for the first treatment quarter and the four-quarter cumulative",
+    "descriptive_slope": "R(two_steps)-R(one_jump) and (R(four_steps)-R(two_steps))/2",
+    "ablation_N": "D(ratchet_strength=0.1) - D(ratchet_strength=0.0)",
+    "replicates_note": "three paired seeds are an engineering bank, not a power calculation"
+  },
+  "promotion_bar": {
+    "reference_first_stage": "required",
+    "political_measurability": "required (non-empty real rows including 1958Q1)",
+    "matching": "required exact same-point matching and whitelisted delta",
+    "history": "UNIDENTIFIED without an admitted D14 source"
+  }
+}
