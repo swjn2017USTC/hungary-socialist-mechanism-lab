@@ -1,0 +1,1035 @@
+{
+  "schema_version": "hist_vnext_labor_institution_spec_v1",
+  "spec_id": "hist-vnext-labor-institution-v1",
+  "spec_semver": "1.0.0",
+  "phase_id": "H5D",
+  "mechanism_id": "M3",
+  "study_id": "M03",
+  "status": "DECLARED_NOT_IMPLEMENTED",
+  "implementation_status": "NOT_RUN",
+  "default_off": true,
+  "wired_into_engine": false,
+  "document": "Versioned labour institution and unit contract for HIST_VNEXT H5D (M3). It fixes the meaning of nominal labour, establishment, headcount, absence, effective hours and the household time axes, plus the hire/release rules a future adapter must implement. It is a declared synthetic contract: no historical series is admitted, no parameter is calibrated, and nothing here changes engine behaviour. The reference run keeps its legacy behaviour because this file is not read by the engine.",
+  "authorization": {
+    "granted_by": "user",
+    "utterance": "我授权你编制该 spec 并取独立 PASS",
+    "date": "2026-10-22",
+    "scope": "spec authorship and independent acceptance only",
+    "explicitly_not_granted": [
+      "labour state adapter implementation",
+      "engine/state/storage changes",
+      "research experiment execution",
+      "historical identification"
+    ]
+  },
+  "scope": {
+    "covers": [
+      "employment, hire and release rules",
+      "establishment versus actual headcount",
+      "nominal labour to persons-hours unit conversion",
+      "aggregate labour total constraint",
+      "exclusivity with the H5B household time budget"
+    ],
+    "does_not_cover": [
+      "magnitude of labour hoarding in any historical period",
+      "wage formation or wage-price spiral",
+      "policy reaction function",
+      "calibration of any declared parameter",
+      "historical identification of hours or absence"
+    ],
+    "coverage_boundary": {
+      "establishment_covered": "organizations with organization_capacity > 0 (the productive branch)",
+      "not_covered": [
+        "wholesale and retail: capacity 0, nominal labour 1700 WE-q, no establishment or headcount",
+        "bank: capacity 0 and nominal labour 0"
+      ],
+      "consequence": "sum_i E_i covers 15300 WE-q of productive nominal labour; the 1700 WE-q distribution share is reported separately and never enters hours_supplied",
+      "must_not": "silently drop the distribution share or attribute it to productive establishments"
+    }
+  },
+  "unit_contract": {
+    "nominal_labor_symbol": "L_WE",
+    "nominal_labor_unit": "worker_equivalent_quarter",
+    "nominal_labor_dimension": "persons",
+    "hours_per_worker_equivalent_quarter": 520.0,
+    "hours_per_worker_quarter_endowment": 1040.0,
+    "hours_per_worker_quarter_formal": 520.0,
+    "hours_per_worker_quarter_plot_cap": 52.0,
+    "hours_per_worker_quarter_second_cap": 130.0,
+    "hours_headroom_for_queue_search_leisure": 338.0,
+    "plot_hours_per_activity": 4.0,
+    "money_per_worker_equivalent_quarter": 6.0,
+    "nominal_labor_share_of_equivalent_persons": 0.9,
+    "labor_capacity_headroom": 1.2,
+    "conversion_rule": "L_hours = L_WE * hours_per_worker_equivalent_quarter",
+    "why_520": "520 is the real TimeParameters.formal_hours_per_worker default (40 h/week * 13 weeks). The spec adopts it instead of inventing a second conversion; no historical value is claimed."
+  },
+  "contract_bindings": [
+    {
+      "spec_field": "unit_contract.hours_per_worker_quarter_formal",
+      "module": "hsm_lab.contract.households",
+      "class": "TimeParameters",
+      "field": "formal_hours_per_worker"
+    },
+    {
+      "spec_field": "unit_contract.hours_per_worker_quarter_endowment",
+      "module": "hsm_lab.contract.households",
+      "class": "TimeParameters",
+      "field": "time_endowment_hours"
+    },
+    {
+      "spec_field": "unit_contract.hours_per_worker_quarter_plot_cap",
+      "module": "hsm_lab.contract.households",
+      "class": "TimeParameters",
+      "field": "plot_hours_cap_per_worker"
+    },
+    {
+      "spec_field": "unit_contract.hours_per_worker_quarter_second_cap",
+      "module": "hsm_lab.contract.households",
+      "class": "TimeParameters",
+      "field": "second_hours_cap_per_worker"
+    },
+    {
+      "spec_field": "unit_contract.plot_hours_per_activity",
+      "module": "hsm_lab.contract.households",
+      "class": "TimeParameters",
+      "field": "plot_hours_per_activity"
+    },
+    {
+      "spec_field": "unit_contract.money_per_worker_equivalent_quarter",
+      "module": "hsm_lab.contract.material",
+      "class": "MaterialParameters",
+      "field": "wage_rate"
+    },
+    {
+      "spec_field": "unit_contract.nominal_labor_share_of_equivalent_persons",
+      "module": "hsm_lab.engine.initial",
+      "class": null,
+      "field": "_PHYSICAL_LABOR_SHARE"
+    },
+    {
+      "spec_field": "unit_contract.labor_capacity_headroom",
+      "module": "hsm_lab.engine.initial",
+      "class": null,
+      "field": "_LABOR_CAPACITY_HEADROOM"
+    },
+    {
+      "spec_field": "rules.effort.effort_grievance_weight",
+      "module": "hsm_lab.contract.households",
+      "class": "TimeParameters",
+      "field": "effort_grievance_weight"
+    },
+    {
+      "spec_field": "rules.effort.effort_informal_hours_weight",
+      "module": "hsm_lab.contract.households",
+      "class": "TimeParameters",
+      "field": "effort_informal_hours_weight"
+    },
+    {
+      "spec_field": "rules.effort.effort_queue_search_weight",
+      "module": "hsm_lab.contract.households",
+      "class": "TimeParameters",
+      "field": "effort_queue_search_weight"
+    },
+    {
+      "spec_field": "rules.effort.effort_floor",
+      "module": "hsm_lab.contract.households",
+      "class": "TimeParameters",
+      "field": "effort_floor"
+    },
+    {
+      "spec_field": "rules.establishment.target_utilization",
+      "module": "hsm_lab.contract.material",
+      "class": "MaterialParameters",
+      "field": "utilization"
+    }
+  ],
+  "state_declarations": [
+    {
+      "symbol": "L_WE",
+      "meaning": "nominal labour stock held by a productive organization",
+      "unit": "worker_equivalent_quarter",
+      "dimension": "persons",
+      "carrier_today": "state.organization_labor_available",
+      "producer_today": "hsm_lab.engine.initial.build_material_initial_conditions",
+      "mutable_today": false,
+      "producer_required": "unchanged (this spec only fixes its meaning)"
+    },
+    {
+      "symbol": "E_i",
+      "meaning": "establishment: budgeted positions, filled or not",
+      "unit": "person",
+      "dimension": "persons",
+      "carrier_today": null,
+      "producer_today": null,
+      "mutable_today": false,
+      "producer_required": "adapter, rules.establishment"
+    },
+    {
+      "symbol": "H_i",
+      "meaning": "actual headcount present at the end of the quarter",
+      "unit": "person",
+      "dimension": "persons",
+      "carrier_today": null,
+      "producer_today": null,
+      "mutable_today": false,
+      "producer_required": "adapter, rules.hire and rules.release"
+    },
+    {
+      "symbol": "A_i",
+      "meaning": "absence rate applied to contracted hours",
+      "unit": "fraction",
+      "dimension": "1",
+      "carrier_today": null,
+      "producer_today": null,
+      "mutable_today": false,
+      "producer_required": "adapter, rules.absence"
+    },
+    {
+      "symbol": "e_i",
+      "meaning": "effort intensity on hours actually attended",
+      "unit": "fraction",
+      "dimension": "1",
+      "carrier_today": "state.organization_effort_factor",
+      "producer_today": "initialize_material only (constant 1.0); no writer elsewhere",
+      "mutable_today": false,
+      "producer_required": "adapter, rules.effort"
+    },
+    {
+      "symbol": "H_eff_i",
+      "meaning": "effective labour hours available to production",
+      "unit": "hour/quarter",
+      "dimension": "hours",
+      "carrier_today": null,
+      "producer_today": null,
+      "mutable_today": false,
+      "producer_required": "derived, identity I2"
+    },
+    {
+      "symbol": "h_formal",
+      "meaning": "formal-sector contracted household hours",
+      "unit": "hour/quarter",
+      "dimension": "hours",
+      "carrier_today": null,
+      "producer_today": "recomputed every tick as TimeParameters.formal_hours_per_worker * household_working_adults; no stored field",
+      "mutable_today": false,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "h_plot",
+      "meaning": "household plot hours",
+      "unit": "hour/quarter",
+      "dimension": "hours",
+      "carrier_today": "state.household_reserved_plot_hours",
+      "producer_today": "plan_household_time",
+      "mutable_today": true,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "h_second",
+      "meaning": "household second-economy hours",
+      "unit": "hour/quarter",
+      "dimension": "hours",
+      "carrier_today": "state.household_reserved_second_hours",
+      "producer_today": "plan_household_time",
+      "mutable_today": true,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "h_queue",
+      "meaning": "queueing hours forced by affordable-but-unavailable goods",
+      "unit": "hour/quarter",
+      "dimension": "hours",
+      "carrier_today": "flows.household_queue_hours",
+      "producer_today": "allocate_household_baskets",
+      "mutable_today": false,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "h_search",
+      "meaning": "search hours forced by channel shortages",
+      "unit": "hour/quarter",
+      "dimension": "hours",
+      "carrier_today": "flows.household_search_hours",
+      "producer_today": "allocate_household_baskets",
+      "mutable_today": false,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "h_leisure",
+      "meaning": "residual leisure hours",
+      "unit": "hour/quarter",
+      "dimension": "hours",
+      "carrier_today": "flows.household_leisure_hours",
+      "producer_today": "allocate_household_baskets",
+      "mutable_today": false,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "capacity_i",
+      "meaning": "organization capacity in activity units",
+      "unit": "activity",
+      "dimension": "activity",
+      "carrier_today": "state.organization_capacity",
+      "producer_today": "initialize_material, then updated when investment completes (material.py)",
+      "mutable_today": true,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "labor_per_activity_i",
+      "meaning": "labour required per activity unit",
+      "unit": "person/activity",
+      "dimension": "persons/activity",
+      "carrier_today": "state.organization_labor_per_activity",
+      "producer_today": "initialize_material",
+      "mutable_today": false,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "activity_realized_i",
+      "meaning": "realized activity units",
+      "unit": "activity",
+      "dimension": "activity",
+      "carrier_today": "MaterialTickFlows.organization_realized",
+      "producer_today": "material production phase; rebuilt every tick",
+      "mutable_today": true,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "N_working",
+      "meaning": "unweighted count of working-age adults",
+      "unit": "person",
+      "dimension": "persons",
+      "carrier_today": "sum(state.household_working_adults)",
+      "producer_today": "initialize_material",
+      "mutable_today": false,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "N_equivalent_persons",
+      "meaning": "weight-weighted total persons",
+      "unit": "person",
+      "dimension": "persons",
+      "carrier_today": "sum(state.household_weight * state.household_size)",
+      "producer_today": "initialize_material",
+      "mutable_today": false,
+      "producer_required": "unchanged"
+    },
+    {
+      "symbol": "activity_target_i",
+      "meaning": "planned activity units",
+      "unit": "activity",
+      "dimension": "activity",
+      "carrier_today": "MaterialTickFlows.organization_target",
+      "producer_today": "material target phase; rebuilt every tick",
+      "mutable_today": true,
+      "producer_required": "unchanged"
+    }
+  ],
+  "rules": {
+    "establishment": {
+      "symbol": "E_i",
+      "target_rule": "E_i_raw = capacity_i * labor_per_activity_i * target_utilization_i; E_i = E_i_raw * min(1, N_working / sum_j E_j_raw)",
+      "target_utilization": 0.9,
+      "unit": "person",
+      "capacity_source": "state.organization_capacity (activity units)",
+      "labor_per_activity_source": "state.organization_labor_per_activity (person per activity unit)",
+      "why_labor_per_activity": "capacity is in activity units, not persons; multiplying by labor_per_activity is the unit bridge. Without it the raw sum is 390000 'persons' = 22.94 * N_equivalent_persons and violates identity I3.",
+      "pro_rata_rule": "if the raw sum exceeds N_working, scale every organization by the same factor; the rule is order-free so no organization is privileged by iteration order",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "note": "capacity-linked, not output-linked: a plan cannot infer establishment from realized output, or hoarding becomes unfalsifiable.",
+      "target_utilization_source": "MaterialParameters.utilization (0.9); binding to the same constant the engine uses in min(utilization * capacity * season, L_WE / labor_per_activity) avoids a second, invented utilization notion",
+      "coverage": "see scope.coverage_boundary (single source of truth)"
+    },
+    "hire": {
+      "symbol": "H_i",
+      "rule": "H1_i = H_i(t-1) - H_i_release(t); H_i(t) = H1_i + scale(t) * H_i_hire_raw(t)",
+      "hire_component": "H_i_hire_raw(t) = clip(E_i(t) - H1_i, 0, hire_capacity_i) with hire_capacity_i = hire_capacity_share_per_quarter * E_i(t-1)",
+      "release_component": "H_i_release(t) = clip(H_i(t-1) - E_i(t), 0, max_release_fraction_per_quarter * H_i(t-1))",
+      "hire_capacity_i": "hire_capacity_share_per_quarter * E_i(t-1)",
+      "hire_lag_quarters": 1,
+      "hire_capacity_share_per_quarter": 0.25,
+      "unit": "person/quarter",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "supply_pool": "avail(t) = N_working - sum_i H1_i",
+      "supply_scale": "scale(t) = min(1, avail(t) / sum_i H_i_hire_raw(t)) when the raw sum exceeds avail(t), else 1",
+      "ordering": "release first (its cap applies to H_i(t-1)), then one order-independent allocation of the remaining external workers across all organizations; no organization is served first",
+      "invariant": "sum_i H_i(t) <= N_working for every t, by construction of the scale factor"
+    },
+    "release": {
+      "symbol": "H_i",
+      "rule": "H_i_release(t) = clip(H_i(t-1) - E_i(t), 0, max_release_fraction_per_quarter * H_i(t-1)); applied before hiring and capped, so headcount may stay above a falling establishment",
+      "release_notice_quarters": 1,
+      "max_release_fraction_per_quarter": 0.1,
+      "unit": "person/quarter",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "note": "release is capped and lagged; instantaneous full adjustment is forbidden because it would erase hoarding by construction.",
+      "ordering": "applied first in the quarter transition"
+    },
+    "absence": {
+      "symbol": "A_i",
+      "rule": "A_i(t) = clip(A_i(t-1) + absence_adjustment_i, 0, absence_upper_bound)",
+      "absence_adjustment_i": "declared exogenous path per organization; zero in the reference run",
+      "absence_default": 0.0,
+      "absence_upper_bound": 0.15,
+      "unit": "fraction",
+      "evidence_status": "structural_assumption",
+      "calibrated": false
+    },
+    "effort": {
+      "symbol": "e_i",
+      "rule": "e_i(t) = clip(1 - effort_grievance_weight * grievance_i - effort_informal_hours_weight * informal_hours_share_i - effort_queue_search_weight * queue_search_share_i, effort_floor, 1)",
+      "effort_floor": 0.25,
+      "effort_grievance_weight": 0.4,
+      "effort_informal_hours_weight": 0.3,
+      "effort_queue_search_weight": 0.2,
+      "grievance_i": "weight-weighted mean of state.household_grievance over the organization's region",
+      "informal_hours_share_i": "(h_plot + h_second) / (1040 * N_working) for the organization's region",
+      "queue_search_share_i": "(h_queue + h_search) / (1040 * N_working) for the organization's region",
+      "weights_source": "hsm_lab.contract.households.TimeParameters defaults (effort_floor 0.25, weights 0.4/0.3/0.2); nothing invented",
+      "unit": "fraction",
+      "evidence_status": "structural_assumption",
+      "calibrated": false
+    }
+  },
+  "identities": [
+    {
+      "id": "I1a",
+      "name": "time_parameter_decomposition",
+      "statement": "1040 = 520 + 52 + 130 + 338",
+      "check": "algebraic",
+      "meaning": "per worker-quarter endowment decomposed into formal, plot cap, second-economy cap and the headroom shared by queue, search and leisure"
+    },
+    {
+      "id": "I1b",
+      "name": "household_time_exclusivity",
+      "statement": "h_formal + h_plot + h_second + h_queue + h_search + h_leisure = 1040 * N_working, with h_leisure = leftover - h_queue - h_search and leftover = max(1040 * N_working - reserved, 0)",
+      "check": "engine_present",
+      "axes": [
+        "h_formal",
+        "h_plot",
+        "h_second",
+        "h_queue",
+        "h_search",
+        "h_leisure"
+      ],
+      "exclusive": true,
+      "exhaustive": true,
+      "enforced_by": "hsm_lab.engine.accounting: the household_time_endowment identity compares the six-axis sum with time_endowment_hours * working every quarter",
+      "anchor": "\"household_time_endowment\""
+    },
+    {
+      "id": "I2",
+      "name": "effective_hours",
+      "statement": "H_eff_i = H_i * 520 * (1 - A_i) * e_i",
+      "check": "definition",
+      "note": "absence multiplies attended hours; effort multiplies attended-and-present hours; neither may be folded into the other",
+      "consumed_by": [
+        "I4",
+        "derived_metrics.unused_labour_share"
+      ]
+    },
+    {
+      "id": "I3",
+      "name": "labor_supply_ceiling",
+      "statement": "sum_i E_i <= N_working and sum_i H_i <= N_working",
+      "check": "runtime_when_implemented",
+      "note": "establishment and headcount are both bounded by the working-age population, not by the all-person equivalent count"
+    },
+    {
+      "id": "I4",
+      "name": "activity_capacity_ceiling",
+      "statement": "activity_target_i <= min(L_WE_i, H_eff_i / 520) / labor_per_activity_i",
+      "check": "engine_present",
+      "anchor": "labor_per_activity = np.asarray(state.organization_labor_per_activity",
+      "binding_side": "at initialization the productive branch has L_WE_i = 1.2 * capacity_i * labor_per_activity_i, so L_WE_i > H_eff_i/520 and effective hours bind first. Capacity grows when investment completes, so the binding side must be re-evaluated from live capacity rather than assumed; the declared rule keeps the min() so either side can bind.",
+      "note": "nominal labour is the accounting stock; effective hours are the production input. Until the adapter exists the engine still bounds activity by L_WE / labor_per_activity, so the H_eff side is a declared requirement, not an observed behaviour."
+    },
+    {
+      "id": "I5a",
+      "name": "nominal_labor_productive_aggregate",
+      "statement": "sum_{productive} L_WE_i = 0.9 * N_equivalent_persons",
+      "check": "algebraic_from_initial_conditions",
+      "note": "productive branch only; 1.2 headroom cancels the 1.2 denominator",
+      "anchor_ref": "C3"
+    },
+    {
+      "id": "I5b",
+      "name": "nominal_labor_all_organization_aggregate",
+      "statement": "sum_{all_organizations} L_WE_i = 1.0 * N_equivalent_persons (= 0.9 productive + 0.1 distribution)",
+      "check": "algebraic_from_initial_conditions",
+      "measured_c0_tick0": {
+        "productive": 15300.0,
+        "retail": 1416.6666667,
+        "wholesale": 283.3333333,
+        "all": 17000.0,
+        "n_equivalent_persons": 17000.0,
+        "note": "productive 15300 + distribution 1700 = 17000; the distribution branch has capacity 0 and therefore no establishment, which is a declared coverage boundary, not an omission"
+      },
+      "note": "the distribution branch is not zero; an earlier draft wrongly stated 0.9 for the all-organization sum",
+      "anchor_ref": "C12"
+    },
+    {
+      "id": "I6",
+      "name": "wage_bill_base",
+      "statement": "wage_bill_open_i = 6.0 * L_WE_i (money/quarter)",
+      "check": "engine_present",
+      "anchor": "wage_bill_open = float(parameters.wage_rate) * np.asarray(",
+      "note": "this is the only place money touches labour; it must never be used to infer hours"
+    },
+    {
+      "id": "I7",
+      "name": "headcount_evolution",
+      "statement": "H_i(t) = H_i(t-1) + H_i_hire(t) - H_i_release(t), with H_i(0) <= E_i(0)",
+      "check": "definition",
+      "note": "release must be subtracted here; without this identity release is declared but inert"
+    },
+    {
+      "id": "I8",
+      "name": "supply_feasible_transition",
+      "statement": "sum_i H_i(t) = sum_i H1_i + min(sum_i H_i_hire_raw(t), N_working - sum_i H1_i) <= N_working, with H1_i = H_i(t-1) - H_i_release(t)",
+      "check": "definition",
+      "witness": "N_working=100, E_prev=H_prev=[10,90], E_cur=[1,99]: release [1,0], raw hire [0,9], avail 1, scale 1/9, H=[9,91], sum 100",
+      "note": "without the scale the witness gives sum H = 108 and violates I3"
+    }
+  ],
+  "reconciliation": {
+    "status": "UNRECONCILED_DECLARED",
+    "organization_side": "sum_{all_organizations} L_WE_i = 1.0 * N_equivalent_persons (0.9 productive + 0.1 distribution)",
+    "household_side": "h_formal / 520 = sum(household_working_adults) = N_working",
+    "same_quantity": false,
+    "why": "N_equivalent_persons counts every person weighted by household weight; N_working counts unweighted working-age adults, which is what the engine multiplies by formal_hours_per_worker. The two also differ by 80 persons because N_equivalent is weighted and N_working is not.",
+    "required_adapter_rule": "introduce an explicit unallocated_labor slack term and report it every quarter; never absorb the gap through wages, prices or capacity",
+    "forbidden": [
+      "asserting the gap is zero",
+      "scaling organisation labour by a fitted factor",
+      "changing _PHYSICAL_LABOR_SHARE or _LABOR_CAPACITY_HEADROOM to force agreement"
+    ],
+    "unallocated_labor": {
+      "symbol": "U_labor",
+      "unit": "person",
+      "definition": "U_labor = N_working - sum_i H_i",
+      "meaning": "working-age persons not employed by any organization; a person count, not a WE stock",
+      "computable_today": false,
+      "why_not_computable": "H_i does not exist; L_WE is not headcount",
+      "n_working_convention": "unweighted working-age adults (11330 in C0)"
+    },
+    "gap_quantity": {
+      "symbol": "G_labor",
+      "unit": "worker_equivalent_quarter",
+      "definition": "G_labor = sum_{all_organizations} L_WE_i - h_formal / 520",
+      "sign": "positive means organization labour exceeds the household formal-hours supply expressed in WE",
+      "computable_today": true,
+      "reporting": "must be reported every quarter alongside U_labor; neither may be forced to zero"
+    },
+    "nominal_effective_gap": {
+      "symbol": "N_gap",
+      "unit": "worker_equivalent_quarter",
+      "definition": "N_gap = sum_{all_orgs} L_WE_i - sum_i H_eff_i / 520",
+      "sign": "positive means nominal labour exceeds effective hours expressed in WE",
+      "measured_c0_tick0": 5670.0,
+      "split": {
+        "distribution_uncovered_we": 1700.0,
+        "productive_nominal_effective_gap_we": 3970.0,
+        "identity": "1700 + 3970 = 5670"
+      },
+      "meaning": "the distribution 1700 WE-q has no establishment under the declared coverage boundary; the productive 3970 WE-q is nominal labour above the establishment clip. Neither is a hoarding estimate.",
+      "must_not_be_forced_to_zero": true
+    }
+  },
+  "timing": {
+    "quarter_boundary_order": [
+      "adapter labour update (future): establishment, release, hire from the supply pool, absence, effort",
+      "plan_household_time: reserve formal, plot and second-economy hours",
+      "production activity targets read L_WE and labor_per_activity",
+      "transport, finance, orders, trade",
+      "allocate_household_baskets: queue and search scaled to leftover, leisure as residual",
+      "settlement, durables, housing, welfare, expectations",
+      "finance close and gates"
+    ],
+    "adapter_position": "before plan_household_time, so the labour state is known when household formal hours are reserved",
+    "must_not": [
+      "rewrite any of the six household time axes",
+      "write back household hours from the production side",
+      "update labour inside the production phase",
+      "stage hires or releases across more than one quarter without recording them"
+    ],
+    "effort_inputs_timing": {
+      "grievance_i": "region-weighted state.household_grievance at t-1",
+      "informal_hours_share_i": "(state.household_reserved_plot_hours + state.household_reserved_second_hours)/(1040*N_working) at t-1",
+      "queue_search_share_i": "(flows.household_queue_hours + flows.household_search_hours)/(1040*N_working) at t-1",
+      "initial_values": "zero at t=0 because no previous quarter exists",
+      "why_lagged": "the adapter runs before planning, so current-quarter plot/second/queue/search are not yet formed"
+    }
+  },
+  "call_chain": [
+    {
+      "id": "C1",
+      "file": "src/hsm_lab/engine/state.py",
+      "anchor": "organization_labor_available: np.ndarray",
+      "role": "declares the nominal labour carrier",
+      "reads": [],
+      "writes": []
+    },
+    {
+      "id": "C2",
+      "file": "src/hsm_lab/engine/state.py",
+      "anchor": "organization_effort_factor: np.ndarray",
+      "role": "declares the effort carrier",
+      "reads": [],
+      "writes": []
+    },
+    {
+      "id": "C3",
+      "file": "src/hsm_lab/engine/initial.py",
+      "anchor": "labor_available = _LABOR_CAPACITY_HEADROOM * capacity * physical_labor_per_activity",
+      "role": "only writer of nominal labour",
+      "reads": [
+        "_PHYSICAL_LABOR_SHARE",
+        "_LABOR_CAPACITY_HEADROOM"
+      ],
+      "writes": [
+        "L_WE"
+      ]
+    },
+    {
+      "id": "C4",
+      "file": "src/hsm_lab/engine/material.py",
+      "anchor": "labor_arr = np.asarray(state.organization_labor_available",
+      "role": "production reads nominal labour",
+      "reads": [
+        "L_WE"
+      ],
+      "writes": []
+    },
+    {
+      "id": "C5",
+      "file": "src/hsm_lab/engine/accounting.py",
+      "anchor": "labor_per_activity = np.asarray(state.organization_labor_per_activity",
+      "role": "capacity ceiling: activities per unit labour",
+      "reads": [
+        "L_WE"
+      ],
+      "writes": []
+    },
+    {
+      "id": "C6",
+      "file": "src/hsm_lab/engine/finance.py",
+      "anchor": "labor_share = np.divide(labor, total_labor",
+      "role": "bailout weighting by labour share",
+      "reads": [
+        "L_WE"
+      ],
+      "writes": []
+    },
+    {
+      "id": "C7",
+      "file": "src/hsm_lab/engine/material.py",
+      "anchor": "wage_bill_open = float(parameters.wage_rate) * np.asarray(",
+      "role": "wage bill base",
+      "reads": [
+        "L_WE",
+        "money_per_worker_equivalent_quarter"
+      ],
+      "writes": []
+    },
+    {
+      "id": "C8",
+      "file": "src/hsm_lab/engine/second_economy.py",
+      "anchor": "reserved = formal_hours + plot_hours + second_hours",
+      "role": "reserves household hours before production",
+      "reads": [
+        "hours_per_worker_quarter_formal",
+        "hours_per_worker_quarter_plot_cap",
+        "hours_per_worker_quarter_second_cap"
+      ],
+      "writes": [
+        "h_plot",
+        "h_second"
+      ]
+    },
+    {
+      "id": "C9",
+      "file": "src/hsm_lab/engine/household_allocation.py",
+      "anchor": "flows.household_leisure_hours = leftover - queue_hours - search_hours",
+      "role": "closes the time budget with queue, search and leisure",
+      "reads": [
+        "h_formal",
+        "h_plot",
+        "h_second"
+      ],
+      "writes": [
+        "h_queue",
+        "h_search",
+        "h_leisure"
+      ]
+    },
+    {
+      "id": "C10",
+      "file": "src/hsm_lab/engine/material.py",
+      "anchor": "plan_household_time(state, household_parameters, network=network, controls=controls)",
+      "role": "tick position: time planned before production",
+      "reads": [],
+      "writes": []
+    },
+    {
+      "id": "C11",
+      "file": "src/hsm_lab/engine/accounting.py",
+      "anchor": "\"household_time_endowment\"",
+      "role": "enforces the six-axis exclusivity identity every quarter",
+      "reads": [
+        "h_formal",
+        "h_plot",
+        "h_second",
+        "h_queue",
+        "h_search",
+        "h_leisure"
+      ],
+      "writes": []
+    },
+    {
+      "id": "C12",
+      "file": "src/hsm_lab/engine/initial.py",
+      "anchor": "trader_labor = (",
+      "role": "distribution branch of nominal labour (0.1 share)",
+      "reads": [
+        "_PHYSICAL_LABOR_SHARE"
+      ],
+      "writes": [
+        "L_WE"
+      ]
+    }
+  ],
+  "derived_metrics": {
+    "unused_labour_share": {
+      "name": "labour_underutilization",
+      "definition": "two declared shares: an establishment-denominator diagnostic (unrestricted range) and a bounded effective-hours share; neither identifies institutional causation",
+      "hours_used": "520 * sum_i (labor_per_activity_i * activity_realized_i)",
+      "hours_supplied_establishment": "520 * sum_i E_i",
+      "hours_supplied_effective": "sum_i H_eff_i",
+      "unit_of_labor_per_activity": "person per activity unit",
+      "unit_of_activity_realized": "activity units (engine field MaterialTickFlows.organization_realized)",
+      "why_520": "sum_i(lpa * realized) is already a worker-equivalent total; the hours-per-worker constant converts it to hours, matching both denominators",
+      "activity_realized_bound": "after the adapter: activity_realized_i <= H_eff_i / (520 * labor_per_activity_i), so hours_used <= sum_i H_eff_i. There is no general inequality against establishment hours: retained workers can make sum_i H_eff_i exceed 520 * sum_i E_i. Today the engine bounds activity by L_WE_i / labor_per_activity_i instead, so the bound is a declared requirement, not current behaviour.",
+      "excluded_inputs": [
+        "state.organization_wage_arrears",
+        "parameters.wage_rate",
+        "any price index"
+      ],
+      "note": "the index must be computable without wages; if a wage-only rule can move it, the definition is wrong",
+      "computable": false,
+      "why_not_computable": "E_i and H_eff_i do not exist yet; hours_used exists only as an implicit activity bound",
+      "establishment_unused_share": {
+        "definition": "1 - hours_used / (520 * sum_i E_i)",
+        "range": "unrestricted",
+        "note": "with nonnegative hours_used and a positive establishment denominator, 1 - used/supplied <= 1 always; the share can only turn negative once retained headcount pushes effective hours above establishment hours (the declared release lag). A diagnostic, not the bounded metric.",
+        "witness": "N=100, E=H=[50,50] then E=[40,40], release [5,5] -> H=[45,45], sum E=80, sum H=90; with A=0, e=1 and a high-season ceiling, the share is -0.125"
+      },
+      "underutilization_share": {
+        "definition": "1 - hours_used / sum_i H_eff_i",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "why_bounded": "I4 bounds activity by H_eff/(520*lpa), so hours_used <= sum H_eff; the denominator is effective hours, which may exceed establishment hours without breaking the bound",
+        "measurable_only_with": "adapter",
+        "computable": false,
+        "domain": "sum_i H_eff_i > 0",
+        "zero_denominator": "UNDEFINED: report null and the raw counts, never a numeric share",
+        "on_zero": "null",
+        "note": "a feasible start can have H(0)=0 while E(0)>0, so zero effective hours is admissible; the share is then undefined rather than 0 or 1"
+      },
+      "institutional_attribution": {
+        "status": "UNIDENTIFIED",
+        "why": "the share mixes utilization, seasonality and input rationing; no counterfactual isolates institutional causes",
+        "required_before_claim": "an explicit technical/input-constrained counterfactual",
+        "must_not": "label the share as evidence of institutional labour hoarding"
+      },
+      "technical_slack": {
+        "capacity_labour_we": 12750.0,
+        "realized_we": 10592.307692307691,
+        "utilization_slack_we": 1275.0,
+        "seasonal_slack_we": 882.6923076923077,
+        "total_unused_we": 2157.6923076923076,
+        "identity": "capacity_labour - realized = utilization_slack + seasonal_slack",
+        "sources": [
+          "MaterialParameters.utilization = 0.9 (contract/material.py)",
+          "farm_seasonal_factors[0] = 0.5 for the tick-0 quarter (contract/material.py)"
+        ]
+      },
+      "capacity_denominator_variant": {
+        "value": 0.16923076923076907,
+        "denominator": "capacity labour, 520 * sum_i (capacity_i * labor_per_activity_i)",
+        "status": "NOT the reported metric; recorded only to show that 0.1692 is a denominator artefact"
+      },
+      "pre_clip_note": "using the pre-clip capacity labour (12750) as the denominator gives 0.1692; the establishment rule clips first, so 5891600 h and 0.06511 are the consistent values",
+      "measured_c0_tick0": {
+        "n_working": 11330.0,
+        "n_working_weighted": 11250.0,
+        "weight_convention_gap_persons": 80.0,
+        "n_equivalent_persons": 17000.0,
+        "sum_capacity_labour_we": 12750.0,
+        "sum_e_raw": 11475.0,
+        "pro_rata_factor": 0.9873638344226583,
+        "net_establishment_factor": 0.8886274509803922,
+        "sum_e_after_clip": 11330.0,
+        "worker_equivalents_used": 10592.307692307691,
+        "hours_used": 5508000.0,
+        "hours_supplied": 5891600.0,
+        "establishment_unused_share": 0.06510964763391947,
+        "capacity_denominator_index": 0.16923076923076907,
+        "unused_we_vs_establishment": 737.6923076923077,
+        "derivation": "C0 tick 0; capacity labour sum(capacity*labor_per_activity) = 12750; E_raw = 12750 * target_utilization(0.9) = 11475; N_working = sum(working_adults) = 11330; clip = min(1, 11330/11475) = 0.9873638; net per-org factor = 0.9 * clip = 0.8886275; sum E = 11330 (the clip saturates at N_working); hours_used = 520 * 10592.3077; hours_supplied = 11330 * 520; share = 1 - used/supplied. N_gap 5670 assumes H_i = E_i with A_i = 0 and e_i = 1; absence or effort below 1 move it.",
+        "weight_convention": "sum(weight * working_adults) = 11250. The engine's formal-hours identity uses the unweighted count, so the spec adopts 11330 and records the 80-person convention gap instead of silently choosing the other convention.",
+        "note": "C0 tick 0 has H = E, so establishment and effective hours coincide; this value is an establishment-denominator diagnostic, not a hoarding estimate"
+      }
+    }
+  },
+  "negative_controls": [
+    {
+      "id": "N1",
+      "control": "wage-only processing",
+      "requirement": "changing wage_rate or wage arrears while holding E_i, H_i, A_i and e_i fixed must leave unused_labour_share unchanged",
+      "status": "NOT_RUN",
+      "why": "needs the adapter"
+    },
+    {
+      "id": "N2",
+      "control": "employment-rule processing",
+      "requirement": "changing establishment or release rules while holding wages fixed must move unused_labour_share",
+      "status": "NOT_RUN",
+      "why": "needs the adapter"
+    },
+    {
+      "id": "N3",
+      "control": "side-work double counting",
+      "requirement": "plot and second-economy hours are subtracted from the household endowment exactly once and are never also subtracted from organization labour",
+      "status": "NOT_RUN",
+      "why": "needs the adapter"
+    }
+  ],
+  "test_matrix": [
+    {
+      "id": "S1",
+      "kind": "spec",
+      "assertion": "schema keys present; status DECLARED_NOT_IMPLEMENTED; default_off true; wired_into_engine false"
+    },
+    {
+      "id": "S2",
+      "kind": "spec",
+      "assertion": "1040 = 520 + 52 + 130 + 338 and headroom >= 0"
+    },
+    {
+      "id": "S3",
+      "kind": "spec",
+      "assertion": "all contract_bindings equal the live defaults in hsm_lab.contract"
+    },
+    {
+      "id": "S4",
+      "kind": "spec",
+      "assertion": "every call_chain anchor exists in its declared file"
+    },
+    {
+      "id": "S5",
+      "kind": "spec",
+      "assertion": "identity I1b lists exactly the six exclusive time axes"
+    },
+    {
+      "id": "S6",
+      "kind": "spec",
+      "assertion": "historical UNIDENTIFIED, admitted_series empty, no calibrated parameter"
+    },
+    {
+      "id": "S7",
+      "kind": "spec",
+      "assertion": "unused_labour_share excludes wage inputs and is not computable today"
+    },
+    {
+      "id": "S8",
+      "kind": "spec",
+      "assertion": "reconciliation is UNRECONCILED_DECLARED with both sides and an explicit slack"
+    },
+    {
+      "id": "S9",
+      "kind": "spec",
+      "assertion": "all stop conditions present"
+    },
+    {
+      "id": "S10",
+      "kind": "spec",
+      "assertion": "establishment, headcount, absence, effective hours and release each have their own key and unit"
+    },
+    {
+      "id": "A1",
+      "kind": "adapter",
+      "assertion": "headcount moves toward establishment by at most max_release_fraction_per_quarter per quarter (notice is an initiation lag, not a completion guarantee); full recovery may take several quarters",
+      "status": "NOT_RUN",
+      "witness": "H_prev=100, E_cur=80 -> release 10 -> H=90 in one quarter"
+    },
+    {
+      "id": "A2",
+      "kind": "adapter",
+      "assertion": "hours_used <= sum_i H_eff_i every quarter",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "A3",
+      "kind": "adapter",
+      "assertion": "legacy C0/C1 digests unchanged with the adapter disabled",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S11",
+      "kind": "spec",
+      "assertion": "identity coverage I1a/I1b/I2/I3/I4/I5a/I5b/I6/I7, summation qualifiers, release in I7"
+    },
+    {
+      "id": "S12",
+      "kind": "spec",
+      "assertion": "hours_used carries the 520 conversion and excludes any non-labour index term"
+    },
+    {
+      "id": "S13",
+      "kind": "spec",
+      "assertion": "establishment bridges capacity units by labor_per_activity and never anchors on realized output; hire subtracts release"
+    },
+    {
+      "id": "S14",
+      "kind": "spec",
+      "assertion": "13 contract bindings, forbidden shortcuts, timing bans, negative controls NOT_RUN, price-index exclusion"
+    },
+    {
+      "id": "S15",
+      "kind": "spec",
+      "assertion": "U_labor is persons, G_labor is WE-q, capacity/lpa/realized declared"
+    },
+    {
+      "id": "S16",
+      "kind": "spec",
+      "assertion": "every numeric rule parameter is bound or declared uncalibrated; adapter rule keeps the slack and the ban"
+    },
+    {
+      "id": "S17",
+      "kind": "spec",
+      "assertion": "I4 and hours_used are bound by H_eff; measured C0 block is arithmetically self-consistent"
+    },
+    {
+      "id": "S18",
+      "kind": "spec",
+      "assertion": "aggregate formulas keep 0.9/1.0 terms; no calendar year appears in rule text; I2 keeps absence and effort factors"
+    },
+    {
+      "id": "S19",
+      "kind": "spec",
+      "assertion": "coverage boundary declared (covered branch, two uncovered branches, 1700 WE-q) and N_working/N_equivalent_persons declared"
+    },
+    {
+      "id": "S20",
+      "kind": "spec",
+      "assertion": "no bare legacy-metric key or prose survives anywhere"
+    },
+    {
+      "id": "S21",
+      "kind": "spec",
+      "assertion": "rules.establishment.coverage only references scope.coverage_boundary"
+    },
+    {
+      "id": "S22",
+      "kind": "spec",
+      "assertion": "evidence_scope states tick-0 range, declared-not-observed status, absence of engine re-derivation and the year-scan whitelist; derivation non-empty"
+    },
+    {
+      "id": "S23",
+      "kind": "spec",
+      "assertion": "no money term outside I6; I6 keeps the wage-bill definition and the hours ban; establishment target_rule applies target_utilization_i"
+    },
+    {
+      "id": "S24",
+      "kind": "spec",
+      "assertion": "hire/release preserve the supply pool (release first, order-free hire scaling, sum H <= N_working); the adapter runs before plan_household_time; effort inputs are lagged to t-1"
+    }
+  ],
+  "historical": {
+    "status": "UNIDENTIFIED",
+    "admitted_series": [],
+    "employed_for_parameters": [],
+    "note": "no labour-hours, absence or establishment series is admitted. Every declared rule is a structural assumption for synthetic experiments, not a description of Hungary or of any other economy.",
+    "promotion_rule": "a historical claim requires an admitted series plus a separately reviewed identification design"
+  },
+  "stop_conditions": [
+    "full migration of legacy state versions is required",
+    "the new state changes any default behaviour",
+    "no aggregate labour total constraint",
+    "wage or arrears substitutes for the hoarding card",
+    "declared parameters are presented as calibrated or historical",
+    "the two labour totals are asserted to be equal without an explicit slack"
+  ],
+  "declared_parameters": [
+    {
+      "name": "rules.establishment.target_utilization",
+      "value": 0.9,
+      "unit": "fraction",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "why": "bound to MaterialParameters.utilization so establishment and production share one utilization notion"
+    },
+    {
+      "name": "rules.hire.hire_lag_quarters",
+      "value": 1,
+      "unit": "quarter",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "why": "hiring takes one quarter; instantaneous staffing would make hoarding unobservable"
+    },
+    {
+      "name": "rules.hire.hire_capacity_share_per_quarter",
+      "value": 0.25,
+      "unit": "fraction",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "why": "at most a quarter of the establishment can be hired in one quarter"
+    },
+    {
+      "name": "rules.release.release_notice_quarters",
+      "value": 1,
+      "unit": "quarter",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "why": "one-quarter notice keeps release slower than hiring, which is what makes hoarding a testable state"
+    },
+    {
+      "name": "rules.release.max_release_fraction_per_quarter",
+      "value": 0.1,
+      "unit": "fraction",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "why": "a release cap; without it a single-quarter adjustment erases hoarding by construction"
+    },
+    {
+      "name": "rules.absence.absence_default",
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "why": "the reference run has no absence; absence is an exogenous path, not a fitted value"
+    },
+    {
+      "name": "rules.absence.absence_upper_bound",
+      "value": 0.15,
+      "unit": "fraction",
+      "evidence_status": "structural_assumption",
+      "calibrated": false,
+      "why": "declared sanity bound so absence cannot silently substitute for release"
+    }
+  ],
+  "evidence_scope": {
+    "measured_block": "measured_c0_tick0 is C0 tick 0 only; later ticks include an input-rationing component the two-term slack identity does not model",
+    "pro_forma": "the measured numbers instantiate the declared establishment rule; they are not an observed adapter output because E_i/H_eff do not exist yet",
+    "not_gated": "no gate re-derives these numbers from the engine; they were produced by an in-process build of historical_f2_replay at seed 1729 and must be recomputed if the engine or the scenario changes",
+    "calendar_year_scan": "S18 scans every free-text value for a calendar year or a quarter label; only authorization.date is exempt",
+    "gate_limits": "S23 rejects (a) any string that combines a currency term with the hours-per-worker constant or with a division/multiplication by a number, anywhere in the document, (b) any currency mention in a normative section without prohibition wording, and (c) any key added to unit_contract. It does not prove that no future numeric field could encode a currency-per-hour factor; that is why unit_contract keys are closed, conversion_rule is pinned, and a human reviewer reads the prose."
+  }
+}

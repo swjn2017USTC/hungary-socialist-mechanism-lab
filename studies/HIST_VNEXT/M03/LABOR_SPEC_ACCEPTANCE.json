@@ -1,0 +1,48 @@
+{
+  "schema_version": "hist_vnext_h5d_labor_spec_acceptance_v1",
+  "phase_id": "H5D",
+  "mechanism_id": "M3",
+  "study_id": "M03",
+  "spec_id": "hist-vnext-labor-institution-v1",
+  "spec_semver": "1.0.0",
+  "spec_path": "studies/HIST_VNEXT/M03/labor_institution_spec_v1.json",
+  "labor_spec_path": "studies/HIST_VNEXT/M03/labor_institution_spec_v1.json",
+  "labor_spec_sha256": "e3174a2dbc2f0abe05815a123cf9b3eeb7f6600a09eed00f38b9d3041621eb01",
+  "labor_spec_review_path": "studies/HIST_VNEXT/M03/LABOR_SPEC_REVIEW.md",
+  "labor_spec_review_sha256": "c6d0244115992f47b86d47745c0255ec2cdf54c7f088faefd8999c5b2a8e036c",
+  "normative_text_path": "studies/HIST_VNEXT/M03/LABOR_SPEC.md",
+  "normative_text_sha256": "f7d8d168f4415b7d222c870128f65ccca08264d4f709fd37d545d9d2b92cb4b0",
+  "validator_path": "studies/HIST_VNEXT/M03/labor_spec.py",
+  "validator_sha256": "31ce051a39af86dbdb7c42076c6daedd27e4d4c143aeb6ce0cdb592fbfa36c8e",
+  "tests_path": "tests/test_hist_labor_identity.py",
+  "tests_sha256": "308870c1981c6b080385bb927cad8ec885af0573ec11c092d3f7c94e1c006753",
+  "verdict": "PASS",
+  "review_rounds": 13,
+  "final_round": 13,
+  "satisfies_blocking_code": "MISSING_LABOR_INSTITUTION_UNIT_SPEC_PASS",
+  "supersedes_state_of": {
+    "blocker_package": "studies/HIST_VNEXT/M03/BLOCKER_CERTIFICATE.json",
+    "blocker_commit": "5f385ed626d0af1f2323e07c46cd9c1f5c5db150",
+    "note": "the blocker package records the state at that commit and is deliberately left byte-identical; this acceptance file is the resolution record"
+  },
+  "scope": {
+    "accepted": "the versioned labour institution/unit spec as a technical prerequisite",
+    "not_accepted": [
+      "H5D implementation (no adapter, no state change)",
+      "historical identification",
+      "any calibrated parameter"
+    ]
+  },
+  "historical_status": "UNIDENTIFIED",
+  "implementation_status": "NOT_RUN",
+  "default_off": true,
+  "wired_into_engine": false,
+  "reviewer": {
+    "rounds_1_8_selector": "minimax-code-cn/MiniMax-M3:high (@review)",
+    "rounds_9_13_selector": "openai-codex/gpt-6.1-sol:high",
+    "fallback_authorized_by": "user",
+    "fallback_reason": "HTTP 429 Token Plan cap on the @review model",
+    "config_changed": false
+  },
+  "next_step": "H5D implementation requires a new plan covering state migration, default-off wiring, the N1-N3 negative controls and the C0/C1 replay gate"
+}
