@@ -1,0 +1,480 @@
+{
+  "schema_version": "hist_vnext_h5d_evidence_manifest_v1",
+  "phase_id": "H5D",
+  "mechanism_id": "M3",
+  "study_id": "M03",
+  "status": "BLOCKED",
+  "blocking_code": "MISSING_LABOR_INSTITUTION_UNIT_SPEC_PASS",
+  "head": "3ec08983f0ca2f77dc1a5e446e4f39e7fab7be98",
+  "branch": "codex/audit-hsm-vnext-2026-10-11",
+  "built_by": "outputs/hist-vnext-h5d-20261022T074508Z/build_manifest.py",
+  "self_excluded": "EVIDENCE_MANIFEST.json (avoids a self-hash cycle)",
+  "artifacts": [
+    {
+      "path": "studies/HIST_VNEXT/M03/PLAN.md",
+      "sha256": "004757e86de472ed9d6ab10b020e02540e4ceae5f42e6199fe070cab9371c196",
+      "bytes": 15776
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5D/PLAN.md",
+      "sha256": "004757e86de472ed9d6ab10b020e02540e4ceae5f42e6199fe070cab9371c196",
+      "bytes": 15776
+    },
+    {
+      "path": "studies/HIST_VNEXT/M03/REPORT.md",
+      "sha256": "9b78b7d075d328a4cb15b82ab9db1dc559bc651b0c8721f047ed8059552c1e1c",
+      "bytes": 16231
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5D/REPORT.md",
+      "sha256": "9b78b7d075d328a4cb15b82ab9db1dc559bc651b0c8721f047ed8059552c1e1c",
+      "bytes": 16231
+    },
+    {
+      "path": "studies/HIST_VNEXT/M03/REVIEW.md",
+      "sha256": "98d51e643ebce82221f87486a0cb58812d59d5c8bd6ba03a3a63ea1d5a91af2f",
+      "bytes": 70258
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5D/REVIEW.md",
+      "sha256": "98d51e643ebce82221f87486a0cb58812d59d5c8bd6ba03a3a63ea1d5a91af2f",
+      "bytes": 70258
+    },
+    {
+      "path": "studies/HIST_VNEXT/M03/BLOCKER_CERTIFICATE.json",
+      "sha256": "f94f18632c56866d893d590cf62e1baaf0fa332fcb34a24ffc5c45c64eecc2c5",
+      "bytes": 22899
+    }
+  ],
+  "pending_artifacts": [],
+  "byte_identical_pairs": [
+    {
+      "name": "PLAN.md",
+      "study": "studies/HIST_VNEXT/M03/PLAN.md",
+      "phase": "docs/phases/HIST_VNEXT/H5D/PLAN.md",
+      "identical": true
+    },
+    {
+      "name": "REPORT.md",
+      "study": "studies/HIST_VNEXT/M03/REPORT.md",
+      "phase": "docs/phases/HIST_VNEXT/H5D/REPORT.md",
+      "identical": true
+    },
+    {
+      "name": "REVIEW.md",
+      "study": "studies/HIST_VNEXT/M03/REVIEW.md",
+      "phase": "docs/phases/HIST_VNEXT/H5D/REVIEW.md",
+      "identical": true
+    }
+  ],
+  "protected": [
+    {
+      "path": "BASELINE.md",
+      "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+      "bytes": 64445
+    },
+    {
+      "path": "config/research_contract.json",
+      "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+      "bytes": 2908
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+      "bytes": 157941
+    },
+    {
+      "path": "config/p06/cards/M3.json",
+      "sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+      "bytes": 794
+    }
+  ],
+  "raw_evidence_dir": "outputs/hist-vnext-h5d-20261022T074508Z",
+  "raw_evidence_files": [
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/raw/10_dir_and_name_probe.txt",
+      "sha256": "1983799b2d2bcde1672459cbd8327e53ef4b72b9ab291e18637f81b30df6aef4",
+      "bytes": 652
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/raw/20_search_requirement_positive.txt",
+      "sha256": "6bffba05887aa499ee308bb71ea882f4b9d3bd8eec2a56df5a8f5c66aa7fc3c7",
+      "bytes": 4178
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/raw/21_search_approved_spec_negative.txt",
+      "sha256": "77f3e95c09040706042d1426c272ba97c199b22fe7438b103dd443de09ed59e1",
+      "bytes": 1659
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/raw/22_h3_pass_scopes.txt",
+      "sha256": "f4a31784e181f3d88b120a2fbcc9ac8becc555feb1d65630faad5c15e41d82ac",
+      "bytes": 3558
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/raw/23_m03_blocked_and_state_fields.txt",
+      "sha256": "a79e60e73e55ac9dd19b92d9c85a270fcc55067a6eac5b6243d5f63cb84b2053",
+      "bytes": 3157
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/raw/24_h5b_boundary.txt",
+      "sha256": "c832c158e79785e2ff14e4642ec3e48967cdff22a2f1fa3209645a4ef730a5af",
+      "bytes": 4173
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/raw/25_reference_digests.txt",
+      "sha256": "56057e6441e1c9cbfd62cf9e233223a270148a3d849c489a6856cefa65c8b9ba",
+      "bytes": 1379
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/logs/00_baseline.txt",
+      "sha256": "a532c5b8ee4f008d9ba222899688bed281d0c3829ae5a7a500244796a74e113a",
+      "bytes": 1866
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/logs/01_initial_dirty_sizes.txt",
+      "sha256": "e15b148930612d40fb834d7ae2bdffa2f1992cca1cb37f89c20081454ad2bbc9",
+      "bytes": 350
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/logs/02_initial_untracked_sizes.txt",
+      "sha256": "9022b5b61edcd22e6e9faedb7530472bfda0e934dd13b3f690f5f46f6ee55424",
+      "bytes": 1896
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/logs/03_protected_sha.txt",
+      "sha256": "bf8d5bec3fedca9e1b41794e211340c1e13d0784e27cafadac278d53f708618d",
+      "bytes": 413
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/logs/03b_protected_sha_correction.txt",
+      "sha256": "91af54d09f8a476a94545073ec52523f0e4ef0aad289544cc41fafd3edc6798b",
+      "bytes": 828
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/verify_manifest.py",
+      "sha256": "9dc17ecc2abfcb56cad59ddab5186e50ead143e452b0aa914904191660255025",
+      "bytes": 7125
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/build_manifest.py",
+      "sha256": "c41f19bf415a610400461ae574af693054ef3617350bfbe053ce5f3fa7102683",
+      "bytes": 15191
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/delivery.json",
+      "sha256": "bcd2b75fc4ee16949c41688c83312bd60398e55c308235801000ca7666d53613",
+      "bytes": 6381
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-1.txt",
+      "sha256": "b1c0c507b0a3700fd3d3a9e7be3615e6aa4d6ff5bd3f38bbb641a38f2c250133",
+      "bytes": 10562
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-2.txt",
+      "sha256": "5259fd566bcd802d568b22013907992c97bfd1648db61a45fcc3877bd611b1e2",
+      "bytes": 13217
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-3.txt",
+      "sha256": "5b2ddf8d724eaeb87a78f56858dc2530b6f79463fb339ffe7d5db4fa41f07e40",
+      "bytes": 7968
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-4.txt",
+      "sha256": "bd2c82a1d7f259c2d5197446e59c41574442603648eaf00068a121a4404625c2",
+      "bytes": 10489
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-5.txt",
+      "sha256": "f1e97f330eae04753e38a46cd1ec8aff2a369a439564110830fa98372b03f52a",
+      "bytes": 11129
+    },
+    {
+      "path": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-6.txt",
+      "sha256": "530e81311d1a58183cd28ff71cadca68714f99df4d7586ad893403df66aa8380",
+      "bytes": 9853
+    }
+  ],
+  "simulation_status": "NOT_RUN",
+  "simulation_manifests": [],
+  "reference_replay": {
+    "C0": {
+      "scenario": "historical_f2_replay",
+      "status": "NOT_RUN",
+      "expected_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "expected_parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+      "actual_digest": null
+    },
+    "C1": {
+      "scenario": "historical_f2_trade_scenario",
+      "status": "NOT_RUN",
+      "expected_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+      "expected_parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+      "actual_digest": null
+    },
+    "digest_source": "docs/upgrade_review/HIST_VNEXT/01_BASELINE_AND_VERSION_AUDIT.md:41-46 (constant reference, not a replay)"
+  },
+  "seeds": {
+    "seed_status": "NOT_RUN",
+    "failed_seeds": null,
+    "note": "null means no seed was executed; not evidence of absence of failures"
+  },
+  "implementation": {
+    "status": "NOT_RUN",
+    "files_created": [],
+    "engine_state_storage_files_modified": [],
+    "new_permanent_tests": []
+  },
+  "research_package_complete": false,
+  "blocked": true,
+  "review": {
+    "reviewer": "phase-reviewer (@review)",
+    "selector": "minimax-code-cn/MiniMax-M3",
+    "thinking_level": "high",
+    "selector_basis": "review transcript model_change records, not self-report",
+    "rounds": [
+      {
+        "round": 1,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-1.txt",
+        "transcript": ".omp/agent/sessions/-OMP-hungary-socialist-mechanism-lab/2026-10-22T07-44-18-516Z_01a16291-6654-765a-8195-d0bf71504e67/H5DBlockerReview.jsonl",
+        "started_utc": "2026-10-22T07:47:03.144Z",
+        "ended_utc": "2026-10-22T08:05:00.635Z",
+        "exit": "completed",
+        "errors": 0,
+        "probes": [
+          {
+            "timestamp": "2026-10-22T07:49:13.615Z",
+            "input": 4481,
+            "output": 46,
+            "cacheRead": 20712,
+            "cost_usd": 0.00264222
+          },
+          {
+            "timestamp": "2026-10-22T07:54:19.304Z",
+            "input": 1854,
+            "output": 56,
+            "cacheRead": 69912,
+            "cost_usd": 0.00481812
+          }
+        ],
+        "probe_totals": {
+          "rows": 2,
+          "input": 6335,
+          "output": 102,
+          "cacheRead": 90624,
+          "cost_usd": 0.00746034
+        },
+        "usage_scope": "sum of model_usage probe rows present at build time; per-message usage is not persisted by this harness version"
+      },
+      {
+        "round": 2,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-2.txt",
+        "transcript": ".omp/agent/sessions/-OMP-hungary-socialist-mechanism-lab/2026-10-22T07-44-18-516Z_01a16291-6654-765a-8195-d0bf71504e67/H5DBlockerReview2.jsonl",
+        "started_utc": "2026-10-22T07:59:52.684Z",
+        "ended_utc": "2026-10-22T09:36:28.205Z",
+        "exit": "completed",
+        "errors": 0,
+        "probes": [
+          {
+            "timestamp": "2026-10-22T08:01:54.823Z",
+            "input": 454,
+            "output": 63,
+            "cacheRead": 42368,
+            "cost_usd": 0.00275388
+          },
+          {
+            "timestamp": "2026-10-22T08:06:56.929Z",
+            "input": 4968,
+            "output": 55,
+            "cacheRead": 78208,
+            "cost_usd": 0.00624888
+          },
+          {
+            "timestamp": "2026-10-22T08:17:00.056Z",
+            "input": 1458,
+            "output": 89,
+            "cacheRead": 141824,
+            "cost_usd": 0.00905364
+          },
+          {
+            "timestamp": "2026-10-22T08:47:02.955Z",
+            "input": 10624,
+            "output": 62,
+            "cacheRead": 240640,
+            "cost_usd": 0.0177
+          }
+        ],
+        "probe_totals": {
+          "rows": 4,
+          "input": 17504,
+          "output": 269,
+          "cacheRead": 503040,
+          "cost_usd": 0.0357564
+        },
+        "usage_scope": "sum of model_usage probe rows present at build time; per-message usage is not persisted by this harness version"
+      },
+      {
+        "round": 3,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-3.txt",
+        "transcript": ".omp/agent/sessions/-OMP-hungary-socialist-mechanism-lab/2026-10-22T07-44-18-516Z_01a16291-6654-765a-8195-d0bf71504e67/H5DBlockerReview3.jsonl",
+        "started_utc": "2026-10-22T09:31:08.686Z",
+        "ended_utc": "2026-10-22T09:49:29.596Z",
+        "exit": "completed",
+        "errors": 0,
+        "probes": [
+          {
+            "timestamp": "2026-10-22T09:33:33.742Z",
+            "input": 409,
+            "output": 57,
+            "cacheRead": 42428,
+            "cost_usd": 0.00273678
+          },
+          {
+            "timestamp": "2026-10-22T09:38:36.257Z",
+            "input": 723,
+            "output": 77,
+            "cacheRead": 89991,
+            "cost_usd": 0.00570876
+          }
+        ],
+        "probe_totals": {
+          "rows": 2,
+          "input": 1132,
+          "output": 134,
+          "cacheRead": 132419,
+          "cost_usd": 0.00844554
+        },
+        "usage_scope": "sum of model_usage probe rows present at build time; per-message usage is not persisted by this harness version"
+      },
+      {
+        "round": 4,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-4.txt",
+        "transcript": ".omp/agent/sessions/-OMP-hungary-socialist-mechanism-lab/2026-10-22T07-44-18-516Z_01a16291-6654-765a-8195-d0bf71504e67/H5DBlockerReview4.jsonl",
+        "started_utc": "2026-10-22T09:43:51.485Z",
+        "ended_utc": "2026-10-22T10:00:18.549Z",
+        "exit": "completed",
+        "errors": 0,
+        "probes": [
+          {
+            "timestamp": "2026-10-22T09:45:55.411Z",
+            "input": 512,
+            "output": 60,
+            "cacheRead": 35551,
+            "cost_usd": 0.00235866
+          },
+          {
+            "timestamp": "2026-10-22T09:51:05.985Z",
+            "input": 854,
+            "output": 73,
+            "cacheRead": 79484,
+            "cost_usd": 0.00511284
+          }
+        ],
+        "probe_totals": {
+          "rows": 2,
+          "input": 1366,
+          "output": 133,
+          "cacheRead": 115035,
+          "cost_usd": 0.0074715
+        },
+        "usage_scope": "sum of model_usage probe rows present at build time; per-message usage is not persisted by this harness version"
+      },
+      {
+        "round": 5,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-5.txt",
+        "transcript": ".omp/agent/sessions/-OMP-hungary-socialist-mechanism-lab/2026-10-22T07-44-18-516Z_01a16291-6654-765a-8195-d0bf71504e67/H5DBlockerReview5.jsonl",
+        "started_utc": "2026-10-22T09:53:51.884Z",
+        "ended_utc": "2026-10-22T10:13:49.262Z",
+        "exit": "completed",
+        "errors": 0,
+        "probes": [
+          {
+            "timestamp": "2026-10-22T09:56:04.583Z",
+            "input": 930,
+            "output": 67,
+            "cacheRead": 27129,
+            "cost_usd": 0.00198714
+          },
+          {
+            "timestamp": "2026-10-22T10:01:09.864Z",
+            "input": 641,
+            "output": 67,
+            "cacheRead": 77609,
+            "cost_usd": 0.00492924
+          }
+        ],
+        "probe_totals": {
+          "rows": 2,
+          "input": 1571,
+          "output": 134,
+          "cacheRead": 104738,
+          "cost_usd": 0.00691638
+        },
+        "usage_scope": "sum of model_usage probe rows present at build time; per-message usage is not persisted by this harness version"
+      },
+      {
+        "round": 6,
+        "verdict": "PASS",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-6.txt",
+        "transcript": ".omp/agent/sessions/-OMP-hungary-socialist-mechanism-lab/2026-10-22T07-44-18-516Z_01a16291-6654-765a-8195-d0bf71504e67/H5DBlockerReview6.jsonl",
+        "started_utc": "2026-10-22T10:07:04.811Z",
+        "ended_utc": "2026-10-22T10:15:27.609Z",
+        "exit": "completed",
+        "errors": 0,
+        "probes": [
+          {
+            "timestamp": "2026-10-22T10:09:08.900Z",
+            "input": 515,
+            "output": 68,
+            "cacheRead": 39674,
+            "cost_usd": 0.00261654
+          },
+          {
+            "timestamp": "2026-10-22T10:14:21.860Z",
+            "input": 2126,
+            "output": 47,
+            "cacheRead": 62577,
+            "cost_usd": 0.00444882
+          }
+        ],
+        "probe_totals": {
+          "rows": 2,
+          "input": 2641,
+          "output": 115,
+          "cacheRead": 102251,
+          "cost_usd": 0.00706536
+        },
+        "usage_scope": "sum of model_usage probe rows present at build time; per-message usage is not persisted by this harness version"
+      }
+    ],
+    "status": "PASS",
+    "review_file": "studies/HIST_VNEXT/M03/REVIEW.md",
+    "review_sha256": "98d51e643ebce82221f87486a0cb58812d59d5c8bd6ba03a3a63ea1d5a91af2f",
+    "final_verdict": "PASS",
+    "round_count_matches_delivery": true,
+    "delivery_round_count": 6
+  },
+  "resource": {
+    "step_start_utc": "2026-10-22T07:45:08Z",
+    "built_utc": "2026-10-22T10:15:47.012631Z",
+    "wall_s": 9039.013,
+    "wall_basis": "first recorded command timestamp to manifest build; a wall clock span, not CPU time",
+    "rss": "NOT_MEASURED",
+    "bytes_written": 227429,
+    "bytes_written_scope": "delivery artefacts only (PLAN/REPORT/REVIEW copies + BLOCKER_CERTIFICATE)",
+    "output_evidence_bytes": 116024,
+    "output_evidence_scope": "raw search/log files, build_manifest.py, verify_manifest.py, delivery.json and the per-round review transcripts copies",
+    "model_usage": "NOT_RECORDED",
+    "model_usage_note": "per-message token/cache/cost is not persisted by this harness version; review.model.rounds carries the probe rows that do exist. 0 is not asserted and no estimate is substituted."
+  },
+  "outputs_committed": false,
+  "pushed": false,
+  "delivery_receipt": "outputs/hist-vnext-h5d-20261022T074508Z/delivery.json"
+}

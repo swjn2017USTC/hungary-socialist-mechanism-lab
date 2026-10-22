@@ -1,0 +1,631 @@
+{
+  "schema_version": "hist_vnext_h5d_blocker_v1",
+  "phase_id": "H5D",
+  "mechanism_id": "M3",
+  "study_id": "M03",
+  "objective": "M3组织劳动纪律与囤工独立状态",
+  "status": "BLOCKED",
+  "blocking_code": "MISSING_LABOR_INSTITUTION_UNIT_SPEC_PASS",
+  "created_utc": "2026-10-22T07:45:08Z",
+  "repository": {
+    "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "branch": "codex/audit-hsm-vnext-2026-10-11",
+    "head": "3ec08983f0ca2f77dc1a5e446e4f39e7fab7be98"
+  },
+  "labor_spec": {
+    "labor_spec_path": null,
+    "labor_spec_sha256": null,
+    "labor_spec_review_sha256": null,
+    "null_semantics": "NOT_OBTAINED — not zero, not an empty file, not an approval"
+  },
+  "required_contract": [
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+      "lines": "219-226",
+      "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+      "bytes": 37168,
+      "quote": "前置输入：H3闭环、劳动制度/单位spec PASS。",
+      "role": "phase contract: prerequisite, whitelist, tests, gate"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+      "lines": "362-373",
+      "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+      "bytes": 114765,
+      "quote": "前置：H3闭环、劳动制度/单位spec PASS。",
+      "role": "single-task handoff prompt"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/evidence/phase-contracts.json",
+      "lines": "164-172",
+      "sha256": "9a81273d6a3b442f5ca48517b55a6ad84faf66873ca96e8ae80c0c28c7593374",
+      "bytes": 19362,
+      "quote": "\"dependencies\": \"H3闭环、劳动制度/单位spec PASS\"",
+      "role": "machine-readable phase contract row"
+    }
+  ],
+  "h3_closure": {
+    "claim": "Every mandatory H3 spine item carries a final independent PASS limited to an engine-side technical scope; none covers the labour institution/unit spec.",
+    "mandatory_spine": [
+      {
+        "phase": "H3A",
+        "verdict": "PASS",
+        "round": 2,
+        "scope": "service capability/scheduling/provision/use/loss measurement layer",
+        "covers_labor_unit_spec": false
+      },
+      {
+        "phase": "H3B",
+        "verdict": "PASS",
+        "round": 4,
+        "scope": "upstream order financing and bank approval closure",
+        "covers_labor_unit_spec": false
+      },
+      {
+        "phase": "H3C",
+        "verdict": "PASS",
+        "round": "final",
+        "scope": "synthetic full-information routing/shortfall feasibility certificate",
+        "covers_labor_unit_spec": false
+      },
+      {
+        "phase": "H3D",
+        "verdict": "PASS",
+        "round": 7,
+        "scope": "short-cycle timing isolation comparison (lead time / substage)",
+        "covers_labor_unit_spec": false
+      },
+      {
+        "phase": "H3F-D0",
+        "verdict": "PASS",
+        "round": 3,
+        "scope": "versioned legacy_treasury_prepay reference plus read-only double-book observation; D1/D2/D3 are NOT_IMPLEMENTED_IN_D0",
+        "covers_labor_unit_spec": false
+      },
+      {
+        "phase": "H3F-D1",
+        "verdict": "PASS",
+        "round": 2,
+        "scope": "limited/maturity working-capital lending",
+        "covers_labor_unit_spec": false
+      },
+      {
+        "phase": "H3F-D2",
+        "verdict": "PASS",
+        "round": 7,
+        "scope": "export receivables and bad-debt reversing entries",
+        "covers_labor_unit_spec": false
+      },
+      {
+        "phase": "H3F-D3",
+        "verdict": "PASS",
+        "round": 3,
+        "scope": "independent CMEA clearing, quotas and contract prices",
+        "covers_labor_unit_spec": false
+      }
+    ],
+    "optional_or_out_of_spine": [
+      {
+        "phase": "H3E",
+        "status": "BLOCKED_NO_PASS",
+        "why_it_does_not_block_H5D": "05:135-137 declares H3E optional and explicitly not a mandatory prerequisite for pure-rule experiments; its REVIEW.md claims no PASS"
+      },
+      {
+        "phase": "H3G",
+        "status": "NO_REVIEW_MD",
+        "why_it_does_not_block_H5D": "not part of the H3 spine enumerated in 05:99-152"
+      }
+    ],
+    "conclusion": "H3 technical closure cannot substitute for the labour institution/unit spec PASS; the block persists independently of H3 status."
+  },
+  "user_work": {
+    "policy": "never staged as user work, overwritten or deleted by this step",
+    "modified": [
+      {
+        "path": ".omp/config.yml",
+        "sha256": "2e90b9c6feed817a4547c7232f650e8c76c089f14f7ae22b36f23bf62dd2fe7f",
+        "bytes": 472,
+        "origin": "user work present at step start"
+      },
+      {
+        "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+        "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+        "bytes": 37168,
+        "origin": "user work present at step start"
+      },
+      {
+        "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+        "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+        "bytes": 114765,
+        "origin": "user work present at step start"
+      }
+    ],
+    "untracked": [
+      {
+        "path": "CMEA_清算制度冻结_PLAN.md",
+        "sha256": "9523e122eb084b642226dd4da3637cf8a3b5ae1b37714f1e3c9e2d0d6f79c81d",
+        "bytes": 46043,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H3A_服务语义分型_PLAN.md",
+        "sha256": "77f4525cfc439bc32ee4d7a085917fa91f073d39c3c3a5762185169eda497872",
+        "bytes": 33300,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H3B_订单融资闭环_PLAN.md",
+        "sha256": "1a35125dcde68909431ccde0e33d3a9ebd366374166190a6ead1598121562240",
+        "bytes": 33231,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H3C_线路运力证书_PLAN.md",
+        "sha256": "505da6af06a792a9e5ccbbdc27610256a92caef320b2b081845e50e5b880c01f",
+        "bytes": 34442,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H3D_短周期时序隔离比较_PLAN.md",
+        "sha256": "44abb9824ca311214b971e8a0121d9f63430077b178474d249d3ffcd99f4da7a",
+        "bytes": 33051,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H3E_4Q_滚动规划_PLAN.md",
+        "sha256": "420d89a877bc17c9d14beebba124f4234b373374c1d1ae2478dcf772eb4e5ed8",
+        "bytes": 28961,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H3F_D1_外贸工作资本贷款_PLAN.md",
+        "sha256": "18b67e79da3cb1edca8ec675fff6e4625b9a92c87dc3a7bb5ddd65311163923d",
+        "bytes": 34459,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H3F_D2_出口应收与坏账反向分录_PLAN.md",
+        "sha256": "135fcc9e5e9db1bb2f3aa0eaa19830102ee5f76264990860c536a5d87d6f9e16",
+        "bytes": 45281,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H4A_0_来源核验与准入_PLAN.md",
+        "sha256": "1041dba4648aa93c1cec44e822c810fb403a22eb2040908c4a5a305874ba6645",
+        "bytes": 32476,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H4A_1_前置补完_PLAN.md",
+        "sha256": "6c6cc09dd1f5c01dd123f877a9b46f3cf7cad8a4a2fc9630e497587507643d21",
+        "bytes": 26196,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H4B_PILOT_A_阻断包_PLAN.md",
+        "sha256": "3a1b8684223b1524911d2248f18007270b0bd21144b0064fcb8f8ebf5e183100",
+        "bytes": 23236,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H4C_PILOT_B_PLAN.md",
+        "sha256": "275db3fe48bfaef28c71e4a8dac4a9147fc8beef360b8ba294bbfbadb1e50f07",
+        "bytes": 31580,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H5A_A1_M2_PLAN.md",
+        "sha256": "1ae544a61e2ed03dc625d1351e62229fc1d892d7c4d79866e41698158bb0768d",
+        "bytes": 30985,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "H5C_参照历史棘轮实验_PLAN.md",
+        "sha256": "ce6cb635c04bc3fe24c6f6deccc3938fd04a50f829b840aa3b12473620c25cf0",
+        "bytes": 32836,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "HIST_VNEXT_H5B_PLAN.md",
+        "sha256": "f8f8c9f721eac86c618909abb792e275fcd0c33a6fa850ec7f18bbaa17b68519",
+        "bytes": 39569,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "LEGACY_TREASURY_PREPAY_双账观察_PLAN.md",
+        "sha256": "bfee42ba00e1ca811a9a4919fdc0ca315d1c235f90d6ba504c4e95d5ef6ea254",
+        "bytes": 29193,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      },
+      {
+        "path": "M3劳动纪律与囤工_PLAN.md",
+        "sha256": "004757e86de472ed9d6ab10b020e02540e4ceae5f42e6199fe070cab9371c196",
+        "bytes": 15776,
+        "preexisting": true,
+        "origin": "this task's plan-phase output, materialized into the repo root at 2026-10-22T07:44:18Z",
+        "preexisting_user_work": false,
+        "modified_by_this_step": false
+      },
+      {
+        "path": "docs/upgrade_review/HIST_VNEXT/09_BATCH02_YEARBOOKS_D08_D10_INTAKE.md",
+        "sha256": "89e0e00d5bf6d4ebefe3364f569d5906ab0c61684c9d6dcc673aacf89100df33",
+        "bytes": 9768,
+        "preexisting": true,
+        "origin": "user work present at step start",
+        "preexisting_user_work": true
+      }
+    ],
+    "counts": {
+      "modified": 3,
+      "untracked": 18,
+      "staged": 0
+    },
+    "source_of_plan": {
+      "path": "M3劳动纪律与囤工_PLAN.md",
+      "sha256": "004757e86de472ed9d6ab10b020e02540e4ceae5f42e6199fe070cab9371c196",
+      "bytes": 15776,
+      "provenance": "this task's @plan-phase output, not user work",
+      "plan_phase_session_file": "/Users/wahrfreiheit/.omp/agent/sessions/-OMP-hungary-socialist-mechanism-lab/2026-10-22T07-07-34-040Z_01a1626f-c318-7466-be7d-aa689f651149/local/hist-vnext-h5d-plan.md",
+      "byte_identical_to_plan_phase_file": true,
+      "authored_by_model": "openai-codex/gpt-6.1-sol",
+      "materialized_in_repo_utc": "2026-10-22T07:44:18Z",
+      "user_instruction_utc": "2026-10-22T07:44:38Z",
+      "modified_by_this_step": false,
+      "first_write_utc": "2026-10-22T07:08:40.157Z",
+      "last_edit_utc": "2026-10-22T07:28:52.189Z",
+      "proposed_utc": "2026-10-22T07:29:05.003Z",
+      "plan_mode_set_utc": "2026-10-22T07:29:05.046Z"
+    }
+  },
+  "protected": [
+    {
+      "path": "BASELINE.md",
+      "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+      "bytes": 64445
+    },
+    {
+      "path": "config/research_contract.json",
+      "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+      "bytes": 2908
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+      "bytes": 157941
+    },
+    {
+      "path": "config/p06/cards/M3.json",
+      "sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+      "bytes": 794
+    }
+  ],
+  "searched": {
+    "paths": [
+      "docs/upgrade_review/HIST_VNEXT",
+      "docs/phases/HIST_VNEXT",
+      "institutions/HIST_VNEXT",
+      "studies",
+      "config",
+      "src",
+      "history/HIST_VNEXT",
+      "outputs (labour/H5D filenames only)"
+    ],
+    "filename_patterns": [
+      "*labor*",
+      "*labour*",
+      "*H5D*",
+      "*h5d*"
+    ],
+    "keyword_patterns": [
+      "劳动制度|单位spec|labor_spec|labor institution|labour institution",
+      "(labor|labour)[ _-]?(spec|institution).{0,80}(PASS|approved|accepted)|组织劳动|囤工独立"
+    ],
+    "raw_evidence_dir": "outputs/hist-vnext-h5d-20261022T074508Z/raw",
+    "negative_search_scope_limit": "proves only that no approved artefact is reachable under the named paths at this HEAD; makes no claim about material outside the repository"
+  },
+  "found_evidence": [
+    {
+      "path": "studies/M03/study_decl.json",
+      "lines": "1-12",
+      "sha256": "20d157baee8439665ed277846ba40d29bc037d450b9abf15810b1c4dda8a2ec7",
+      "finding": "status=blocked; research_package_complete=false; no independent labor hoarding state; wage factor is not a hoarding operation"
+    },
+    {
+      "path": "studies/HIST_VNEXT/declarations/research_status_overlay.json",
+      "lines": "159-197",
+      "sha256": "d5e256e1dfd02b4d176a5d5131592f33c054008a6b644fecb15b427060cbe1a6",
+      "finding": "M03 3/3 metrics blocked; structural NOT_RUN/HYPOTHESIS; historical UNIDENTIFIED; no admitted labour-hours or absence series"
+    },
+    {
+      "path": "src/hsm_lab/engine/state.py",
+      "lines": "361-366",
+      "sha256": "5a4a51abc8554f82e4332caa9021a832aa1508fdab6c4ad37552fdb4f67b00fe",
+      "finding": "five labour fields at 361-364 and 366 (nominal labor, static nominal base, effort factor, labor_per_activity, wage arrears); :365 is organization_cash; no headcount, attendance or hours identity"
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H5B/REVIEW.md",
+      "lines": "167-201",
+      "sha256": "2b45a22fb499c89027c252fa3b4a8f001da58b2445b1556718ec99f610cbf377",
+      "finding": "final PASS retains 'no formal-effort feedback'; side-work time budget is not an M3 labour-institution PASS"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/01_BASELINE_AND_VERSION_AUDIT.md",
+      "lines": "41-46",
+      "sha256": "e46979b7dbe235c09f4caf793164a2b9e7c675fd1679f6fbbd731a704e7f4059",
+      "finding": "reference C0/C1 digests and parameter hashes recorded; not replayed by this step"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/evidence/phase-contracts.json",
+      "lines": "164-172",
+      "sha256": "9a81273d6a3b442f5ca48517b55a6ad84faf66873ca96e8ae80c0c28c7593374",
+      "finding": "H5D contract row: dependency text requires the labour institution/unit spec PASS"
+    }
+  ],
+  "missing_artifacts": [
+    {
+      "id": "MISSING-1",
+      "item": "versioned labor institution spec covering employment hire/release rules"
+    },
+    {
+      "id": "MISSING-2",
+      "item": "establishment vs actual headcount relation"
+    },
+    {
+      "id": "MISSING-3",
+      "item": "nominal labor to persons/hours unit conversion basis"
+    },
+    {
+      "id": "MISSING-4",
+      "item": "labor total-volume constraint consistent with total time budget"
+    },
+    {
+      "id": "MISSING-5",
+      "item": "exclusivity with H5B formal/plot/second-economy/queue/search/leisure time"
+    },
+    {
+      "id": "MISSING-6",
+      "item": "independent PASS record bound to the exact spec version/content SHA"
+    }
+  ],
+  "stop_reason": "The H5D prerequisite 'labor institution/unit spec PASS' is absent at this HEAD. Implementing labor identity without it would invent the employment rules and unit conversion the contract forbids.",
+  "not_executed": [
+    {
+      "step": "counterexample: wage/arrears cannot identify hoarding",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "counterexample: legacy nominal labor lacks headcount/hours identity",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "minimal labor state adapter/spec implementation",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "employment-rule vs wage-only negative control",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "labor total constraint and household side-work exclusivity test",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "tests/test_hist_labor_identity.py",
+      "status": "NOT_CREATED"
+    },
+    {
+      "step": "full pytest regression",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "ruff check",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "uv lock --check --offline",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "hsm baseline verify --json",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "C0 replay historical_f2_replay",
+      "status": "NOT_RUN",
+      "actual_digest": null
+    },
+    {
+      "step": "C1 replay historical_f2_trade_scenario",
+      "status": "NOT_RUN",
+      "actual_digest": null
+    },
+    {
+      "step": "final implementation independent review",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "implementer single-task omp session",
+      "status": "NOT_RUN"
+    }
+  ],
+  "dimensions": {
+    "technical": {
+      "status": "BLOCKED",
+      "level": "VERIFIED_BY_CODE",
+      "reason": "prerequisite spec absent"
+    },
+    "structural": {
+      "status": "NOT_RUN",
+      "level": "HYPOTHESIS",
+      "reason": "no labor state exists to hold discipline constant"
+    },
+    "historical": {
+      "status": "UNIDENTIFIED",
+      "level": "NOT_RUN",
+      "reason": "no independent historical labour-hours or absence observation verified in this step"
+    }
+  },
+  "seeds": {
+    "seed_status": "NOT_RUN",
+    "failed_seeds": null,
+    "note": "null means no seed was executed; it is not evidence that none would fail"
+  },
+  "review": {
+    "status": "PASS",
+    "reviewer": "phase-reviewer (@review)",
+    "selector": "minimax-code-cn/MiniMax-M3",
+    "thinking_level": "high",
+    "rounds": [
+      {
+        "round": 1,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-1.txt",
+        "started_utc": "2026-10-22T07:47:03.144Z",
+        "ended_utc": "2026-10-22T08:05:00.635Z",
+        "errors": 0,
+        "usage": {
+          "rows": 2,
+          "input": 6335,
+          "output": 102,
+          "cacheRead": 90624,
+          "cost_usd": 0.00746034
+        }
+      },
+      {
+        "round": 2,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-2.txt",
+        "started_utc": "2026-10-22T07:59:52.684Z",
+        "ended_utc": "2026-10-22T09:36:28.205Z",
+        "errors": 0,
+        "usage": {
+          "rows": 4,
+          "input": 17504,
+          "output": 269,
+          "cacheRead": 503040,
+          "cost_usd": 0.0357564
+        }
+      },
+      {
+        "round": 3,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-3.txt",
+        "started_utc": "2026-10-22T09:31:08.686Z",
+        "ended_utc": "2026-10-22T09:49:29.596Z",
+        "errors": 0,
+        "usage": {
+          "rows": 2,
+          "input": 1132,
+          "output": 134,
+          "cacheRead": 132419,
+          "cost_usd": 0.00844554
+        }
+      },
+      {
+        "round": 4,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-4.txt",
+        "started_utc": "2026-10-22T09:43:51.485Z",
+        "ended_utc": "2026-10-22T10:00:18.549Z",
+        "errors": 0,
+        "usage": {
+          "rows": 2,
+          "input": 1366,
+          "output": 133,
+          "cacheRead": 115035,
+          "cost_usd": 0.0074715
+        }
+      },
+      {
+        "round": 5,
+        "verdict": "PATCH",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-5.txt",
+        "started_utc": "2026-10-22T09:53:51.884Z",
+        "ended_utc": "2026-10-22T10:13:49.262Z",
+        "errors": 0,
+        "usage": {
+          "rows": 2,
+          "input": 1571,
+          "output": 134,
+          "cacheRead": 104738,
+          "cost_usd": 0.00691638
+        }
+      },
+      {
+        "round": 6,
+        "verdict": "PASS",
+        "evidence": "outputs/hist-vnext-h5d-20261022T074508Z/reviews/round-6.txt",
+        "started_utc": "2026-10-22T10:07:04.811Z",
+        "ended_utc": "2026-10-22T10:15:27.609Z",
+        "errors": 0,
+        "usage": {
+          "rows": 2,
+          "input": 2641,
+          "output": 115,
+          "cacheRead": 102251,
+          "cost_usd": 0.00706536
+        }
+      }
+    ],
+    "final_verdict": "PASS",
+    "usage": {
+      "per_call": "NOT_RECORDED",
+      "basis": "model_usage probe rows present in the review transcripts; per-message token/cache/cost is not persisted by this harness version and ~/.omp/stats.db is indexed only to 2026-08-27T16:17:00Z",
+      "detail_in": "EVIDENCE_MANIFEST.json:review.rounds"
+    }
+  },
+  "delivery": {
+    "simulation_status": "NOT_RUN",
+    "simulation_manifests": [],
+    "research_package_complete": false,
+    "outputs_committed": false,
+    "pushed": false
+  },
+  "plan_freeze_erratum": {
+    "frozen_text": "M3劳动纪律与囤工_PLAN.md:9 asserts untracked=17",
+    "measured_at_step_start": 18,
+    "both_counts_correct": true,
+    "why_they_differ": "17 was correct at 07:08:00Z for the plan-phase git status, which lists 17 '??' rows and does not contain the plan file; the plan file itself materialized at 07:44:18Z, so the same command at 07:45:08Z returns 18. The delta is the plan artefact, not a miscount.",
+    "evidence": [
+      "outputs/hist-vnext-h5d-20261022T074508Z/logs/00_baseline.txt",
+      "outputs/hist-vnext-h5d-20261022T074508Z/logs/02_initial_untracked_sizes.txt"
+    ],
+    "resolution": "The frozen PLAN bytes are NOT edited: the plan requires a verbatim freeze and byte-identical copies of the same source. This erratum is the record; 18 is the value at this step's start."
+  },
+  "probe_notes": {
+    "filename_probe_time": "raw/10_dir_and_name_probe.txt was recorded before this step created docs/phases/HIST_VNEXT/H5D and studies/HIST_VNEXT/M03; re-running it now also returns those two paths, which are this delivery's own artefacts",
+    "logs_03_row_2": "logs/03_protected_sha.txt line 2 is an empty row from a wrong path probe (docs/upgrade_review/HIST_VNEXT/research_contract.json); the correct path config/research_contract.json is on line 5 with a correction note in logs/03b_protected_sha_correction.txt; the raw log was not rewritten"
+  }
+}
