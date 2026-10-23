@@ -418,24 +418,24 @@ class _CellLedger:
         for r, g, cell in self._retail_cell_iter(network):
             self.retail_out[cell] += float(flows.retail_sales[r, g])
 
-        # plot household channels (quantities; food ready only)
+        # Plot household channels: the authoritative stock draws are the
+        # allocation flows, not a re-derived "food" column.  P02 named the plot
+        # commodity "food"; P05/F2 uses g09_basic_food, so keying off the name
+        # silently dropped every plot outflow and broke checkpoint history.
         self.plot_self_use = np.zeros(regions, dtype=np.float64)
         self.plot_market_sales = np.zeros(regions, dtype=np.float64)
-        food_index = commodity_ids.index("food") if "food" in commodity_ids else None
-        if food_index is not None:
-            ready_price = float(parameters.prices[food_index])
-            if ready_price > 0.0:
-                self.plot_self_use = _household_region_sums(
-                    state, np.asarray(flows.household_self_use) / ready_price, regions
-                )
-                realized_food = _household_region_sums(
-                    state, np.asarray(flows.household_realized)[:, food_index], regions
-                )
-                self.plot_market_sales = (
-                    realized_food
-                    - np.asarray(flows.retail_sales, dtype=np.float64)[:, food_index]
-                    - self.plot_self_use
-                )
+        catalog = getattr(network, "household_catalog", None)
+        if catalog is not None:
+            plot_self_h = np.asarray(flows.household_plot_self_h, dtype=np.float64)
+            plot_market_h = np.asarray(flows.household_plot_market_h, dtype=np.float64)
+            basic_h = int(catalog.channel("basic_food"))
+            self.plot_self_use = _household_region_sums(
+                state, plot_self_h[:, basic_h], regions
+            )
+            equity = np.asarray(catalog.material_equivalent, dtype=np.float64)
+            self.plot_market_sales = (
+                _household_region_sums(state, plot_market_h, regions) * equity[None, :]
+            ).sum(axis=1)
         self.plot_out = np.zeros(cell_count, dtype=np.float64)
         ready_self = np.asarray(network.plot_ready_self_cell)
         ready_market = np.asarray(network.plot_ready_market_cell)

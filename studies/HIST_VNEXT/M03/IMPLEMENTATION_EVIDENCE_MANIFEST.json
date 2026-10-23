@@ -1,0 +1,1268 @@
+{
+  "acceptance_matrix": [
+    {
+      "evidence": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-reproduce/reproduce.json",
+      "id": "R1",
+      "status": "PASS"
+    },
+    {
+      "evidence": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-reproduce/reproduce.json",
+      "id": "R2",
+      "status": "PASS"
+    },
+    {
+      "evidence": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-reproduce/reproduce.json",
+      "id": "R3",
+      "status": "PASS"
+    },
+    {
+      "evidence": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-reproduce/reproduce.json",
+      "id": "R4",
+      "status": "PASS"
+    },
+    {
+      "evidence": "tests/test_hist_labor_identity.py::test_headcount_transition_witness_and_shared_pool",
+      "id": "A1",
+      "status": "PASS"
+    },
+    {
+      "evidence": "tests/test_hist_labor_identity.py::test_real_tick_binds_effective_hours_and_rejects_forgery",
+      "id": "A2",
+      "status": "PASS"
+    },
+    {
+      "evidence": "C0-f/C1-f digests + default-off byte test",
+      "id": "A3",
+      "status": "PASS"
+    },
+    {
+      "evidence": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-negative-controls/negative_controls.json",
+      "id": "N1",
+      "status": "PASS"
+    },
+    {
+      "evidence": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-negative-controls/negative_controls.json",
+      "id": "N2",
+      "status": "PASS"
+    },
+    {
+      "evidence": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-negative-controls/negative_controls.json",
+      "id": "N3",
+      "status": "PASS"
+    },
+    {
+      "evidence": "final4 C0/C1/intermediate8 resume equality",
+      "id": "S",
+      "status": "PASS"
+    }
+  ],
+  "acceptance_path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_ACCEPTANCE.json",
+  "acceptance_sha256": "af7fd7910fe3174155359382087b656c850b6ddb751ee83c7685d7eedd44b10e",
+  "accepted_spec": {
+    "acceptance_path": "studies/HIST_VNEXT/M03/LABOR_SPEC_ACCEPTANCE.json",
+    "acceptance_sha256": "eb0ecc169fd93a986ef7730047ce9a2a7052494ecefe2e3277d4edc78d2c8312",
+    "path": "studies/HIST_VNEXT/M03/labor_institution_spec_v1.json",
+    "review_sha256": "c6d0244115992f47b86d47745c0255ec2cdf54c7f088faefd8999c5b2a8e036c",
+    "scope": "declared contract only",
+    "sha256": "e3174a2dbc2f0abe05815a123cf9b3eeb7f6600a09eed00f38b9d3041621eb01",
+    "spec_id": "hist-vnext-labor-institution-v1",
+    "spec_semver": "1.0.0"
+  },
+  "adapter_interfaces": [
+    "LaborRecipe",
+    "LaborSidecar",
+    "LaborTickPlan",
+    "LaborDiagnostics",
+    "transition_headcount",
+    "prepare_labor_tick",
+    "apply_labor_plan",
+    "close_labor_tick",
+    "validate_labor_plan",
+    "labor_chain_start",
+    "labor_chain_advance"
+  ],
+  "approved_existing_files": [
+    {
+      "basis": "plan whitelist: tick keyword, pre-plan apply, effective-hours cap",
+      "path": "src/hsm_lab/engine/material.py"
+    },
+    {
+      "basis": "plan whitelist: independent labour ledger and target ceiling",
+      "path": "src/hsm_lab/engine/accounting.py"
+    },
+    {
+      "basis": "user-authorized stage-ledger fix: authoritative plot flows",
+      "path": "src/hsm_lab/storage/material_output.py"
+    },
+    {
+      "basis": "unmodified versus HEAD; stage zero-residual gate retained; the plot-flow fix closes the histories",
+      "path": "src/hsm_lab/storage/checkpoint.py"
+    }
+  ],
+  "artifacts": [
+    {
+      "bytes": 57344,
+      "path": "src/hsm_lab/institutions/labor_state_adapter.py",
+      "sha256": "9259bf0b39dfa012d600a3d5227e48274d693f3aaa41f7d8f284a49830335060"
+    },
+    {
+      "bytes": 69286,
+      "path": "studies/HIST_VNEXT/M03/labor_runner.py",
+      "sha256": "80647cab4b0ce21a19805ff451f5b8dfe4cd7ff51a9f4be36d604633449dc6ec"
+    },
+    {
+      "bytes": 9685,
+      "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_SPEC.json",
+      "sha256": "bc490b0be004dcad38380183e1e2b6eeaa10678fa9ea996cf5ecb7c2ce042df5"
+    },
+    {
+      "bytes": 61276,
+      "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_PLAN.md",
+      "sha256": "81148e3796adb0c7f728293931054c0979a72e9316a6c59b8a4da5765043d469"
+    },
+    {
+      "bytes": 10249,
+      "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REPORT.md",
+      "sha256": "c1b9c219d60e5dd2b73f7ac58764a3e63dda56bbe521cec3bf205b53488f4891"
+    },
+    {
+      "bytes": 4645,
+      "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REVIEW.md",
+      "sha256": "5e60589b156f656387cc2535d3cd1ad3e01c3b46cbbdd5b6c58582c771614f58"
+    },
+    {
+      "bytes": 61276,
+      "path": "docs/phases/HIST_VNEXT/H5D/IMPLEMENTATION_PLAN.md",
+      "sha256": "81148e3796adb0c7f728293931054c0979a72e9316a6c59b8a4da5765043d469"
+    },
+    {
+      "bytes": 10249,
+      "path": "docs/phases/HIST_VNEXT/H5D/IMPLEMENTATION_REPORT.md",
+      "sha256": "c1b9c219d60e5dd2b73f7ac58764a3e63dda56bbe521cec3bf205b53488f4891"
+    },
+    {
+      "bytes": 4645,
+      "path": "docs/phases/HIST_VNEXT/H5D/IMPLEMENTATION_REVIEW.md",
+      "sha256": "5e60589b156f656387cc2535d3cd1ad3e01c3b46cbbdd5b6c58582c771614f58"
+    },
+    {
+      "bytes": 265672,
+      "path": "src/hsm_lab/engine/material.py",
+      "sha256": "fe240e0b89281601519071edab14052379517eaa9891ae2a93a75428393ce888"
+    },
+    {
+      "bytes": 156551,
+      "path": "src/hsm_lab/engine/accounting.py",
+      "sha256": "03e7c04016e8946e4858e03aeaec479f344fe48dfde90612c270afb59110fe57"
+    },
+    {
+      "bytes": 76375,
+      "path": "src/hsm_lab/storage/checkpoint.py",
+      "sha256": "db5d8999c1e59099090a31f50c4d18216e3447b422c16eda4b56e981aed3bdcc"
+    },
+    {
+      "bytes": 55482,
+      "path": "src/hsm_lab/storage/material_output.py",
+      "sha256": "f57f3f25d281bad1c01880e6aad68617f0a7d86f4b87715dd66359a3909576c0"
+    },
+    {
+      "bytes": 68920,
+      "path": "tests/test_hist_labor_identity.py",
+      "sha256": "d587efab10389b60e6f6a5e88f400d8478cb6fea35d946bd718825288cb376f8"
+    },
+    {
+      "bytes": 3131,
+      "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_ACCEPTANCE.json",
+      "sha256": "af7fd7910fe3174155359382087b656c850b6ddb751ee83c7685d7eedd44b10e"
+    }
+  ],
+  "blocking_items": [],
+  "branch": "codex/audit-hsm-vnext-2026-10-11",
+  "bundle_resume_check": {
+    "c0": {
+      "continuous": {
+        "core_digest_chain": "d7c53d31ad9c57bd4f8f761e6083aa698c5fe2490e98741a4efcc1364d296b58",
+        "dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-opt-in-continuous",
+        "labor_digest_chain": "ed16f3f0019c55dc16c80adbb4b6f8a6925f7cd8653a654a523a978ff9c7da9f",
+        "last_tick_metrics": {
+          "distribution_uncovered_we": 1699.9999999999982,
+          "establishment_unused_share": 0.21408095902092783,
+          "g_labor": 5669.999999999993,
+          "hours_supplied_effective": 5826544.94715376,
+          "hours_supplied_establishment": 5891600.0,
+          "hours_used": 4630320.621832302,
+          "n_gap": 5795.105870858146,
+          "n_working": 11330.0,
+          "n_working_weighted": 11250.0,
+          "productive_nominal_effective_gap_we": 4095.1058708581477,
+          "quarter": "1957Q4",
+          "tick": 3,
+          "u_labor": 0.0,
+          "underutilization_share": 0.20530594652081213,
+          "weight_gap_persons": -80.0
+        }
+      },
+      "core_equal": true,
+      "labor_equal": true,
+      "metrics_equal": true,
+      "resumed": {
+        "core_digest_chain": "d7c53d31ad9c57bd4f8f761e6083aa698c5fe2490e98741a4efcc1364d296b58",
+        "dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-opt-in-resumed",
+        "labor_digest_chain": "ed16f3f0019c55dc16c80adbb4b6f8a6925f7cd8653a654a523a978ff9c7da9f",
+        "last_tick_metrics": {
+          "distribution_uncovered_we": 1699.9999999999982,
+          "establishment_unused_share": 0.21408095902092783,
+          "g_labor": 5669.999999999993,
+          "hours_supplied_effective": 5826544.94715376,
+          "hours_supplied_establishment": 5891600.0,
+          "hours_used": 4630320.621832302,
+          "n_gap": 5795.105870858146,
+          "n_working": 11330.0,
+          "n_working_weighted": 11250.0,
+          "productive_nominal_effective_gap_we": 4095.1058708581477,
+          "quarter": "1957Q4",
+          "tick": 3,
+          "u_labor": 0.0,
+          "underutilization_share": 0.20530594652081213,
+          "weight_gap_persons": -80.0
+        }
+      }
+    },
+    "c1": {
+      "continuous": {
+        "core_digest_chain": "f3bc991121092f1e7fbed2ac61f93cc65c4dc006dfecf264cd2b7c8ce28c6706",
+        "dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-c1-straight",
+        "labor_digest_chain": "b8f741b3d4c70fbf10351f0d6c716eb1cb523970df3a7cf67134dcad14edd667",
+        "last_tick_metrics": {
+          "distribution_uncovered_we": 1699.9999999999982,
+          "establishment_unused_share": 0.31238841937202133,
+          "g_labor": 5669.999999999993,
+          "hours_supplied_effective": 5826742.4196166415,
+          "hours_supplied_establishment": 5891599.999999998,
+          "hours_used": 4051132.3884277977,
+          "n_gap": 5794.726116121836,
+          "n_working": 11330.0,
+          "n_working_weighted": 11250.0,
+          "productive_nominal_effective_gap_we": 4094.7261161218375,
+          "quarter": "1957Q4",
+          "tick": 3,
+          "u_labor": 3.637978807091713e-12,
+          "underutilization_share": 0.3047346018267384,
+          "weight_gap_persons": -80.0
+        }
+      },
+      "core_equal": true,
+      "labor_equal": true,
+      "metrics_equal": true,
+      "resumed": {
+        "core_digest_chain": "f3bc991121092f1e7fbed2ac61f93cc65c4dc006dfecf264cd2b7c8ce28c6706",
+        "dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-c1-resumed",
+        "labor_digest_chain": "b8f741b3d4c70fbf10351f0d6c716eb1cb523970df3a7cf67134dcad14edd667",
+        "last_tick_metrics": {
+          "distribution_uncovered_we": 1699.9999999999982,
+          "establishment_unused_share": 0.31238841937202133,
+          "g_labor": 5669.999999999993,
+          "hours_supplied_effective": 5826742.4196166415,
+          "hours_supplied_establishment": 5891599.999999998,
+          "hours_used": 4051132.3884277977,
+          "n_gap": 5794.726116121836,
+          "n_working": 11330.0,
+          "n_working_weighted": 11250.0,
+          "productive_nominal_effective_gap_we": 4094.7261161218375,
+          "quarter": "1957Q4",
+          "tick": 3,
+          "u_labor": 3.637978807091713e-12,
+          "underutilization_share": 0.3047346018267384,
+          "weight_gap_persons": -80.0
+        }
+      }
+    },
+    "intermediate8": {
+      "continuous": {
+        "core_digest_chain": "daca5978b9c05f77643c9d7d0cfdcf8cdf994389582bc2081c828168390c224f",
+        "dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-i8-straight",
+        "labor_digest_chain": "314ab921f754a70b1fd14141e03f43938722968a529239d55555e376bdde6513",
+        "last_tick_metrics": {
+          "distribution_uncovered_we": 1699.9999999999982,
+          "establishment_unused_share": 0.026542523463944367,
+          "g_labor": 5669.999999999993,
+          "hours_supplied_effective": 5816135.400972687,
+          "hours_supplied_establishment": 5891600.000000001,
+          "hours_used": 5735222.068759826,
+          "n_gap": 5815.124228898672,
+          "n_working": 11330.0,
+          "n_working_weighted": 11250.0,
+          "productive_nominal_effective_gap_we": 4115.124228898674,
+          "quarter": "1957Q4",
+          "tick": 3,
+          "u_labor": 1.8189894035458565e-12,
+          "underutilization_share": 0.013911872168472672,
+          "weight_gap_persons": -80.0
+        }
+      },
+      "core_equal": true,
+      "labor_equal": true,
+      "metrics_equal": true,
+      "resumed": {
+        "core_digest_chain": "daca5978b9c05f77643c9d7d0cfdcf8cdf994389582bc2081c828168390c224f",
+        "dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-i8-resumed",
+        "labor_digest_chain": "314ab921f754a70b1fd14141e03f43938722968a529239d55555e376bdde6513",
+        "last_tick_metrics": {
+          "distribution_uncovered_we": 1699.9999999999982,
+          "establishment_unused_share": 0.026542523463944367,
+          "g_labor": 5669.999999999993,
+          "hours_supplied_effective": 5816135.400972687,
+          "hours_supplied_establishment": 5891600.000000001,
+          "hours_used": 5735222.068759826,
+          "n_gap": 5815.124228898672,
+          "n_working": 11330.0,
+          "n_working_weighted": 11250.0,
+          "productive_nominal_effective_gap_we": 4115.124228898674,
+          "quarter": "1957Q4",
+          "tick": 3,
+          "u_labor": 1.8189894035458565e-12,
+          "underutilization_share": 0.013911872168472672,
+          "weight_gap_persons": -80.0
+        }
+      }
+    }
+  },
+  "bundle_schema": "hist_vnext_h5d_labor_bundle_v1",
+  "byte_identical_pairs": [
+    {
+      "a": "studies/HIST_VNEXT/M03/IMPLEMENTATION_PLAN.md",
+      "b": "docs/phases/HIST_VNEXT/H5D/IMPLEMENTATION_PLAN.md",
+      "equal": true
+    },
+    {
+      "a": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REPORT.md",
+      "b": "docs/phases/HIST_VNEXT/H5D/IMPLEMENTATION_REPORT.md",
+      "equal": true
+    },
+    {
+      "a": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REVIEW.md",
+      "b": "docs/phases/HIST_VNEXT/H5D/IMPLEMENTATION_REVIEW.md",
+      "equal": true
+    }
+  ],
+  "commit": null,
+  "core_checkpoint_version": "material-checkpoint-v6",
+  "core_state_version": "material-state-v4",
+  "default_off": true,
+  "delivery_receipt": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/delivery_receipt.json",
+  "failed_seeds": [],
+  "head": "43cbfc1687efc450ee675b0d1b16cde03918c677",
+  "historical_verdict": "UNIDENTIFIED",
+  "immutable_packages": [
+    {
+      "bytes": 44744,
+      "path": "studies/HIST_VNEXT/M03/labor_institution_spec_v1.json",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "e3174a2dbc2f0abe05815a123cf9b3eeb7f6600a09eed00f38b9d3041621eb01"
+    },
+    {
+      "bytes": 17214,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC.md",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "f7d8d168f4415b7d222c870128f65ccca08264d4f709fd37d545d9d2b92cb4b0"
+    },
+    {
+      "bytes": 36693,
+      "path": "studies/HIST_VNEXT/M03/labor_spec.py",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "31ce051a39af86dbdb7c42076c6daedd27e4d4c143aeb6ce0cdb592fbfa36c8e"
+    },
+    {
+      "bytes": 2373,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC_ACCEPTANCE.json",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "eb0ecc169fd93a986ef7730047ce9a2a7052494ecefe2e3277d4edc78d2c8312"
+    },
+    {
+      "bytes": 133792,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC_REVIEW.md",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "c6d0244115992f47b86d47745c0255ec2cdf54c7f088faefd8999c5b2a8e036c"
+    },
+    {
+      "bytes": 10991,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC_REPORT.md",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "9c07ba9b78724aac83d280310984ce4a5403b24d260aec8f103b74c366ae41ce"
+    },
+    {
+      "bytes": 14429,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC_PLAN.md",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "69a099533de38b5666cc9f14d5c8adceb6cd9a23f6d1afa2135fad4a50846d15"
+    },
+    {
+      "bytes": 15776,
+      "path": "studies/HIST_VNEXT/M03/PLAN.md",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "004757e86de472ed9d6ab10b020e02540e4ceae5f42e6199fe070cab9371c196"
+    },
+    {
+      "bytes": 16231,
+      "path": "studies/HIST_VNEXT/M03/REPORT.md",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "9b78b7d075d328a4cb15b82ab9db1dc559bc651b0c8721f047ed8059552c1e1c"
+    },
+    {
+      "bytes": 70258,
+      "path": "studies/HIST_VNEXT/M03/REVIEW.md",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "98d51e643ebce82221f87486a0cb58812d59d5c8bd6ba03a3a63ea1d5a91af2f"
+    },
+    {
+      "bytes": 17458,
+      "path": "studies/HIST_VNEXT/M03/EVIDENCE_MANIFEST.json",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "7a77994fc9598f565f710b592f01751cae030ed89cd602c4a988ab858b7092d1"
+    },
+    {
+      "bytes": 22899,
+      "path": "studies/HIST_VNEXT/M03/BLOCKER_CERTIFICATE.json",
+      "provenance": "commit 43cbfc1; blocker files from 5f385ed, left byte-identical",
+      "sha256": "f94f18632c56866d893d590cf62e1baaf0fa332fcb34a24ffc5c45c64eecc2c5"
+    }
+  ],
+  "implementation_spec_sha256": "bc490b0be004dcad38380183e1e2b6eeaa10678fa9ea996cf5ecb7c2ce042df5",
+  "institutional_attribution": "UNIDENTIFIED",
+  "legacy_replays": [
+    {
+      "actual_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "completed_ticks": 116,
+      "expected_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "initial_recipe_hash": "10655b0706fae7960a6a7b6dec660d160b9c6670186bec7adf82743870432b82",
+      "input_artifact_hashes": {
+        "p02_material_global_usd_rate_quarterly": "16df220d707d6800ce9e749df5a887e8207310246cd3bfabbd65416cd6652882",
+        "p02_material_world_oil_quarterly": "93709a3aae211376debb0143a8567ef236e39818bcf653606402c8e53bc364cb"
+      },
+      "last_completed_quarter": "1985Q4",
+      "lock_hash": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+      "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+      "run_dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/C0-f",
+      "scenario": "historical_f2_replay",
+      "scenario_hash": "a1881537e2d8b2c29551e0fe747d1f7485ab80d22bebbb7bb5b09231142d5d29",
+      "seed": 1729,
+      "status": "PASS"
+    },
+    {
+      "actual_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+      "completed_ticks": 116,
+      "expected_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+      "initial_recipe_hash": "10655b0706fae7960a6a7b6dec660d160b9c6670186bec7adf82743870432b82",
+      "input_artifact_hashes": {
+        "p02_material_global_usd_rate_quarterly": "16df220d707d6800ce9e749df5a887e8207310246cd3bfabbd65416cd6652882",
+        "p02_material_world_oil_quarterly": "93709a3aae211376debb0143a8567ef236e39818bcf653606402c8e53bc364cb"
+      },
+      "last_completed_quarter": "1985Q4",
+      "lock_hash": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+      "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+      "run_dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/C1-f",
+      "scenario": "historical_f2_trade_scenario",
+      "scenario_hash": "a8c70922ff0da62e23d82f48b7bb5860de56590d3cabbf4f11ff729274c85395",
+      "seed": 1729,
+      "status": "PASS"
+    },
+    {
+      "actual_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "completed_ticks": 116,
+      "expected_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "initial_recipe_hash": "10655b0706fae7960a6a7b6dec660d160b9c6670186bec7adf82743870432b82",
+      "input_artifact_hashes": {
+        "p02_material_global_usd_rate_quarterly": "16df220d707d6800ce9e749df5a887e8207310246cd3bfabbd65416cd6652882",
+        "p02_material_world_oil_quarterly": "93709a3aae211376debb0143a8567ef236e39818bcf653606402c8e53bc364cb"
+      },
+      "last_completed_quarter": "1985Q4",
+      "lock_hash": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+      "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+      "run_dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/C0-f-r2",
+      "scenario": "historical_f2_replay",
+      "scenario_hash": "a1881537e2d8b2c29551e0fe747d1f7485ab80d22bebbb7bb5b09231142d5d29",
+      "seed": 1729,
+      "status": "PASS"
+    },
+    {
+      "actual_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+      "completed_ticks": 116,
+      "expected_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+      "initial_recipe_hash": "10655b0706fae7960a6a7b6dec660d160b9c6670186bec7adf82743870432b82",
+      "input_artifact_hashes": {
+        "p02_material_global_usd_rate_quarterly": "16df220d707d6800ce9e749df5a887e8207310246cd3bfabbd65416cd6652882",
+        "p02_material_world_oil_quarterly": "93709a3aae211376debb0143a8567ef236e39818bcf653606402c8e53bc364cb"
+      },
+      "last_completed_quarter": "1985Q4",
+      "lock_hash": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+      "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+      "run_dir": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/C1-f-r2",
+      "scenario": "historical_f2_trade_scenario",
+      "scenario_hash": "a8c70922ff0da62e23d82f48b7bb5860de56590d3cabbf4f11ff729274c85395",
+      "seed": 1729,
+      "status": "PASS"
+    }
+  ],
+  "mechanism_id": "M3",
+  "metrics": {
+    "adapter_measured_share": "separate from spec_reference 0.06510964763391947",
+    "c0_tick0": {
+      "distribution_uncovered_we": 1699.9999999999982,
+      "establishment_unused_share": 0.07593862448231381,
+      "g_labor": 5669.999999999993,
+      "hours_supplied_effective": 5891600.0,
+      "hours_supplied_establishment": 5891600.0,
+      "hours_used": 5444200.0,
+      "n_gap": 5669.999999999993,
+      "n_working": 11330.0,
+      "n_working_weighted": 11250.0,
+      "productive_nominal_effective_gap_we": 3969.9999999999945,
+      "quarter": "1957Q1",
+      "tick": 0,
+      "u_labor": 0.0,
+      "underutilization_share": 0.07593862448231381,
+      "weight_gap_persons": -80.0
+    },
+    "zero_denominator_case": {
+      "arm": "zero headcount",
+      "establishment_unused_share": 1.0,
+      "hours_supplied_effective": 0.0,
+      "hours_used": 0.0,
+      "underutilization_share": null
+    }
+  },
+  "model_usage": {
+    "cache_tokens": "NOT_RECORDED",
+    "cost": "NOT_RECORDED",
+    "implementation_selector": "session default (no explicit override in this run)",
+    "note": "unknown usage does not trigger STOP",
+    "provider_request_ids": "NOT_RECORDED",
+    "reviewer_selector": "phase-reviewer independent role",
+    "tokens": "NOT_RECORDED"
+  },
+  "mutation_count_basis": "pytest collection = 51 tests (35 pre-existing S1-S24 mutation/spec tests + 16 new behavioural tests). The historical 35/71 figures are snapshots, not this phase's pass gate; no static deepcopy count is presented as executed tests.",
+  "outputs_committed": false,
+  "phase_id": "H5D",
+  "protected": [
+    {
+      "bytes": 64445,
+      "path": "BASELINE.md",
+      "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f"
+    },
+    {
+      "bytes": 2908,
+      "path": "config/research_contract.json",
+      "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82"
+    },
+    {
+      "bytes": 157941,
+      "path": "uv.lock",
+      "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9"
+    },
+    {
+      "bytes": 44744,
+      "path": "studies/HIST_VNEXT/M03/labor_institution_spec_v1.json",
+      "sha256": "e3174a2dbc2f0abe05815a123cf9b3eeb7f6600a09eed00f38b9d3041621eb01"
+    },
+    {
+      "bytes": 17214,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC.md",
+      "sha256": "f7d8d168f4415b7d222c870128f65ccca08264d4f709fd37d545d9d2b92cb4b0"
+    },
+    {
+      "bytes": 36693,
+      "path": "studies/HIST_VNEXT/M03/labor_spec.py",
+      "sha256": "31ce051a39af86dbdb7c42076c6daedd27e4d4c143aeb6ce0cdb592fbfa36c8e"
+    },
+    {
+      "bytes": 2373,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC_ACCEPTANCE.json",
+      "sha256": "eb0ecc169fd93a986ef7730047ce9a2a7052494ecefe2e3277d4edc78d2c8312"
+    },
+    {
+      "bytes": 133792,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC_REVIEW.md",
+      "sha256": "c6d0244115992f47b86d47745c0255ec2cdf54c7f088faefd8999c5b2a8e036c"
+    },
+    {
+      "bytes": 10991,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC_REPORT.md",
+      "sha256": "9c07ba9b78724aac83d280310984ce4a5403b24d260aec8f103b74c366ae41ce"
+    },
+    {
+      "bytes": 14429,
+      "path": "studies/HIST_VNEXT/M03/LABOR_SPEC_PLAN.md",
+      "sha256": "69a099533de38b5666cc9f14d5c8adceb6cd9a23f6d1afa2135fad4a50846d15"
+    },
+    {
+      "bytes": 15776,
+      "path": "studies/HIST_VNEXT/M03/PLAN.md",
+      "sha256": "004757e86de472ed9d6ab10b020e02540e4ceae5f42e6199fe070cab9371c196"
+    },
+    {
+      "bytes": 16231,
+      "path": "studies/HIST_VNEXT/M03/REPORT.md",
+      "sha256": "9b78b7d075d328a4cb15b82ab9db1dc559bc651b0c8721f047ed8059552c1e1c"
+    },
+    {
+      "bytes": 70258,
+      "path": "studies/HIST_VNEXT/M03/REVIEW.md",
+      "sha256": "98d51e643ebce82221f87486a0cb58812d59d5c8bd6ba03a3a63ea1d5a91af2f"
+    },
+    {
+      "bytes": 17458,
+      "path": "studies/HIST_VNEXT/M03/EVIDENCE_MANIFEST.json",
+      "sha256": "7a77994fc9598f565f710b592f01751cae030ed89cd602c4a988ab858b7092d1"
+    },
+    {
+      "bytes": 22899,
+      "path": "studies/HIST_VNEXT/M03/BLOCKER_CERTIFICATE.json",
+      "sha256": "f94f18632c56866d893d590cf62e1baaf0fa332fcb34a24ffc5c45c64eecc2c5"
+    },
+    {
+      "bytes": 40900,
+      "path": "config/scenarios/historical_f2_replay.json",
+      "sha256": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c"
+    },
+    {
+      "bytes": 42508,
+      "path": "config/scenarios/historical_f2_trade_scenario.json",
+      "sha256": "3ad4510064daa6e0b6f37893eb6a5721c3ad0b34f3284175c2cde77a33397a5f"
+    },
+    {
+      "bytes": 33341,
+      "path": "config/scenarios/intermediate8.json",
+      "sha256": "07b0a1fada377bfa8782f83fb3cdda7b08f88add58d608fddee18becb69df94b"
+    },
+    {
+      "bytes": 1163,
+      "path": "config/p06/cards/M1.json",
+      "sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d"
+    },
+    {
+      "bytes": 806,
+      "path": "config/p06/cards/M10.json",
+      "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+    },
+    {
+      "bytes": 1341,
+      "path": "config/p06/cards/M11.json",
+      "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+    },
+    {
+      "bytes": 904,
+      "path": "config/p06/cards/M2.json",
+      "sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589"
+    },
+    {
+      "bytes": 794,
+      "path": "config/p06/cards/M3.json",
+      "sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba"
+    },
+    {
+      "bytes": 887,
+      "path": "config/p06/cards/M4.json",
+      "sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac"
+    },
+    {
+      "bytes": 1004,
+      "path": "config/p06/cards/M5.json",
+      "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+    },
+    {
+      "bytes": 815,
+      "path": "config/p06/cards/M6.json",
+      "sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6"
+    },
+    {
+      "bytes": 953,
+      "path": "config/p06/cards/M7.json",
+      "sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90"
+    },
+    {
+      "bytes": 849,
+      "path": "config/p06/cards/M8.json",
+      "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+    },
+    {
+      "bytes": 928,
+      "path": "config/p06/cards/M9.json",
+      "sha256": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c"
+    }
+  ],
+  "pushed": false,
+  "raw_evidence_files": [
+    {
+      "bytes": 885,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/C0-f-r2.json",
+      "sha256": "867650267c800776ba05dc247404ae46572c1b92857e194df0ffa35b4f58f205"
+    },
+    {
+      "bytes": 879,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/C0-f.json",
+      "sha256": "75f7f3e5f67ab902f0cda929e56a89364b1f7ceaf8afbddf8a88326bc21adadc"
+    },
+    {
+      "bytes": 885,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/C1-f-r2.json",
+      "sha256": "54a395c44105ab576e259c53c5f1919490509c74ac9d5e2c904f97814dba2e29"
+    },
+    {
+      "bytes": 879,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/C1-f.json",
+      "sha256": "3d55893c2c48b5baeecac074311c46c857907f91510767c67f6e7d5483916dc5"
+    },
+    {
+      "bytes": 318,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/baseline.json",
+      "sha256": "4d1c94478e3c1540bd33cb868e32534120c4c4489ab2f6618cd1f620581262e3"
+    },
+    {
+      "bytes": 2,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/c0-resume-blocked.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "bytes": 1505,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/c0-resume-blocked.stderr",
+      "sha256": "27e66b215e3e6f11af5447408d35ea6c7fd891254143b34db6dfccc71623541e"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/c0-resume-blocked.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-c0-resume-blocked.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "bytes": 676,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-c0-resume-blocked.json",
+      "sha256": "902e2a53886d2232dd130091afba7992864623da514f26c106870789ddd14758"
+    },
+    {
+      "bytes": 1505,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-c0-resume-blocked.stderr",
+      "sha256": "8bcbd7576ad1240f624ffac300e92db1bb14b001359d11beb231af47e68c5fe2"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-c0-resume-blocked.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 60,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-default-off.stdout",
+      "sha256": "ddeb3084b17b008406d8ca1534e7f7c49e976ce2ad5c7455bb0cdbb9a5f4693d"
+    },
+    {
+      "bytes": 2925,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-negative-controls.stdout",
+      "sha256": "aefcf6078fa8b7363759c229b46a4d5b31d0506973f0e1178496d19e3dd3745e"
+    },
+    {
+      "bytes": 2967,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-opt-in-continuous.stdout",
+      "sha256": "becf6ee04305295b8b3ab09393f4d573b643812c28a36d1c130f3cd1fe7d4244"
+    },
+    {
+      "bytes": 2608,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-opt-in-prefix.stdout",
+      "sha256": "5021ac9cf66fa382016ac50884bd1ad4c8cfddeea47b05ece2aaa5880fbee808"
+    },
+    {
+      "bytes": 979,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-opt-in-resumed-fixed.stderr",
+      "sha256": "0ab5c6e0276c23a5c52cf94a4599b2971b7d317b67a04d7ce1fe49c2b09e7d08"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-opt-in-resumed-fixed.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2577,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-opt-in-zero.stdout",
+      "sha256": "07c0770fe5aaa02b4004a53a1bc637913d3ec3d83238c88799dbf1b6f1f1f9b6"
+    },
+    {
+      "bytes": 2462,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-reproduce.stdout",
+      "sha256": "f19d5d08ea82c0209e37bee8ad333d2844de9aefd62bfc58ec7e574044ec0c56"
+    },
+    {
+      "bytes": 2673,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-resume-continuous.stdout",
+      "sha256": "50a755255090f0d9499310cdd48f7572fde3a9c8d5545be834f897c323a4e413"
+    },
+    {
+      "bytes": 2610,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-resume-prefix.stdout",
+      "sha256": "44e4a90bcd900c906312b0c8c725e76738cd71c3adbc9d4e1b4f9398a45b4efb"
+    },
+    {
+      "bytes": 2638,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-resume-straight.stdout",
+      "sha256": "01ba7ed0c85c4c3d791674d2673dc3cbc1e9c8a9ba1702b9e78bda60520c2779"
+    },
+    {
+      "bytes": 436,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-verify-continuous.stdout",
+      "sha256": "ca5058502bce7a5000eb311bbc96393df3dab773b5acab80041b5a688823bbe0"
+    },
+    {
+      "bytes": 436,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final-verify-resumed.stdout",
+      "sha256": "83bed37ea65e89ef2580a03ae2bc84a196a2a03c70478356df4c59ea0a09430b"
+    },
+    {
+      "bytes": 232,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/labor_spec.txt",
+      "sha256": "533eb156d2aa4db722a6ea6d66469aa71fb48bbdb87b1aacc69a2f7d546484be"
+    },
+    {
+      "bytes": 2,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/legacy-c0-resume.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "bytes": 144,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/legacy-c0-resume.stderr",
+      "sha256": "8d5531e6163bd2eae1551b5304672951c743b045bad2031a990a70c6b96d7522"
+    },
+    {
+      "bytes": 3530,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/pytest-full.txt",
+      "sha256": "2d67879f124496cc1273347f18ba149ba20009497adc37700c0c590c385aa6ea"
+    },
+    {
+      "bytes": 99,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/pytest-labor.txt",
+      "sha256": "dd4584bdd5d469181bc7911cd191207de3699c4587e31b0ad5f8ee3568b0d29f"
+    },
+    {
+      "bytes": 19,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/ruff.txt",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "bytes": 2655,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-c1-prefix.stdout",
+      "sha256": "c231faab68142928163a715c182679a083876bd3d4e5824da1dc6a8c5f8770dc"
+    },
+    {
+      "bytes": 2727,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-c1-resumed.stdout",
+      "sha256": "e97790e0196cb015dc14618343a7b6ef265249e5aa246218b1ada4ff215773b4"
+    },
+    {
+      "bytes": 2685,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-c1-straight.stdout",
+      "sha256": "ecf4e798a425af00af05123c682e72aaf313bac764ff86808a467ab74ef55c0c"
+    },
+    {
+      "bytes": 60,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-default-off.stdout",
+      "sha256": "ddeb3084b17b008406d8ca1534e7f7c49e976ce2ad5c7455bb0cdbb9a5f4693d"
+    },
+    {
+      "bytes": 2925,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-negative-controls.stdout",
+      "sha256": "aefcf6078fa8b7363759c229b46a4d5b31d0506973f0e1178496d19e3dd3745e"
+    },
+    {
+      "bytes": 3007,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-opt-in-continuous.stdout",
+      "sha256": "e026a12409bbb91edab823d03aaa838bd68a0410607bd47a7db3c4355d0fe466"
+    },
+    {
+      "bytes": 2648,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-opt-in-prefix.stdout",
+      "sha256": "522a74358cf9628e2c3f2fe0a8cdc78b1f8b6c0722d66c16453dbcc4094cf047"
+    },
+    {
+      "bytes": 2663,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-opt-in-resumed.stdout",
+      "sha256": "2619afcea062911a7216a51fe1ba2b7e5474555b5866cef4fc2566aaedf6c6b4"
+    },
+    {
+      "bytes": 2617,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-opt-in-zero.stdout",
+      "sha256": "f1161996f7bd4d2823611e5a5aca5b4c93e433b0f53e499070bf29a602fed047"
+    },
+    {
+      "bytes": 2462,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/final4-reproduce.stdout",
+      "sha256": "f19d5d08ea82c0209e37bee8ad333d2844de9aefd62bfc58ec7e574044ec0c56"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/uv-lock.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1135,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-1.md",
+      "sha256": "cd53d4e2910ccc67fe3d8b76704bbf31fe720cfd980dcfdb06abed3f6b7f2337"
+    },
+    {
+      "bytes": 4230,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/raw/provenance.json",
+      "sha256": "94eda7492da3c442c9ea45e39bed4687c49e840dae6ec1df5b14d41c0c3c0365"
+    },
+    {
+      "bytes": 2462,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-reproduce/reproduce.json",
+      "sha256": "f19d5d08ea82c0209e37bee8ad333d2844de9aefd62bfc58ec7e574044ec0c56"
+    },
+    {
+      "bytes": 2925,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-negative-controls/negative_controls.json",
+      "sha256": "aefcf6078fa8b7363759c229b46a4d5b31d0506973f0e1178496d19e3dd3745e"
+    },
+    {
+      "bytes": 3007,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-opt-in-continuous/labor_summary.json",
+      "sha256": "e026a12409bbb91edab823d03aaa838bd68a0410607bd47a7db3c4355d0fe466"
+    },
+    {
+      "bytes": 2663,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-opt-in-resumed/labor_summary.json",
+      "sha256": "2619afcea062911a7216a51fe1ba2b7e5474555b5866cef4fc2566aaedf6c6b4"
+    },
+    {
+      "bytes": 2617,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-opt-in-zero/labor_summary.json",
+      "sha256": "f1161996f7bd4d2823611e5a5aca5b4c93e433b0f53e499070bf29a602fed047"
+    },
+    {
+      "bytes": 2727,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-c1-resumed/labor_summary.json",
+      "sha256": "e97790e0196cb015dc14618343a7b6ef265249e5aa246218b1ada4ff215773b4"
+    },
+    {
+      "bytes": 437,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-opt-in-continuous/labor_verify.json",
+      "sha256": "58cc78c252cfc85ce03f10b450e0afc55b201043ca8951813850df673f8c2e13"
+    },
+    {
+      "bytes": 434,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-opt-in-resumed/labor_verify.json",
+      "sha256": "bc440076323a7fc7bd351b159a602514549b2bcf90b1723e47927916064cef15"
+    },
+    {
+      "bytes": 430,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-c1-resumed/labor_verify.json",
+      "sha256": "9ec4e2bb3f99be261fc5af444ecfbd95759dd89b6a43b34c211e5e3e4e3a3c87"
+    },
+    {
+      "bytes": 880,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-2.md",
+      "sha256": "7b32e3d2bd8173e3b8fcf3e4de25e48b8b7ef6a78e1530de888fa370eef90047"
+    },
+    {
+      "bytes": 967,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-3.md",
+      "sha256": "d2470bf2766bd62798dcde860a45221ca2dfe1d34cc067c26149b4e590462c2f"
+    },
+    {
+      "bytes": 2655,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-c1-prefix/labor_summary.json",
+      "sha256": "c231faab68142928163a715c182679a083876bd3d4e5824da1dc6a8c5f8770dc"
+    },
+    {
+      "bytes": 2685,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-c1-straight/labor_summary.json",
+      "sha256": "ecf4e798a425af00af05123c682e72aaf313bac764ff86808a467ab74ef55c0c"
+    },
+    {
+      "bytes": 2650,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-i8-prefix/labor_summary.json",
+      "sha256": "654775d46933e4a4691e6bc78de99cf41b679ca9d5aa64c204b76b9b63dfac69"
+    },
+    {
+      "bytes": 2713,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-i8-resumed/labor_summary.json",
+      "sha256": "70ffbbcfd141ac385ade311fc1b74e501ed683ac2f39d814eaed047f6a9de4c9"
+    },
+    {
+      "bytes": 2678,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-i8-straight/labor_summary.json",
+      "sha256": "67c727f4fe1de571bcbc4dbb6ed7a31cfe4ef760899338d986ec66ae86900556"
+    },
+    {
+      "bytes": 430,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-i8-resumed/labor_verify.json",
+      "sha256": "7dfeb7878137efa0d2233380358aa219ad7f18a4f89b9d97c02f2df0c378983b"
+    },
+    {
+      "bytes": 2648,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/final4-opt-in-prefix/labor_summary.json",
+      "sha256": "522a74358cf9628e2c3f2fe0a8cdc78b1f8b6c0722d66c16453dbcc4094cf047"
+    },
+    {
+      "bytes": 831,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-4.md",
+      "sha256": "54cda29dbc8d7f5f5f4cc0ac4922c4524d6c84d0770ff318e4072ec554814c0c"
+    },
+    {
+      "bytes": 832,
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-5.md",
+      "sha256": "067a3b4ee384428b8119339ecd0a7342bc698a95df9965fc52805ad01fdd5177"
+    }
+  ],
+  "reconciliation": {
+    "g_labor": 5669.999999999993,
+    "n_gap": 5669.999999999993,
+    "split": {
+      "distribution_uncovered_we": 1699.9999999999982,
+      "productive_nominal_effective_gap_we": 3969.9999999999945
+    },
+    "u_labor": 0.0,
+    "weighted_minus_unweighted_persons": -80.0
+  },
+  "resources": [
+    {
+      "command": "full pytest",
+      "elapsed_wall_s": 203.82,
+      "peak_rss": "NOT_RECORDED",
+      "peak_rss_reason": "per-run RSS not instrumented by this executor; cumulative RUSAGE_CHILDREN would not be a per-run peak",
+      "source": "executor timing"
+    },
+    {
+      "command": "phase runner batch",
+      "elapsed_wall_s": 10.92,
+      "peak_rss": "NOT_RECORDED",
+      "peak_rss_reason": "per-run RSS not instrumented by this executor; cumulative RUSAGE_CHILDREN would not be a per-run peak"
+    },
+    {
+      "command": "C0/C1 replay batch",
+      "elapsed_wall_s": 31.47,
+      "peak_rss": "NOT_RECORDED",
+      "peak_rss_reason": "per-run RSS not instrumented by this executor; cumulative RUSAGE_CHILDREN would not be a per-run peak"
+    }
+  ],
+  "review": {
+    "final_verdict": "PASS",
+    "round_1": {
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-1.md",
+      "sha256": "cd53d4e2910ccc67fe3d8b76704bbf31fe720cfd980dcfdb06abed3f6b7f2337",
+      "verdict": "REDESIGN"
+    },
+    "round_2": {
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-2.md",
+      "sha256": "7b32e3d2bd8173e3b8fcf3e4de25e48b8b7ef6a78e1530de888fa370eef90047",
+      "verdict": "PATCH"
+    },
+    "round_3": {
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-3.md",
+      "sha256": "d2470bf2766bd62798dcde860a45221ca2dfe1d34cc067c26149b4e590462c2f",
+      "verdict": "PATCH"
+    },
+    "round_4": {
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-4.md",
+      "sha256": "54cda29dbc8d7f5f5f4cc0ac4922c4524d6c84d0770ff318e4072ec554814c0c",
+      "verdict": "PATCH"
+    },
+    "round_5": {
+      "path": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/reviews/round-5.md",
+      "sha256": "067a3b4ee384428b8119339ecd0a7342bc698a95df9965fc52805ad01fdd5177",
+      "verdict": "PASS"
+    },
+    "rounds": 5
+  },
+  "schema_version": "hist_vnext_h5d_implementation_manifest_v1",
+  "self_excluded": "studies/HIST_VNEXT/M03/IMPLEMENTATION_EVIDENCE_MANIFEST.json",
+  "sidecar_schema": "hist_vnext_h5d_labor_sidecar_v1",
+  "state_strategy": "external_sidecar",
+  "stop_conditions_triggered": [
+    "pre-existing F2 stage-ledger residual (dropped plot outflow) blocked C0/C1 resume; resolved by user-authorized plot-flow fix with the checkpoint gate restored"
+  ],
+  "structural_verdict": "PASS_SYNTHETIC",
+  "study_id": "M03",
+  "technical_verdict": "PASS",
+  "test_commands": [
+    {
+      "command": "pytest -q -p no:cacheprovider tests/test_hist_labor_identity.py",
+      "exit": 0,
+      "log": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/pytest-labor.txt",
+      "log_sha256": "dd4584bdd5d469181bc7911cd191207de3699c4587e31b0ad5f8ee3568b0d29f",
+      "result": "51 passed in 4.83s"
+    },
+    {
+      "command": "pytest -q -p no:cacheprovider",
+      "exit": 0,
+      "log": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/pytest-full.txt",
+      "log_sha256": "2d67879f124496cc1273347f18ba149ba20009497adc37700c0c590c385aa6ea",
+      "result": "1863 passed, 180 warnings in 199.06s (0:03:19)"
+    },
+    {
+      "command": "ruff check --no-cache src tests studies/HIST_VNEXT/M03",
+      "exit": 0,
+      "log": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/ruff.txt",
+      "log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "result": "All checks passed!"
+    },
+    {
+      "command": "python studies/HIST_VNEXT/M03/labor_spec.py",
+      "exit": 0,
+      "log": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/labor_spec.txt",
+      "log_sha256": "533eb156d2aa4db722a6ea6d66469aa71fb48bbdb87b1aacc69a2f7d546484be",
+      "result": "ok=true checks=24 failures=[]"
+    },
+    {
+      "command": "hsm baseline verify --json",
+      "exit": 0,
+      "log": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/baseline.json",
+      "log_sha256": "4d1c94478e3c1540bd33cb868e32534120c4c4489ab2f6618cd1f620581262e3",
+      "result": "status ok"
+    },
+    {
+      "command": "uv lock --check --offline",
+      "exit": 0,
+      "log": "outputs/hist-vnext-h5d-implementation-20261023T034835Z/logs/uv-lock.txt",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result": "Resolved 101 packages"
+    }
+  ],
+  "tests_sha256": {
+    "current": "d587efab10389b60e6f6a5e88f400d8478cb6fea35d946bd718825288cb376f8",
+    "previous": "308870c1981c6b080385bb927cad8ec885af0573ec11c092d3f7c94e1c006753"
+  },
+  "user_work": [
+    {
+      "bytes": 472,
+      "path": ".omp/config.yml",
+      "sha256": "2e90b9c6feed817a4547c7232f650e8c76c089f14f7ae22b36f23bf62dd2fe7f",
+      "status": " M"
+    },
+    {
+      "bytes": 37168,
+      "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+      "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+      "status": " M"
+    },
+    {
+      "bytes": 114765,
+      "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+      "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+      "status": " M"
+    },
+    {
+      "bytes": null,
+      "path": "CMEA_\\346\\270\\205\\347\\256\\227\\345\\210\\266\\345\\272\\246\\345\\206\\273\\347\\273\\223_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H3A_\\346\\234\\215\\345\\212\\241\\350\\257\\255\\344\\271\\211\\345\\210\\206\\345\\236\\213_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H3B_\\350\\256\\242\\345\\215\\225\\350\\236\\215\\350\\265\\204\\351\\227\\255\\347\\216\\257_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H3C_\\347\\272\\277\\350\\267\\257\\350\\277\\220\\345\\212\\233\\350\\257\\201\\344\\271\\246_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H3D_\\347\\237\\255\\345\\221\\250\\346\\234\\237\\346\\227\\266\\345\\272\\217\\351\\232\\224\\347\\246\\273\\346\\257\\224\\350\\276\\203_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H3E_4Q_\\346\\273\\232\\345\\212\\250\\350\\247\\204\\345\\210\\222_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H3F_D1_\\345\\244\\226\\350\\264\\270\\345\\267\\245\\344\\275\\234\\350\\265\\204\\346\\234\\254\\350\\264\\267\\346\\254\\276_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H3F_D2_\\345\\207\\272\\345\\217\\243\\345\\272\\224\\346\\224\\266\\344\\270\\216\\345\\235\\217\\350\\264\\246\\345\\217\\215\\345\\220\\221\\345\\210\\206\\345\\275\\225_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H4A_0_\\346\\235\\245\\346\\272\\220\\346\\240\\270\\351\\252\\214\\344\\270\\216\\345\\207\\206\\345\\205\\245_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H4A_1_\\345\\211\\215\\347\\275\\256\\350\\241\\245\\345\\256\\214_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H4B_PILOT_A_\\351\\230\\273\\346\\226\\255\\345\\214\\205_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": 31580,
+      "path": "H4C_PILOT_B_PLAN.md",
+      "sha256": "275db3fe48bfaef28c71e4a8dac4a9147fc8beef360b8ba294bbfbadb1e50f07",
+      "status": "??"
+    },
+    {
+      "bytes": 30985,
+      "path": "H5A_A1_M2_PLAN.md",
+      "sha256": "1ae544a61e2ed03dc625d1351e62229fc1d892d7c4d79866e41698158bb0768d",
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H5C_\\345\\217\\202\\347\\205\\247\\345\\216\\206\\345\\217\\262\\346\\243\\230\\350\\275\\256\\345\\256\\236\\351\\252\\214_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "H5D_\\345\\212\\263\\345\\212\\250\\345\\210\\266\\345\\272\\246_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": 39569,
+      "path": "HIST_VNEXT_H5B_PLAN.md",
+      "sha256": "f8f8c9f721eac86c618909abb792e275fcd0c33a6fa850ec7f18bbaa17b68519",
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "LEGACY_TREASURY_PREPAY_\\345\\217\\214\\350\\264\\246\\350\\247\\202\\345\\257\\237_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": null,
+      "path": "M3\\345\\212\\263\\345\\212\\250\\347\\272\\252\\345\\276\\213\\344\\270\\216\\345\\233\\244\\345\\267\\245_PLAN.md",
+      "sha256": null,
+      "status": "??"
+    },
+    {
+      "bytes": 9768,
+      "path": "docs/upgrade_review/HIST_VNEXT/09_BATCH02_YEARBOOKS_D08_D10_INTAKE.md",
+      "sha256": "89e0e00d5bf6d4ebefe3364f569d5906ab0c61684c9d6dcc673aacf89100df33",
+      "status": "??"
+    }
+  ]
+}

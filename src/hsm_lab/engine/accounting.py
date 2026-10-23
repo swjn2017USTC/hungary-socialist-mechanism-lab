@@ -1012,6 +1012,7 @@ def check_material_invariants(
     forcing: MaterialForcing | None = None,
     export_receivable_policy: Any = None,
     cmea_clearing_policy: Any = None,
+    labor_plan: Any = None,
 ) -> InvariantSummary:
     """Verify every material/financial ledger of one completed tick.
 
@@ -1424,12 +1425,165 @@ def check_material_invariants(
             quarter,
             "productive organization lacks a positive labor_per_activity",
         )
+        labor_cap_rows = (
+            np.asarray(state.organization_labor_available, dtype=np.float64)[rows]
+            / labor_per_activity
+        )
+        if labor_plan is not None:
+            # H5D: independently recompute every labour identity from the plan's
+            # carriers (H, A, e, recipe) rather than trusting a bare cap array.
+            if int(labor_plan.tick) != int(flows.tick):
+                raise AccountingError(
+                    f"labor plan tick {labor_plan.tick} does not match flows tick {flows.tick}"
+                )
+            if not np.array_equal(
+                np.asarray(labor_plan.organization_ids, dtype=np.int64),
+                np.asarray(state.organization_id, dtype=np.int64),
+            ):
+                raise AccountingError("labor plan organization axis does not match the state")
+            region_count = int(np.asarray(state.dwelling_stock).shape[0])
+            if not np.array_equal(
+                np.asarray(labor_plan.region_ids, dtype=np.int64),
+                np.arange(region_count, dtype=np.int64),
+            ):
+                raise AccountingError("labor plan region axis does not match the state")
+            capacity_axis = np.asarray(labor_plan.capacity_open, dtype=np.float64)
+            material(
+                "labor_capacity_identity",
+                capacity_axis,
+                np.asarray(opening.organization_capacity, dtype=np.float64),
+            )
+            material(
+                "labor_labor_per_activity_identity",
+                np.asarray(labor_plan.labor_per_activity, dtype=np.float64),
+                np.asarray(state.organization_labor_per_activity, dtype=np.float64),
+            )
+            productive_axis = capacity_axis > 0.0
+            establishment_raw = np.zeros(capacity_axis.shape[0], dtype=np.float64)
+            establishment_raw[productive_axis] = (
+                capacity_axis[productive_axis]
+                * np.asarray(state.organization_labor_per_activity, dtype=np.float64)[
+                    productive_axis
+                ]
+                * float(parameters.utilization)
+            )
+            raw_total = float(establishment_raw.sum())
+            establishment_scale = (
+                min(1.0, float(np.asarray(state.household_working_adults).sum()) / raw_total)
+                if raw_total > 0.0
+                else 1.0
+            )
+            material(
+                "labor_establishment_rule",
+                np.asarray(labor_plan.establishment, dtype=np.float64),
+                establishment_raw * establishment_scale,
+            )
+            n_working = float(np.asarray(state.household_working_adults, dtype=np.float64).sum())
+            material_at_most(
+                "labor_establishment_supply",
+                np.asarray([float(np.asarray(labor_plan.establishment).sum())]),
+                np.asarray([n_working]),
+            )
+            plan_headcount = np.asarray(labor_plan.headcount, dtype=np.float64)
+            material_at_most(
+                "labor_headcount_supply",
+                np.asarray([float(plan_headcount.sum())]),
+                np.asarray([n_working]),
+            )
+            material(
+                "labor_effective_hours_identity",
+                np.asarray(labor_plan.effective_hours, dtype=np.float64),
+                plan_headcount
+                * float(labor_plan.recipe.hours_per_we)
+                * (1.0 - np.asarray(labor_plan.absence_rate, dtype=np.float64))
+                * np.asarray(labor_plan.effort, dtype=np.float64),
+            )
+            plan_release = np.asarray(labor_plan.release, dtype=np.float64)
+            plan_hire_raw = np.asarray(labor_plan.hire_raw, dtype=np.float64)
+            plan_hire = np.asarray(labor_plan.hire, dtype=np.float64)
+            if labor_plan.previous is not None:
+                previous = labor_plan.previous
+                previous_headcount = np.asarray(previous.headcount, dtype=np.float64)
+                material(
+                    "labor_headcount_evolution",
+                    plan_headcount,
+                    previous_headcount - plan_release + plan_hire,
+                )
+                material(
+                    "labor_release_rule",
+                    plan_release,
+                    np.clip(
+                        previous_headcount
+                        - np.asarray(labor_plan.establishment, dtype=np.float64),
+                        0.0,
+                        float(labor_plan.recipe.max_release_fraction) * previous_headcount,
+                    ),
+                )
+                retained = previous_headcount - plan_release
+                expected_hire_raw = np.clip(
+                    np.asarray(labor_plan.establishment, dtype=np.float64) - retained,
+                    0.0,
+                    float(labor_plan.recipe.hire_capacity_share)
+                    * np.asarray(previous.establishment, dtype=np.float64),
+                )
+                material(
+                    "labor_hire_raw_rule",
+                    plan_hire_raw,
+                    expected_hire_raw,
+                )
+                retained_total = float(retained.sum())
+                available_workers = n_working - retained_total
+                material(
+                    "labor_available_workers",
+                    np.asarray([float(labor_plan.available_workers)]),
+                    np.asarray([available_workers]),
+                )
+                raw_total = float(expected_hire_raw.sum())
+                expected_scale = (
+                    available_workers / raw_total
+                    if raw_total > available_workers
+                    else 1.0
+                )
+                material(
+                    "labor_hire_scale",
+                    np.asarray([float(labor_plan.hire_scale)]),
+                    np.asarray([expected_scale]),
+                )
+                material(
+                    "labor_hire_rule",
+                    plan_hire,
+                    expected_scale * expected_hire_raw,
+                )
+                material_at_most(
+                    "labor_hire_supply",
+                    np.asarray([float(plan_hire.sum())]),
+                    np.asarray([available_workers]),
+                )
+            else:
+                zeros = np.zeros(plan_headcount.shape[0], dtype=np.float64)
+                material("labor_initial_transition", plan_release + plan_hire_raw, zeros)
+                material("labor_initial_hire", plan_hire, zeros)
+            effective_hours_axis = np.asarray(labor_plan.effective_hours, dtype=np.float64)
+            hours_used_axis = (
+                float(labor_plan.recipe.hours_per_we)
+                * np.asarray(state.organization_labor_per_activity, dtype=np.float64)
+                * np.asarray(flows.organization_realized, dtype=np.float64)
+            )
+            material_at_most(
+                "labor_effective_hours_used",
+                hours_used_axis,
+                effective_hours_axis,
+                labels=[f"organization[{int(o)}]" for o in state.organization_id],
+            )
+            labor_cap_rows = np.minimum(
+                np.asarray(state.organization_labor_available, dtype=np.float64)[rows],
+                effective_hours_axis[rows] / float(labor_plan.recipe.hours_per_we),
+            ) / labor_per_activity
         expected_local = np.minimum(
             float(parameters.utilization)
             * np.asarray(opening.organization_capacity, dtype=np.float64)[rows]
             * season,
-            np.asarray(state.organization_labor_available, dtype=np.float64)[rows]
-            / labor_per_activity,
+            labor_cap_rows,
         )
         if controls is not None and getattr(controls, "central_target", None) is not None:
             autonomy = float(np.clip(controls.autonomy, 0.0, 1.0))
@@ -1438,8 +1592,7 @@ def check_material_invariants(
             ceiling = np.maximum(
                 np.minimum(
                     np.asarray(opening.organization_capacity, dtype=np.float64)[rows] * season,
-                    np.asarray(state.organization_labor_available, dtype=np.float64)[rows]
-                    / labor_per_activity,
+                    labor_cap_rows,
                 ),
                 0.0,
             )

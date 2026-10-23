@@ -168,6 +168,7 @@ from hsm_lab.storage.output import write_summary
 
 if TYPE_CHECKING:  # pragma: no cover - annotation-only; avoids an import cycle
     from hsm_lab.data.registry import DataRegistry
+    from hsm_lab.institutions.labor_state_adapter import LaborTickPlan
 
 MATERIAL_ENGINE_VERSION = "material-engine-v4"
 MATERIAL_RUN_KIND: Literal["material_household_simulation"] = "material_household_simulation"
@@ -824,6 +825,7 @@ def _tick_material_impl(
     export_receivable_policy: ExportReceivablePolicy | None = None,
     cmea_clearing_policy: CmeaClearingPolicy | None = None,
     second_economy_trace: dict[str, Any] | None = None,
+    labor_plan: LaborTickPlan | None = None,
 ) -> MaterialTickFlows:
     """Advance the material economy by one admitted quarter (plan section 3).
 
@@ -883,6 +885,13 @@ def _tick_material_impl(
     quarters = list(forcing.quarters)
     _require(0 <= tick < len(quarters), f"tick {tick} lies outside the forcing horizon")
     quarter = str(quarters[tick])
+
+    # H5D opt-in labour plan: validate identity/shape/tick before any state
+    # mutation.  ``None`` (the default) imports nothing and allocates nothing.
+    if labor_plan is not None:
+        from hsm_lab.institutions.labor_state_adapter import validate_labor_plan
+
+        validate_labor_plan(state, labor_plan)
 
     org_count = int(state.organization_id.shape[0])
     household_count = int(state.household_id.shape[0])
@@ -1194,6 +1203,10 @@ def _tick_material_impl(
     region_persons = np.bincount(hh_region, weights=hh_weight * hh_size, minlength=region_count)
 
     # --- P03 household demand, frozen for the whole quarter (C1) -----------
+    if labor_plan is not None:
+        from hsm_lab.institutions.labor_state_adapter import apply_labor_plan
+
+        apply_labor_plan(state, labor_plan)
     plan_household_time(state, household_parameters, network=network, controls=controls)
     desired_h = form_household_demand(state, household_parameters, catalog)
     durable_owned_open = np.asarray(state.household_durable_owned, dtype=np.float64)
@@ -1277,6 +1290,19 @@ def _tick_material_impl(
         np.asarray(state.organization_labor_available, dtype=np.float64)[org_rows]
         / np.asarray(state.organization_labor_per_activity, dtype=np.float64)[org_rows]
     )
+    if labor_plan is not None:
+        # H5D: effective hours bind the organization activity ceiling.  The
+        # nominal (L_WE) cap above is retained; I4 takes the min of both.
+        effective_nominal = np.minimum(
+            np.asarray(state.organization_labor_available, dtype=np.float64)[org_rows],
+            np.asarray(labor_plan.effective_hours, dtype=np.float64)[org_rows]
+            / float(labor_plan.recipe.hours_per_we),
+        )
+        labor_cap[activity_is_org] = np.minimum(
+            labor_cap[activity_is_org],
+            effective_nominal
+            / np.asarray(state.organization_labor_per_activity, dtype=np.float64)[org_rows],
+        )
     if plot_rows.size:
         plot_regions = activity_region[plot_rows]
         capacity[plot_rows] = np.asarray(state.plot_capacity, dtype=np.float64)[plot_regions]
@@ -4541,6 +4567,7 @@ def tick_material(
     export_receivable_policy: ExportReceivablePolicy | None = None,
     cmea_clearing_policy: CmeaClearingPolicy | None = None,
     second_economy_trace: dict[str, Any] | None = None,
+    labor_plan: LaborTickPlan | None = None,
 ) -> MaterialTickFlows:
     """Public kernel entry point.
 
@@ -4570,6 +4597,7 @@ def tick_material(
             export_receivable_policy=None,
             cmea_clearing_policy=None,
             second_economy_trace=second_economy_trace,
+            labor_plan=labor_plan,
         )
     snapshot = copy.deepcopy(state)
     try:
@@ -4591,6 +4619,7 @@ def tick_material(
             export_receivable_policy=export_receivable_policy,
             cmea_clearing_policy=cmea_clearing_policy,
             second_economy_trace=second_economy_trace,
+            labor_plan=labor_plan,
         )
     except BaseException:
         for field_name in state.__dataclass_fields__:

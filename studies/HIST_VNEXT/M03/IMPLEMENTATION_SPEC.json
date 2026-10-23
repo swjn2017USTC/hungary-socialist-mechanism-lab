@@ -1,0 +1,262 @@
+{
+  "accepted_spec": {
+    "acceptance_path": "studies/HIST_VNEXT/M03/LABOR_SPEC_ACCEPTANCE.json",
+    "path": "studies/HIST_VNEXT/M03/labor_institution_spec_v1.json",
+    "rule_value_source": "accepted spec only; this file references keys, it does not restate numeric values",
+    "sha256": "e3174a2dbc2f0abe05815a123cf9b3eeb7f6600a09eed00f38b9d3041621eb01",
+    "spec_id": "hist-vnext-labor-institution-v1",
+    "spec_semver": "1.0.0",
+    "validator_path": "studies/HIST_VNEXT/M03/labor_spec.py",
+    "validator_sha256": "31ce051a39af86dbdb7c42076c6daedd27e4d4c143aeb6ce0cdb592fbfa36c8e"
+  },
+  "evidence_status": {
+    "admitted_historical_series": [],
+    "calibrated_parameters": [],
+    "default_off": true,
+    "historical_status": "UNIDENTIFIED",
+    "implementation_status": "RUN",
+    "institutional_attribution": "UNIDENTIFIED"
+  },
+  "implementation": {
+    "adapter_path": "src/hsm_lab/institutions/labor_state_adapter.py",
+    "bundle_schema_version": "hist_vnext_h5d_labor_bundle_v1",
+    "core_checkpoint_version": "material-checkpoint-v6",
+    "core_state_version": "material-state-v4",
+    "default_off": true,
+    "engine_hooks": [
+      {
+        "default_off_guarantee": "labor_plan=None preserves the legacy path line by line and allocates no labour arrays",
+        "file": "src/hsm_lab/engine/material.py",
+        "purpose": "keyword-only labor_plan; pre-mutation validation, apply before plan_household_time, effective-hours activity cap",
+        "symbols": [
+          "tick_material",
+          "_tick_material_impl"
+        ]
+      },
+      {
+        "default_off_guarantee": "labor_plan=None keeps the legacy target and six-axis accounting untouched",
+        "file": "src/hsm_lab/engine/accounting.py",
+        "purpose": "independent H/A/e recomputation, I2/I3/I4/I7/I8 ledgers, effective-hours target ceiling",
+        "symbols": [
+          "check_material_invariants"
+        ]
+      },
+      {
+        "default_off_guarantee": "reporting rows only; state/flows and canonical digests unchanged",
+        "file": "src/hsm_lab/storage/material_output.py",
+        "purpose": "use authoritative plot self/market allocation flows instead of a food-named column",
+        "symbols": [
+          "_CellLedger"
+        ]
+      },
+      {
+        "authorization": "user selected 'Fix the F2 stage ledger' (2026-10-23)",
+        "default_off_guarantee": "no behaviour change; loading still rejects any planted residual",
+        "file": "src/hsm_lab/storage/checkpoint.py",
+        "purpose": "stage_balances zero-residual gate retained; the plot-outflow fix makes F2 histories close",
+        "symbols": [
+          "_validate_history_consistency"
+        ]
+      }
+    ],
+    "not_modified": [
+      "src/hsm_lab/engine/state.py",
+      "src/hsm_lab/engine/initial.py",
+      "src/hsm_lab/engine/finance.py",
+      "config/",
+      "scenarios",
+      "uv.lock"
+    ],
+    "runner_path": "studies/HIST_VNEXT/M03/labor_runner.py",
+    "sidecar_schema_version": "hist_vnext_h5d_labor_sidecar_v1",
+    "state_strategy": "external_sidecar"
+  },
+  "initial_state": {
+    "absence": "rules.absence.absence_default plus a zero adjustment path",
+    "effort": "1 because all three lagged inputs are zero at t=0",
+    "headcount": "H(0)=E(0) by default; explicit initial_headcount may be zero or any non-negative vector within supply",
+    "lags": {
+      "lag_grievance": 0.0,
+      "lag_informal_share": 0.0,
+      "lag_queue_search_share": 0.0
+    },
+    "release_hire": "both zero (initialisation is not a hiring event)",
+    "signal_tick": null
+  },
+  "mechanism_id": "M3",
+  "metrics": {
+    "activity_per_effective_hour": "organization_realized / H_eff_i, null for zero denominators",
+    "establishment_unused_share": "spec derived_metrics.unused_labour_share.establishment_unused_share",
+    "g_labor": "spec reconciliation.gap_quantity",
+    "hours_supplied_effective": "spec derived_metrics.unused_labour_share.hours_supplied_effective",
+    "hours_supplied_establishment": "spec derived_metrics.unused_labour_share.hours_supplied_establishment",
+    "hours_used": "spec derived_metrics.unused_labour_share.hours_used",
+    "n_gap": "spec reconciliation.nominal_effective_gap",
+    "u_labor": "spec reconciliation.unallocated_labor",
+    "underutilization_share": "spec derived_metrics.unused_labour_share.underutilization_share",
+    "zero_denominator": "null with raw counts; never 0, 1 or NaN"
+  },
+  "output_files": {
+    "negative_controls": [
+      "negative_controls.json"
+    ],
+    "reproduce": [
+      "reproduce.json"
+    ],
+    "run": [
+      "labor_run.json",
+      "labor_summary.json",
+      "labor_ticks.jsonl",
+      "labor_organizations.jsonl",
+      "labor_manifest.json",
+      "labor_checkpoints/tick-<N>/{material/,labor.json,bundle.json}"
+    ],
+    "verify": [
+      "labor_verify.json"
+    ]
+  },
+  "phase_id": "H5D",
+  "schema_version": "hist_vnext_h5d_labor_implementation_spec_v1",
+  "spec_key_references": {
+    "absence_default": "rules.absence.absence_default",
+    "absence_rule": "rules.absence.rule",
+    "absence_upper_bound": "rules.absence.absence_upper_bound",
+    "coverage_boundary": "scope.coverage_boundary",
+    "effort_rule": "rules.effort.rule",
+    "effort_weights": "rules.effort.effort_grievance_weight|effort_informal_hours_weight|effort_queue_search_weight|effort_floor",
+    "endowment_hours": "unit_contract.hours_per_worker_quarter_endowment",
+    "establishment_rule": "rules.establishment.target_rule",
+    "hire_capacity_share": "rules.hire.hire_capacity_share_per_quarter",
+    "hire_rule": "rules.hire.rule",
+    "hours_per_we": "unit_contract.hours_per_worker_equivalent_quarter",
+    "max_release_fraction": "rules.release.max_release_fraction_per_quarter",
+    "release_rule": "rules.release.rule",
+    "target_utilization": "rules.establishment.target_utilization"
+  },
+  "state_carriers": [
+    {
+      "carrier": "MaterialState.organization_labor_available",
+      "symbol": "L_WE",
+      "writer": "unchanged legacy initial/finance path"
+    },
+    {
+      "carrier": "LaborSidecar.establishment and LaborTickPlan.establishment",
+      "producer": "prepare_labor_tick",
+      "symbol": "E_i"
+    },
+    {
+      "carrier": "LaborSidecar.headcount and LaborTickPlan.headcount",
+      "producer": "transition_headcount",
+      "symbol": "H_i"
+    },
+    {
+      "carrier": "LaborSidecar.absence_rate",
+      "producer": "prepare_labor_tick exogenous path",
+      "symbol": "A_i"
+    },
+    {
+      "carrier": "LaborSidecar.effort and MaterialState.organization_effort_factor (enabled only)",
+      "producer": "prepare_labor_tick/apply_labor_plan",
+      "symbol": "e_i"
+    },
+    {
+      "carrier": "LaborTickPlan.effective_hours",
+      "producer": "identity I2",
+      "symbol": "H_eff_i"
+    },
+    {
+      "carrier": "LaborSidecar.lag_grievance",
+      "producer": "close_labor_tick",
+      "symbol": "lag_grievance"
+    },
+    {
+      "carrier": "LaborSidecar.lag_informal_share",
+      "producer": "close_labor_tick",
+      "symbol": "lag_informal_share"
+    },
+    {
+      "carrier": "LaborSidecar.lag_queue_search_share",
+      "producer": "close_labor_tick",
+      "symbol": "lag_queue_search_share"
+    },
+    {
+      "carrier": "MaterialState.household_working_adults (unweighted sum)",
+      "producer": "unchanged",
+      "symbol": "N_working"
+    },
+    {
+      "carrier": "computed from recipe.hours_per_we and N_working",
+      "producer": "diagnostics",
+      "symbol": "h_formal"
+    },
+    {
+      "carrier": "unchanged MaterialState/MaterialTickFlows",
+      "producer": "unchanged",
+      "symbol": "h_plot/h_second/h_queue/h_search/h_leisure"
+    }
+  ],
+  "study_id": "M03",
+  "switches": {
+    "checkpoint_every": "--checkpoint-every N (default 0 = no checkpoints)",
+    "enabled": "--enable-labor-institution (default false)",
+    "initial_headcount": "--initial-headcount establishment|zero (default establishment)",
+    "resume_bundle": "--resume-bundle PATH (requires the labour switch)"
+  },
+  "verification_arms": [
+    {
+      "arm": "legacy C0 tick 0",
+      "expected": "wage/arrears does not identify headcount or effective hours",
+      "id": "R1"
+    },
+    {
+      "arm": "legacy C0 tick 0",
+      "expected": "nominal labour total differs from household formal-hours headcount",
+      "id": "R2"
+    },
+    {
+      "arm": "legacy C0 tick 0",
+      "expected": "legacy per-organization realized exceeds the declared establishment ceiling",
+      "id": "R3"
+    },
+    {
+      "arm": "legacy C0 tick 0",
+      "expected": "weighted and unweighted working populations differ by 80 persons",
+      "id": "R4"
+    },
+    {
+      "arm": "headcount transition witness",
+      "expected": "release capped at rules.release.max_release_fraction_per_quarter",
+      "id": "A1"
+    },
+    {
+      "arm": "real enabled tick",
+      "expected": "hours_used_i <= H_eff_i and target/accounting agree",
+      "id": "A2"
+    },
+    {
+      "arm": "default-off command replay",
+      "expected": "C0/C1 digests unchanged",
+      "id": "A3"
+    },
+    {
+      "arm": "wage-only processing",
+      "expected": "shares unchanged under wage/arrears processing; different employment states move them",
+      "id": "N1"
+    },
+    {
+      "arm": "employment-rule processing",
+      "expected": "both shares move; real low headcount lowers target/realized",
+      "id": "N2"
+    },
+    {
+      "arm": "side-work double counting",
+      "expected": "H_eff unchanged; six-axis sum equals endowment in both arms",
+      "id": "N3"
+    },
+    {
+      "arm": "resume",
+      "expected": "continuous and resumed runs share the same core and labour chains",
+      "id": "S"
+    }
+  ]
+}

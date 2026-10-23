@@ -1,0 +1,69 @@
+{
+  "accepted_spec": {
+    "acceptance_path": "studies/HIST_VNEXT/M03/LABOR_SPEC_ACCEPTANCE.json",
+    "acceptance_sha256": "eb0ecc169fd93a986ef7730047ce9a2a7052494ecefe2e3277d4edc78d2c8312",
+    "normative_text_path": "studies/HIST_VNEXT/M03/LABOR_SPEC.md",
+    "normative_text_sha256": "f7d8d168f4415b7d222c870128f65ccca08264d4f709fd37d545d9d2b92cb4b0",
+    "path": "studies/HIST_VNEXT/M03/labor_institution_spec_v1.json",
+    "sha256": "e3174a2dbc2f0abe05815a123cf9b3eeb7f6600a09eed00f38b9d3041621eb01",
+    "validator_path": "studies/HIST_VNEXT/M03/labor_spec.py",
+    "validator_sha256": "31ce051a39af86dbdb7c42076c6daedd27e4d4c143aeb6ce0cdb592fbfa36c8e"
+  },
+  "commit": null,
+  "core_checkpoint_version": "material-checkpoint-v6",
+  "core_state_version": "material-state-v4",
+  "current_tests_sha256": "d587efab10389b60e6f6a5e88f400d8478cb6fea35d946bd718825288cb376f8",
+  "default_off": true,
+  "evidence": {
+    "c0_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+    "c0_labor_chain": "ed16f3f0019c55dc16c80adbb4b6f8a6925f7cd8653a654a523a978ff9c7da9f",
+    "c1_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+    "c1_labor_chain": "b8f741b3d4c70fbf10351f0d6c716eb1cb523970df3a7cf67134dcad14edd667",
+    "full_suite": "1863 passed",
+    "i8_labor_chain": "314ab921f754a70b1fd14141e03f43938722968a529239d55555e376bdde6513",
+    "resume_equal_all_arms": true,
+    "tests": "51 passed"
+  },
+  "implementation": {
+    "accounting_sha256": "03e7c04016e8946e4858e03aeaec479f344fe48dfde90612c270afb59110fe57",
+    "adapter_sha256": "9259bf0b39dfa012d600a3d5227e48274d693f3aaa41f7d8f284a49830335060",
+    "material_output_sha256": "f57f3f25d281bad1c01880e6aad68617f0a7d86f4b87715dd66359a3909576c0",
+    "material_sha256": "fe240e0b89281601519071edab14052379517eaa9891ae2a93a75428393ce888",
+    "runner_sha256": "80647cab4b0ce21a19805ff451f5b8dfe4cd7ff51a9f4be36d604633449dc6ec",
+    "spec_sha256": "bc490b0be004dcad38380183e1e2b6eeaa10678fa9ea996cf5ecb7c2ce042df5"
+  },
+  "manifest_sha256": "dd367923684b9741214a194fea8ad8c7546622e567ea6c178c689467863486e0",
+  "mechanism_id": "M3",
+  "phase_id": "H5D",
+  "previous_tests_sha256": "308870c1981c6b080385bb927cad8ec885af0573ec11c092d3f7c94e1c006753",
+  "pushed": false,
+  "report_sha256": "c1b9c219d60e5dd2b73f7ac58764a3e63dda56bbe521cec3bf205b53488f4891",
+  "review": {
+    "final_verdict": "PASS",
+    "rounds": 5,
+    "verdicts": [
+      "REDESIGN",
+      "PATCH",
+      "PATCH",
+      "PATCH",
+      "PASS"
+    ]
+  },
+  "review_sha256": "5e60589b156f656387cc2535d3cd1ad3e01c3b46cbbdd5b6c58582c771614f58",
+  "schema_version": "hist_vnext_h5d_labor_implementation_acceptance_v1",
+  "scope": {
+    "accepted": "opt-in labour adapter, kernel binding, external sidecar/bundle, tests and evidence",
+    "not_accepted": [
+      "historical identification",
+      "calibrated parameters",
+      "institutional hoarding attribution"
+    ]
+  },
+  "study_id": "M03",
+  "verdicts": {
+    "historical": "UNIDENTIFIED",
+    "institutional_attribution": "UNIDENTIFIED",
+    "structural": "PASS_SYNTHETIC",
+    "technical": "PASS"
+  }
+}
