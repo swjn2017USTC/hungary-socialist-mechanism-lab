@@ -9,7 +9,7 @@
     "validator_path": "studies/HIST_VNEXT/M03/labor_spec.py",
     "validator_sha256": "31ce051a39af86dbdb7c42076c6daedd27e4d4c143aeb6ce0cdb592fbfa36c8e"
   },
-  "commit": null,
+  "commit": "b73fb6e0eb34006558e4b1c7aba4df564d927d31",
   "core_checkpoint_version": "material-checkpoint-v6",
   "core_state_version": "material-state-v4",
   "current_tests_sha256": "d587efab10389b60e6f6a5e88f400d8478cb6fea35d946bd718825288cb376f8",
@@ -32,7 +32,6 @@
     "runner_sha256": "80647cab4b0ce21a19805ff451f5b8dfe4cd7ff51a9f4be36d604633449dc6ec",
     "spec_sha256": "bc490b0be004dcad38380183e1e2b6eeaa10678fa9ea996cf5ecb7c2ce042df5"
   },
-  "manifest_sha256": "dd367923684b9741214a194fea8ad8c7546622e567ea6c178c689467863486e0",
   "mechanism_id": "M3",
   "phase_id": "H5D",
   "previous_tests_sha256": "308870c1981c6b080385bb927cad8ec885af0573ec11c092d3f7c94e1c006753",
