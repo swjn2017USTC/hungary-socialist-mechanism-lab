@@ -1,0 +1,34 @@
+{
+  "schema_version": "hist_vnext_h5e_resource_usage_v1",
+  "phase_id": "H5E",
+  "study_id": "M07",
+  "measured_at_utc": "2026-10-23T14:48:10Z",
+  "audit_process": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root .",
+    "wall_seconds": 0.18,
+    "user_seconds": 0.10,
+    "sys_seconds": 0.02,
+    "max_rss_bytes": 42631168,
+    "page_reclaims": 4051,
+    "page_faults": 425,
+    "voluntary_context_switches": 289,
+    "involuntary_context_switches": 175,
+    "instructions_retired": 26927447,
+    "cycles_elapsed": 11521097,
+    "peak_memory_footprint_raw": 1327392,
+    "stdout_bytes": 4107,
+    "stderr_bytes": 0,
+    "source": "/usr/bin/time -l -o /tmp/h5e_time.txt"
+  },
+  "sealing_session": {
+    "wall_seconds": "NOT_MEASURED",
+    "cpu_seconds": "NOT_MEASURED",
+    "max_rss_bytes": "NOT_MEASURED",
+    "output_bytes": "recomputed by EVIDENCE_MANIFEST.json for every sealed file",
+    "note": "The in-session executor has no independent child process; only the audit process above has OS-level measurements."
+  },
+  "disk": {
+    "free_bytes_at_seal": "NOT_MEASURED",
+    "note": "no disk-pressure event observed"
+  }
+}

@@ -1,0 +1,132 @@
+{
+ "schema_version": "hist_vnext_h5e_evidence_manifest_v1",
+ "phase_id": "H5E",
+ "mechanism_id": "M7",
+ "study_id": "M07",
+ "status": "BLOCKED",
+ "blocking_code": "MISSING_REGIONAL_CROSSWALK_PASS",
+ "head": "0235872979cafb4edab35f3aa5e729222cdd3748",
+ "branch": "codex/audit-hsm-vnext-2026-10-11",
+ "built_by": "in-session deepseek/deepseek-flash executor under user 2026-10-23 override",
+ "self_excluded": "EVIDENCE_MANIFEST.json (avoids a self-hash cycle)",
+ "review_status": "PASS",
+ "round_5_repair_verification": "PASS",
+ "artifacts": [
+  {
+   "path": "studies/HIST_VNEXT/M07/BLOCKER_CERTIFICATE.json",
+   "sha256": "e4f60c74e85c22889e704cc3c24b24026841e0a6ac227b0fa57b3090ec079da5",
+   "bytes": 22125
+  },
+  {
+   "path": "studies/HIST_VNEXT/M07/PLAN.md",
+   "sha256": "1955c8d99c44a54497a8527e5b1682c8dd0b20bcf77831c668a3c7aa1cfe1766",
+   "bytes": 16976
+  },
+  {
+   "path": "studies/HIST_VNEXT/M07/REPORT.md",
+   "sha256": "895c63e0106c4abae0ee7ca060280f543bba311af6d5119b7861c8a0740db6a7",
+   "bytes": 7850
+  },
+  {
+   "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+   "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f",
+   "bytes": 12378
+  },
+  {
+   "path": "studies/HIST_VNEXT/M07/commands.json",
+   "sha256": "55feca59c64ea2dd2ef78aa10dcc75fe36cfd4ad7fd38b603e3dd9abc6eecade",
+   "bytes": 4601
+  },
+  {
+   "path": "studies/HIST_VNEXT/M07/model_usage.json",
+   "sha256": "97affe6dff243aa65e040bc2863ab989d640612e6fb584ca1c56624b744c71b8",
+   "bytes": 1350
+  },
+  {
+   "path": "studies/HIST_VNEXT/M07/resource_usage.json",
+   "sha256": "17c64c428354818243237c3642daf406e2591b0be5c9c1bb680eb7c7b4b35c23",
+   "bytes": 1190
+  },
+  {
+   "path": "studies/HIST_VNEXT/M07/logs/preflight_admission.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M07/logs/preflight_admission.stdout.json",
+   "sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+   "bytes": 4107
+  }
+ ],
+ "pending_artifacts": [],
+ "byte_identical_pairs": [
+  {
+   "a": "H5E_地区预算阻断_PLAN.md",
+   "b": "studies/HIST_VNEXT/M07/PLAN.md",
+   "sha256": "1955c8d99c44a54497a8527e5b1682c8dd0b20bcf77831c668a3c7aa1cfe1766",
+   "identical": true
+  }
+ ],
+ "protected": [
+  {
+   "path": "BASELINE.md",
+   "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+   "bytes": 64445
+  },
+  {
+   "path": "config/research_contract.json",
+   "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+   "bytes": 2908
+  },
+  {
+   "path": "uv.lock",
+   "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+   "bytes": 157941
+  },
+  {
+   "path": "config/p06/cards/M7.json",
+   "sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+   "bytes": 953
+  },
+  {
+   "path": ".omp/agents/phase-reviewer.md",
+   "sha256": "5961ba05e6b0cd42f0abcc3b74c64c959a3c47cca62fee44ad21cf6a8e632a1b",
+   "bytes": 1395
+  },
+  {
+   "path": "config/initial_state/hist_vnext_h4_v1/anchor_crosswalk.json",
+   "sha256": "c8296b33f163a13bc66dc3ec84b752e60e6d7a36c5d77b87afe74b7ec54d2fa3",
+   "bytes": 190164
+  },
+  {
+   "path": "config/initial_state/hist_vnext_v1/anchor_crosswalk.json",
+   "sha256": "22acf7aa205f082ffda579f9ccef10c03bb2f4e133eeddb4063f4fd5b10f4b9c",
+   "bytes": 76964
+  }
+ ],
+ "raw_evidence_dir": "studies/HIST_VNEXT/M07/logs",
+ "raw_evidence_files": [
+  {
+   "path": "studies/HIST_VNEXT/M07/logs/preflight_admission.stdout.json",
+   "sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+   "bytes": 4107
+  },
+  {
+   "path": "studies/HIST_VNEXT/M07/logs/preflight_admission.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  }
+ ],
+ "simulation_status": "NOT_RUN",
+ "simulation_manifests": [],
+ "reference_replay": {
+  "C0": "NOT_RUN",
+  "C1": "NOT_RUN",
+  "frozen_C0": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+  "frozen_C1": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5"
+ },
+ "seeds": {
+  "seed_status": "NOT_RUN",
+  "failed_seeds": null
+ }
+}

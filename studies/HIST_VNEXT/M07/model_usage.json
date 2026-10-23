@@ -1,0 +1,32 @@
+{
+ "schema_version": "hist_vnext_h5e_model_usage_v1",
+ "phase_id": "H5E",
+ "study_id": "M07",
+ "executor": {
+  "selector": "deepseek/deepseek-flash",
+  "provider": "deepseek",
+  "requested_thinking": "NOT_SET_BY_THIS_STEP",
+  "observed_reasoning_capability": "low,high,max (provider metadata; not an execution record)",
+  "input_tokens": "NOT_MEASURED",
+  "output_tokens": "NOT_MEASURED",
+  "cache_read_tokens": "NOT_MEASURED",
+  "cost_usd": "NOT_MEASURED",
+  "basis": "in-session execution under the user-authorized override; the harness did not expose per-session token accounting to this step",
+  "authorization": "user 2026-10-23 explicitly replaced minimax-code-cn/MiniMax-M3 with this executor for the sealing step"
+ },
+ "reviewer": {
+  "selector": "minimax-code-cn/MiniMax-M3",
+  "thinking_level": "high",
+  "input_tokens": "NOT_MEASURED",
+  "output_tokens": "NOT_MEASURED",
+  "cache_read_tokens": "NOT_MEASURED",
+  "cost_usd": "NOT_MEASURED",
+  "basis": "the phase-reviewer task did not return token accounting to this step; no fabricated number"
+ },
+ "failed_seeds": {
+  "status": "NOT_RUN",
+  "note": "no seed was executed; null/NOT_RUN is not evidence that a seed would fail"
+ },
+ "commit": null,
+ "commit_note": "commit SHA is intentionally null in the sealed content to avoid a self-reference; the git log records the evidence commit"
+}

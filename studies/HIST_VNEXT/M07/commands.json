@@ -1,0 +1,96 @@
+{
+ "schema_version": "hist_vnext_h5e_commands_v1",
+ "phase_id": "H5E",
+ "study_id": "M07",
+ "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+ "note": "Actual commands run for this sealing step. Repeated read-only audits must not overwrite earlier results; this file records one execution per command.",
+ "commands": [
+  {
+   "id": "CMD-1",
+   "time_utc": "2026-10-23T14:47:40Z",
+   "command": "python3 - <<'PY' (git status --porcelain; sha256+bytes for every dirty path; write /tmp/h5e_user_snapshot.json) PY",
+   "purpose": "snapshot all user dirty files before sealing",
+   "exit_code": 0,
+   "wall_seconds": 0.15,
+   "outputs": [
+    "/tmp/h5e_user_snapshot.json"
+   ]
+  },
+  {
+   "id": "CMD-2",
+   "time_utc": "2026-10-23T14:47:55Z",
+   "command": "cp H5E_地区预算阻断_PLAN.md studies/HIST_VNEXT/M07/PLAN.md",
+   "purpose": "byte-identical copy of the canonical plan",
+   "exit_code": 0,
+   "wall_seconds": 0.01,
+   "outputs": [
+    "studies/HIST_VNEXT/M07/PLAN.md"
+   ]
+  },
+  {
+   "id": "CMD-3",
+   "time_utc": "2026-10-23T14:47:56Z",
+   "command": "shasum -a 256 BASELINE.md config/research_contract.json uv.lock config/p06/cards/M7.json",
+   "purpose": "re-verify frozen identities",
+   "exit_code": 0,
+   "wall_seconds": 0.02,
+   "outputs": []
+  },
+  {
+   "id": "CMD-4",
+   "time_utc": "2026-10-23T14:48:10Z",
+   "command": "/usr/bin/time -l -o /tmp/h5e_time.txt sh -c 'PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root . > studies/HIST_VNEXT/M07/logs/preflight_admission.stdout.json 2> studies/HIST_VNEXT/M07/logs/preflight_admission.stderr.txt'",
+   "purpose": "read-only admission audit; reproduce the regional-source blocker",
+   "exit_code": 1,
+   "wall_seconds": 0.18,
+   "max_rss_bytes": 42631168,
+   "stdout_path": "studies/HIST_VNEXT/M07/logs/preflight_admission.stdout.json",
+   "stdout_bytes": 4107,
+   "stderr_path": "studies/HIST_VNEXT/M07/logs/preflight_admission.stderr.txt",
+   "stderr_bytes": 0,
+   "canonical_reproduction_command": "PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root .",
+   "note": "The sealed stdout matches the PYTHONHASHSEED=0 ordering. Under the default hash seed, admission.py:1306 set iteration can swap two detail lines and produce full digest 2e4bb8ec...; semantic content and 4107-byte length are identical."
+  },
+  {
+   "id": "CMD-5",
+   "time_utc": "2026-10-23T14:48:34Z",
+   "command": "date -u +%Y-%m-%dT%H:%M:%SZ; git branch --show-current; git rev-parse HEAD; git status --porcelain=v1 | wc -l",
+   "purpose": "record sealing time, branch, head and dirty count",
+   "exit_code": 0,
+   "wall_seconds": 0.05,
+   "outputs": [
+    "2026-10-23T14:48:34Z",
+    "codex/audit-hsm-vnext-2026-10-11",
+    "0235872979cafb4edab35f3aa5e729222cdd3748",
+    "24 (23 user entries + studies/HIST_VNEXT/M07/)"
+   ]
+  },
+  {
+   "id": "CMD-6",
+   "time_utc": "2026-10-23T16:20:00Z",
+   "command": "cd /Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab; set +e; for i in 1 2 3 4 5 6; do PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root . > /tmp/adm_$i.json 2>/tmp/adm_$i.err; ec=$?; echo \"default $i exit=$ec $(shasum -a 256 /tmp/adm_$i.json | cut -c1-12) err=$(wc -c < /tmp/adm_$i.err)\"; done; for i in 1 2 3; do PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root . > /tmp/adm_seed_$i.json 2>/tmp/adm_seed_$i.err; ec=$?; echo \"seed0 $i exit=$ec $(shasum -a 256 /tmp/adm_seed_$i.json | cut -c1-12) err=$(wc -c < /tmp/adm_seed_$i.err)\"; done",
+   "purpose": "measure hash-seed dependence of the sealed admission stdout",
+   "exit_code": 0,
+   "results": {
+    "default_seed_full_sha256": [
+     "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+     "2e4bb8ecc81decefa3e401143ac39777bbfa091d83c6b13cec25e4201855e677"
+    ],
+    "PYTHONHASHSEED_0_full_sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419 (3/3 runs, identical to sealed)",
+    "semantic_equality": true,
+    "canonical_content_sha256": "e5308ed4f92ec777ca623fc7436b56ace7bf2768779efabb3635eda1812c7908",
+    "stderr_bytes": 0
+   },
+   "note": "The compound shell loop exits 0 because it ends with echo; the admission CLI itself exits 1 in every run. Reproduction requires PYTHONHASHSEED=0. No source or sealed log was modified.",
+   "admission_exit_code": 1
+  }
+ ],
+ "not_run": [
+  "pytest",
+  "ruff",
+  "hsm baseline verify",
+  "uv lock --check",
+  "historical_f2_replay (C0)",
+  "historical_f2_trade_scenario (C1)"
+ ]
+}

@@ -1,0 +1,580 @@
+{
+ "schema_version": "hist_vnext_h5e_blocker_v1",
+ "phase_id": "H5E",
+ "mechanism_id": "M7",
+ "study_id": "M07",
+ "objective": "M7地区预算与稳定反馈",
+ "status": "BLOCKED",
+ "blocking_code": "MISSING_REGIONAL_CROSSWALK_PASS",
+ "created_utc": "2026-10-23T14:48:34Z",
+ "repository": {
+  "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+  "branch": "codex/audit-hsm-vnext-2026-10-11",
+  "head": "0235872979cafb4edab35f3aa5e729222cdd3748"
+ },
+ "authorization": {
+  "overridden_role": "minimax-code-cn/MiniMax-M3",
+  "executor": "deepseek/deepseek-flash",
+  "user_statement": "我明确授权你而不是minimax-code-cn/MiniMax-M3来执行计划。请你修改PLAN。",
+  "scope": "executor identity for this evidence-sealing step only",
+  "not_authorized": [
+   "H5E implementation",
+   "adapter/runner/tests",
+   "simulation",
+   "C0/C1 replay",
+   "lifting MISSING_REGIONAL_CROSSWALK_PASS",
+   "expanding the M07 whitelist"
+  ],
+  "review_selector_unchanged": "minimax-code-cn/MiniMax-M3:high"
+ },
+ "required_contract": [
+  {
+   "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+   "lines": "228-235",
+   "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+   "bytes": 37168,
+   "quote": "前置输入：H3routing、H2权限及地区crosswalk PASS。",
+   "role": "phase contract: prerequisite, whitelist, tests, gate, STOP"
+  },
+  {
+   "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+   "lines": "375-392",
+   "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+   "bytes": 114765,
+   "quote": "前置：H3routing、H2权限及地区crosswalk PASS。……独立phase-reviewer使用@review且不得是实现者自签",
+   "role": "single-task handoff prompt"
+  },
+  {
+   "path": "docs/upgrade_review/HIST_VNEXT/evidence/phase-contracts.json",
+   "lines": "173-181",
+   "sha256": "9a81273d6a3b442f5ca48517b55a6ad84faf66873ca96e8ae80c0c28c7593374",
+   "bytes": 19362,
+   "quote": "\"dependencies\": \"H3routing、H2权限及地区crosswalk PASS\"",
+   "role": "machine-readable phase contract row"
+  }
+ ],
+ "h2_h3_closure": {
+  "claim": "Every cited H2/H3 final PASS is limited to engine-side technical or admission semantics; none covers a dated county/city -> 20-region crosswalk or regional 1957 population/housing stock.",
+  "gates": [
+   {
+    "phase": "H2A",
+    "verdict": "PASS",
+    "round": 19,
+    "scope": "permission/admission technical layer",
+    "covers_regional_crosswalk": false,
+    "evidence": {
+     "path": "docs/phases/HIST_VNEXT/H2A/REVIEW.md",
+     "sha256": "a6dbd78a85c2b60a2139ecd3f3aa91d305a7818c53440a490a9e3492c390d1c8",
+     "bytes": 11419
+    }
+   },
+   {
+    "phase": "H2B",
+    "verdict": "PASS",
+    "round": 5,
+    "scope": "admission-blocking semantics",
+    "covers_regional_crosswalk": false,
+    "evidence": {
+     "path": "docs/phases/HIST_VNEXT/H2B/REVIEW.md",
+     "sha256": "bcdc8f057475d42943c4b3ab19fdcee3bb16f65e83fa7566fb777160c1a093ec",
+     "bytes": 2368
+    }
+   },
+   {
+    "phase": "H3C",
+    "verdict": "PASS",
+    "round": "final_v2",
+    "scope": "synthetic full-information routing technical acceptance only",
+    "covers_regional_crosswalk": false,
+    "evidence": {
+     "path": "docs/phases/HIST_VNEXT/H3C/REVIEW.md",
+     "sha256": "8a960a8279a97d38e5d7d975c0921818b8a9191cc8cc2fa8092c651094cfc0db",
+     "bytes": 3374
+    }
+   }
+  ],
+  "conclusion": "H2/H3 technical PASS cannot substitute for the H5E regional crosswalk prerequisite."
+ },
+ "regional_crosswalk": {
+  "status": "BLOCKED",
+  "admission_audit": {
+   "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root .",
+   "exit_code": 1,
+   "structural": "PASS",
+   "historical": "BLOCKED",
+   "summary": {
+    "total_candidates": 4,
+    "total_admitted": 0,
+    "total_blocked_sources": 0,
+    "total_blocked_anchors": 63,
+    "total_sources": 4,
+    "total_works": 3,
+    "anchor_classifications": {
+     "blocked": 63
+    },
+    "authority_blocked": 5,
+    "event_candidates": 10,
+    "review_requests_required": 4,
+    "independent_pairs": 0,
+    "non_independent_pairs": 1
+   },
+   "stdout_path": "studies/HIST_VNEXT/M07/logs/preflight_admission.stdout.json",
+   "stdout_sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+   "stderr_path": "studies/HIST_VNEXT/M07/logs/preflight_admission.stderr.txt",
+   "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr_bytes": 0,
+   "reproduction_condition": "PYTHONHASHSEED=0",
+   "reproduction_command": "PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root .",
+   "sealed_digest_reproduced_under_condition": true,
+   "default_seed_nondeterminism": {
+    "cause": "history/HIST_VNEXT/sources/admission.py:1306 iterates a set of strings, so two authority detail lines can swap order",
+    "observed_full_sha256": {
+     "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419": "also produced by PYTHONHASHSEED=0",
+     "2e4bb8ecc81decefa3e401143ac39777bbfa091d83c6b13cec25e4201855e677": "default seed alternative"
+    },
+    "semantic_equality": "exit_code, structural, historical, summary, sorted(details), and stdout byte length are identical across both orderings"
+   },
+   "canonical_content_sha256": "e5308ed4f92ec777ca623fc7436b56ace7bf2768779efabb3635eda1812c7908",
+   "canonicalization": "sha256 of json.dumps({exit_code,structural,historical,summary,details:(sorted)}, sort_keys=True, separators=(\",\",\":\"), ensure_ascii=False)"
+  },
+  "missing_artifacts": [
+   {
+    "id": "MISSING-1",
+    "item": "dated county/city -> frozen 20-region crosswalk",
+    "evidence": "docs/phases/HIST_VNEXT/H4A-0/ANCHOR_CROSSWALK.md:25-29,56-64"
+   },
+   {
+    "id": "MISSING-2",
+    "item": "1957 regional population observation mapped to the 20 regions",
+    "evidence": "config/initial_state/hist_vnext_h4_v1/candidate_overlay.json:471-533"
+   },
+   {
+    "id": "MISSING-3",
+    "item": "1957 regional housing stock observation",
+    "evidence": "docs/phases/HIST_VNEXT/H4A-1/REPORT.md:181-205"
+   },
+   {
+    "id": "MISSING-4",
+    "item": "value-use rights and a second independent transcription",
+    "evidence": "docs/phases/HIST_VNEXT/H4A-0/ANCHOR_CROSSWALK.md:56-64"
+   },
+   {
+    "id": "MISSING-5",
+    "item": "region-sum closure and boundary_mapping=established",
+    "evidence": "config/initial_state/hist_vnext_h4_v1/candidate_overlay.json:471-533"
+   },
+   {
+    "id": "MISSING-6",
+    "item": "independent PASS for the regional crosswalk",
+    "evidence": "docs/phases/HIST_VNEXT/H4A-1/REVIEW.md:58-61"
+   }
+  ],
+  "null_semantics": "crosswalk path/hash/review hash are null because they were not obtained; null is not zero, not an empty file, and not an approval",
+  "crosswalk_path": null,
+  "crosswalk_sha256": null,
+  "crosswalk_review_sha256": null
+ },
+ "user_work": {
+  "policy": "never staged as user work, overwritten or deleted by this step; only studies/HIST_VNEXT/M07/ is added and committed",
+  "modified": [
+   {
+    "path": ".omp/config.yml",
+    "sha256": "2e90b9c6feed817a4547c7232f650e8c76c089f14f7ae22b36f23bf62dd2fe7f",
+    "bytes": 472,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+    "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+    "bytes": 37168,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+    "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+    "bytes": 114765,
+    "origin": "user work present at step start"
+   }
+  ],
+  "untracked": [
+   {
+    "path": "CMEA_清算制度冻结_PLAN.md",
+    "sha256": "9523e122eb084b642226dd4da3637cf8a3b5ae1b37714f1e3c9e2d0d6f79c81d",
+    "bytes": 46043,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H3A_服务语义分型_PLAN.md",
+    "sha256": "77f4525cfc439bc32ee4d7a085917fa91f073d39c3c3a5762185169eda497872",
+    "bytes": 33300,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H3B_订单融资闭环_PLAN.md",
+    "sha256": "1a35125dcde68909431ccde0e33d3a9ebd366374166190a6ead1598121562240",
+    "bytes": 33231,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H3C_线路运力证书_PLAN.md",
+    "sha256": "505da6af06a792a9e5ccbbdc27610256a92caef320b2b081845e50e5b880c01f",
+    "bytes": 34442,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H3D_短周期时序隔离比较_PLAN.md",
+    "sha256": "44abb9824ca311214b971e8a0121d9f63430077b178474d249d3ffcd99f4da7a",
+    "bytes": 33051,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H3E_4Q_滚动规划_PLAN.md",
+    "sha256": "420d89a877bc17c9d14beebba124f4234b373374c1d1ae2478dcf772eb4e5ed8",
+    "bytes": 28961,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H3F_D1_外贸工作资本贷款_PLAN.md",
+    "sha256": "18b67e79da3cb1edca8ec675fff6e4625b9a92c87dc3a7bb5ddd65311163923d",
+    "bytes": 34459,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H3F_D2_出口应收与坏账反向分录_PLAN.md",
+    "sha256": "135fcc9e5e9db1bb2f3aa0eaa19830102ee5f76264990860c536a5d87d6f9e16",
+    "bytes": 45281,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H4A_0_来源核验与准入_PLAN.md",
+    "sha256": "1041dba4648aa93c1cec44e822c810fb403a22eb2040908c4a5a305874ba6645",
+    "bytes": 32476,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H4A_1_前置补完_PLAN.md",
+    "sha256": "6c6cc09dd1f5c01dd123f877a9b46f3cf7cad8a4a2fc9630e497587507643d21",
+    "bytes": 26196,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H4B_PILOT_A_阻断包_PLAN.md",
+    "sha256": "3a1b8684223b1524911d2248f18007270b0bd21144b0064fcb8f8ebf5e183100",
+    "bytes": 23236,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H4C_PILOT_B_PLAN.md",
+    "sha256": "275db3fe48bfaef28c71e4a8dac4a9147fc8beef360b8ba294bbfbadb1e50f07",
+    "bytes": 31580,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H5A_A1_M2_PLAN.md",
+    "sha256": "1ae544a61e2ed03dc625d1351e62229fc1d892d7c4d79866e41698158bb0768d",
+    "bytes": 30985,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H5C_参照历史棘轮实验_PLAN.md",
+    "sha256": "ce6cb635c04bc3fe24c6f6deccc3938fd04a50f829b840aa3b12473620c25cf0",
+    "bytes": 32836,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H5D_劳动制度_PLAN.md",
+    "sha256": "81148e3796adb0c7f728293931054c0979a72e9316a6c59b8a4da5765043d469",
+    "bytes": 61276,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "H5E_地区预算阻断_PLAN.md",
+    "sha256": "1955c8d99c44a54497a8527e5b1682c8dd0b20bcf77831c668a3c7aa1cfe1766",
+    "bytes": 16976,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "HIST_VNEXT_H5B_PLAN.md",
+    "sha256": "f8f8c9f721eac86c618909abb792e275fcd0c33a6fa850ec7f18bbaa17b68519",
+    "bytes": 39569,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "LEGACY_TREASURY_PREPAY_双账观察_PLAN.md",
+    "sha256": "bfee42ba00e1ca811a9a4919fdc0ca315d1c235f90d6ba504c4e95d5ef6ea254",
+    "bytes": 29193,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "M3劳动纪律与囤工_PLAN.md",
+    "sha256": "004757e86de472ed9d6ab10b020e02540e4ceae5f42e6199fe070cab9371c196",
+    "bytes": 15776,
+    "origin": "user work present at step start"
+   },
+   {
+    "path": "docs/upgrade_review/HIST_VNEXT/09_BATCH02_YEARBOOKS_D08_D10_INTAKE.md",
+    "sha256": "89e0e00d5bf6d4ebefe3364f569d5906ab0c61684c9d6dcc673aacf89100df33",
+    "bytes": 9768,
+    "origin": "user work present at step start"
+   }
+  ],
+  "counts": {
+   "modified": 3,
+   "untracked": 20,
+   "staged": 0
+  },
+  "source_of_plan": {
+   "path": "H5E_地区预算阻断_PLAN.md",
+   "sha256": "1955c8d99c44a54497a8527e5b1682c8dd0b20bcf77831c668a3c7aa1cfe1766",
+   "bytes": 16976,
+   "provenance": "canonical plan; modified 2026-10-23 to record the user-authorized executor override; copied byte-identically to studies/HIST_VNEXT/M07/PLAN.md",
+   "copy_path": "studies/HIST_VNEXT/M07/PLAN.md",
+   "copy_sha256": "1955c8d99c44a54497a8527e5b1682c8dd0b20bcf77831c668a3c7aa1cfe1766",
+   "byte_identical_to_copy": true
+  }
+ },
+ "protected": [
+  {
+   "path": "BASELINE.md",
+   "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+   "bytes": 64445
+  },
+  {
+   "path": "config/research_contract.json",
+   "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+   "bytes": 2908
+  },
+  {
+   "path": "uv.lock",
+   "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+   "bytes": 157941
+  },
+  {
+   "path": "config/p06/cards/M7.json",
+   "sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+   "bytes": 953
+  },
+  {
+   "path": ".omp/agents/phase-reviewer.md",
+   "sha256": "5961ba05e6b0cd42f0abcc3b74c64c959a3c47cca62fee44ad21cf6a8e632a1b",
+   "bytes": 1395
+  },
+  {
+   "path": "config/initial_state/hist_vnext_h4_v1/anchor_crosswalk.json",
+   "sha256": "c8296b33f163a13bc66dc3ec84b752e60e6d7a36c5d77b87afe74b7ec54d2fa3",
+   "bytes": 190164
+  },
+  {
+   "path": "config/initial_state/hist_vnext_v1/anchor_crosswalk.json",
+   "sha256": "22acf7aa205f082ffda579f9ccef10c03bb2f4e133eeddb4063f4fd5b10f4b9c",
+   "bytes": 76964
+  }
+ ],
+ "searched": {
+  "paths": [
+   "docs/phases/HIST_VNEXT",
+   "config/initial_state",
+   "config/research_contract.json",
+   "history/HIST_VNEXT",
+   "studies/HIST_VNEXT"
+  ],
+  "filename_patterns": [
+   "*CROSSWALK*",
+   "*REGION*",
+   "*ANCHOR*"
+  ],
+  "keyword_patterns": [
+   "crosswalk",
+   "model_regions",
+   "boundary_mapping",
+   "region_sum_closure",
+   "county_boundary_crosswalk",
+   "regional population",
+   "regional housing"
+  ],
+  "negative_search_scope_limit": "proves only that no approved regional crosswalk artefact is reachable under these paths; it does not prove no private source exists"
+ },
+ "found_evidence": [
+  {
+   "path": "docs/phases/HIST_VNEXT/H4A-0/ANCHOR_CROSSWALK.md",
+   "sha256": "8ea4a5ca59c14c9ba802923e100863aacadcb1167711d8628884adf927100193",
+   "bytes": 3405,
+   "lines": "24-29,56-64",
+   "finding": "Regional population and regional dwelling are blocked; proportional splitting or summing would invent a distribution; no admitted initial-state value."
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4A-1/REPORT.md",
+   "sha256": "9a5bdda54e599693db0271f8a40946b24f5d220e2438b67d2512bcd0236cc543",
+   "bytes": 23853,
+   "lines": "181-205",
+   "finding": "1957 regional population and regional housing stock BLOCKED; historical_inputs_admitted=0; EXPERIMENT_ONLY."
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4A-1/REVIEW.md",
+   "sha256": "48ab18fa7fc893c8c9a11ef03dd9a01afbae5e5775d3f871d9309e355e9f6f86",
+   "bytes": 11703,
+   "lines": "58-61",
+   "finding": "PASS covers documentation repairs and approval semantics only; does not authorize production initialization, measurement wiring, runtime connection, or historical claims."
+  },
+  {
+   "path": "config/initial_state/hist_vnext_h4_v1/candidate_overlay.json",
+   "sha256": "f3c2a13c8eed9a6c36d86592425b80ca038eeb0196fabf754491447f59c140b2",
+   "bytes": 51493,
+   "lines": "471-533",
+   "finding": "model_regions=null; boundary_mapping=not_established; admission_status=blocked; missing county_boundary_crosswalk, region_sum_closure, value_reuse_rights."
+  },
+  {
+   "path": "config/initial_state/hist_vnext_h4_v1/anchor_crosswalk.json",
+   "sha256": "c8296b33f163a13bc66dc3ec84b752e60e6d7a36c5d77b87afe74b7ec54d2fa3",
+   "bytes": 190164,
+   "lines": "all 63 anchor records",
+   "finding": "63/63 classification=blocked; 0 admitted; no runtime connection."
+  }
+ ],
+ "stop_reason": "The H5E prerequisite \"regional crosswalk PASS\" is a substantive source/technical gate: no dated county/city -> 20-region mapping, no admitted 1957 regional population, and no 1957 regional housing stock. H4A-1 admitted zero historical inputs. Synthesizing weights or broadcasting the national scalar would violate the 05 STOP clause.",
+ "not_executed": [
+  {
+   "step": "H5E allocation vector adapter / runner / tests/test_hist_regional_budget.py",
+   "status": "NOT_RUN"
+  },
+  {
+   "step": "national-total-fixed + 20-region conservation experiment",
+   "status": "NOT_RUN"
+  },
+  {
+   "step": "real delivery / housing / consumption / local political feedback experiment",
+   "status": "NOT_RUN"
+  },
+  {
+   "step": "national scalar negative control",
+   "status": "NOT_RUN"
+  },
+  {
+   "step": "pytest / ruff / baseline CLI / uv lock check",
+   "status": "NOT_RUN"
+  },
+  {
+   "step": "new C0/C1 replay",
+   "status": "NOT_RUN"
+  },
+  {
+   "step": "commit role producing a phase-completion commit",
+   "status": "NOT_RUN"
+  }
+ ],
+ "dimensions": {
+  "technical": {
+   "status": "BLOCKED",
+   "level": "VERIFIED_BY_CODE",
+   "reason": "regional crosswalk prerequisite absent"
+  },
+  "structural": {
+   "status": "NOT_RUN",
+   "level": "VERIFIED_BY_CODE",
+   "reason": "no allocation vector adapter exists; engine unchanged"
+  },
+  "historical": {
+   "status": "BLOCKED",
+   "level": "VERIFIED_BY_RUN",
+   "reason": "admission audit exit 1; 63 blocked anchors; 0 admitted"
+  }
+ },
+ "seeds": {
+  "seed_status": "NOT_RUN",
+  "failed_seeds": null,
+  "note": "null means no seed was executed; it is not evidence that a seed would fail"
+ },
+ "review": {
+  "status": "PASS",
+  "reviewer": "phase-reviewer",
+  "selector": "minimax-code-cn/MiniMax-M3",
+  "thinking_level": "high",
+  "rounds": [
+   {
+    "round": 1,
+    "verdict": "PASS",
+    "task_id": "H5EBlockerReview",
+    "started_utc": "2026-10-23T14:49:55Z",
+    "completed_utc": "2026-10-23T14:54:30Z",
+    "duration_seconds": 275,
+    "evidence": "studies/HIST_VNEXT/M07/REVIEW.md",
+    "usage": "NOT_MEASURED",
+    "non_blocking_observations": 4
+   },
+   {
+    "round": 2,
+    "verdict": "PATCH",
+    "task_id": "H5EBlockerReviewR2",
+    "started_utc": "2026-10-23T14:55:07Z",
+    "completed_utc": "2026-10-23T14:57:28Z",
+    "duration_seconds": 141,
+    "evidence": "studies/HIST_VNEXT/M07/REVIEW.md#round-2-repair-verification",
+    "usage": "NOT_MEASURED",
+    "defect": "undisclosed manifest regeneration: round-1 \"8/8 artifacts\" and \"REVIEW.md not hashed\" statements contradicted the final 9-artifact manifest",
+    "repair": "REVIEW.md scope note + repair item 4; certificate cleanup item 4"
+   },
+   {
+    "round": 3,
+    "verdict": "PATCH",
+    "task_id": "H5EBlockerReviewR3",
+    "started_utc": "2026-10-23T14:58:00Z",
+    "completed_utc": "2026-10-23T16:10:15Z",
+    "duration_seconds": 4335,
+    "evidence": "studies/HIST_VNEXT/M07/REVIEW.md#round-3-repair-verification",
+    "usage": "NOT_MEASURED",
+    "defects": [
+     "D1: REVIEW.md restated mutable review_status in present tense, contradicted by the shipped manifest",
+     "D2: three further round-1 protected/artifact counts were not scoped",
+     "D3: the second manifest regeneration was undisclosed",
+     "D4: certificate review.status stayed PASS while round 2 was PATCH and final_verdict pending"
+    ],
+    "repair": "scope note converted to reference form and enumerated all counts; cleanup item 5 added; certificate review.status aligned to the round ledger; manifest regenerated"
+   },
+   {
+    "round": 4,
+    "verdict": "PATCH",
+    "task_id": "H5EBlockerReviewR4",
+    "started_utc": "2026-10-23T16:11:00Z",
+    "completed_utc": "2026-10-23T16:19:13Z",
+    "duration_seconds": 493,
+    "evidence": "studies/HIST_VNEXT/M07/REVIEW.md#round-4-repair-verification",
+    "usage": "NOT_MEASURED",
+    "defect": "D5: the byte-identical/deterministic admission stdout guarantee was false under the default hash seed; set iteration at admission.py:1306 reorders two detail lines",
+    "repair": "recorded PYTHONHASHSEED=0 reproduction condition, both default-seed digests, and a canonical sorted-details content digest; scoped the round-1 claim; commands CMD-6"
+   },
+   {
+    "round": 5,
+    "verdict": "PASS",
+    "task_id": "H5EBlockerReviewR5",
+    "started_utc": "2026-10-23T16:20:00Z",
+    "completed_utc": "2026-10-23T17:25:11Z",
+    "duration_seconds": 3900,
+    "evidence": "studies/HIST_VNEXT/M07/REVIEW.md#round-5-verification",
+    "usage": "NOT_MEASURED",
+    "result": "hashes, seed-0 reproduction, canonical digest, disclosure, scope, dirty snapshot and BLOCKED status all verified"
+   }
+  ],
+  "final_verdict": "PASS",
+  "evidence_recording_verified": true,
+  "missing_prerequisite_still_blocked": true,
+  "post_round_1_cleanups": [
+   "reviewer token sentinel PENDING_REVIEW -> NOT_MEASURED",
+   "phase-contracts citation lines 173-183 -> 173-181",
+   "manifest protected expanded to the certificate's 7 files",
+   "manifest regenerated to hash REVIEW.md as artifact 9, pending_artifacts emptied; disclosed in REVIEW.md",
+   "second manifest regeneration after round-2 repair: review_status set to PATCH_ROUND_2_REPAIRED; round_2_repair_verification renamed to round_3_repair_verification (historical; current values live in the manifest)",
+   "admission stdout reproduction scoped to PYTHONHASHSEED=0; default-seed alternatives and canonical content digest recorded (round-4 D5)"
+  ],
+  "note": "round-2 repair verification is recorded in REVIEW.md; it re-checks the final manifest and cleanups",
+  "mutable_fields_note": "review_status and round_N_repair_verification are rewritten after each round; REVIEW.md references them instead of restating their values"
+ },
+ "delivery": {
+  "simulation_status": "NOT_RUN",
+  "simulation_manifests": [],
+  "research_package_complete": false,
+  "phase_completion_claimed": false,
+  "outputs_committed": false,
+  "pushed": false,
+  "commit_note": "commit happens only after independent PASS and includes only studies/HIST_VNEXT/M07/; SHA is in git log; it is not a phase-completion claim"
+ }
+}
