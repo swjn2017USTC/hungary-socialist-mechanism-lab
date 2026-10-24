@@ -1,0 +1,29 @@
+{
+  "gate": "LINKAGE_AND_MEASUREMENT_EMPTY",
+  "h4a0_measurement_inputs": [],
+  "h4c_historical_status": "NOT_ESTABLISHED",
+  "p05_identification": {
+    "p02_material_cmea_contract_prior": "fixed",
+    "p02_material_cmea_uncertainty_prior": "fixed",
+    "p02_material_oil_warmup_prior": "fixed",
+    "p04_broker_prior": "fixed",
+    "p04_coalition_prior": "unidentified",
+    "p04_culture_prior": "unidentified",
+    "p04_external_recipe_prior": "unidentified",
+    "p04_information_prior": "unidentified",
+    "p04_observation_prior": "unidentified",
+    "p04_opposition_prior": "unidentified",
+    "p05_fiscal_turnover_remittance_prior": "fixed",
+    "p05_household_savings_reentry_prior": "fixed",
+    "p05_input_credit_earmark_prior": "fixed",
+    "p05_interest_sink_recipient_prior": "fixed",
+    "p05_interest_sink_remittance_prior": "fixed"
+  },
+  "p05_identification_counts": {
+    "fixed": 9,
+    "unidentified": 6
+  },
+  "p05_linkage": [],
+  "p05_linkage_len": 0,
+  "p05_path": "config/calibration/p05.json"
+}

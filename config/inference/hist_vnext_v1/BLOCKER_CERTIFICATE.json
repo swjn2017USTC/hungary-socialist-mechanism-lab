@@ -1,0 +1,958 @@
+{
+  "schema_version": "hist_vnext_h6a_blocker_v1",
+  "phase_id": "H6A",
+  "objective": "H6A 识别 screen 与条件推断（默认不推断）——仅对独立 linkage 参数子集进行识别 screen；本证书封存前置阻断",
+  "status": "BLOCKED",
+  "blocking_code": "MISSING_INDEPENDENT_LINKAGE_ADMISSION",
+  "identifiable_set": [],
+  "inference_status": "NOT_RUN",
+  "created_utc": "2026-10-24T20:25:44Z",
+  "created_utc_meaning": "the authoring moment of the certificate body (implementation.attempt-2); it is not the timestamp of any later revision",
+  "authored_by_attempt": "implementation.attempt-2",
+  "amendment_note": "本证书在成文后只被 review PATCH 修复轮修改过，且每次都只改 provenance 与措辞字段（不改 status/blocking_code/identifiable_set/inference_status/三维/15 项参数身份/NOT_RUN 清单）。逐轮修订链与各轮 exit/wall/用量见 commands.json 的 implementation.attempt-3 及之后的条目与 model_usage.json；当前最终字节的 bytes/SHA-256 由 EVIDENCE_MANIFEST.json 封存。This certificate has only been modified by review PATCH repair rounds after authoring, and each such round changed provenance and wording fields only (never status, blocking code, identifiable set, inference status, the three-dimension statuses, the 15 parameter identities or the NOT_RUN list). The per-round revision chain and each round's exit/wall/usage are recorded in commands.json (implementation.attempt-3 and later entries) and model_usage.json; the bytes/SHA-256 of the current final files are sealed by EVIDENCE_MANIFEST.json.",
+  "final_bytes_note": "The final bytes of this certificate are not attributed to any single attempt here: this field is a pointer, not a terminal attribution. The authoritative bytes/SHA-256 are sealed by the supervisor's EVIDENCE_MANIFEST.json, and the revision chain (each round's attempt, exit code, wall time and usage) is recorded in commands.json and model_usage.json. Any later review PATCH round may revise provenance and wording fields again, which is why no attempt is named as the last writer of the final bytes. The bytes written by implementation.attempt-3 (certificate 2026-10-24T20:38:07Z, REPORT.md 2026-10-24T20:39:02Z) were one intermediate state of that chain and were superseded by later rounds; no scientific conclusion changed in any of them.",
+  "repository": {
+    "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "branch": "codex/audit-hsm-vnext-2026-10-11",
+    "start_head": "c0b19dbd14b79cec79b58c7a1f77d14cc0b6aa5d",
+    "start_head_verified_by": "git rev-parse HEAD + config/inference/hist_vnext_v1/user_work_snapshot.json (VERIFIED_BY_RUN)",
+    "index_state_at_start": "empty (0 staged paths; VERIFIED_BY_RUN)",
+    "user_work_preserved": "3 tracked modified + 24 untracked user paths untouched: not stashed, not reset, not cleaned, not staged, not committed (VERIFIED_BY_RUN)"
+  },
+  "executor": {
+    "session": "implementation session resumed across bounded attempts on the single session id 01a16f88-89cb-7781-825e-f385000bd08d; MiniMax single-task override. The authoritative list of attempts and their exit codes, wall times and usage is the supervisor's commands.json and model_usage.json; the attempts array below is a snapshot of the rounds observed while this certificate was written.",
+    "attempts_note": "This array is a snapshot, not a closed chain: further review PATCH rounds may append entries. The authoritative per-round chain (attempt, exit code, wall time, usage) is commands.json and model_usage.json, and the sealed bytes/SHA-256 are in EVIDENCE_MANIFEST.json.",
+    "authoring_attempt": "implementation.attempt-2 (certificate body and REPORT.md authored; see top-level authored_by_attempt)",
+    "no_terminal_attribution_note": "No attempt is designated as the last writer of the final bytes, because every review PATCH round rewrites these files. The authoritative bytes/SHA-256 are sealed in the supervisor's EVIDENCE_MANIFEST.json and the revision chain (each round's attempt, exit code, wall time and usage) is recorded in commands.json and model_usage.json; see the top-level amendment_note and final_bytes_note.",
+    "selector_requested": "minimax-code-cn/MiniMax-M3",
+    "thinking_requested": "high",
+    "actual_provider": "minimax-code-cn",
+    "actual_model": "MiniMax-M3",
+    "actual_api": "anthropic-messages",
+    "actual_source": "config/inference/hist_vnext_v1/logs/implementation.attempt-1.jsonl (prior investigation), logs/implementation.attempt-2.jsonl (certificate author), logs/implementation.attempt-3.jsonl (review round-1 repair) and logs/implementation.attempt-4.jsonl (review round-2 repair) — all measured provider=minimax-code-cn, model=MiniMax-M3, api=anthropic-messages (VERIFIED_BY_RUN)",
+    "attempts": [
+      {
+        "attempt": "implementation.attempt-1",
+        "session_id": "01a16f88-89cb-7781-825e-f385000bd08d",
+        "exit_code": 1,
+        "wall_seconds": 600.288,
+        "outcome": "stopped by the --max-time 10m bound at 600.288 s while still reading evidence; only failed_seeds.json was written; no REPORT.md and no certificate",
+        "files_written": [
+          "config/inference/hist_vnext_v1/failed_seeds.json"
+        ],
+        "event_stream": "config/inference/hist_vnext_v1/logs/implementation.attempt-1.jsonl",
+        "note": "The timeout is preserved as a real failure, not retried as an extension of the same process."
+      },
+      {
+        "attempt": "implementation.attempt-2",
+        "session_id": "01a16f88-89cb-7781-825e-f385000bd08d",
+        "exit_code": 0,
+        "wall_seconds": 357.9,
+        "wall_seconds_ledger_exact": 357.852,
+        "outcome": "resumed the same session id under a fresh 10m-bounded process with the same model and provider and no scope change; wrote REPORT.md and this certificate",
+        "files_written": [
+          "config/inference/hist_vnext_v1/REPORT.md",
+          "config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json"
+        ],
+        "event_stream": "config/inference/hist_vnext_v1/logs/implementation.attempt-2.jsonl"
+      },
+      {
+        "attempt": "implementation.attempt-3",
+        "session_id": "01a16f88-89cb-7781-825e-f385000bd08d",
+        "exit_code": 0,
+        "wall_seconds": 284.956,
+        "outcome": "resumed the same session id to apply the independent review round-1 PATCH items D2-D6; 11 edit operations rewrote REPORT.md and this certificate; the bytes written by attempt-3 (certificate 2026-10-24T20:38:07Z, REPORT.md 2026-10-24T20:39:02Z) were one intermediate state of the revision chain and were superseded by later rounds (see the top-level amendment_note and final_bytes_note); same model and provider; exit 0",
+        "files_written": [
+          "config/inference/hist_vnext_v1/REPORT.md",
+          "config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json"
+        ],
+        "event_stream": "config/inference/hist_vnext_v1/logs/implementation.attempt-3.jsonl",
+        "note": "Ledger values (exit 0, wall 284.956 s) are the supervisor's records in commands.json and model_usage.json; this certificate references them without embedding those ledgers' hashes."
+      },
+      {
+        "attempt": "implementation.attempt-4",
+        "session_id": "01a16f88-89cb-7781-825e-f385000bd08d",
+        "exit_code": "PENDING_SUPERVISOR_SETTLEMENT",
+        "wall_seconds": "PENDING_SUPERVISOR_SETTLEMENT",
+        "outcome": "resumed the same session id to apply the independent review round-2 PATCH items N3-N4 (session-count and provenance fields only); this is one round of the open revision chain, not the last one — its exit code and wall time are settled by the supervisor's commands.json and model_usage.json rather than asserted here",
+        "files_written": [
+          "config/inference/hist_vnext_v1/REPORT.md",
+          "config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json"
+        ],
+        "event_stream": "config/inference/hist_vnext_v1/logs/implementation.attempt-4.jsonl"
+      }
+    ],
+    "review_patch_applied": [
+      {
+        "round": 1,
+        "attempt": "implementation.attempt-3",
+        "session_id": "01a16f88-89cb-7781-825e-f385000bd08d",
+        "event_stream": "config/inference/hist_vnext_v1/logs/implementation.attempt-3.jsonl",
+        "items": "D2-D6",
+        "scope": "applied the independent review round-1 PATCH items D2-D6 to config/inference/hist_vnext_v1/REPORT.md and config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json only; no scientific conclusion, status, blocking code, identifiable set, inference status, three-dimension status, parameter identity or NOT_RUN list was changed"
+      },
+      {
+        "round": 2,
+        "attempt": "implementation.attempt-4",
+        "session_id": "01a16f88-89cb-7781-825e-f385000bd08d",
+        "event_stream": "config/inference/hist_vnext_v1/logs/implementation.attempt-4.jsonl",
+        "items": "N3-N4",
+        "scope": "applied the independent review round-2 PATCH items N3-N4 (session-count and provenance fields only) to config/inference/hist_vnext_v1/REPORT.md and config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json only; no scientific conclusion, status, blocking code, identifiable set, inference status, three-dimension status, parameter identity or NOT_RUN list was changed"
+      }
+    ],
+    "reasoning_actual": "NOT_SEPARATELY_MEASURED (the stream carries no separate reasoning-token field; requested high is a CLI flag, not a measured reasoning level)",
+    "usage_records_note": "Per-session tokens/cost/RSS are settled by the supervisor into model_usage.json and resource_usage.json; this certificate references those ledgers by path only and does not restate their figures (VERIFIED_BY_CODE)",
+    "global_roles_unchanged": true,
+    "silent_fallback": false
+  },
+  "required_contract": [
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+      "lines": "255-261, 287",
+      "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+      "bytes": 37168,
+      "quote": [
+        "### H6A：识别screen与条件推断（默认不推断）",
+        "- **前置输入：** 相关H5结构研究完成、H1/H4 source measurement准入且明确新推断授权。",
+        "- **文件白名单候选：** 新增config/inference/hist_vnext_v1/及measurement inference screen、tests/test_hist_identifiability.py；不改冻结p05识别结论。",
+        "- **测试与实验输出：** 仅有独立linkage子集Jacobian rank、参数碰撞、synthetic truth recovery、测量误差/初态敏感度与跨源；rank不足及prior-only必须拒绝。",
+        "- **通过门：** 报告identifiable子集与未识别块；无独立来源/费用上限则inference NOT_RUN，不能把工程固定当历史估计。",
+        "- **显式STOP：** rank不足仍ABC、复用forcing/已选参观测作独立验证、看封存窗口或超预算即STOP。PASS并commit后同样STOP，等待下一步授权。",
+        "| P11B识别、rank/collision/truth recovery | H6A | KEEP+DEFER inference | 只对独立linkage子集；未识别或无推断授权就NOT_RUN，不改冻结calibrated=0 |"
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md:255-261,287 (verbatim; line numbers checked with nl -ba)",
+      "role": "phase contract H6A: 前置输入、文件白名单、识别测试项、通过门、显式 STOP、识别映射行"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+      "lines": "414-424, 19, 25, 27, 29, 31",
+      "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+      "bytes": 114765,
+      "quote": [
+        "## H6A：识别screen与条件推断（默认不推断）",
+        "只处理HIST_VNEXT的H6A：识别screen与条件推断（默认不推断）。按本步先形成Plan，再完成实现、独立复核、修复、测试和本地提交，不等待额外同意或预算确认。",
+        "工作目录 /Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab。读docs/upgrade_review/HIST_VNEXT/01–06和05中本步完整合同。前置：相关H5结构研究完成、H1/H4 source measurement分型正确且识别screen支持拟推断参数。核实当前HEAD/dirty与前置review，禁止覆盖用户工作。",
+        "角色：@plan先冻结Plan；实现者显式minimax-code-cn/MiniMax-M3单任务override；独立phase-reviewer使用@review且不得是实现者自签；保留@commit配置。推理设置与模型用量如实记录；不改全局角色、不静默fallback；未知用量不作为停止条件。",
+        "只允许：新增config/inference/hist_vnext_v1/及measurement inference screen、tests/test_hist_identifiability.py；不改冻结p05识别结论。engine/state/storage等现有接口若需修改，先在本步Plan逐文件说明必要性并纳入独立review；未列入本步范围则不改。保护BASELINE、research_contract、uv.lock、config/p06/cards、原场景/报告/输出。",
+        "本步操作/测试：仅有独立linkage子集Jacobian rank、参数碰撞、synthetic truth recovery、测量误差/初态敏感度与跨源；rank不足及prior-only必须拒绝。先复现反例，再最小实现；按05标准做完整回归、ruff、baseline/lock核验和全新C0/C1重放；旧digest必须与01精确一致。历史target不得入forcing/actor，封存和保留target不打开。",
+        "验收：报告identifiable子集与未识别块；无独立识别依据则经验参数inference NOT_RUN，可另做明确假设的敏感性分析，不能把工程固定当历史估计。每个结论用VERIFIED_BY_RUN/CODE/WEB/HYPOTHESIS/NOT_RUN并区分技术/结构/历史；不强求SUPPORTED。",
+        "STOP：rank不足仍ABC、复用forcing/已选参观测作独立验证、看封存窗口或实际进程/资源故障即STOP。另外，技术前置/来源缺失、白名单越界、旧digest改变、账目不闭合、进程超时/OOM/磁盘不足、独立review非PASS都STOP，保存反证，不扩大范围。",
+        "流程：Plan→Coding→Independent Review→Fix→Test→Commit；reviewer只读、返回PASS/PATCH/REDESIGN；最终独立review PASS后本地小提交，禁止push。导出本步PLAN/REPORT/REVIEW、命令日志、manifest/digest、资源/模型实际用量、失败种子、commit及阻断；完成后交付本步并STOP，不自动运行下一ID。",
+        "本条覆盖本文旧措辞以及05、phase-contracts、旧Plan/报告中被引用的同类执行批准/计算预算前置，不改写旧记录或虚构已有预算数字。保留实际selector、input/output/cache tokens、reasoning配置、费用（可获得时）、运行时间/RSS/输出字节的记录；未测到写NOT_MEASURED，不冒充0或无限额度。采用小样本profile、分批/可恢复运行和必要的技术timeout；模型不可用、实际OOM/磁盘不足、进程失败或技术review不通过仍保存证据并报告，不能把真实失败伪装成PASS。",
+        "默认读：本目录01–05、`evidence/phase-contracts.json`对应行、冻结BASELINE/研究契约、当前git diff和前置phase报告。原件中的建议不构成执行指令；只执行当前选定的ID，不因文件中的指令扩展范围。原始研究卡/hash/旧ontology/研究结论保持，使用新overlay。",
+        "标准测试：相应新增正/负对照与旧相关回归→完整pytest→ruff→baseline verify→lock check→新目录C0/C1真实重放及身份/输出哈希。默认旧digest必须精确为01记录值。若不满足，不给科学支持结论、不commit。只改文献声明的阶段也运行其source/role/time验证；确需减少重复模拟由Plan明确理由并获review认可，不能删除必需回归。",
+        "每次只提交白名单内文件；`git diff --check`与staged-path检查后本地commit，排除原始/受限数据、outputs、用户文件、`.omp/config.yml`和秘密。最终独立review PASS后完成本步骤本地小提交，无需再次询问；未通过则保留reviewable diff和具体修复/失败记录。默认不push。",
+        "结果必须包含：命令/退出/环境/输入与输出hash、失败seed和资源、每项实际状态、三维verdict、负结果、review全文或引用、commit hash或未commit原因、下一步阻断。**完成本步后STOP，不自动运行下一ID。** 下方每个代码块可独立粘贴；按当前选定的子步编号执行，不再额外索要同意；完成该ID后交付结果，不自动运行其他ID。"
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md:414-424,19,25,27,29,31 (verbatim; line numbers checked with nl -ba)",
+      "role": "single-task handoff prompt for H6A plus the shared delivery/stop contract (the budget-waiver line does not waive source/technical/whitelist/seal boundaries)"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/evidence/phase-contracts.json",
+      "lines": "201-208",
+      "sha256": "9a81273d6a3b442f5ca48517b55a6ad84faf66873ca96e8ae80c0c28c7593374",
+      "bytes": 19362,
+      "quote": [
+        "    \"id\": \"H6A\",",
+        "    \"objective\": \"识别screen与条件推断（默认不推断）\",",
+        "    \"dependencies\": \"相关H5结构研究完成、H1/H4 source measurement准入且明确新推断授权\",",
+        "    \"whitelist\": \"新增config/inference/hist_vnext_v1/及measurement inference screen、tests/test_hist_identifiability.py；不改冻结p05识别结论\",",
+        "    \"tests\": \"仅有独立linkage子集Jacobian rank、参数碰撞、synthetic truth recovery、测量误差/初态敏感度与跨源；rank不足及prior-only必须拒绝\",",
+        "    \"gate\": \"报告identifiable子集与未识别块；无独立来源/费用上限则inference NOT_RUN，不能把工程固定当历史估计\",",
+        "    \"stop\": \"rank不足仍ABC、复用forcing/已选参观测作独立验证、看封存窗口或超预算即STOP\""
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/evidence/phase-contracts.json:201-207 (H6A machine-contract row, verbatim lines with original indentation)",
+      "role": "machine-readable H6A contract row"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/01_BASELINE_AND_VERSION_AUDIT.md",
+      "lines": "30-33, 43-46",
+      "sha256": "e46979b7dbe235c09f4caf793164a2b9e7c675fd1679f6fbbd731a704e7f4059",
+      "bytes": 10147,
+      "quote": [
+        "| BASELINE.md | 1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f |",
+        "| config/research_contract.json | 6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82 |",
+        "| uv.lock | 9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9 |",
+        "| config/ontology/f2_v1.json | 93ff304d6d90389176570d9d767ede998894ebedcc23adb35229889bd0346812 |",
+        "| C0-r1 | 92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d | e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445 | 7.2951760839205235 |",
+        "| C0-r2 | 92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d | e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445 | 7.594965290976688 |",
+        "| C1-r1 | c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5 | 632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90 | 7.946012082975358 |",
+        "| C1-r2 | c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5 | 632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90 | 7.846629000036046 |"
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/01_BASELINE_AND_VERSION_AUDIT.md:30-33,43-46 (verbatim)",
+      "role": "frozen file hashes and the C0/C1 digests reserved as the post-unblock acceptance checklist (NOT run in this branch)"
+    },
+    {
+      "path": ".omp/agents/phase-reviewer.md",
+      "lines": "1-7, 11-33",
+      "sha256": "5961ba05e6b0cd42f0abcc3b74c64c959a3c47cca62fee44ad21cf6a8e632a1b",
+      "bytes": 1395,
+      "quote": [
+        "name: phase-reviewer",
+        "description: Independently audit a completed Hungary simulation phase against BASELINE.md and phase acceptance criteria. Never edit implementation files.",
+        "model: \"@review\"",
+        "tools: [read, grep, glob, bash]",
+        "blocking: true",
+        "1. Read BASELINE.md first.",
+        "3. Do not edit source files.",
+        "7. Output exactly one verdict:",
+        "8. For PATCH or REDESIGN, give a finite prioritized repair list with file paths and reproducible evidence.",
+        "9. Do not praise broadly. Report evidence and defects."
+      ],
+      "quote_origin": ".omp/agents/phase-reviewer.md:1-7,11-33 (verbatim)",
+      "role": "independent reviewer binding: @review resolves to the project review role (minimax-code-cn/MiniMax-M3:high per .omp/config.yml), read-only tools, single verdict PASS/PATCH/REDESIGN; the implementer must not self-sign a review"
+    },
+    {
+      "path": "studies/HIST_VNEXT/M06/reviews/round-4.md",
+      "lines": "1-3, 44-47",
+      "sha256": "cb8b6235942587012a04c4c7bafd545466691f4d6f83b5afa3224eb9e6e75025",
+      "bytes": 6964,
+      "quote": [
+        "## Verdict: **PASS**",
+        "Round-4 independent verification of the H5G-G1 (M6) evidence-only blocker package. Both round-3 defects are confirmed repaired at the exact locations named; the core invariants re-verify; no substantive defect remains. This PASS covers **blocker judgment + sealed evidence accuracy + evidence-only scope only** — it is **not** H5G acceptance (H5G remains `BLOCKED`).",
+        "### Supervisor actions authorized by this PASS",
+        "(a) Save this verdict verbatim to `REVIEW.md` and to `reviews/round-3.md` / `reviews/round-4.md` as appropriate (have `REVIEW.md` enumerate rounds 1–4 with their verdicts and defect IDs).",
+        "(b) Fill `model_usage.reviewer` with `NOT_MEASURED` or the real reviewer usage — never a self-signed figure.",
+        "(c) Then build `EVIDENCE_MANIFEST.json` over the **final** bytes: write `REVIEW.md` (and any `reviews/round-3.md`/`round-4.md`) **first**, then hash every actual file in `studies/HIST_VNEXT/M06/` (39 files currently: PLAN.md, REPORT.md, BLOCKER_CERTIFICATE.json, failed_seeds.json, commands.json, model_usage.json, resource_usage.json, protected_hashes.preflight.json, user_work_snapshot.json, 29 log files, 2 preserved reviews, plus REVIEW.md), excluding the manifest itself and the post-commit `COMMIT_RECEIPT.json`. Do not change any other evidence claim, and note that `certificate.delivery.files_not_yet_written` / `package_completeness` remain seal-time snapshots."
+      ],
+      "quote_origin": "studies/HIST_VNEXT/M06/reviews/round-4.md:1-3,44-47 (verbatim)",
+      "role": "sealing convention precedent: evidence-only PASS is separated from research BLOCKED; ordering of REVIEW → usage settlement → manifest; manifest excludes itself and the post-commit receipt"
+    }
+  ],
+  "prerequisite_reviews": [
+    {
+      "phase": "H4A-1",
+      "path": "docs/phases/HIST_VNEXT/H4A-1/REVIEW.md",
+      "sha256": "48ab18fa7fc893c8c9a11ef03dd9a01afbae5e5775d3f871d9309e355e9f6f86",
+      "bytes": 11703,
+      "verdict": "PASS",
+      "actual_scope": "REVIEW:60 PASS covers the five documentation repairs, seven-file byte-identity of the approved scope, CLI/approval semantics, H1A/H4A-0 regression preservation, C0/C1 identity against frozen pins, the truthful 4Q-control marking, and absence of overclaims; it does not authorize production initialization, measurement wiring, runtime connection, or any historical claim. REVIEW:61 records H4A-0 approved sets empty (0 approved inputs).",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "H4B-EXEC",
+      "path": "docs/phases/HIST_VNEXT/H4B-EXEC/REPORT.md",
+      "sha256": "2d8e646d500eb5a48d59ebf217a29faeab4504886d81d153501c61e64397560a",
+      "bytes": 6681,
+      "verdict": "CLEARED (technical wiring only)",
+      "actual_scope": "REPORT:59-82 runtime adapter re-runs the hash-bound approval, applies approved persons/households and dwelling ratios to a copy of historical_f2_replay, runs 4 quarters per setting, writes measurement.json with runtime_connected=true; consumed_by_model has 9 entries, but historical_inputs_admitted=0 and every measurement has historical_comparison=NOT_RUN. REPORT:100-102 marks PRICE_INVESTMENT_EXECUTION_MAPPING_ABSENT and H4A_RUNTIME_MEASUREMENT_NOT_CONNECTED CLEARED and STRICT_FULL_FILE_BYTE_GATE_UNMET CLEARED for fresh runs. REPORT:111-114 keeps price/investment magnitudes and authority dates UNIDENTIFIED and historical comparison NOT_ESTABLISHED.",
+      "covers_independent_historical_linkage_admission": false,
+      "note": "Measurement wiring exists and is real; it must not be reported as 'no wiring at all' nor upgraded to source admission."
+    },
+    {
+      "phase": "H4C",
+      "path": "docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json",
+      "sha256": "44c803e513ef44cd7a0c6dc512cb7c0001691c8360e6e0d271c23052b25c8180",
+      "bytes": 2547,
+      "verdict": "historical_status=NOT_ESTABLISHED",
+      "actual_scope": "Model-internal measurement definitions; caveats state branch states are model-generated; windows 1977_1978 NOT_RUN and 1979_1985 NOT_OBSERVED; price index is explicitly not a historical conversion.",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "H4C-original-coverage",
+      "path": "docs/phases/HIST_VNEXT/H4C/ORIGINAL_COVERAGE.md",
+      "sha256": "b8d1291032633542e68477841e8de17fc09b64f067d05fdefdc528dc630d1d78",
+      "bytes": 4540,
+      "verdict": "NOT_A_HISTORICAL_ADMISSION",
+      "actual_scope": "Read-level table with every Admitted excerpt = null; D03/D04/D05/D16 missing; D06/D07/D17 MISSING/UNVERIFIED; D01/D02 metadata only; HOLD pages not read; H4C therefore uses declared engineering settings, not historical estimates.",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "H1A (source gate, re-run in this branch)",
+      "path": "config/inference/hist_vnext_v1/logs/admission.attempt-1.stdout.json",
+      "stdout_sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+      "stdout_bytes": 4107,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/admission.attempt-1.stderr.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_bytes": 0,
+      "verdict": "exit 1; structural PASS / historical BLOCKED",
+      "actual_scope": "Read-only source admission audit: total_admitted=0, independent_pairs=0, non_independent_pairs=1, total_blocked_anchors=63, total_candidates=4, authority_blocked=5, event_candidates=10, review_requests_required=4; detail lines include 'historical gate: no independent admitted observable pair with traceable roots' and 'historical gate: fewer than two admitted observable patterns'.",
+      "covers_independent_historical_linkage_admission": false,
+      "note": "General source-gate counterexample only; it must be judged jointly with the H4 records below and cannot alone exclude later admission."
+    },
+    {
+      "phase": "B1 linkage decision (user-owned, earlier)",
+      "path": "docs/phases/P06_CLEARANCE_LOG.md",
+      "sha256": "25a4b6cb56a3f2c030eb6535662cc203c1122774bfbc12c6323e4ab43c905f8b",
+      "bytes": 55051,
+      "verdict": "DECLARED BLOCKER",
+      "actual_scope": "LOG:236-274 — the external reasoning pass concluded 0 of 6 behavioural blocks demonstrably identified and the code audit rejected the one conditional candidate; 'the correct production linkage is `[]` without a diagnostic candidate'; Track B stops at B1 as a declared blocker owned by the user.",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "P06 calibration clearance",
+      "path": "config/calibration/p06_clearance.json",
+      "sha256": "3195f04af4a923a053b9f43473ed3e24a56bb17a0e394eba27df8b768783b572",
+      "bytes": 12382,
+      "verdict": "calibration_and_inference = WAIVED",
+      "actual_scope": "scope_decision basis B1: 0 of 6 behavioural blocks demonstrably identified; the conditional candidate has zero sensitivity to the admitted trade targets; the observation layer collides across blocks. Consequence: identifiable_set is empty and no linkage exists, so no paired F1/F2 study and no ABC inference can run; Inference_status stays NOT_RUN.",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "H5A-A1 / M02",
+      "path": "studies/HIST_VNEXT/M02/REVIEW.md",
+      "sha256": "26fe24c77f21cbb865226bfb848a165c24267ac36b1995e4705e416149eebd5b",
+      "bytes": 12219,
+      "verdict": "PASS",
+      "actual_scope": "Independent phase review PASS on the M02 study package; the report's own verdict table keeps Structural REJECTED in both demand regimes and Historical UNIDENTIFIED / NOT_ESTABLISHED (NOT_RUN) because no admitted enterprise archive and no independent shortage observation was used (studies/HIST_VNEXT/M02/REPORT.md:430-434).",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "H5B / M04",
+      "path": "docs/phases/HIST_VNEXT/H5B/REVIEW.md",
+      "sha256": "2b45a22fb499c89027c252fa3b4a8f001da58b2445b1556718ec99f610cbf377",
+      "bytes": 27152,
+      "verdict": "PASS (round 5)",
+      "actual_scope": "Independent review PASS of the M04 package; the report's own verdict table (studies/HIST_VNEXT/M04/REPORT.md:113-116) records Technical VERIFIED_BY_RUN, Structural FIRST_STAGE_SUPPORTED with a capacity ceiling, Historical UNIDENTIFIED (no admitted primary source; recipe/participation are declared structural assumptions), Calibration NOT_RUN (no calibration target admitted).",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "H5C / M01",
+      "path": "studies/HIST_VNEXT/M01/REVIEW.md",
+      "sha256": "f10e80b4ae9c5b82dc905542de0cc0780aab851c453028b55f548620fbc20cc3",
+      "bytes": 26089,
+      "verdict": "PASS (round 5)",
+      "actual_scope": "Independent review record; the review states technical PASS with 78 arms / 2185 files and income/import CONDITIONAL_CARRIED_REFERENCE_EFFECT while welfare and historical remain UNIDENTIFIED; the H0B registration for M1 is unchanged.",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "H5D / M03 (follow-on implementation)",
+      "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REVIEW.md",
+      "sha256": "5e60589b156f656387cc2535d3cd1ad3e01c3b46cbbdd5b6c58582c771614f58",
+      "bytes": 4645,
+      "verdict": "PASS (round 5)",
+      "actual_scope": "Independent review of the H5D labour-institution implementation; the implementation report keeps historical and institutional attribution UNIDENTIFIED (studies/HIST_VNEXT/M03/IMPLEMENTATION_REPORT.md:134). The earlier H5D blocker-package seal (studies/HIST_VNEXT/M03/REVIEW.md, round 6 PASS, blocking code MISSING_LABOR_INSTITUTION_UNIT_SPEC_PASS) was released by this later synthetic implementation, so the labour-spec gap is no longer claimed as missing.",
+      "covers_independent_historical_linkage_admission": false,
+      "note": "Synthetic implementation PASS; it must not be propagated as a historical identification result."
+    },
+    {
+      "phase": "H5F-F1 / M09",
+      "path": "studies/HIST_VNEXT/M09/REVIEW.md",
+      "sha256": "6f23a94a552e5a8f46f08ca6dcd29b415ab5af078105ad37d7bdced2f442c69a",
+      "bytes": 6367,
+      "verdict": "PASS (round 4, final independent verdict)",
+      "actual_scope": "Independent review PASS of the H5F-F1 package; the report itself states 'technical PASS candidate; structural SYNTHETIC_ENGINEERING_PROFILE; historical validation NOT_RUN' and 'Historical status NOT_RUN (no historical plan-implementation source; no sealed 1979-85 / 1986-88 target read)' (studies/HIST_VNEXT/M09/REPORT.md:3-5,25).",
+      "covers_independent_historical_linkage_admission": false,
+      "note": "Synthetic engineering profile; not an independent historical observation."
+    },
+    {
+      "phase": "H5G-G1 / M06 (blocker seal only)",
+      "path": "studies/HIST_VNEXT/M06/reviews/round-4.md",
+      "sha256": "cb8b6235942587012a04c4c7bafd545466691f4d6f83b5afa3224eb9e6e75025",
+      "bytes": 6964,
+      "verdict": "PASS (evidence-only blocker package)",
+      "actual_scope": "PASS covers blocker judgment + sealed evidence accuracy + evidence-only scope only; H5G remains BLOCKED. The M06 report keeps technical BLOCKED_PREREQUISITE, structural/implementation/experiments NOT_RUN, commit null.",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "H5E / M07 (blocker seal only)",
+      "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+      "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f",
+      "bytes": 12378,
+      "verdict": "PASS (sealed blocker package)",
+      "actual_scope": "PASS on the sealed blocker package; the M07 report keeps technical BLOCKED_PREREQUISITE, structural NOT_RUN, historical BLOCKED, implementation/experiments NOT_RUN, and states that H5E is not completed and not SUPPORTED (studies/HIST_VNEXT/M07/REPORT.md:13-17).",
+      "covers_independent_historical_linkage_admission": false
+    },
+    {
+      "phase": "H5 sub-steps not started",
+      "verdict": "NOT_STARTED",
+      "actual_scope": "studies/HIST_VNEXT/M05, M08, M10 and M11 directories do not exist (VERIFIED_BY_RUN: directory listing in this session). They correspond to 05 contract rows H5A-A2 (M5), H5A-A3 (M11), H5F-F2 (M8) and H5G-G2 (M10).",
+      "covers_independent_historical_linkage_admission": false
+    }
+  ],
+  "search_scope": {
+    "performed": [
+      {
+        "target": "config/calibration/p05.json",
+        "method": "in-memory JSON read (read-only)",
+        "result": "identification block lines 61-77 with 9 'fixed' + 6 'unidentified'; linkage = [] (line 79); linkage_notes (line 80) requires the screen to report NO_IDENTIFIABLE_PARAMETERS rather than invent a candidate set; identification_notes (line 78) separates declared identification identity from run disposition and forbids reporting the six P04 behavioural blocks as estimated."
+      },
+      {
+        "target": "config/calibration/p05_parameters.yml",
+        "method": "read-only",
+        "result": "15 declared parameter artifacts with variable_id and literature_refs, consistent with the p05 identification identities."
+      },
+      {
+        "target": "config/calibration/p06_clearance.json",
+        "method": "read-only",
+        "result": "calibration_and_inference waived because identifiable_set is empty and no linkage exists; Inference_status stays NOT_RUN."
+      },
+      {
+        "target": "config/calibration/p06_reproduction_crosswalk.json",
+        "method": "read-only",
+        "result": "no linkage key and no identifiable_set key present."
+      },
+      {
+        "target": "config/p06/cards/*.json (11 cards)",
+        "method": "read-only scan of calibrated_parameter_dependencies",
+        "result": "card dependencies point only at the p04_* behaviour priors (M1/M4/M5/M6/M7/M8/M9/M10); no card declares an admissible-target link that would supply an independent historical observable."
+      },
+      {
+        "target": "config/initial_state/hist_vnext_h4_v1/candidate_overlay.json",
+        "method": "read-only structural scan",
+        "result": "9 records with data_role=candidate_linkage: admission_status = 7 candidate + 2 blocked; purpose = 8 definition_review + 1 internal_validation_background. No admitted historical measurement input."
+      },
+      {
+        "target": "config/initial_state/hist_vnext_h4_v1/measurement_crosswalk.json",
+        "method": "read-only structural scan",
+        "result": "9 records with data_role: 7 target + 2 candidate_linkage; mapping_status = 8 no_counterpart + 1 proxy; no admission_status field, i.e. no admitted measurement value."
+      },
+      {
+        "target": "config/initial_state/hist_vnext_v1/anchor_crosswalk.json",
+        "method": "read-only structural scan",
+        "result": "63 declared 1957 anchors, all blocked by the source gate."
+      },
+      {
+        "target": "history/HIST_VNEXT/h4_sources/shared_observations.json",
+        "method": "read-only structural scan",
+        "result": "19 records, independent=False for every record; 4 observation groups; the file states known common roots are never marked independent and unknown roots stay null and are not treated as independent."
+      },
+      {
+        "target": "docs/phases/HIST_VNEXT/H4A-0/APPROVED_INPUT_SET.json",
+        "method": "read-only",
+        "result": "initial_state_inputs=[], measurement_inputs=[], assumption_inputs=[]; notice: no candidate passed the value-use/rights gate."
+      },
+      {
+        "target": "docs/phases/HIST_VNEXT/H4A-1/EXPERIMENT_INPUT_APPROVAL.json",
+        "method": "read-only",
+        "result": "3 approved assumption ids for purpose=initial_state, runtime_connected=false."
+      },
+      {
+        "target": "docs/phases/HIST_VNEXT/H4B-EXEC/REPORT.md:59-115",
+        "method": "read-only",
+        "result": "runtime wiring is real; historical_inputs_admitted=0 and historical_comparison=NOT_RUN."
+      },
+      {
+        "target": "docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json and ORIGINAL_COVERAGE.md",
+        "method": "read-only",
+        "result": "historical_status=NOT_ESTABLISHED; every admitted excerpt null; D03/D04/D05/D16 missing; D06/D07/D17 MISSING/UNVERIFIED."
+      },
+      {
+        "target": "docs/phases/P05_REPORT.md:345-380 and :725-735",
+        "method": "read-only",
+        "result": "§10b lists the independent observables still required by the six unidentified blocks and states they are acquisition candidates, not verified series; the F1 calibration row records 'not run' because no declared parameter is linked to an admissible target variable."
+      },
+      {
+        "target": "docs/phases/P05_B1_LINKAGE_PROMPT.md",
+        "method": "read-only",
+        "result": "A linkage entry alone does not make a parameter identifiable in this pipeline; admissible identification targets are only the 1960-1969 observed rows."
+      },
+      {
+        "target": "docs/phases/P06_CLEARANCE_LOG.md:236-280",
+        "method": "read-only",
+        "result": "B1 linkage decision: 0 of 6 behavioural blocks demonstrably identified; the correct production linkage is [] without a diagnostic candidate."
+      },
+      {
+        "target": "H5 study packages studies/HIST_VNEXT/{M01,M02,M03,M04,M06,M07,M09} and docs/phases/HIST_VNEXT/H5B/",
+        "method": "read-only review/report inspection",
+        "result": "Verdicts and scopes recorded in prerequisite_reviews; none of them supplies an admissible historical observable linked to a parameter artifact."
+      }
+    ],
+    "not_opened_by_design": [
+      "data/manifests/p05_targets.yml (target registry)",
+      "data/manifests/p05_holdout.yml (holdout registry)",
+      "sealed / HOLD / reserved 1979-1985 and 1986-1988 target payloads",
+      "full D01 / D02 source bodies (metadata only, per H4C ORIGINAL_COVERAGE)",
+      "the legacy screen entry point src/hsm_lab/calibration/screen.py:64 (reads control['registries']['targets']); it was read as code but not invoked, because the metadata check needed no target registry"
+    ],
+    "no_new_linkage_invented": "No linkage entry, candidate set, pseudo-target or synthetic admissible observation was constructed in this branch (VERIFIED_BY_RUN)."
+  },
+  "source_measurement_independence_gaps": [
+    {
+      "gap": "no admitted independent historical observation pair",
+      "detail": "independent_pairs=0 and non_independent_pairs=1 in the admission audit; 'historical gate: no independent admitted observable pair with traceable roots'; history/HIST_VNEXT/h4_sources/shared_observations.json has independent=False for all 19 records across 4 groups.",
+      "evidence": [
+        {
+          "path": "config/inference/hist_vnext_v1/logs/admission.attempt-1.stdout.json",
+          "sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419"
+        },
+        {
+          "path": "history/HIST_VNEXT/h4_sources/shared_observations.json",
+          "sha256": "30451530b03ac2b4fc85cb317c1161d39b8e6fe0fde3e2f40dcafa68b6226b2a",
+          "bytes": 11548
+        }
+      ],
+      "verified_by": "VERIFIED_BY_RUN"
+    },
+    {
+      "gap": "no admitted historical measurement input set",
+      "detail": "H4A-0 APPROVED_INPUT_SET.json has empty initial_state_inputs / measurement_inputs / assumption_inputs with the truthful-empty notice; H4A-1 approved only 3 initial-state assumption ids.",
+      "evidence": [
+        {
+          "path": "docs/phases/HIST_VNEXT/H4A-0/APPROVED_INPUT_SET.json",
+          "sha256": "4a1cbb3ae0637b8a0ae1c064db89a2890fc0c40c4def5103b0030234dd96a5ac",
+          "bytes": 335
+        },
+        {
+          "path": "docs/phases/HIST_VNEXT/H4A-1/EXPERIMENT_INPUT_APPROVAL.json",
+          "sha256": "c322f7bbc5cbc86da9eadc2fed36535152c5bc9efcd29b3d9f0cdb9ec9c450fc",
+          "bytes": 1494
+        }
+      ],
+      "verified_by": "VERIFIED_BY_CODE"
+    },
+    {
+      "gap": "model-internal measurement exists but historical comparison never ran",
+      "detail": "H4B-EXEC produced measurement.json per run with runtime_connected=true and 9 consumed_by_model entries, yet historical_inputs_admitted=0 and every measurement has historical_comparison=NOT_RUN; H4C historical_status=NOT_ESTABLISHED.",
+      "evidence": [
+        {
+          "path": "docs/phases/HIST_VNEXT/H4B-EXEC/REPORT.md",
+          "sha256": "2d8e646d500eb5a48d59ebf217a29faeab4504886d81d153501c61e64397560a",
+          "bytes": 6681
+        },
+        {
+          "path": "docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json",
+          "sha256": "44c803e513ef44cd7a0c6dc512cb7c0001691c8360e6e0d271c23052b25c8180",
+          "bytes": 2547
+        }
+      ],
+      "verified_by": "VERIFIED_BY_CODE"
+    },
+    {
+      "gap": "primary originals missing or unverified",
+      "detail": "H4C ORIGINAL_COVERAGE records every admitted excerpt as null; D03/D04/D05/D16 missing; D06/D07/D17 MISSING/UNVERIFIED; D01/D02 metadata only; H4C therefore uses declared engineering settings, not historical estimates.",
+      "evidence": [
+        {
+          "path": "docs/phases/HIST_VNEXT/H4C/ORIGINAL_COVERAGE.md",
+          "sha256": "b8d1291032633542e68477841e8de17fc09b64f067d05fdefdc528dc630d1d78",
+          "bytes": 4540
+        }
+      ],
+      "verified_by": "VERIFIED_BY_CODE"
+    },
+    {
+      "gap": "candidate link records are not admissions",
+      "detail": "candidate_overlay.json: 9 candidate_linkage records, 7 candidate + 2 blocked, purposes definition_review / internal_validation_background. measurement_crosswalk.json: 8 no_counterpart + 1 proxy mappings and no admission_status field.",
+      "evidence": [
+        {
+          "path": "config/initial_state/hist_vnext_h4_v1/candidate_overlay.json",
+          "sha256": "f3c2a13c8eed9a6c36d86592425b80ca038eeb0196fabf754491447f59c140b2",
+          "bytes": 51493
+        },
+        {
+          "path": "config/initial_state/hist_vnext_h4_v1/measurement_crosswalk.json",
+          "sha256": "d0fbfab60e7278de01dc642ece9d73643a3b91cf0af4760aca05a72ef92691e8",
+          "bytes": 10644
+        }
+      ],
+      "verified_by": "VERIFIED_BY_RUN"
+    },
+    {
+      "gap": "the independent observables required by the six unidentified blocks are not acquired",
+      "detail": "P05 §10b lists physical IO / energy import flows, plan-vs-reported-vs-verified output, independent repeated measurement of one indicator, party composition and resolutions, cultural facility use and participation rates, and event-dated protest/petition/strike signals; the section states these are acquisition candidates, not verified series.",
+      "evidence": [
+        {
+          "path": "docs/phases/P05_REPORT.md",
+          "sha256": "33b75aa3c4e51f43de95384f939639b57b5b22ffe73f67a29acd1f736568c751",
+          "bytes": 52088
+        }
+      ],
+      "verified_by": "VERIFIED_BY_CODE"
+    },
+    {
+      "gap": "declared linkage is empty by decision, not by accident of this branch",
+      "detail": "config/calibration/p05.json linkage = [] and p06_clearance.json records calibration_and_inference as WAIVED for exactly this reason; the B1 audit rejected the one conditional candidate because the executable path does not exist.",
+      "evidence": [
+        {
+          "path": "config/calibration/p05.json",
+          "sha256": "ef1371b66625ddaf78663cc1181679443d7288c084c18f54e1b206a5470bb6ae",
+          "bytes": 6141
+        },
+        {
+          "path": "config/calibration/p06_clearance.json",
+          "sha256": "3195f04af4a923a053b9f43473ed3e24a56bb17a0e394eba27df8b768783b572",
+          "bytes": 12382
+        }
+      ],
+      "verified_by": "VERIFIED_BY_CODE"
+    }
+  ],
+  "missing_source_admission_linkage": [
+    {
+      "item": "admitted independent historical observation pair (linking a declared parameter artifact to an admissible target variable)",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING",
+      "reason": "admission audit reports independent_pairs=0 and no admitted observable pair with traceable roots"
+    },
+    {
+      "item": "independent observable series for p04_external_recipe_prior (physical input-output / energy import flows)",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING",
+      "reason": "P05 §10b acquisition candidate; D03/D04/D05/D16 missing per H4C ORIGINAL_COVERAGE"
+    },
+    {
+      "item": "independent observable series for p04_information_prior (plan target vs reported vs finally verified output)",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING",
+      "reason": "P05 §10b acquisition candidate; no admitted series"
+    },
+    {
+      "item": "independent observable series for p04_observation_prior (independent repeated measurement / revision of one indicator)",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING",
+      "reason": "P05 §10b acquisition candidate; shared_observations.json holds no independent record"
+    },
+    {
+      "item": "independent observable series for p04_coalition_prior (party composition, key resolutions, cadre appointments)",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING",
+      "reason": "P05 §10b acquisition candidate; no admitted series"
+    },
+    {
+      "item": "independent observable series for p04_culture_prior (cultural facility use, press circulation, broadcast reception, participation)",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING",
+      "reason": "P05 §10b acquisition candidate; no admitted series"
+    },
+    {
+      "item": "independent observable series for p04_opposition_prior (event-dated strikes, petitions, protests, sanctions and responses)",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING",
+      "reason": "P05 §10b acquisition candidate; no admitted series"
+    },
+    {
+      "item": "primary originals D03/D04/D05/D16 (reform resolution, implementing regulations, enterprise sample, contract file)",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING",
+      "reason": "H4C ORIGINAL_COVERAGE: missing; every admitted excerpt is null"
+    },
+    {
+      "item": "requested originals D06/D07/D17",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING_UNVERIFIED",
+      "reason": "H4C ORIGINAL_COVERAGE: MISSING/UNVERIFIED; not used"
+    },
+    {
+      "item": "admission review for any new independent linkage entry (non-empty linkage set in config/calibration/p05.json)",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "NOT_CREATED",
+      "reason": "the linkage set is empty by the B1 user decision; this branch does not modify the frozen p05 identification conclusion"
+    }
+  ],
+  "parameter_typing": {
+    "source": "config/calibration/p05.json identification block, lines 61-77",
+    "source_sha256": "ef1371b66625ddaf78663cc1181679443d7288c084c18f54e1b206a5470bb6ae",
+    "counts": {
+      "fixed": 9,
+      "unidentified": 6,
+      "total": 15
+    },
+    "counts_evidence": "config/inference/hist_vnext_v1/logs/metadata-probe.attempt-1.stdout.json (real read output, exit 1)",
+    "identity_rule": "The 9 'fixed' entries are declared structural / design-rule / engineering values that keep a runtime value; they are NOT historical estimates. The 6 'unidentified' entries are prior-constrained behavioural blocks and are NOT reclassified here.",
+    "parameters": [
+      {
+        "artifact_id": "p02_material_cmea_contract_prior",
+        "identification": "fixed",
+        "historical_estimate": false,
+        "note": "declared structural assumption (constant early CMEA base contract price)"
+      },
+      {
+        "artifact_id": "p02_material_cmea_uncertainty_prior",
+        "identification": "fixed",
+        "historical_estimate": false,
+        "note": "declared structural assumption (neutral CMEA reconstruction multiplier)"
+      },
+      {
+        "artifact_id": "p02_material_oil_warmup_prior",
+        "identification": "fixed",
+        "historical_estimate": false,
+        "note": "declared structural assumption (fixed warm-up oil price)"
+      },
+      {
+        "artifact_id": "p04_broker_prior",
+        "identification": "fixed",
+        "historical_estimate": false,
+        "note": "pure engineering fixture"
+      },
+      {
+        "artifact_id": "p05_input_credit_earmark_prior",
+        "identification": "fixed",
+        "historical_estimate": false,
+        "note": "declared mechanism-design rule, not a fitted coefficient"
+      },
+      {
+        "artifact_id": "p05_interest_sink_remittance_prior",
+        "identification": "fixed",
+        "historical_estimate": false,
+        "note": "declared mechanism-design rule, not a fitted coefficient"
+      },
+      {
+        "artifact_id": "p05_interest_sink_recipient_prior",
+        "identification": "fixed",
+        "historical_estimate": false,
+        "note": "declared mechanism-design rule, not a fitted coefficient"
+      },
+      {
+        "artifact_id": "p05_fiscal_turnover_remittance_prior",
+        "identification": "fixed",
+        "historical_estimate": false,
+        "note": "declared mechanism-design rule, not a fitted coefficient"
+      },
+      {
+        "artifact_id": "p05_household_savings_reentry_prior",
+        "identification": "fixed",
+        "historical_estimate": false,
+        "note": "declared mechanism-design rule, not a fitted coefficient"
+      },
+      {
+        "artifact_id": "p04_coalition_prior",
+        "identification": "unidentified",
+        "historical_estimate": false,
+        "note": "prior-constrained behavioural block; identity kept unchanged"
+      },
+      {
+        "artifact_id": "p04_culture_prior",
+        "identification": "unidentified",
+        "historical_estimate": false,
+        "note": "prior-constrained behavioural block; identity kept unchanged"
+      },
+      {
+        "artifact_id": "p04_external_recipe_prior",
+        "identification": "unidentified",
+        "historical_estimate": false,
+        "note": "prior-constrained behavioural block; zero sensitivity to the admitted trade targets per the B1 code audit"
+      },
+      {
+        "artifact_id": "p04_information_prior",
+        "identification": "unidentified",
+        "historical_estimate": false,
+        "note": "prior-constrained behavioural block; identity kept unchanged"
+      },
+      {
+        "artifact_id": "p04_observation_prior",
+        "identification": "unidentified",
+        "historical_estimate": false,
+        "note": "prior-constrained behavioural block; identity kept unchanged"
+      },
+      {
+        "artifact_id": "p04_opposition_prior",
+        "identification": "unidentified",
+        "historical_estimate": false,
+        "note": "prior-constrained behavioural block; identity kept unchanged"
+      }
+    ]
+  },
+  "linkage_state": {
+    "p05_linkage": [],
+    "p05_linkage_len": 0,
+    "p05_linkage_source": "config/calibration/p05.json:79 (VERIFIED_BY_RUN)",
+    "p05_linkage_note": "config/calibration/p05.json:80 — empty means no parameter declares an informing target yet, so the identifiability screen must report NO_IDENTIFIABLE_PARAMETERS rather than invent a candidate set.",
+    "independent_pairs": 0,
+    "identifiable_subset": [],
+    "screen_executed": false,
+    "screen_not_executed_reason": "no independent linkage subset exists; writing a synthetic screen or using an arbitrary threshold to bypass admission is forbidden by the contract",
+    "note": "Absence of an independent linkage subset means the current evidence does not permit identification. It is NOT a proof that the model is mathematically of zero rank; no zero Jacobian matrix and no zero-rank conclusion is fabricated."
+  },
+  "dimensions": {
+    "technical": {
+      "status": "BLOCKED_PREREQUISITE",
+      "verified_by": "VERIFIED_BY_RUN",
+      "basis": "Read-only source admission CLI exit 1: structural PASS / historical BLOCKED; total_admitted=0, independent_pairs=0, total_blocked_anchors=63.",
+      "log_reference": "config/inference/hist_vnext_v1/logs/admission.attempt-1.stdout.json"
+    },
+    "structural": {
+      "status": "NOT_RUN",
+      "verified_by": "VERIFIED_BY_RUN",
+      "basis": "No identification screen, runner, adapter or test was implemented; engine/state/storage and the source validator were not modified.",
+      "not_run_detail": "rank, parameter collision, synthetic truth recovery, measurement-error and initial-state sensitivity, cross-source validation"
+    },
+    "historical": {
+      "status": "UNIDENTIFIED",
+      "verified_by": "VERIFIED_BY_RUN",
+      "basis": "Frozen p05 linkage=[] with 6 unidentified behavioural blocks and 9 fixed entries that are not historical estimates; H4A-0 approved sets empty; H4B-EXEC historical_inputs_admitted=0 and historical_comparison=NOT_RUN; H4C historical_status=NOT_ESTABLISHED.",
+      "note": "This records that historical identification is unestablished, not that it is permanently impossible."
+    }
+  },
+  "implementation": {
+    "status": "NOT_RUN",
+    "verified_by": "VERIFIED_BY_RUN",
+    "basis": "This branch only seals the prerequisite blocker. No measurement source code, no tests/test_hist_identifiability.py, no CLI hook, no runner was created; engine/state/storage were not touched.",
+    "files_written_by_this_implementation": [
+      "config/inference/hist_vnext_v1/REPORT.md",
+      "config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json",
+      "config/inference/hist_vnext_v1/failed_seeds.json"
+    ],
+    "files_written_attribution": "Across the bounded implementation attempts on session id 01a16f88-89cb-7781-825e-f385000bd08d: failed_seeds.json was written by implementation.attempt-1; REPORT.md and BLOCKER_CERTIFICATE.json were authored by implementation.attempt-2 and then rewritten by each subsequent review PATCH round (implementation.attempt-3 for D2-D6, implementation.attempt-4 for N3-N4), each within the same whitelist. Further review PATCH rounds may rewrite them again, so no attempt is named as the final writer; the sealed bytes/SHA-256 are in EVIDENCE_MANIFEST.json and the per-round chain is in commands.json and model_usage.json. See the top-level amendment_note and final_bytes_note."
+  },
+  "experiments": {
+    "status": "NOT_RUN",
+    "verified_by": "VERIFIED_BY_RUN",
+    "basis": "No simulation, no seed ensemble, no full regression, no C0/C1 replay was executed. The complete regression set stays reserved for the unblocked full H6A.",
+    "reserved_post_unblock_commands": [
+      "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q -p no:cacheprovider",
+      ".venv/bin/ruff check --no-cache src tests",
+      "uv lock --check --offline",
+      ".venv/bin/hsm baseline verify --json",
+      ".venv/bin/hsm run --scenario historical_f2_replay --output-dir \"$HSM_PHASE_OUT/C0\" --json",
+      ".venv/bin/hsm run --scenario historical_f2_trade_scenario --output-dir \"$HSM_PHASE_OUT/C1\" --json"
+    ]
+  },
+  "not_executed": [
+    {
+      "item": "Jacobian rank on an independent linkage subset",
+      "status": "NOT_RUN",
+      "reason": "no independent linkage subset (p05 linkage=[]); no zero Jacobian matrix and no zero-rank conclusion is fabricated"
+    },
+    {
+      "item": "parameter collision analysis",
+      "status": "NOT_RUN",
+      "reason": "no admitted observation pair to collide"
+    },
+    {
+      "item": "synthetic truth recovery",
+      "status": "NOT_RUN",
+      "reason": "no truth to recover; no synthetic ABC smoke was run in this branch"
+    },
+    {
+      "item": "measurement-error sensitivity",
+      "status": "NOT_RUN",
+      "reason": "no admitted historical measurement (historical_comparison=NOT_RUN)"
+    },
+    {
+      "item": "initial-state sensitivity",
+      "status": "NOT_RUN",
+      "reason": "H4A-0 initial_state_inputs=[] and 63 anchors blocked"
+    },
+    {
+      "item": "cross-source validation",
+      "status": "NOT_RUN",
+      "reason": "independent_pairs=0, so no independent cross-source pair exists"
+    },
+    {
+      "item": "empirical parameter inference (ABC / posterior)",
+      "status": "NOT_RUN",
+      "reason": "identifiable_set=[] and inference_status=NOT_RUN; no posterior and no run digest exist"
+    },
+    {
+      "item": "sensitivity experiments",
+      "status": "NOT_RUN",
+      "reason": "deliberately not performed in this prerequisite-STOP branch"
+    },
+    {
+      "item": "identification screen / runner / tests/test_hist_identifiability.py",
+      "status": "NOT_CREATED",
+      "reason": "the prerequisite STOP does not authorise writing an inference skeleton"
+    },
+    {
+      "item": "full regression (pytest / ruff / uv lock check / baseline verify)",
+      "status": "NOT_RUN",
+      "reason": "no production behaviour change and prerequisite STOP; reserved for the unblocked full H6A"
+    },
+    {
+      "item": "fresh C0/C1 replay",
+      "status": "NOT_RUN",
+      "reason": "reserved for the unblocked full H6A; the 01 digests are quoted as a future acceptance checklist only and no old pass counts are cited"
+    },
+    {
+      "item": "seed ensemble",
+      "status": "NOT_RUN",
+      "reason": "no simulation started"
+    }
+  ],
+  "seeds": {
+    "seed_status": "NOT_RUN",
+    "failed_seeds": null,
+    "failed_seeds_path": "config/inference/hist_vnext_v1/failed_seeds.json",
+    "note": "null means no seed was executed; it is not evidence that a seed would fail."
+  },
+  "frozen_digests_not_run": {
+    "note": "Quoted from 01_BASELINE_AND_VERSION_AUDIT.md:43-46 as the post-unblock acceptance checklist. Not run and not replayed in this branch; digest equality is not full-file byte equality.",
+    "C0": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+    "C1": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5"
+  },
+  "protected_files": {
+    "note": "Read-only digests recomputed in this branch and matching the 01 records exactly (VERIFIED_BY_RUN). Hash comparison is not a C0/C1 replay.",
+    "BASELINE.md": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+    "config/research_contract.json": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+    "uv.lock": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+    "config/calibration/p05.json": "ef1371b66625ddaf78663cc1181679443d7288c084c18f54e1b206a5470bb6ae",
+    "preflight_snapshot_path": "config/inference/hist_vnext_v1/protected_hashes.json",
+    "user_work_snapshot_path": "config/inference/hist_vnext_v1/user_work_snapshot.json"
+  },
+  "reference_paths_not_hashed_here": {
+    "note": "These supervisor-owned ledgers still change during sealing; this certificate references them by path only and embeds none of their hashes, avoiding self-reference. Final byte length and SHA-256 for all of them are recorded in the supervisor's EVIDENCE_MANIFEST.json.",
+    "commands": "config/inference/hist_vnext_v1/commands.json",
+    "model_usage": "config/inference/hist_vnext_v1/model_usage.json",
+    "resource_usage": "config/inference/hist_vnext_v1/resource_usage.json",
+    "evidence_manifest": "config/inference/hist_vnext_v1/EVIDENCE_MANIFEST.json",
+    "implementation_event_stream": "config/inference/hist_vnext_v1/logs/implementation.attempt-1.jsonl"
+  },
+  "review": {
+    "status": "PASS (round 5) — blocker judgment + sealed evidence accuracy + evidence-only scope only",
+    "reviewer": "phase-reviewer (independent session, not the implementer)",
+    "selector": "minimax-code-cn/MiniMax-M3:high via @review (reviewer-affirmed; usage NOT_MEASURED)",
+    "selector_source": ".omp/config.yml @review and .omp/agents/phase-reviewer.md model: \"@review\" (VERIFIED_BY_CODE)",
+    "must_not_self_sign": true,
+    "note": "The independent review is recorded in REVIEW.md and reviews/round-1..5.md verbatim. This status field is the only post-review change to this certificate and was explicitly authorised by the round-5 verdict item (d)(2).",
+    "rounds": {
+      "total": 5,
+      "patches": 4,
+      "final": "PASS"
+    },
+    "final_text": "config/inference/hist_vnext_v1/reviews/round-5.md",
+    "index": "config/inference/hist_vnext_v1/REVIEW.md",
+    "scope": "PASS does NOT approve historical inference, does NOT mean H6A is complete, does NOT authorise the next ID, and does NOT lift MISSING_INDEPENDENT_LINKAGE_ADMISSION."
+  },
+  "delivery": {
+    "simulation_status": "NOT_RUN",
+    "research_package_complete": false,
+    "phase_completion_claimed": false,
+    "h6a_research_completed": false,
+    "outputs_committed": false,
+    "pushed": false,
+    "commit": null,
+    "commit_reason": "This implementation sub-session is explicitly forbidden to commit. A local evidence-only commit is permitted only after a real independent review PASS, staging only config/inference/hist_vnext_v1/ whitelist paths and excluding the receipt, user files and outputs; no push.",
+    "commit_receipt": null,
+    "commit_receipt_reason": "no successful commit in this branch, so no success receipt is created",
+    "blocked_phase_acceptance": true,
+    "blocker_seal_pass_is_not_phase_pass": "An independent evidence-only PASS authorises an evidence-only local commit; it does not mean H6A is complete and does not authorise historical inference or the next ID."
+  },
+  "scope": {
+    "new_paths_under": "config/inference/hist_vnext_v1/",
+    "production_behavior_changed": false,
+    "modified_paths": [],
+    "note": "This branch only adds evidence files under config/inference/hist_vnext_v1/. It did not modify engine/state/storage, the source validator, any config, the frozen p05 identification conclusion, historical cards, or any pre-existing report or output. No target/HOLD/sealed body or target registry was opened.",
+    "not_started_because": "the plan explicitly forbids creating a measurement source, tests/test_hist_identifiability.py, a CLI hook or a runner before the source/linkage prerequisite is satisfied"
+  },
+  "next_step_blocker": {
+    "condition": "MISSING_INDEPENDENT_LINKAGE_ADMISSION",
+    "required_new_evidence": [
+      "at least one independently admitted historical observation pair with traceable roots, so that independent_pairs >= 1 and the 'two admitted observable patterns' historical gate can pass",
+      "the independent observables listed in P05 §10b for the six unidentified behavioural blocks, or equivalent rights-cleared admitted observations",
+      "a reviewed, non-empty linkage set in config/calibration/p05.json — that file is protected and frozen in this branch, so changing it requires a new plan and an independent review"
+    ],
+    "consequence": "Until then H6A research stays incomplete: empirical parameter inference NOT_RUN, identifiable subset empty.",
+    "stop_after_this_step": true,
+    "next_id_not_started": true
+  }
+}

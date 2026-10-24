@@ -1,0 +1,321 @@
+{
+  "schema_version": "hist_vnext_h6a_protected_hashes_v1",
+  "phase_id": "H6A",
+  "captured_utc": "2026-10-24T20:09:20Z",
+  "scope": "read-only digest capture at execution start; these bytes are not modified by this phase",
+  "expected_authoritative": {
+    "BASELINE.md": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+    "config/research_contract.json": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+    "uv.lock": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+    "config/calibration/p05.json": "ef1371b66625ddaf78663cc1181679443d7288c084c18f54e1b206a5470bb6ae"
+  },
+  "protected": [
+    {
+      "path": "BASELINE.md",
+      "kind": "file",
+      "bytes": 64445,
+      "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+      "matches_expected": true
+    },
+    {
+      "path": "config/research_contract.json",
+      "kind": "file",
+      "bytes": 2908,
+      "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+      "matches_expected": true
+    },
+    {
+      "path": "docs/research_contract.md",
+      "kind": "file",
+      "bytes": 2488,
+      "sha256": "d036f9227414582cac078893d90eb1dcae6f23f6ed18e2505165fa0b9861c677",
+      "matches_expected": null
+    },
+    {
+      "path": "uv.lock",
+      "kind": "file",
+      "bytes": 157941,
+      "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+      "matches_expected": true
+    },
+    {
+      "path": "config/calibration/p05.json",
+      "kind": "file",
+      "bytes": 6141,
+      "sha256": "ef1371b66625ddaf78663cc1181679443d7288c084c18f54e1b206a5470bb6ae",
+      "matches_expected": true
+    },
+    {
+      "path": "config/calibration/p05_parameters.yml",
+      "kind": "file",
+      "bytes": 3234,
+      "sha256": "e20c55d4e1166451e2ef7f08faeddfa3e43c49a154546461db36972426775fd2",
+      "matches_expected": null
+    },
+    {
+      "path": "config/p06",
+      "kind": "dir",
+      "bytes": null,
+      "sha256": null,
+      "entries": 13,
+      "files": [
+        {
+          "path": "config/p06/cards/M1.json",
+          "bytes": 1163,
+          "sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d"
+        },
+        {
+          "path": "config/p06/cards/M10.json",
+          "bytes": 806,
+          "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+        },
+        {
+          "path": "config/p06/cards/M11.json",
+          "bytes": 1341,
+          "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+        },
+        {
+          "path": "config/p06/cards/M2.json",
+          "bytes": 904,
+          "sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589"
+        },
+        {
+          "path": "config/p06/cards/M3.json",
+          "bytes": 794,
+          "sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba"
+        },
+        {
+          "path": "config/p06/cards/M4.json",
+          "bytes": 887,
+          "sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac"
+        },
+        {
+          "path": "config/p06/cards/M5.json",
+          "bytes": 1004,
+          "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+        },
+        {
+          "path": "config/p06/cards/M6.json",
+          "bytes": 815,
+          "sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6"
+        },
+        {
+          "path": "config/p06/cards/M7.json",
+          "bytes": 953,
+          "sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90"
+        },
+        {
+          "path": "config/p06/cards/M8.json",
+          "bytes": 849,
+          "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+        },
+        {
+          "path": "config/p06/cards/M9.json",
+          "bytes": 928,
+          "sha256": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c"
+        },
+        {
+          "path": "config/p06/forcing_ladder.json",
+          "bytes": 894,
+          "sha256": "d4818bea18bb649a32e75f47b70eaec9137b628033d5df731d471853d8b2cff9"
+        },
+        {
+          "path": "config/p06/mechanism_card.schema.json",
+          "bytes": 2108,
+          "sha256": "e35d09887cfa853275feaf99fbe1e4f149c38ff5b0699533381390ba5a8d0be9"
+        }
+      ],
+      "matches_expected": null
+    },
+    {
+      "path": "config/calibration/p06_clearance.json",
+      "kind": "file",
+      "bytes": 12382,
+      "sha256": "3195f04af4a923a053b9f43473ed3e24a56bb17a0e394eba27df8b768783b572",
+      "matches_expected": null
+    },
+    {
+      "path": "config/calibration/p06_reproduction_crosswalk.json",
+      "kind": "file",
+      "bytes": 10579,
+      "sha256": "43353fdd09643bc963b2f7002a508284b7e153bcd9ebae5ffb55f88820826aeb",
+      "matches_expected": null
+    },
+    {
+      "path": "config/scenarios",
+      "kind": "dir",
+      "bytes": null,
+      "sha256": null,
+      "entries": 10,
+      "files": [
+        {
+          "path": "config/scenarios/historical_f2_replay.json",
+          "bytes": 40900,
+          "sha256": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c"
+        },
+        {
+          "path": "config/scenarios/historical_f2_trade_scenario.json",
+          "bytes": 42508,
+          "sha256": "3ad4510064daa6e0b6f37893eb6a5721c3ad0b34f3284175c2cde77a33397a5f"
+        },
+        {
+          "path": "config/scenarios/historical_f2_trade_wage_diagnostic.json",
+          "bytes": 42698,
+          "sha256": "0e99fbbada784dde5844f9250d7281a0868d2f07380957c12a9f6006266809cb"
+        },
+        {
+          "path": "config/scenarios/intermediate8.json",
+          "bytes": 33341,
+          "sha256": "07b0a1fada377bfa8782f83fb3cdda7b08f88add58d608fddee18becb69df94b"
+        },
+        {
+          "path": "config/scenarios/intermediate8_external.json",
+          "bytes": 33695,
+          "sha256": "ad1d6b8f534da79d8363b48d57e85c2540d89a65d3546a0938997a0b2efeb53b"
+        },
+        {
+          "path": "config/scenarios/p04_endogenous.json",
+          "bytes": 33799,
+          "sha256": "25a05d667baffcd758950228bdd6bc2c30fd38a44b8c633bcaaeab8537c52f3a"
+        },
+        {
+          "path": "config/scenarios/p04_endogenous_external.json",
+          "bytes": 34164,
+          "sha256": "08b9c11261b57209fdac7eabb58a399191db5f43253b4b0b64e1508063831b1f"
+        },
+        {
+          "path": "config/scenarios/p04_replay.json",
+          "bytes": 33819,
+          "sha256": "07b1bb115b067a247fbcfbade6faf37d64f36b27069636e86bb3542473b91f8c"
+        },
+        {
+          "path": "config/scenarios/p04_replay_external.json",
+          "bytes": 34184,
+          "sha256": "449341e20286c6ddfd128e00428bfdc75df5e296b3b5a0d6dc22a66561c85d5c"
+        },
+        {
+          "path": "config/scenarios/smoke.json",
+          "bytes": 705,
+          "sha256": "1ca4fb59d3c799a5653aa5a64d205a0a3eabd96cdac30be283f13a8f5450c697"
+        }
+      ],
+      "matches_expected": null
+    },
+    {
+      "path": "config/mechanisms",
+      "kind": "dir",
+      "bytes": null,
+      "sha256": null,
+      "entries": 4,
+      "files": [
+        {
+          "path": "config/mechanisms/hist_vnext_v1/hypothesis_diffs.json",
+          "bytes": 19698,
+          "sha256": "d46045c3746cdc855eb9009e43200c7ad140da02b07a9884bc0479d5d2183ac4"
+        },
+        {
+          "path": "config/mechanisms/hist_vnext_v1/new_id_applications.json",
+          "bytes": 5036,
+          "sha256": "7a4225f6d474bc2fcd93f50618c083c5eb7e2f74e80b18c00e858d1381fbe3cb"
+        },
+        {
+          "path": "config/mechanisms/v2/mechanism_card.schema.json",
+          "bytes": 8855,
+          "sha256": "8ce8067521ca82deaba1361754d69b63b5c08219ae981e8f04f36dea5e180a68"
+        },
+        {
+          "path": "config/mechanisms/v2/supersedes.json",
+          "bytes": 1096,
+          "sha256": "808161e9ec0d0c0d1056ac0860c67be2aec0bc6975f4a41fb39f3576bdef05d3"
+        }
+      ],
+      "matches_expected": null
+    }
+  ],
+  "cited_evidence": [
+    {
+      "path": "H6A_阻断封存_PLAN.md",
+      "kind": "file",
+      "bytes": 16446,
+      "sha256": "83ab9e5c8f3925c3c8dbba7ada73cf63ef71e05ca55c5dba69c7ffcddff75053"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/01_BASELINE_AND_VERSION_AUDIT.md",
+      "kind": "file",
+      "bytes": 10147,
+      "sha256": "e46979b7dbe235c09f4caf793164a2b9e7c675fd1679f6fbbd731a704e7f4059"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+      "kind": "file",
+      "bytes": 37168,
+      "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+      "kind": "file",
+      "bytes": 114765,
+      "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/evidence/phase-contracts.json",
+      "kind": "file",
+      "bytes": 19362,
+      "sha256": "9a81273d6a3b442f5ca48517b55a6ad84faf66873ca96e8ae80c0c28c7593374"
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H4A-0/APPROVED_INPUT_SET.json",
+      "kind": "file",
+      "bytes": 335,
+      "sha256": "4a1cbb3ae0637b8a0ae1c064db89a2890fc0c40c4def5103b0030234dd96a5ac"
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H4A-1/REVIEW.md",
+      "kind": "file",
+      "bytes": 11703,
+      "sha256": "48ab18fa7fc893c8c9a11ef03dd9a01afbae5e5775d3f871d9309e355e9f6f86"
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H4B-EXEC/REPORT.md",
+      "kind": "file",
+      "bytes": 6681,
+      "sha256": "2d8e646d500eb5a48d59ebf217a29faeab4504886d81d153501c61e64397560a"
+    },
+    {
+      "path": "docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json",
+      "kind": "file",
+      "bytes": 2547,
+      "sha256": "44c803e513ef44cd7a0c6dc512cb7c0001691c8360e6e0d271c23052b25c8180"
+    },
+    {
+      "path": "studies/HIST_VNEXT/M06/PLAN.md",
+      "kind": "file",
+      "bytes": 17660,
+      "sha256": "7bd469084aa2ce96d7c4391154677afeff3992dbc65a1cc238296b31d8fb4557"
+    },
+    {
+      "path": "studies/HIST_VNEXT/M06/REPORT.md",
+      "kind": "file",
+      "bytes": 28506,
+      "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2"
+    },
+    {
+      "path": "studies/HIST_VNEXT/M06/reviews/round-4.md",
+      "kind": "file",
+      "bytes": 6964,
+      "sha256": "cb8b6235942587012a04c4c7bafd545466691f4d6f83b5afa3224eb9e6e75025"
+    },
+    {
+      "path": ".omp/agents/phase-reviewer.md",
+      "kind": "file",
+      "bytes": 1395,
+      "sha256": "5961ba05e6b0cd42f0abcc3b74c64c959a3c47cca62fee44ad21cf6a8e632a1b"
+    },
+    {
+      "path": ".omp/config.yml",
+      "kind": "file",
+      "bytes": 472,
+      "sha256": "2e90b9c6feed817a4547c7232f650e8c76c089f14f7ae22b36f23bf62dd2fe7f"
+    }
+  ]
+}

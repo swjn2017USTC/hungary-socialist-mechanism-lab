@@ -1,0 +1,629 @@
+{
+  "schema_version": "hist_vnext_h6a_commands_v1",
+  "phase_id": "H6A",
+  "captured_by": "supervisor (root session)",
+  "runtime": {
+    "python": "3.12.14",
+    "platform": "macOS-26.5-arm64-arm-64bit",
+    "executable": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/.venv/bin/python"
+  },
+  "commands": [
+    {
+      "id": "admission.attempt-1",
+      "purpose": "H1A read-only source admission CLI: general source gate counterexample",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-m",
+        "history.HIST_VNEXT.sources.admission",
+        "--root",
+        "."
+      ],
+      "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+      "env_overrides": {
+        "PYTHONHASHSEED": "0",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "env_subset": {
+        "PATH": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/.venv/bin:/Users/wahrfreiheit/.local/bin:/Users/wahrfreiheit/Library/Python/3.9/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/TeX/texbin:/opt/homebrew/bin:/Applications/Ghostty.app/Contents/MacOS:/Users/wahrfreiheit/.lmstudio/bin",
+        "VIRTUAL_ENV": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/.venv",
+        "SHELL": "/bin/zsh",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": null,
+        "PYTHONHASHSEED": "0",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "started_utc": "2026-10-24T20:09:27Z",
+      "finished_utc": "2026-10-24T20:09:28Z",
+      "wall_seconds": 0.262,
+      "exit_code": 1,
+      "signal": null,
+      "stdout_path": "config/inference/hist_vnext_v1/logs/admission.attempt-1.stdout.json",
+      "stdout_bytes": 4107,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/admission.attempt-1.stderr.txt",
+      "stderr_bytes": 0,
+      "note": "Expected exit 1 is the historical source block, not a validator defect. Not modified to exit 0."
+    },
+    {
+      "id": "metadata-probe.attempt-1",
+      "purpose": "Memory probe over frozen p05 and H4A-0/H4C metadata; no target/holdout registry opened",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-c",
+        "import json,sys,collections\np05=json.load(open(\"config/calibration/p05.json\",encoding=\"utf-8\"))\nh4a0=json.load(open(\"docs/phases/HIST_VNEXT/H4A-0/APPROVED_INPUT_SET.json\",encoding=\"utf-8\"))\nh4c=json.load(open(\"docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json\",encoding=\"utf-8\"))\nidc=collections.Counter(p05[\"identification\"].values())\nlinkage=p05[\"linkage\"]\nmi=h4a0.get(\"measurement_inputs\")\nhs=h4c.get(\"historical_status\")\nout={\"p05_path\":\"config/calibration/p05.json\",\"p05_identification_counts\":dict(idc),\"p05_identification\":p05[\"identification\"],\"p05_linkage\":linkage,\"p05_linkage_len\":len(linkage),\"h4a0_measurement_inputs\":mi,\"h4c_historical_status\":hs,\"gate\":\"LINKAGE_AND_MEASUREMENT_EMPTY\" if (not linkage and not mi) else \"NONEMPTY\"}\nprint(json.dumps(out,indent=2,sort_keys=True,ensure_ascii=False))\nsys.exit(1 if (not linkage and not mi) else 0)\n"
+      ],
+      "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+      "env_overrides": {
+        "PYTHONHASHSEED": "0",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "env_subset": {
+        "PATH": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/.venv/bin:/Users/wahrfreiheit/.local/bin:/Users/wahrfreiheit/Library/Python/3.9/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/TeX/texbin:/opt/homebrew/bin:/Applications/Ghostty.app/Contents/MacOS:/Users/wahrfreiheit/.lmstudio/bin",
+        "VIRTUAL_ENV": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/.venv",
+        "SHELL": "/bin/zsh",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": null,
+        "PYTHONHASHSEED": "0",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "started_utc": "2026-10-24T20:09:28Z",
+      "finished_utc": "2026-10-24T20:09:28Z",
+      "wall_seconds": 0.025,
+      "exit_code": 1,
+      "signal": null,
+      "stdout_path": "config/inference/hist_vnext_v1/logs/metadata-probe.attempt-1.stdout.json",
+      "stdout_bytes": 1021,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/metadata-probe.attempt-1.stderr.txt",
+      "stderr_bytes": 0,
+      "note": "Expected exit 1 when p05 linkage and H4A-0 measurement_inputs are both empty; stdout is real read output."
+    },
+    {
+      "id": "implementation.attempt-1",
+      "purpose": "Explicit minimax-code-cn/MiniMax-M3 implementation session (attempt-1: fresh launch)",
+      "argv": [
+        "omp",
+        "--model",
+        "minimax-code-cn/MiniMax-M3",
+        "--thinking",
+        "high",
+        "--no-prewalk",
+        "--no-title",
+        "--mode",
+        "json",
+        "--config",
+        "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/config/inference/hist_vnext_v1/implementation-overlay.yml",
+        "--max-time",
+        "10m",
+        "-p",
+        "@config/inference/hist_vnext_v1/PLAN.md",
+        "仅执行 H6A 前置阻断证据封存；只写 Plan 白名单。禁止 screen/runner/ABC、读取目标或补其他阶段；不得自签 REVIEW，不得 commit。\n监督者已冻结这些文件，禁止改写/删除/重排：PLAN.md、implementation-overlay.yml、user_work_snapshot.json、protected_hashes.json、commands.json、logs/admission.attempt-1.*、logs/metadata-probe.attempt-1.*。\n你只写三个文件：REPORT.md、BLOCKER_CERTIFICATE.json、failed_seeds.json。\n1) REPORT.md：技术/结构/历史三维分列；identifiable 子集为空；从 config/calibration/p05.json 的 identification 逐项列出全部15个 artifact_id 及其 fixed/unidentified 身份（9 fixed + 6 unidentified），9 个 fixed 不得称历史估计，6 个 unidentified 不改判；记录相关 H5 真正完成范围（M02/H5A-A1、M04/H5B、M01/H5C、M03/H5D 后续实现、M09/H5F-F1 有最终独立 PASS；M06/H5G-G1 与 M07/H5E 仅阻断封存；M05/M11、M08、M10 未启动）与缺件，合成研究不得表述为独立历史观测；Jacobian rank、参数碰撞、truth recovery、测量误差/初态敏感度、跨源验证、经验推断逐项 NOT_RUN；本分支不做敏感性实验。\n2) BLOCKER_CERTIFICATE.json：schema_version=hist_vnext_h6a_blocker_v1、phase_id=H6A、status=BLOCKED、blocking_code=MISSING_INDEPENDENT_LINKAGE_ADMISSION、identifiable_set=[]、inference_status=NOT_RUN；dimensions 三维 technical=BLOCKED_PREREQUISITE、structural=NOT_RUN、historical=UNIDENTIFIED；含开始 HEAD=c0b19dbd14b79cec79b58c7a1f77d14cc0b6aa5d、合同逐字摘录(路径+行号+该文件 SHA256)、前置 review 的实际 verdict/scope、实际搜索范围、来源/measurement/独立性缺件、not_run 清单；缺失的 source/admission/linkage 路径与 hash 写 null；不得内嵌 commands.json/model_usage.json/resource_usage.json/EVIDENCE_MANIFEST.json 的 hash（用路径引用，避免自引用）；不得造零 Jacobian 或伪 run digest。\n必须实际读取并据实引用：commands.json 与 logs/admission.attempt-1.stdout.json、docs/phases/HIST_VNEXT/H4A-0/APPROVED_INPUT_SET.json、docs/phases/HIST_VNEXT/H4B-EXEC/REPORT.md:59-82,96-115、docs/phases/HIST_VNEXT/H4A-1/REVIEW.md:58-64、docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json、studies/HIST_VNEXT/M06/reviews/round-4.md:1-3,44-47、docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md、docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md:17-31,414-424、.omp/agents/phase-reviewer.md:1-7,11-33。禁止打开 target/HOLD/封存正文或 target registry。\n3) failed_seeds.json：{\"status\":\"NOT_RUN\",\"seeds\":[],\"reason\":\"H6A source/linkage prerequisite blocked; no simulation or inference started\"}。\n每个结论标注 VERIFIED_BY_RUN/CODE/WEB/HYPOTHESIS/NOT_RUN。完成后直接 yield 摘要，不要 commit。"
+      ],
+      "prompt": "仅执行 H6A 前置阻断证据封存；只写 Plan 白名单。禁止 screen/runner/ABC、读取目标或补其他阶段；不得自签 REVIEW，不得 commit。\n监督者已冻结这些文件，禁止改写/删除/重排：PLAN.md、implementation-overlay.yml、user_work_snapshot.json、protected_hashes.json、commands.json、logs/admission.attempt-1.*、logs/metadata-probe.attempt-1.*。\n你只写三个文件：REPORT.md、BLOCKER_CERTIFICATE.json、failed_seeds.json。\n1) REPORT.md：技术/结构/历史三维分列；identifiable 子集为空；从 config/calibration/p05.json 的 identification 逐项列出全部15个 artifact_id 及其 fixed/unidentified 身份（9 fixed + 6 unidentified），9 个 fixed 不得称历史估计，6 个 unidentified 不改判；记录相关 H5 真正完成范围（M02/H5A-A1、M04/H5B、M01/H5C、M03/H5D 后续实现、M09/H5F-F1 有最终独立 PASS；M06/H5G-G1 与 M07/H5E 仅阻断封存；M05/M11、M08、M10 未启动）与缺件，合成研究不得表述为独立历史观测；Jacobian rank、参数碰撞、truth recovery、测量误差/初态敏感度、跨源验证、经验推断逐项 NOT_RUN；本分支不做敏感性实验。\n2) BLOCKER_CERTIFICATE.json：schema_version=hist_vnext_h6a_blocker_v1、phase_id=H6A、status=BLOCKED、blocking_code=MISSING_INDEPENDENT_LINKAGE_ADMISSION、identifiable_set=[]、inference_status=NOT_RUN；dimensions 三维 technical=BLOCKED_PREREQUISITE、structural=NOT_RUN、historical=UNIDENTIFIED；含开始 HEAD=c0b19dbd14b79cec79b58c7a1f77d14cc0b6aa5d、合同逐字摘录(路径+行号+该文件 SHA256)、前置 review 的实际 verdict/scope、实际搜索范围、来源/measurement/独立性缺件、not_run 清单；缺失的 source/admission/linkage 路径与 hash 写 null；不得内嵌 commands.json/model_usage.json/resource_usage.json/EVIDENCE_MANIFEST.json 的 hash（用路径引用，避免自引用）；不得造零 Jacobian 或伪 run digest。\n必须实际读取并据实引用：commands.json 与 logs/admission.attempt-1.stdout.json、docs/phases/HIST_VNEXT/H4A-0/APPROVED_INPUT_SET.json、docs/phases/HIST_VNEXT/H4B-EXEC/REPORT.md:59-82,96-115、docs/phases/HIST_VNEXT/H4A-1/REVIEW.md:58-64、docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json、studies/HIST_VNEXT/M06/reviews/round-4.md:1-3,44-47、docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md、docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md:17-31,414-424、.omp/agents/phase-reviewer.md:1-7,11-33。禁止打开 target/HOLD/封存正文或 target registry。\n3) failed_seeds.json：{\"status\":\"NOT_RUN\",\"seeds\":[],\"reason\":\"H6A source/linkage prerequisite blocked; no simulation or inference started\"}。\n每个结论标注 VERIFIED_BY_RUN/CODE/WEB/HYPOTHESIS/NOT_RUN。完成后直接 yield 摘要，不要 commit。",
+      "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+      "env_overrides": {
+        "PI_SKIP": "none; inherited environment"
+      },
+      "started_utc": "2026-10-24T20:09:41Z",
+      "finished_utc": "2026-10-24T20:19:41Z",
+      "wall_seconds": 600.288,
+      "exit_code": 1,
+      "signal": null,
+      "stdout_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-1.jsonl",
+      "stdout_bytes": 6467700,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-1.stderr.txt",
+      "stderr_bytes": 0,
+      "observed_model": {
+        "MiniMax-M3": 72
+      },
+      "usage_records": 72,
+      "note": "attempt-1 was stopped by --max-time 10m at 600.3 s with exit 1 while still researching; it had written only failed_seeds.json. The timeout is preserved as a real failure, not retried as an extension of the same process. attempt-2 resumed the same session id under a new 10m-bounded process (no provider/model change, no scope change), per 06_OMP_MINIMAX_HANDOFF.md:19 '小样本profile、分批/可恢复运行和必要的技术timeout'.",
+      "usage_record_rule": "one record per assistant turn (assistant-role message_end only)",
+      "event_counts": {
+        "message_start": 184,
+        "message_end": 184,
+        "turn_end": 72,
+        "agent_end": 1
+      },
+      "assistant_event_counts": {
+        "message_start": 72,
+        "message_end": 72,
+        "turn_end": 72,
+        "agent_end_embedded_assistant_copies": 72
+      },
+      "all_message_event_counts": {
+        "message_start": 184,
+        "message_end": 184,
+        "tool_execution_start": 110,
+        "turn_end": 72,
+        "agent_end": 1
+      },
+      "message_roles": {
+        "user": 2,
+        "fileMention": 2,
+        "assistant": 144,
+        "toolResult": 220
+      },
+      "tokens": {
+        "input": 93782,
+        "output": 76582,
+        "cacheRead": 5568000,
+        "cacheWrite": 0,
+        "totalTokens": 5738364
+      },
+      "cost_usd": 0.454113
+    },
+    {
+      "id": "implementation.attempt-2",
+      "purpose": "Recovery of the same M3 session under a fresh bounded process (attempt-2)",
+      "argv": [
+        "omp",
+        "--model",
+        "minimax-code-cn/MiniMax-M3",
+        "--thinking",
+        "high",
+        "--no-prewalk",
+        "--no-title",
+        "--mode",
+        "json",
+        "--config",
+        "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/config/inference/hist_vnext_v1/implementation-overlay.yml",
+        "--max-time",
+        "10m",
+        "-r",
+        "01a16f88-89cb-7781-825e-f385000bd08d",
+        "-p",
+        "继续同一 H6A 任务（你已完成全部调查，且已写出 failed_seeds.json）。现在立即落笔，不要再做新的调查、不要再 grep/read 长文件。\n只写两个文件，顺序执行：\nA) config/inference/hist_vnext_v1/REPORT.md —— 技术/结构/历史三维分列；identifiable 子集为空；从 config/calibration/p05.json 的 identification 逐项列出全部15个 artifact_id 及其 fixed/unidentified 身份（9 fixed + 6 unidentified），9 个 fixed 不得称历史估计，6 个 unidentified 不改判；写相关 H5 真正完成范围（M02/H5A-A1、M04/H5B、M01/H5C、M03/H5D 后续实现、M09/H5F-F1 有最终独立 PASS；M06/H5G-G1 与 M07/H5E 仅阻断封存；M05/M11、M08、M10 未启动）与缺件，合成研究不得表述为独立历史观测；Jacobian rank、参数碰撞、truth recovery、测量误差/初态敏感度、跨源验证、经验推断逐项 NOT_RUN；本分支不做敏感性实验；每条结论标 VERIFIED_BY_RUN/CODE/WEB/HYPOTHESIS/NOT_RUN；含开始 HEAD=c0b19dbd14b79cec79b58c7a1f77d14cc0b6aa5d 与命令/日志路径引用。\nB) config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json —— schema_version=hist_vnext_h6a_blocker_v1、phase_id=H6A、status=BLOCKED、blocking_code=MISSING_INDEPENDENT_LINKAGE_ADMISSION、identifiable_set=[]、inference_status=NOT_RUN；dimensions: technical=BLOCKED_PREREQUISITE、structural=NOT_RUN、historical=UNIDENTIFIED；含开始 HEAD/分支、合同逐字摘录(路径+行号+该文件 SHA256)、前置 review 实际 verdict/scope、实际搜索范围、来源/measurement/独立性缺件、not_run 清单、missing 的 source/admission/linkage 路径与 hash 为 null；不内嵌 commands.json/model_usage.json/resource_usage.json/EVIDENCE_MANIFEST.json 的 hash；不造零 Jacobian、不写伪 run digest；封存 PASS 不等于 H6A 完成。\n写完两个文件后立即 yield 简短摘要；不 commit，不写 REVIEW.md，不改其他文件。"
+      ],
+      "prompt": "继续同一 H6A 任务（你已完成全部调查，且已写出 failed_seeds.json）。现在立即落笔，不要再做新的调查、不要再 grep/read 长文件。\n只写两个文件，顺序执行：\nA) config/inference/hist_vnext_v1/REPORT.md —— 技术/结构/历史三维分列；identifiable 子集为空；从 config/calibration/p05.json 的 identification 逐项列出全部15个 artifact_id 及其 fixed/unidentified 身份（9 fixed + 6 unidentified），9 个 fixed 不得称历史估计，6 个 unidentified 不改判；写相关 H5 真正完成范围（M02/H5A-A1、M04/H5B、M01/H5C、M03/H5D 后续实现、M09/H5F-F1 有最终独立 PASS；M06/H5G-G1 与 M07/H5E 仅阻断封存；M05/M11、M08、M10 未启动）与缺件，合成研究不得表述为独立历史观测；Jacobian rank、参数碰撞、truth recovery、测量误差/初态敏感度、跨源验证、经验推断逐项 NOT_RUN；本分支不做敏感性实验；每条结论标 VERIFIED_BY_RUN/CODE/WEB/HYPOTHESIS/NOT_RUN；含开始 HEAD=c0b19dbd14b79cec79b58c7a1f77d14cc0b6aa5d 与命令/日志路径引用。\nB) config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json —— schema_version=hist_vnext_h6a_blocker_v1、phase_id=H6A、status=BLOCKED、blocking_code=MISSING_INDEPENDENT_LINKAGE_ADMISSION、identifiable_set=[]、inference_status=NOT_RUN；dimensions: technical=BLOCKED_PREREQUISITE、structural=NOT_RUN、historical=UNIDENTIFIED；含开始 HEAD/分支、合同逐字摘录(路径+行号+该文件 SHA256)、前置 review 实际 verdict/scope、实际搜索范围、来源/measurement/独立性缺件、not_run 清单、missing 的 source/admission/linkage 路径与 hash 为 null；不内嵌 commands.json/model_usage.json/resource_usage.json/EVIDENCE_MANIFEST.json 的 hash；不造零 Jacobian、不写伪 run digest；封存 PASS 不等于 H6A 完成。\n写完两个文件后立即 yield 简短摘要；不 commit，不写 REVIEW.md，不改其他文件。",
+      "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+      "env_overrides": {
+        "PI_SKIP": "none; inherited environment"
+      },
+      "started_utc": "2026-10-24T20:20:08Z",
+      "finished_utc": "2026-10-24T20:26:06Z",
+      "wall_seconds": 357.852,
+      "exit_code": 0,
+      "signal": null,
+      "stdout_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-2.jsonl",
+      "stdout_bytes": 2701398,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-2.stderr.txt",
+      "stderr_bytes": 0,
+      "observed_model": {
+        "MiniMax-M3": 30
+      },
+      "usage_records": 30,
+      "note": "attempt-2 resumed session 01a16f88-89cb-7781-825e-f385000bd08d with the same model/provider and no scope change; exit 0 after writing REPORT.md and BLOCKER_CERTIFICATE.json.",
+      "usage_record_rule": "one record per assistant turn (assistant-role message_end only)",
+      "event_counts": {
+        "message_start": 60,
+        "message_end": 60,
+        "turn_end": 30,
+        "agent_end": 1
+      },
+      "assistant_event_counts": {
+        "message_start": 30,
+        "message_end": 30,
+        "turn_end": 30,
+        "agent_end_embedded_assistant_copies": 30
+      },
+      "all_message_event_counts": {
+        "message_start": 60,
+        "message_end": 60,
+        "tool_execution_start": 29,
+        "turn_end": 30,
+        "agent_end": 1
+      },
+      "message_roles": {
+        "user": 2,
+        "assistant": 60,
+        "toolResult": 58
+      },
+      "tokens": {
+        "input": 12388,
+        "output": 52488,
+        "cacheRead": 6292608,
+        "cacheWrite": 0,
+        "totalTokens": 6357484
+      },
+      "cost_usd": 0.444258
+    },
+    {
+      "id": "implementation.attempt-3",
+      "purpose": "Explicit M3 PATCH session applying independent review round-1 repair items D2-D6 to REPORT.md and BLOCKER_CERTIFICATE.json",
+      "argv": [
+        "omp",
+        "--model",
+        "minimax-code-cn/MiniMax-M3",
+        "--thinking",
+        "high",
+        "--no-prewalk",
+        "--no-title",
+        "--mode",
+        "json",
+        "--config",
+        "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/config/inference/hist_vnext_v1/implementation-overlay.yml",
+        "--max-time",
+        "10m",
+        "-r",
+        "01a16f88-89cb-7781-825e-f385000bd08d",
+        "-p",
+        "独立 review 已返回 PATCH（D1–D6）。D1 是监督者账本（model_usage.json/resource_usage.json），监督者已修复，你不要改。\n你只修复 config/inference/hist_vnext_v1/REPORT.md 与 BLOCKER_CERTIFICATE.json 中的 D2–D6，逐条精确执行，不得改动任何科学结论（status=BLOCKED、blocking_code、identifiable_set=[]、inference_status=NOT_RUN、三维、15 项参数身份、NOT_RUN 清单均不变）。不得改 PLAN.md、commands.json、logs/、model_usage.json、resource_usage.json、protected_hashes.json、user_work_snapshot.json、EVIDENCE_MANIFEST.json；不得写 REVIEW.md/reviews；不得 commit。\nD2（BLOCKER_CERTIFICATE.json 溯源失真）：executor.session 改为 implementation session attempt-2（恢复自 attempt-1 的同一 session id 01a16f88-89cb-7781-825e-f385000bd08d）；executor.actual_source 同时引用 logs/implementation.attempt-2.jsonl（证书作者）与 logs/implementation.attempt-1.jsonl（前置调查）；新增 executor.attempts 记录两段：attempt-1 exit 1 / wall 600.288 s / 被 --max-time 10m 停止 / 只写 failed_seeds.json；attempt-2 exit 0 / wall 357.9 s / 写 REPORT.md 与证书；顶层 created_utc 改为 2026-10-24T20:25:44Z，并新增 written_by_attempt=\"implementation.attempt-2\"。\nD3（REPORT.md §8 内部矛盾）：删除“本轮无真实进程故障（无 timeout/OOM/磁盘不足/信号）”这一覆盖实施子会话的错误断言。改为两句：两个只读探针无 timeout/OOM/磁盘不足/信号，exit 1 是来源阻断而非进程故障；实施子会话 attempt-1 被 --max-time 10m 在 600.288 s 处停止（exit 1），作为真实故障保留（见 commands.json 与 model_usage.json），其后在同一 session id 上以新的 10m 有界进程恢复（attempt-2，exit 0），依据 06_OMP_MINIMAX_HANDOFF.md:19“小样本profile、分批/可恢复运行和必要的技术timeout”。\nD4（REPORT.md 溯源合并陈述）：新增一节“实施子会话的执行事实”，逐段写明 attempt-1 与 attempt-2 的 exit/wall/写入文件/session id/同 model 同 provider/无范围变更；并显式披露 attempt-2 的提示词要求不再做新调查，故 REPORT 的事实性引用主要继承 attempt-1 的调查上下文；§10 的“本子会话”改为“两个实施子会话合计”。\nD5（REPORT.md §2 计数差）：增补一句：PLAN 前置清点记 23 个未跟踪路径；canonical 计划文件 H6A_阻断封存_PLAN.md 落盘后，执行起始快照为 24 条，差 1 已核对，非用户工作丢失或新增。不得改 PLAN.md。\nD6（精度）：REPORT.md §5.2 中 M07 REPORT 的行号改为“行 13–17（维度表）、行 20（H5E 未完成声明）”；§2 的读取范围改为“未打开目标 registry、holdout registry 与封存/保留载荷；会话仅对 data/manifests/ 做过一次目录列举（不含载荷内容）；元数据核查以内存脚本读取 p05/H4A-0/H4C，其余为只读合同与前置报告”。\n修复后自查：REPORT 不得再出现“无真实进程故障”式断言；证书 executor/created_utc 与实际写入尝试一致。完成后 yield 简短 diff 摘要。"
+      ],
+      "prompt": "独立 review 已返回 PATCH（D1–D6）。D1 是监督者账本（model_usage.json/resource_usage.json），监督者已修复，你不要改。\n你只修复 config/inference/hist_vnext_v1/REPORT.md 与 BLOCKER_CERTIFICATE.json 中的 D2–D6，逐条精确执行，不得改动任何科学结论（status=BLOCKED、blocking_code、identifiable_set=[]、inference_status=NOT_RUN、三维、15 项参数身份、NOT_RUN 清单均不变）。不得改 PLAN.md、commands.json、logs/、model_usage.json、resource_usage.json、protected_hashes.json、user_work_snapshot.json、EVIDENCE_MANIFEST.json；不得写 REVIEW.md/reviews；不得 commit。\nD2（BLOCKER_CERTIFICATE.json 溯源失真）：executor.session 改为 implementation session attempt-2（恢复自 attempt-1 的同一 session id 01a16f88-89cb-7781-825e-f385000bd08d）；executor.actual_source 同时引用 logs/implementation.attempt-2.jsonl（证书作者）与 logs/implementation.attempt-1.jsonl（前置调查）；新增 executor.attempts 记录两段：attempt-1 exit 1 / wall 600.288 s / 被 --max-time 10m 停止 / 只写 failed_seeds.json；attempt-2 exit 0 / wall 357.9 s / 写 REPORT.md 与证书；顶层 created_utc 改为 2026-10-24T20:25:44Z，并新增 written_by_attempt=\"implementation.attempt-2\"。\nD3（REPORT.md §8 内部矛盾）：删除“本轮无真实进程故障（无 timeout/OOM/磁盘不足/信号）”这一覆盖实施子会话的错误断言。改为两句：两个只读探针无 timeout/OOM/磁盘不足/信号，exit 1 是来源阻断而非进程故障；实施子会话 attempt-1 被 --max-time 10m 在 600.288 s 处停止（exit 1），作为真实故障保留（见 commands.json 与 model_usage.json），其后在同一 session id 上以新的 10m 有界进程恢复（attempt-2，exit 0），依据 06_OMP_MINIMAX_HANDOFF.md:19“小样本profile、分批/可恢复运行和必要的技术timeout”。\nD4（REPORT.md 溯源合并陈述）：新增一节“实施子会话的执行事实”，逐段写明 attempt-1 与 attempt-2 的 exit/wall/写入文件/session id/同 model 同 provider/无范围变更；并显式披露 attempt-2 的提示词要求不再做新调查，故 REPORT 的事实性引用主要继承 attempt-1 的调查上下文；§10 的“本子会话”改为“两个实施子会话合计”。\nD5（REPORT.md §2 计数差）：增补一句：PLAN 前置清点记 23 个未跟踪路径；canonical 计划文件 H6A_阻断封存_PLAN.md 落盘后，执行起始快照为 24 条，差 1 已核对，非用户工作丢失或新增。不得改 PLAN.md。\nD6（精度）：REPORT.md §5.2 中 M07 REPORT 的行号改为“行 13–17（维度表）、行 20（H5E 未完成声明）”；§2 的读取范围改为“未打开目标 registry、holdout registry 与封存/保留载荷；会话仅对 data/manifests/ 做过一次目录列举（不含载荷内容）；元数据核查以内存脚本读取 p05/H4A-0/H4C，其余为只读合同与前置报告”。\n修复后自查：REPORT 不得再出现“无真实进程故障”式断言；证书 executor/created_utc 与实际写入尝试一致。完成后 yield 简短 diff 摘要。",
+      "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+      "env_overrides": {
+        "note": "inherited environment"
+      },
+      "started_utc": "2026-10-24T20:35:03Z",
+      "finished_utc": "2026-10-24T20:39:48Z",
+      "wall_seconds": 284.956,
+      "exit_code": 0,
+      "signal": null,
+      "stdout_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-3.jsonl",
+      "stdout_bytes": 2486849,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-3.stderr.txt",
+      "stderr_bytes": 0,
+      "observed_model": {
+        "MiniMax-M3": 30
+      },
+      "usage_records": 30,
+      "note": "resumed session 01a16f88-89cb-7781-825e-f385000bd08d; same model/provider; exit 0; no science changed (checked by supervisor).",
+      "usage_record_rule": "one record per assistant turn (assistant-role message_end only)",
+      "event_counts": {
+        "message_start": 65,
+        "message_end": 65,
+        "turn_end": 30,
+        "agent_end": 1
+      },
+      "assistant_event_counts": {
+        "message_start": 30,
+        "message_end": 30,
+        "turn_end": 30,
+        "agent_end_embedded_assistant_copies": 30
+      },
+      "all_message_event_counts": {
+        "message_start": 65,
+        "message_end": 65,
+        "tool_execution_start": 34,
+        "turn_end": 30,
+        "agent_end": 1
+      },
+      "message_roles": {
+        "user": 2,
+        "assistant": 60,
+        "toolResult": 68
+      },
+      "tokens": {
+        "input": 14924,
+        "output": 42774,
+        "cacheRead": 7879424,
+        "cacheWrite": 0,
+        "totalTokens": 7937122
+      },
+      "cost_usd": 0.528571
+    },
+    {
+      "id": "implementation.attempt-4",
+      "purpose": "Explicit M3 PATCH session applying independent review round-2 repair items N3-N4 to REPORT.md and BLOCKER_CERTIFICATE.json",
+      "argv": [
+        "omp",
+        "--model",
+        "minimax-code-cn/MiniMax-M3",
+        "--thinking",
+        "high",
+        "--no-prewalk",
+        "--no-title",
+        "--mode",
+        "json",
+        "--config",
+        "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/config/inference/hist_vnext_v1/implementation-overlay.yml",
+        "--max-time",
+        "10m",
+        "-r",
+        "01a16f88-89cb-7781-825e-f385000bd08d",
+        "-p",
+        "独立 review 第二轮返回 PATCH（N1–N4）。N1/N2 是监督者账本，已由监督者修复，你不要改。\n你只修 N3 与 N4，只改 config/inference/hist_vnext_v1/REPORT.md 与 BLOCKER_CERTIFICATE.json；不得改动任何科学结论（status=BLOCKED、blocking_code、identifiable_set=[]、inference_status=NOT_RUN、三维、15 项参数身份、NOT_RUN 清单）。不得改 PLAN.md、commands.json、model_usage.json、resource_usage.json、protected_hashes.json、user_work_snapshot.json、EVIDENCE_MANIFEST.json、logs/、reviews/；不得 commit。\nN3（REPORT.md 实施会话计数过时）：attempt-3 的 11 次 edit 已改写 REPORT.md 与证书（最终字节 mtime 20:38:07Z / 20:39:02Z，落在 attempt-3 窗口 20:35:03–20:39:48Z）。把 REPORT.md 中四处“两个实施子会话”（约在 §0/§2/§8.1/§10，实际行号以当前文件为准）统一改为“三个实施子会话（attempt-1/2/3，同一 session id 01a16f88-89cb-7781-825e-f385000bd08d）”或等价表述“两个实施子会话 + 一轮 review 修复会话（attempt-3）”；并在 §8 的模型/厂商实测来源中补上 logs/implementation.attempt-3.jsonl（其 model/provider/api 实测同为 MiniMax-M3 / minimax-code-cn / anthropic-messages）。§8.1 的执行事实表请补 attempt-3 一行：exit 0、wall 284.956 s、会话 id 相同、只写 REPORT.md 与 BLOCKER_CERTIFICATE.json、范围=review PATCH 修复。\nN4（证书 written_by_attempt 对最终字节字面为假）：把顶层 written_by_attempt 拆为 authored_by_attempt=\"implementation.attempt-2\" 与 last_amended_by_attempt=\"implementation.attempt-3\"，保留 created_utc=2026-10-24T20:25:44Z 作为“证书正文成文时刻”，并在同处注明最终字节由 attempt-3 于 2026-10-24T20:38:07Z 修订（仅 provenance/措辞字段）。若已有 review_patch_applied 段，保持一致，不要重复矛盾说法。\n完成后自查：REPORT 不得再出现“两个实施子会话”这一过时计数；证书不得再有把最终字节归于 attempt-2 的字段。yield 简短 diff 摘要。"
+      ],
+      "prompt": "独立 review 第二轮返回 PATCH（N1–N4）。N1/N2 是监督者账本，已由监督者修复，你不要改。\n你只修 N3 与 N4，只改 config/inference/hist_vnext_v1/REPORT.md 与 BLOCKER_CERTIFICATE.json；不得改动任何科学结论（status=BLOCKED、blocking_code、identifiable_set=[]、inference_status=NOT_RUN、三维、15 项参数身份、NOT_RUN 清单）。不得改 PLAN.md、commands.json、model_usage.json、resource_usage.json、protected_hashes.json、user_work_snapshot.json、EVIDENCE_MANIFEST.json、logs/、reviews/；不得 commit。\nN3（REPORT.md 实施会话计数过时）：attempt-3 的 11 次 edit 已改写 REPORT.md 与证书（最终字节 mtime 20:38:07Z / 20:39:02Z，落在 attempt-3 窗口 20:35:03–20:39:48Z）。把 REPORT.md 中四处“两个实施子会话”（约在 §0/§2/§8.1/§10，实际行号以当前文件为准）统一改为“三个实施子会话（attempt-1/2/3，同一 session id 01a16f88-89cb-7781-825e-f385000bd08d）”或等价表述“两个实施子会话 + 一轮 review 修复会话（attempt-3）”；并在 §8 的模型/厂商实测来源中补上 logs/implementation.attempt-3.jsonl（其 model/provider/api 实测同为 MiniMax-M3 / minimax-code-cn / anthropic-messages）。§8.1 的执行事实表请补 attempt-3 一行：exit 0、wall 284.956 s、会话 id 相同、只写 REPORT.md 与 BLOCKER_CERTIFICATE.json、范围=review PATCH 修复。\nN4（证书 written_by_attempt 对最终字节字面为假）：把顶层 written_by_attempt 拆为 authored_by_attempt=\"implementation.attempt-2\" 与 last_amended_by_attempt=\"implementation.attempt-3\"，保留 created_utc=2026-10-24T20:25:44Z 作为“证书正文成文时刻”，并在同处注明最终字节由 attempt-3 于 2026-10-24T20:38:07Z 修订（仅 provenance/措辞字段）。若已有 review_patch_applied 段，保持一致，不要重复矛盾说法。\n完成后自查：REPORT 不得再出现“两个实施子会话”这一过时计数；证书不得再有把最终字节归于 attempt-2 的字段。yield 简短 diff 摘要。",
+      "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+      "env_overrides": {
+        "note": "inherited environment"
+      },
+      "started_utc": "2026-10-24T20:46:49Z",
+      "finished_utc": "2026-10-24T20:50:30Z",
+      "wall_seconds": 221.682,
+      "exit_code": 0,
+      "signal": null,
+      "stdout_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-4.jsonl",
+      "stdout_bytes": 1600559,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-4.stderr.txt",
+      "stderr_bytes": 0,
+      "observed_model": {
+        "MiniMax-M3": 20
+      },
+      "usage_records": 20,
+      "usage_record_rule": "one record per assistant turn (assistant-role message_end only)",
+      "assistant_event_counts": {
+        "message_start": 20,
+        "message_end": 20,
+        "turn_end": 20,
+        "agent_end_embedded_assistant_copies": 20
+      },
+      "tokens": {
+        "input": 10078,
+        "output": 26519,
+        "cacheRead": 6095488,
+        "cacheWrite": 0,
+        "totalTokens": 6132085
+      },
+      "cost_usd": 0.400575,
+      "note": "resumed session 01a16f88-89cb-7781-825e-f385000bd08d; same model/provider; exit 0; only N3/N4 provenance wording changed.",
+      "all_message_event_counts": {
+        "message_start": 42,
+        "message_end": 42,
+        "tool_execution_start": 21,
+        "turn_end": 20,
+        "agent_end": 1
+      },
+      "message_roles": {
+        "user": 2,
+        "assistant": 40,
+        "toolResult": 42
+      }
+    },
+    {
+      "id": "implementation.attempt-5",
+      "purpose": "Explicit M3 PATCH session: applied review round-3 PATCH items R1/R2/R4 (provenance wording) to REPORT.md and BLOCKER_CERTIFICATE.json",
+      "argv": [
+        "omp",
+        "--model",
+        "minimax-code-cn/MiniMax-M3",
+        "--thinking",
+        "high",
+        "--no-prewalk",
+        "--no-title",
+        "--mode",
+        "json",
+        "--config",
+        "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/config/inference/hist_vnext_v1/implementation-overlay.yml",
+        "--max-time",
+        "10m",
+        "-r",
+        "01a16f88-89cb-7781-825e-f385000bd08d",
+        "-p",
+        "独立 review 第三轮返回 PATCH（R1–R4）。R3 是监督者账本，监督者已修复，你不要改。\n你只修 R1、R2、R4，只改 config/inference/hist_vnext_v1/REPORT.md 与 BLOCKER_CERTIFICATE.json；不得改任何科学结论（status=BLOCKED、blocking_code、identifiable_set=[]、inference_status=NOT_RUN、三维、15 项参数身份、NOT_RUN 清单不变）；不得改 PLAN.md、commands.json、model_usage.json、resource_usage.json、protected_hashes.json、user_work_snapshot.json、EVIDENCE_MANIFEST.json、logs/、reviews/；不得 commit。\n重要约束：**不要在任何地方硬编码新的 mtime 或写入时刻**——这正是 R1/R2 反复失效的原因。改用“时点限定 + 指向 manifest/账本”的表述。\nR1（REPORT.md §8.1 中 attempt-3 的 bullet，当前约 L330-331）：删除“证书最终字节 mtime 20:38:07Z、REPORT.md 20:39:02Z”这类把 attempt-3 写成最终字节的断言；改为：attempt-3 在该轮窗口内改写了 REPORT.md 与证书；其后 attempt-4 再次改写这两份文件，因此当前最终字节不是 attempt-3 的写盘时刻，当前最终字节以 EVIDENCE_MANIFEST.json 记录的 bytes/SHA256 为准（VERIFIED_BY_RUN，路径引用 EVIDENCE_MANIFEST.json）。\nR2（BLOCKER_CERTIFICATE.json 的 executor.attempts[2].outcome，当前约 L63）：把“certificate final bytes mtime … REPORT.md …”改为“the bytes written by attempt-3 (certificate 2026-10-24T20:38:07Z, REPORT.md 2026-10-24T20:39:02Z); the current final bytes were last amended by implementation.attempt-4 (see final_bytes_note)”，消除与同文件 final_bytes_note 的冲突。\nR4（REPORT.md §8 的模型/厂商实测来源段，当前约 L296-299）：在已有 attempt-1/2/3 事件流来源后补上 logs/implementation.attempt-4.jsonl（实测同为 minimax-code-cn / MiniMax-M3 / anthropic-messages）。\n完成后自查：REPORT 与证书中不得再出现把 attempt-3 的时刻当作“最终字节 mtime”的断言；两处对最终字节的归属必须一致，且统一指向 EVIDENCE_MANIFEST.json / final_bytes_note。yield 简短 diff 摘要。"
+      ],
+      "prompt": "独立 review 第三轮返回 PATCH（R1–R4）。R3 是监督者账本，监督者已修复，你不要改。\n你只修 R1、R2、R4，只改 config/inference/hist_vnext_v1/REPORT.md 与 BLOCKER_CERTIFICATE.json；不得改任何科学结论（status=BLOCKED、blocking_code、identifiable_set=[]、inference_status=NOT_RUN、三维、15 项参数身份、NOT_RUN 清单不变）；不得改 PLAN.md、commands.json、model_usage.json、resource_usage.json、protected_hashes.json、user_work_snapshot.json、EVIDENCE_MANIFEST.json、logs/、reviews/；不得 commit。\n重要约束：**不要在任何地方硬编码新的 mtime 或写入时刻**——这正是 R1/R2 反复失效的原因。改用“时点限定 + 指向 manifest/账本”的表述。\nR1（REPORT.md §8.1 中 attempt-3 的 bullet，当前约 L330-331）：删除“证书最终字节 mtime 20:38:07Z、REPORT.md 20:39:02Z”这类把 attempt-3 写成最终字节的断言；改为：attempt-3 在该轮窗口内改写了 REPORT.md 与证书；其后 attempt-4 再次改写这两份文件，因此当前最终字节不是 attempt-3 的写盘时刻，当前最终字节以 EVIDENCE_MANIFEST.json 记录的 bytes/SHA256 为准（VERIFIED_BY_RUN，路径引用 EVIDENCE_MANIFEST.json）。\nR2（BLOCKER_CERTIFICATE.json 的 executor.attempts[2].outcome，当前约 L63）：把“certificate final bytes mtime … REPORT.md …”改为“the bytes written by attempt-3 (certificate 2026-10-24T20:38:07Z, REPORT.md 2026-10-24T20:39:02Z); the current final bytes were last amended by implementation.attempt-4 (see final_bytes_note)”，消除与同文件 final_bytes_note 的冲突。\nR4（REPORT.md §8 的模型/厂商实测来源段，当前约 L296-299）：在已有 attempt-1/2/3 事件流来源后补上 logs/implementation.attempt-4.jsonl（实测同为 minimax-code-cn / MiniMax-M3 / anthropic-messages）。\n完成后自查：REPORT 与证书中不得再出现把 attempt-3 的时刻当作“最终字节 mtime”的断言；两处对最终字节的归属必须一致，且统一指向 EVIDENCE_MANIFEST.json / final_bytes_note。yield 简短 diff 摘要。",
+      "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+      "env_overrides": {
+        "note": "inherited environment"
+      },
+      "started_utc": "2026-10-24T20:56:18Z",
+      "finished_utc": "2026-10-24T20:57:17Z",
+      "wall_seconds": 58.649,
+      "exit_code": 0,
+      "signal": null,
+      "stdout_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-5.jsonl",
+      "stdout_bytes": 538765,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-5.stderr.txt",
+      "stderr_bytes": 0,
+      "observed_model": {
+        "MiniMax-M3": 11
+      },
+      "usage_records": 11,
+      "usage_record_rule": "one record per assistant turn (assistant-role message_end only)",
+      "assistant_event_counts": {
+        "message_start": 11,
+        "message_end": 11,
+        "turn_end": 11,
+        "agent_end_embedded_assistant_copies": 11
+      },
+      "all_message_event_counts": {
+        "message_start": 22,
+        "message_end": 22,
+        "tool_execution_start": 10,
+        "turn_end": 11,
+        "agent_end": 1
+      },
+      "message_roles": {
+        "user": 2,
+        "assistant": 22,
+        "toolResult": 20
+      },
+      "tokens": {
+        "input": 5793,
+        "output": 7940,
+        "cacheRead": 3569408,
+        "cacheWrite": 0,
+        "totalTokens": 3583141
+      },
+      "cost_usd": 0.22543,
+      "note": "resumed session 01a16f88-89cb-7781-825e-f385000bd08d; same model/provider; provenance/wording only."
+    },
+    {
+      "id": "implementation.attempt-6",
+      "purpose": "Explicit M3 PATCH session: replaced terminal 'last/final amendment' attributions with ledger-pointer wording that cannot go stale",
+      "argv": [
+        "omp",
+        "--model",
+        "minimax-code-cn/MiniMax-M3",
+        "--thinking",
+        "high",
+        "--no-prewalk",
+        "--no-title",
+        "--mode",
+        "json",
+        "--config",
+        "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/config/inference/hist_vnext_v1/implementation-overlay.yml",
+        "--max-time",
+        "10m",
+        "-r",
+        "01a16f88-89cb-7781-825e-f385000bd08d",
+        "-p",
+        "第三轮 review 的 R1/R2/R4 已由你修好，但你的这次写入又使“last/final 归属”字段再次过时（同一模式：每次修复都会改写最终字节）。本轮只做一件事：把“最终字节/最后修订”的归属改为**不会随下一轮修复失效的指针式表述**。只改 config/inference/hist_vnext_v1/REPORT.md 与 BLOCKER_CERTIFICATE.json；不得改任何科学结论；不得改其他文件；不得 commit；不要硬编码新的 mtime。\n1) BLOCKER_CERTIFICATE.json：删除顶层 last_amended_by_attempt 与 executor.final_bytes_attempt 这两个“终结性归属”字段；保留 authored_by_attempt=\"implementation.attempt-2\"（成文归属，稳定不变）；新增 amendment_note：“本证书在成文后只被 review PATCH 修复轮修改过，且每次都只改 provenance 与措辞字段（不改 status/blocking_code/identifiable_set/inference_status/三维/15 项参数身份/NOT_RUN 清单）。逐轮修订链与各轮 exit/wall/用量见 commands.json 的 implementation.attempt-3 及之后的条目与 model_usage.json；当前最终字节的 bytes/SHA-256 由 EVIDENCE_MANIFEST.json 封存。”（英文或中英对照均可，含义必须如此；不得写“最后一次是 attempt-N”。）同时把 final_bytes_note 改为同义指针式表述，删除其中对某一次尝试作为“最终字节”的指认。\n2) REPORT.md §8.1：把“四个有界实施子会话”改为“本表列出 attempt-1 至 attempt-4 的有界实施子会话；此后每一轮 review 修复会话都在同一白名单内只改溯源与措辞字段，逐轮账目见 commands.json 与 model_usage.json，最终字节以 EVIDENCE_MANIFEST.json 为准。”；表头“implementation.attempt-4（当前）”改为“implementation.attempt-4”。§0/§2/§10 中任何“四个实施子会话合计/共同构成”的表述改为“截至 attempt-4 的四个实施子会话……；其后各轮 review 修复会话见 commands.json”。\n3) 全文自查：不得再出现把某次 attempt 标为“当前/最后/final bytes”的断言，也不得出现新的硬编码写入时刻。yield 简短 diff 摘要。"
+      ],
+      "prompt": "第三轮 review 的 R1/R2/R4 已由你修好，但你的这次写入又使“last/final 归属”字段再次过时（同一模式：每次修复都会改写最终字节）。本轮只做一件事：把“最终字节/最后修订”的归属改为**不会随下一轮修复失效的指针式表述**。只改 config/inference/hist_vnext_v1/REPORT.md 与 BLOCKER_CERTIFICATE.json；不得改任何科学结论；不得改其他文件；不得 commit；不要硬编码新的 mtime。\n1) BLOCKER_CERTIFICATE.json：删除顶层 last_amended_by_attempt 与 executor.final_bytes_attempt 这两个“终结性归属”字段；保留 authored_by_attempt=\"implementation.attempt-2\"（成文归属，稳定不变）；新增 amendment_note：“本证书在成文后只被 review PATCH 修复轮修改过，且每次都只改 provenance 与措辞字段（不改 status/blocking_code/identifiable_set/inference_status/三维/15 项参数身份/NOT_RUN 清单）。逐轮修订链与各轮 exit/wall/用量见 commands.json 的 implementation.attempt-3 及之后的条目与 model_usage.json；当前最终字节的 bytes/SHA-256 由 EVIDENCE_MANIFEST.json 封存。”（英文或中英对照均可，含义必须如此；不得写“最后一次是 attempt-N”。）同时把 final_bytes_note 改为同义指针式表述，删除其中对某一次尝试作为“最终字节”的指认。\n2) REPORT.md §8.1：把“四个有界实施子会话”改为“本表列出 attempt-1 至 attempt-4 的有界实施子会话；此后每一轮 review 修复会话都在同一白名单内只改溯源与措辞字段，逐轮账目见 commands.json 与 model_usage.json，最终字节以 EVIDENCE_MANIFEST.json 为准。”；表头“implementation.attempt-4（当前）”改为“implementation.attempt-4”。§0/§2/§10 中任何“四个实施子会话合计/共同构成”的表述改为“截至 attempt-4 的四个实施子会话……；其后各轮 review 修复会话见 commands.json”。\n3) 全文自查：不得再出现把某次 attempt 标为“当前/最后/final bytes”的断言，也不得出现新的硬编码写入时刻。yield 简短 diff 摘要。",
+      "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+      "env_overrides": {
+        "note": "inherited environment"
+      },
+      "started_utc": "2026-10-24T20:57:33Z",
+      "finished_utc": "2026-10-24T20:59:08Z",
+      "wall_seconds": 94.382,
+      "exit_code": 0,
+      "signal": null,
+      "stdout_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-6.jsonl",
+      "stdout_bytes": 849273,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-6.stderr.txt",
+      "stderr_bytes": 0,
+      "observed_model": {
+        "MiniMax-M3": 18
+      },
+      "usage_records": 18,
+      "usage_record_rule": "one record per assistant turn (assistant-role message_end only)",
+      "assistant_event_counts": {
+        "message_start": 18,
+        "message_end": 18,
+        "turn_end": 18,
+        "agent_end_embedded_assistant_copies": 18
+      },
+      "all_message_event_counts": {
+        "message_start": 36,
+        "message_end": 36,
+        "tool_execution_start": 17,
+        "turn_end": 18,
+        "agent_end": 1
+      },
+      "message_roles": {
+        "user": 2,
+        "assistant": 36,
+        "toolResult": 34
+      },
+      "tokens": {
+        "input": 7017,
+        "output": 11552,
+        "cacheRead": 6106752,
+        "cacheWrite": 0,
+        "totalTokens": 6125321
+      },
+      "cost_usd": 0.382373,
+      "note": "resumed session 01a16f88-89cb-7781-825e-f385000bd08d; same model/provider; provenance/wording only."
+    },
+    {
+      "id": "implementation.attempt-7",
+      "purpose": "Explicit M3 PATCH session: removed the last stale '(…, current)' provenance marker from BLOCKER_CERTIFICATE.json executor.actual_source and swept both files for terminal-attribution wording",
+      "argv": [
+        "omp",
+        "--model",
+        "minimax-code-cn/MiniMax-M3",
+        "--thinking",
+        "high",
+        "--no-prewalk",
+        "--no-title",
+        "--mode",
+        "json",
+        "--config",
+        "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/config/inference/hist_vnext_v1/implementation-overlay.yml",
+        "--max-time",
+        "10m",
+        "-r",
+        "01a16f88-89cb-7781-825e-f385000bd08d",
+        "-p",
+        "第四轮 review 只剩一处 round-3 同类残留：BLOCKER_CERTIFICATE.json 的 executor.actual_source 把 attempt-4 标为“(review round-2 repair, current)”。本轮只做定点清理，只改 config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json（如 REPORT.md 命中同样标记才一并改）；不得改科学结论；不得改其他文件；不得 commit。\n1) 删除 actual_source 中 attempt-4 后的 “, current” 一词（改为 “(review round-2 repair)”），使其不再把任何一次尝试标为当前/最终。\n2) 然后对 BLOCKER_CERTIFICATE.json 与 REPORT.md 做一次彻底自查，检索并修正**任何**把这轮或某次 attempt 标为 current / 当前 / 最后 / last / final writer 的 provenance 措辞。允许保留：(a) 逐字引用的合同/前置 review 原文；(b) 普通英文 “current evidence”（指证据现状，不是写入者归属）；(c) “final bytes are sealed by EVIDENCE_MANIFEST.json” 这类指针式表述。不得新增任何硬编码 mtime，不得新增“最后一次是 attempt-N”的断言。\n3) 自查输出（yield 时报告）：grep -n -i 'current|当前|最后|last|final' 的两个文件命中行，并逐条说明保留/修改理由。"
+      ],
+      "prompt": "第四轮 review 只剩一处 round-3 同类残留：BLOCKER_CERTIFICATE.json 的 executor.actual_source 把 attempt-4 标为“(review round-2 repair, current)”。本轮只做定点清理，只改 config/inference/hist_vnext_v1/BLOCKER_CERTIFICATE.json（如 REPORT.md 命中同样标记才一并改）；不得改科学结论；不得改其他文件；不得 commit。\n1) 删除 actual_source 中 attempt-4 后的 “, current” 一词（改为 “(review round-2 repair)”），使其不再把任何一次尝试标为当前/最终。\n2) 然后对 BLOCKER_CERTIFICATE.json 与 REPORT.md 做一次彻底自查，检索并修正**任何**把这轮或某次 attempt 标为 current / 当前 / 最后 / last / final writer 的 provenance 措辞。允许保留：(a) 逐字引用的合同/前置 review 原文；(b) 普通英文 “current evidence”（指证据现状，不是写入者归属）；(c) “final bytes are sealed by EVIDENCE_MANIFEST.json” 这类指针式表述。不得新增任何硬编码 mtime，不得新增“最后一次是 attempt-N”的断言。\n3) 自查输出（yield 时报告）：grep -n -i 'current|当前|最后|last|final' 的两个文件命中行，并逐条说明保留/修改理由。",
+      "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+      "env_overrides": {
+        "note": "inherited environment"
+      },
+      "started_utc": "2026-10-24T21:21:56Z",
+      "finished_utc": "2026-10-24T21:24:14Z",
+      "wall_seconds": 137.621,
+      "exit_code": 0,
+      "signal": null,
+      "stdout_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-7.jsonl",
+      "stdout_bytes": 1186931,
+      "stderr_path": "config/inference/hist_vnext_v1/logs/implementation.attempt-7.stderr.txt",
+      "stderr_bytes": 0,
+      "observed_model": {
+        "MiniMax-M3": 16
+      },
+      "usage_records": 16,
+      "usage_record_rule": "one record per assistant turn (assistant-role message_end only)",
+      "assistant_event_counts": {
+        "message_start": 16,
+        "message_end": 16,
+        "turn_end": 16,
+        "agent_end_embedded_assistant_copies": 16
+      },
+      "all_message_event_counts": {
+        "message_start": 34,
+        "message_end": 34,
+        "tool_execution_start": 17,
+        "turn_end": 16,
+        "agent_end": 1
+      },
+      "message_roles": {
+        "user": 2,
+        "assistant": 32,
+        "toolResult": 34
+      },
+      "tokens": {
+        "input": 7435,
+        "output": 18415,
+        "cacheRead": 5778048,
+        "cacheWrite": 0,
+        "totalTokens": 5803898
+      },
+      "cost_usd": 0.371011,
+      "note": "resumed session 01a16f88-89cb-7781-825e-f385000bd08d; same model/provider; provenance wording only."
+    }
+  ],
+  "settlement_note": "Implementation attempts were launched by the supervisor. `usage_records`, `observed_model` and `assistant_event_counts` count assistant turns only: attempt-1..attempt-7 = 72/30/30/20/11/18/16. `all_message_event_counts` and `message_roles` give the raw multiplicity: message_start/message_end events total 184/60/65/42/22/36/34, of which only 72/30/30/20/11/18/16 are assistant turns (the rest are user, toolResult and fileMention messages). `turn_end` repeats each assistant usage payload and `agent_end` embeds another copy, so summing every usage-bearing event inflates tokens 2x (3x including agent_end) and cost 4x (2 copies x summing five cost fields, which double-counts `total`). Tokens and cost here equal the message_end sums and match model_usage.json; the wall/exit/byte figures match resource_usage.json. `message_roles` counts both message_start and message_end events per role, so the assistant entry is twice the assistant-turn count. Review sessions are listed under `review_sessions`; their usage is NOT_MEASURED.",
+  "review_sessions": {
+    "note": "Independent phase-reviewer sessions (blocking task subagents, @review). Usage/model metadata for subagents is not exposed to the supervisor, so it is NOT_MEASURED rather than zero.",
+    "sessions": [
+      {
+        "round": 1,
+        "agent": "H6AReview1",
+        "verdict": "PATCH",
+        "defects": "D1-D6",
+        "duration": "7m20s",
+        "text": "reviews/round-1.md"
+      },
+      {
+        "round": 2,
+        "agent": "H6AReview2",
+        "verdict": "PATCH",
+        "defects": "N1-N4",
+        "duration": "6m04s",
+        "text": "reviews/round-2.md"
+      },
+      {
+        "round": 3,
+        "agent": "H6AReview3",
+        "verdict": "PATCH",
+        "defects": "R1-R4",
+        "duration": "4m57s",
+        "text": "reviews/round-3.md"
+      },
+      {
+        "round": 4,
+        "agent": "H6AReview4",
+        "verdict": "PATCH",
+        "defects": "stale '(…, current)' provenance marker",
+        "duration": "22m12s",
+        "text": "reviews/round-4.md"
+      },
+      {
+        "round": 5,
+        "agent": "H6AReview5",
+        "verdict": "PASS",
+        "defects": "none blocking (R-1/R-2 non-blocking)",
+        "duration": "4m57s",
+        "text": "reviews/round-5.md"
+      }
+    ]
+  }
+}

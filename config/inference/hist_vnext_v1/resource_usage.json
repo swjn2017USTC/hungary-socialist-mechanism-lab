@@ -1,0 +1,111 @@
+{
+ "schema_version": "hist_vnext_h6a_resource_usage_v1",
+ "phase_id": "H6A",
+ "settled_utc": "2026-10-24T21:30:10Z",
+ "note": "wall and byte counts are measured by the supervisor; RSS is NOT_MEASURED because the child processes were launched through a single supervisor shell whose aggregate rusage cannot be attributed per attempt after the fact. NOT_MEASURED is not zero.",
+ "processes": [
+  {
+   "id": "admission.attempt-1",
+   "wall_seconds": 0.262,
+   "stdout_bytes": 4107,
+   "stderr_bytes": 0,
+   "exit_code": 1,
+   "rss": "NOT_MEASURED"
+  },
+  {
+   "id": "metadata-probe.attempt-1",
+   "wall_seconds": 0.025,
+   "stdout_bytes": 1021,
+   "stderr_bytes": 0,
+   "exit_code": 1,
+   "rss": "NOT_MEASURED"
+  },
+  {
+   "id": "implementation.attempt-1",
+   "wall_seconds": 600.288,
+   "stdout_bytes": 6467700,
+   "stderr_bytes": 0,
+   "exit_code": 1,
+   "rss": "NOT_MEASURED",
+   "limit": "--max-time 10m reached"
+  },
+  {
+   "id": "implementation.attempt-2",
+   "wall_seconds": 357.852,
+   "stdout_bytes": 2701398,
+   "stderr_bytes": 0,
+   "exit_code": 0,
+   "rss": "NOT_MEASURED"
+  },
+  {
+   "id": "implementation.attempt-3",
+   "wall_seconds": 284.956,
+   "stdout_bytes": 2486849,
+   "stderr_bytes": 0,
+   "exit_code": 0,
+   "rss": "NOT_MEASURED"
+  },
+  {
+   "id": "implementation.attempt-4",
+   "wall_seconds": 221.682,
+   "stdout_bytes": 1600559,
+   "stderr_bytes": 0,
+   "exit_code": 0,
+   "rss": "NOT_MEASURED"
+  },
+  {
+   "id": "implementation.attempt-5",
+   "wall_seconds": 58.649,
+   "stdout_bytes": 538765,
+   "stderr_bytes": 0,
+   "exit_code": 0,
+   "rss": "NOT_MEASURED"
+  },
+  {
+   "id": "implementation.attempt-6",
+   "wall_seconds": 94.382,
+   "stdout_bytes": 849273,
+   "stderr_bytes": 0,
+   "exit_code": 0,
+   "rss": "NOT_MEASURED"
+  },
+  {
+   "id": "implementation.attempt-7",
+   "wall_seconds": 137.621,
+   "stdout_bytes": 1186931,
+   "stderr_bytes": 0,
+   "exit_code": 0,
+   "rss": "NOT_MEASURED"
+  }
+ ],
+ "disk": {
+  "state": "sufficient; no ENOSPC observed",
+  "measured_bytes": "NOT_MEASURED"
+ },
+ "simulation_resources": {
+  "status": "NOT_RUN",
+  "cpu_hours": "0 (no simulation executed)",
+  "note": "no simulation, no seed ensemble, no C0/C1 replay in this branch"
+ },
+ "reviewer": {
+  "status": "PASS (round 5)",
+  "sessions": 5,
+  "durations": {
+   "round-1": "7m20s",
+   "round-2": "6m04s",
+   "round-3": "4m57s",
+   "round-4": "22m12s",
+   "round-5": "4m57s"
+  },
+  "wall_seconds_total": "NOT_MEASURED (only per-session durations reported by the task dispatcher are available; 44m30s sum of reported durations)",
+  "rss": "NOT_MEASURED",
+  "texts": [
+   "reviews/round-1.md",
+   "reviews/round-2.md",
+   "reviews/round-3.md",
+   "reviews/round-4.md",
+   "reviews/round-5.md"
+  ],
+  "verdict_index": "REVIEW.md"
+ }
+}
