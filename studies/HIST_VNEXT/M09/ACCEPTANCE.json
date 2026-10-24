@@ -1,0 +1,128 @@
+{
+  "failures": [],
+  "historical": "NOT_RUN",
+  "phase_id": "H5F-F1",
+  "receipt": {
+    "command": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "acceptance",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z"
+    ],
+    "exit_code": 0,
+    "note": "The acceptance command is read-only; this file is the parent-saved stdout, not a rewritten result.",
+    "stdout_path": "outputs/hist-vnext-h5f-f1-20261024T021255Z/logs/acceptance-final3.stdout.txt",
+    "stdout_sha256": "9977570fc85ecdec59bbc352fa4651e9cbfc046bf1ba87d861ca31c643df05f3"
+  },
+  "schema_version": "hist_vnext_h5f_f1_m09_v1",
+  "status": "PASS",
+  "structural": {
+    "historical_plan_implementation_sources": "MISSING",
+    "historical_validation": "NOT_RUN",
+    "m09_registration": "blocked (unchanged)",
+    "synthetic_profile_only": true
+  },
+  "technical": {
+    "C0": {
+      "completed_ticks": 116,
+      "deterministic_replay_digest": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+      "parameter_hash": "e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445",
+      "run_id": "035ed8a3f9804904bbdc5437bb6b2bf7"
+    },
+    "C1": {
+      "completed_ticks": 116,
+      "deterministic_replay_digest": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5",
+      "parameter_hash": "632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90",
+      "run_id": "ed9790d5cb74460da9279b9b7f7aef4a"
+    },
+    "profile_repeat_identical": true,
+    "regression": {
+      "baseline_verify": {
+        "command": [
+          ".venv/bin/hsm",
+          "baseline",
+          "verify",
+          "--json"
+        ],
+        "exit_code": 0,
+        "stdout": "{\"baseline_version\": \"1.1\", \"command\": \"baseline verify\", \"expected_sha256\": \"1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f\", \"path\": \"/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/BASELINE.md\", \"sha256\": \"1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f\", \"status\": \"ok\"}"
+      },
+      "c0": {
+        "command": [
+          ".venv/bin/hsm",
+          "run",
+          "--scenario",
+          "historical_f2_replay",
+          "--output-dir",
+          "outputs/hist-vnext-h5f-f1-20261024T021255Z/C0",
+          "--json"
+        ],
+        "exit_code": 0,
+        "reason": "engine/scenario unchanged by adapter/runner/test repairs",
+        "reused": true
+      },
+      "c0c1_identity": {
+        "command": [
+          ".venv/bin/python",
+          "-B",
+          "outputs/hist-vnext-h5f-f1-20261024T021255Z/verify_c0c1.py"
+        ],
+        "exit_code": 0,
+        "status": "PASS"
+      },
+      "c1": {
+        "command": [
+          ".venv/bin/hsm",
+          "run",
+          "--scenario",
+          "historical_f2_trade_scenario",
+          "--output-dir",
+          "outputs/hist-vnext-h5f-f1-20261024T021255Z/C1",
+          "--json"
+        ],
+        "exit_code": 0,
+        "reason": "engine/scenario unchanged by adapter/runner/test repairs",
+        "reused": true
+      },
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_code": 0,
+      "failed": 0,
+      "no_skip": true,
+      "passed": 1877,
+      "ruff": {
+        "command": [
+          ".venv/bin/ruff",
+          "check",
+          "--no-cache",
+          "src",
+          "tests",
+          "studies/HIST_VNEXT/M09"
+        ],
+        "exit_code": 0
+      },
+      "schema_version": "hist_vnext_h5f_f1_m09_v1",
+      "skipped": 0,
+      "summary": "1877 passed, 180 warnings in 242.92s (0:04:02)",
+      "uv_lock": {
+        "command": [
+          "uv",
+          "lock",
+          "--check",
+          "--offline"
+        ],
+        "exit_code": 0
+      },
+      "wall_seconds": 243.722
+    }
+  }
+}

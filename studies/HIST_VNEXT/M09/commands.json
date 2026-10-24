@@ -1,0 +1,1594 @@
+[
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "reproduce",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/reproduce"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "reproduce",
+    "signal": null,
+    "started_at": "2026-10-24T02:19:50.702085+00:00",
+    "stderr_path": "logs/reproduce.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/reproduce.stdout.txt",
+    "stdout_sha256": "4a45ea6f0f75ab38ad1723ed89acc014ffb1e326d2b91429d160564b56d93ad8",
+    "time_stats_path": null,
+    "wall_seconds": 0.374
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "smoke",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/smoke"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "smoke",
+    "signal": null,
+    "started_at": "2026-10-24T02:19:53.097953+00:00",
+    "stderr_path": "logs/smoke.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/smoke.stdout.txt",
+    "stdout_sha256": "8575e61b19547f6ad02614aea64a6a51af76d3bccce495b726506c6e313a7c38",
+    "time_stats_path": null,
+    "wall_seconds": 1.322
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "profile",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/profile"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "profile",
+    "signal": null,
+    "started_at": "2026-10-24T02:19:56.577575+00:00",
+    "stderr_path": "logs/profile.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/profile.stdout.txt",
+    "stdout_sha256": "748fd2f93c890b504a6d914d3bffd460b9bdc5a5b6a42d7a4752e3abcb0ff2cc",
+    "time_stats_path": null,
+    "wall_seconds": 2.426
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "study",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/study"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 2,
+    "name": "study",
+    "signal": null,
+    "started_at": "2026-10-24T02:20:01.321257+00:00",
+    "stderr_path": "logs/study.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/study.stdout.txt",
+    "stdout_sha256": "41fd8b313750cdd98bcd61ff550a02f1a1ed2ac60ce5ac5339b7575d2f831fcf",
+    "time_stats_path": null,
+    "wall_seconds": 6.036
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "smoke",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/smoke"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "smoke-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:22:30.792740+00:00",
+    "stderr_path": "logs/smoke-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/smoke-final.stdout.txt",
+    "stdout_sha256": "a539d5369eaa62edd5856a2bfd123ab734b279382be6745c0c0887ef92451815",
+    "time_stats_path": null,
+    "wall_seconds": 1.541
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "profile",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/profile"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "profile-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:22:34.075918+00:00",
+    "stderr_path": "logs/profile-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/profile-final.stdout.txt",
+    "stdout_sha256": "952204241e956e843007e55a143152c32a9f92a411a486f8b4e66bd9bfe08c56",
+    "time_stats_path": null,
+    "wall_seconds": 2.808
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "study",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/study"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "study-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:22:39.354710+00:00",
+    "stderr_path": "logs/study-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/study-final.stdout.txt",
+    "stdout_sha256": "168b526211acdeac87ee7855594111f308baa60bc00d9c539041349bd18473bb",
+    "time_stats_path": null,
+    "wall_seconds": 7.633
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "profile",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/repeat"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "repeat-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:22:48.730911+00:00",
+    "stderr_path": "logs/repeat-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/repeat-final.stdout.txt",
+    "stdout_sha256": "0245affb1b8b2f6d734852f27717f4267ae078427e657926ea98825d787722a7",
+    "time_stats_path": null,
+    "wall_seconds": 2.781
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/smoke"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-smoke",
+    "signal": null,
+    "started_at": "2026-10-24T02:22:53.568785+00:00",
+    "stderr_path": "logs/verify-smoke.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-smoke.stdout.txt",
+    "stdout_sha256": "4621b7542b2b9402003348ec4e47e9d91137e3ef236b25730376e9cc14c1f362",
+    "time_stats_path": null,
+    "wall_seconds": 0.368
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/profile"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-profile",
+    "signal": null,
+    "started_at": "2026-10-24T02:22:53.976208+00:00",
+    "stderr_path": "logs/verify-profile.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-profile.stdout.txt",
+    "stdout_sha256": "6b17ada40ce6533b2f5e9256834e7471b23a14395ba86f9ea52256bf3cd9d2d6",
+    "time_stats_path": null,
+    "wall_seconds": 0.34
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/study"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-study",
+    "signal": null,
+    "started_at": "2026-10-24T02:22:54.357783+00:00",
+    "stderr_path": "logs/verify-study.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-study.stdout.txt",
+    "stdout_sha256": "4ec9d158403f4e3a09d90a8560b57ab879e43d3bd60be27e5d622fcd3466a164",
+    "time_stats_path": null,
+    "wall_seconds": 0.385
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/repeat"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-repeat",
+    "signal": null,
+    "started_at": "2026-10-24T02:22:54.782939+00:00",
+    "stderr_path": "logs/verify-repeat.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-repeat.stdout.txt",
+    "stdout_sha256": "6b17ada40ce6533b2f5e9256834e7471b23a14395ba86f9ea52256bf3cd9d2d6",
+    "time_stats_path": null,
+    "wall_seconds": 0.338
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "smoke",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/smoke"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "smoke-final2",
+    "signal": null,
+    "started_at": "2026-10-24T02:47:37.555511+00:00",
+    "stderr_path": "logs/smoke-final2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/smoke-final2.stdout.txt",
+    "stdout_sha256": "c4261ea719d015c37fa41f05c7d13dee1e5b2991a62bfe4f82f76b72f0aa6de9",
+    "time_stats_path": "logs/smoke-final2.time.txt",
+    "wall_seconds": 1.546
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "profile",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/profile"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "profile-final2",
+    "signal": null,
+    "started_at": "2026-10-24T02:47:39.144015+00:00",
+    "stderr_path": "logs/profile-final2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/profile-final2.stdout.txt",
+    "stdout_sha256": "e00a38d4c814223f20d552eb3b4be909957e5ad28be257ac7c10e6c0ce2f3615",
+    "time_stats_path": "logs/profile-final2.time.txt",
+    "wall_seconds": 2.75
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "study",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/study"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "study-final2",
+    "signal": null,
+    "started_at": "2026-10-24T02:47:41.934386+00:00",
+    "stderr_path": "logs/study-final2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/study-final2.stdout.txt",
+    "stdout_sha256": "95fbb4ab663889f03cd06663abf7fa077137d5cbeb6baeae1cd4a56667c04693",
+    "time_stats_path": "logs/study-final2.time.txt",
+    "wall_seconds": 7.669
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "profile",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/repeat"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "repeat-final2",
+    "signal": null,
+    "started_at": "2026-10-24T02:47:49.648950+00:00",
+    "stderr_path": "logs/repeat-final2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/repeat-final2.stdout.txt",
+    "stdout_sha256": "ff14fdefc240a7ddb67b8814c80c00df03cd8fb963bc8e61c86e0114cee7d435",
+    "time_stats_path": "logs/repeat-final2.time.txt",
+    "wall_seconds": 2.839
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/smoke"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-smoke-2",
+    "signal": null,
+    "started_at": "2026-10-24T02:47:55.155010+00:00",
+    "stderr_path": "logs/verify-smoke-2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-smoke-2.stdout.txt",
+    "stdout_sha256": "d0f9a37aa9dacf5f93cfcbc3b135f540778ad550a245eba1dcdec82959f035bf",
+    "time_stats_path": "logs/verify-smoke-2.time.txt",
+    "wall_seconds": 0.371
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/profile"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-profile-2",
+    "signal": null,
+    "started_at": "2026-10-24T02:47:55.569538+00:00",
+    "stderr_path": "logs/verify-profile-2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-profile-2.stdout.txt",
+    "stdout_sha256": "aebdaf0ea33ff01faf9d5f2a9b28ea9cde8b6839179a08f1d1052952c141d83d",
+    "time_stats_path": "logs/verify-profile-2.time.txt",
+    "wall_seconds": 0.343
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/study"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-study-2",
+    "signal": null,
+    "started_at": "2026-10-24T02:47:55.953886+00:00",
+    "stderr_path": "logs/verify-study-2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-study-2.stdout.txt",
+    "stdout_sha256": "ec66612927d4ae23f8e28a8d41eb890ae4d8e8439146f4718ab3c646a52fd2a5",
+    "time_stats_path": "logs/verify-study-2.time.txt",
+    "wall_seconds": 0.381
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/repeat"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-repeat-2",
+    "signal": null,
+    "started_at": "2026-10-24T02:47:56.378119+00:00",
+    "stderr_path": "logs/verify-repeat-2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-repeat-2.stdout.txt",
+    "stdout_sha256": "aebdaf0ea33ff01faf9d5f2a9b28ea9cde8b6839179a08f1d1052952c141d83d",
+    "time_stats_path": "logs/verify-repeat-2.time.txt",
+    "wall_seconds": 0.355
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "pytest-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:48:08.803222+00:00",
+    "stderr_path": "logs/pytest-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/pytest-final.stdout.txt",
+    "stdout_sha256": "c156c14e189039d519c62fb33e70d64cc265ceef94b893857cbc883f4c7b933c",
+    "time_stats_path": "logs/pytest-final.time.txt",
+    "wall_seconds": 214.794
+  },
+  {
+    "argv": [
+      ".venv/bin/ruff",
+      "check",
+      "--no-cache",
+      "src",
+      "tests",
+      "studies/HIST_VNEXT/M09"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "ruff-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:51:48.892470+00:00",
+    "stderr_path": "logs/ruff-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/ruff-final.stdout.txt",
+    "stdout_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "time_stats_path": "logs/ruff-final.time.txt",
+    "wall_seconds": 0.033
+  },
+  {
+    "argv": [
+      "uv",
+      "lock",
+      "--check",
+      "--offline"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "uv-lock-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:51:48.971117+00:00",
+    "stderr_path": "logs/uv-lock-final.stderr.txt",
+    "stderr_sha256": "8ff5a3561e1f169b904ac28730cea6e748f61bf08f656b2c1f70e8e1917f3e5a",
+    "stdout_path": "logs/uv-lock-final.stdout.txt",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "time_stats_path": "logs/uv-lock-final.time.txt",
+    "wall_seconds": 0.061
+  },
+  {
+    "argv": [
+      ".venv/bin/hsm",
+      "baseline",
+      "verify",
+      "--json"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "baseline-verify-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:51:49.073477+00:00",
+    "stderr_path": "logs/baseline-verify-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/baseline-verify-final.stdout.txt",
+    "stdout_sha256": "4d1c94478e3c1540bd33cb868e32534120c4c4489ab2f6618cd1f620581262e3",
+    "time_stats_path": "logs/baseline-verify-final.time.txt",
+    "wall_seconds": 0.307
+  },
+  {
+    "argv": [
+      ".venv/bin/hsm",
+      "run",
+      "--scenario",
+      "historical_f2_replay",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/C0",
+      "--json"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "c0-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:51:51.709986+00:00",
+    "stderr_path": "logs/c0-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/c0-final.stdout.txt",
+    "stdout_sha256": "5058590b39cd35ee4beba86df135923c21b49b216b8e907cd9e719519ccdb33e",
+    "time_stats_path": "logs/c0-final.time.txt",
+    "wall_seconds": 7.895
+  },
+  {
+    "argv": [
+      ".venv/bin/hsm",
+      "run",
+      "--scenario",
+      "historical_f2_trade_scenario",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/C1",
+      "--json"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "c1-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:52:01.230725+00:00",
+    "stderr_path": "logs/c1-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/c1-final.stdout.txt",
+    "stdout_sha256": "5edb8ecddb0c19466fe4ee4a0b392e3ba1d56ebabbae262a34c6ccdc7d01add5",
+    "time_stats_path": "logs/c1-final.time.txt",
+    "wall_seconds": 8.063
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/verify_c0c1.py"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-c0c1-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:52:19.594345+00:00",
+    "stderr_path": "logs/verify-c0c1-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-c0c1-final.stdout.txt",
+    "stdout_sha256": "0959e7427d6f613cb60d45602855f3220a3f77766b2689bfc67369cca5f3497b",
+    "time_stats_path": "logs/verify-c0c1-final.time.txt",
+    "wall_seconds": 0.95
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "acceptance",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "acceptance-final",
+    "signal": null,
+    "started_at": "2026-10-24T02:52:26.463588+00:00",
+    "stderr_path": "logs/acceptance-final.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/acceptance-final.stdout.txt",
+    "stdout_sha256": "5b50993777b35019d411a7f30aa394380651adc547e187e7cc6dc1d656e53ba7",
+    "time_stats_path": "logs/acceptance-final.time.txt",
+    "wall_seconds": 1.009
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "smoke",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/smoke"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "smoke-final3",
+    "signal": null,
+    "started_at": "2026-10-24T03:31:20.111018+00:00",
+    "stderr_path": "logs/smoke-final3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/smoke-final3.stdout.txt",
+    "stdout_sha256": "c2d564e006fcc60a18f76efc0d7f53cc6fb0c0f0b6f050d2ab34d01a06e6468a",
+    "time_stats_path": "logs/smoke-final3.time.txt",
+    "wall_seconds": 1.606
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "profile",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/profile"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "profile-final3",
+    "signal": null,
+    "started_at": "2026-10-24T03:31:21.761136+00:00",
+    "stderr_path": "logs/profile-final3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/profile-final3.stdout.txt",
+    "stdout_sha256": "63cfcfc612f0a655d604a7f204d3c0b0b75d62f1f53c54b21a598ceab16d9d87",
+    "time_stats_path": "logs/profile-final3.time.txt",
+    "wall_seconds": 2.856
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "study",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/study"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "study-final3",
+    "signal": null,
+    "started_at": "2026-10-24T03:31:24.661883+00:00",
+    "stderr_path": "logs/study-final3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/study-final3.stdout.txt",
+    "stdout_sha256": "e50505e1eeda6df8ab199f1ba0b8caa54072ce5d8ed21816afeec8833eaa5d65",
+    "time_stats_path": "logs/study-final3.time.txt",
+    "wall_seconds": 7.788
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "profile",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/repeat"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "repeat-final3",
+    "signal": null,
+    "started_at": "2026-10-24T03:31:32.499404+00:00",
+    "stderr_path": "logs/repeat-final3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/repeat-final3.stdout.txt",
+    "stdout_sha256": "edefa772a238c63c191b4161a963d79caee5f9677e2408bbf63978aba752bf22",
+    "time_stats_path": "logs/repeat-final3.time.txt",
+    "wall_seconds": 2.816
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/smoke"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-smoke-3",
+    "signal": null,
+    "started_at": "2026-10-24T03:31:38.407585+00:00",
+    "stderr_path": "logs/verify-smoke-3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-smoke-3.stdout.txt",
+    "stdout_sha256": "8d4b076acf82d00ab4db29816ae4d1b4ec9525461b02ea5bcfa796105228d814",
+    "time_stats_path": "logs/verify-smoke-3.time.txt",
+    "wall_seconds": 0.377
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/profile"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-profile-3",
+    "signal": null,
+    "started_at": "2026-10-24T03:31:38.830298+00:00",
+    "stderr_path": "logs/verify-profile-3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-profile-3.stdout.txt",
+    "stdout_sha256": "70cbef0aa3623634f80b19a2bf528a6dee3d2f15eaff3b584af34ae5995dbcda",
+    "time_stats_path": "logs/verify-profile-3.time.txt",
+    "wall_seconds": 0.358
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/study"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-study-3",
+    "signal": null,
+    "started_at": "2026-10-24T03:31:39.233108+00:00",
+    "stderr_path": "logs/verify-study-3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-study-3.stdout.txt",
+    "stdout_sha256": "8b19498e5977cc34841fa22cf3f14bb138feb2f25d4b37ee8b416c628d7b280d",
+    "time_stats_path": "logs/verify-study-3.time.txt",
+    "wall_seconds": 0.357
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/repeat"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-repeat-3",
+    "signal": null,
+    "started_at": "2026-10-24T03:31:39.635004+00:00",
+    "stderr_path": "logs/verify-repeat-3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-repeat-3.stdout.txt",
+    "stdout_sha256": "70cbef0aa3623634f80b19a2bf528a6dee3d2f15eaff3b584af34ae5995dbcda",
+    "time_stats_path": "logs/verify-repeat-3.time.txt",
+    "wall_seconds": 0.351
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "pytest-final2",
+    "signal": null,
+    "started_at": "2026-10-24T03:31:49.147303+00:00",
+    "stderr_path": "logs/pytest-final2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/pytest-final2.stdout.txt",
+    "stdout_sha256": "690c5d0b8ba69046cc77409ec43e25642f976ccfbbfbb0d751df23f075722648",
+    "time_stats_path": "logs/pytest-final2.time.txt",
+    "wall_seconds": 271.31
+  },
+  {
+    "argv": [
+      ".venv/bin/ruff",
+      "check",
+      "--no-cache",
+      "src",
+      "tests",
+      "studies/HIST_VNEXT/M09"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "ruff-final2",
+    "signal": null,
+    "started_at": "2026-10-24T03:36:24.999733+00:00",
+    "stderr_path": "logs/ruff-final2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/ruff-final2.stdout.txt",
+    "stdout_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "time_stats_path": "logs/ruff-final2.time.txt",
+    "wall_seconds": 0.06
+  },
+  {
+    "argv": [
+      "uv",
+      "lock",
+      "--check",
+      "--offline"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "uv-lock-final2",
+    "signal": null,
+    "started_at": "2026-10-24T03:36:25.119501+00:00",
+    "stderr_path": "logs/uv-lock-final2.stderr.txt",
+    "stderr_sha256": "8ff5a3561e1f169b904ac28730cea6e748f61bf08f656b2c1f70e8e1917f3e5a",
+    "stdout_path": "logs/uv-lock-final2.stdout.txt",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "time_stats_path": "logs/uv-lock-final2.time.txt",
+    "wall_seconds": 0.065
+  },
+  {
+    "argv": [
+      ".venv/bin/hsm",
+      "baseline",
+      "verify",
+      "--json"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "baseline-verify-final2",
+    "signal": null,
+    "started_at": "2026-10-24T03:36:25.235400+00:00",
+    "stderr_path": "logs/baseline-verify-final2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/baseline-verify-final2.stdout.txt",
+    "stdout_sha256": "4d1c94478e3c1540bd33cb868e32534120c4c4489ab2f6618cd1f620581262e3",
+    "time_stats_path": "logs/baseline-verify-final2.time.txt",
+    "wall_seconds": 0.383
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "acceptance",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "acceptance-final2",
+    "signal": null,
+    "started_at": "2026-10-24T03:36:32.332616+00:00",
+    "stderr_path": "logs/acceptance-final2.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/acceptance-final2.stdout.txt",
+    "stdout_sha256": "8c46fe500ee994e3472f75dccd047c31879f786bff9a25ea89360af9bd5c1eb8",
+    "time_stats_path": "logs/acceptance-final2.time.txt",
+    "wall_seconds": 1.163
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "smoke",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/smoke"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "smoke-final4",
+    "signal": null,
+    "started_at": "2026-10-24T03:45:10.383969+00:00",
+    "stderr_path": "logs/smoke-final4.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/smoke-final4.stdout.txt",
+    "stdout_sha256": "8f45380289af8c3fd1b5b484f73b7a728e9c281d403b5cfeb51487035cb30300",
+    "time_stats_path": "logs/smoke-final4.time.txt",
+    "wall_seconds": 1.795
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "profile",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/profile"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "profile-final4",
+    "signal": null,
+    "started_at": "2026-10-24T03:45:12.226279+00:00",
+    "stderr_path": "logs/profile-final4.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/profile-final4.stdout.txt",
+    "stdout_sha256": "73d5f0b0aeabe8757a55ea9927e4bdc1761c5f8e85f4fc3a8d64665582bb7410",
+    "time_stats_path": "logs/profile-final4.time.txt",
+    "wall_seconds": 3.288
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "study",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/study"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "study-final4",
+    "signal": null,
+    "started_at": "2026-10-24T03:45:15.557392+00:00",
+    "stderr_path": "logs/study-final4.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/study-final4.stdout.txt",
+    "stdout_sha256": "082fa2a9ec0a1acacfada7ab72ec231782b86c6404a4d07d3806d5a53466de00",
+    "time_stats_path": "logs/study-final4.time.txt",
+    "wall_seconds": 8.972
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "profile",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/repeat"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "repeat-final4",
+    "signal": null,
+    "started_at": "2026-10-24T03:45:24.592795+00:00",
+    "stderr_path": "logs/repeat-final4.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/repeat-final4.stdout.txt",
+    "stdout_sha256": "b9231147cf8072eba725e05bcde9eb375225ad356888bcb9aa154057fa587197",
+    "time_stats_path": "logs/repeat-final4.time.txt",
+    "wall_seconds": 3.229
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/smoke"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-smoke-4",
+    "signal": null,
+    "started_at": "2026-10-24T03:45:30.851082+00:00",
+    "stderr_path": "logs/verify-smoke-4.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-smoke-4.stdout.txt",
+    "stdout_sha256": "10296366e584245aa655bb6027d47d0c14c1e5651671f84054f80513d3aaa4f6",
+    "time_stats_path": "logs/verify-smoke-4.time.txt",
+    "wall_seconds": 0.367
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/profile"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-profile-4",
+    "signal": null,
+    "started_at": "2026-10-24T03:45:31.263818+00:00",
+    "stderr_path": "logs/verify-profile-4.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-profile-4.stdout.txt",
+    "stdout_sha256": "e52f2bb55c3eede05724005f67bcde0d8993e46a59c4264745e2036fc70dc4d7",
+    "time_stats_path": "logs/verify-profile-4.time.txt",
+    "wall_seconds": 0.349
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/study"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-study-4",
+    "signal": null,
+    "started_at": "2026-10-24T03:45:31.656655+00:00",
+    "stderr_path": "logs/verify-study-4.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-study-4.stdout.txt",
+    "stdout_sha256": "deb4fc90e12d165d74f78d6871f811e804dfcb1d895461a8df475892e0ecc26a",
+    "time_stats_path": "logs/verify-study-4.time.txt",
+    "wall_seconds": 0.374
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "verify",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z/repeat"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "verify-repeat-4",
+    "signal": null,
+    "started_at": "2026-10-24T03:45:32.078944+00:00",
+    "stderr_path": "logs/verify-repeat-4.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/verify-repeat-4.stdout.txt",
+    "stdout_sha256": "e52f2bb55c3eede05724005f67bcde0d8993e46a59c4264745e2036fc70dc4d7",
+    "time_stats_path": "logs/verify-repeat-4.time.txt",
+    "wall_seconds": 0.424
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "pytest-final3",
+    "signal": null,
+    "started_at": "2026-10-24T03:45:43.606953+00:00",
+    "stderr_path": "logs/pytest-final3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/pytest-final3.stdout.txt",
+    "stdout_sha256": "5980c996ce0d90e9516461966d579e87fbe21678f08339d8d99aa6962261cf60",
+    "time_stats_path": "logs/pytest-final3.time.txt",
+    "wall_seconds": 243.722
+  },
+  {
+    "argv": [
+      ".venv/bin/ruff",
+      "check",
+      "--no-cache",
+      "src",
+      "tests",
+      "studies/HIST_VNEXT/M09"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "ruff-final3",
+    "signal": null,
+    "started_at": "2026-10-24T03:49:51.495715+00:00",
+    "stderr_path": "logs/ruff-final3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/ruff-final3.stdout.txt",
+    "stdout_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "time_stats_path": "logs/ruff-final3.time.txt",
+    "wall_seconds": 0.033
+  },
+  {
+    "argv": [
+      "uv",
+      "lock",
+      "--check",
+      "--offline"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "uv-lock-final3",
+    "signal": null,
+    "started_at": "2026-10-24T03:49:51.580520+00:00",
+    "stderr_path": "logs/uv-lock-final3.stderr.txt",
+    "stderr_sha256": "8ff5a3561e1f169b904ac28730cea6e748f61bf08f656b2c1f70e8e1917f3e5a",
+    "stdout_path": "logs/uv-lock-final3.stdout.txt",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "time_stats_path": "logs/uv-lock-final3.time.txt",
+    "wall_seconds": 0.061
+  },
+  {
+    "argv": [
+      ".venv/bin/hsm",
+      "baseline",
+      "verify",
+      "--json"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "baseline-verify-final3",
+    "signal": null,
+    "started_at": "2026-10-24T03:49:51.685696+00:00",
+    "stderr_path": "logs/baseline-verify-final3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/baseline-verify-final3.stdout.txt",
+    "stdout_sha256": "4d1c94478e3c1540bd33cb868e32534120c4c4489ab2f6618cd1f620581262e3",
+    "time_stats_path": "logs/baseline-verify-final3.time.txt",
+    "wall_seconds": 0.337
+  },
+  {
+    "argv": [
+      ".venv/bin/python",
+      "-B",
+      "-m",
+      "studies.HIST_VNEXT.M09.runner",
+      "acceptance",
+      "--output-dir",
+      "outputs/hist-vnext-h5f-f1-20261024T021255Z"
+    ],
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "exit_code": 0,
+    "name": "acceptance-final3",
+    "signal": null,
+    "started_at": "2026-10-24T03:49:55.825376+00:00",
+    "stderr_path": "logs/acceptance-final3.stderr.txt",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "logs/acceptance-final3.stdout.txt",
+    "stdout_sha256": "9977570fc85ecdec59bbc352fa4651e9cbfc046bf1ba87d861ca31c643df05f3",
+    "time_stats_path": "logs/acceptance-final3.time.txt",
+    "wall_seconds": 1.118
+  }
+]

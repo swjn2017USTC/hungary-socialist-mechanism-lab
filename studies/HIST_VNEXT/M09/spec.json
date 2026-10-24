@@ -1,0 +1,65 @@
+{
+  "schema_version": "hist_vnext_h5f_f1_m09_v1",
+  "phase_id": "H5F-F1",
+  "study_id": "M09",
+  "mechanism_id": "M9",
+  "registration_status_changed": false,
+  "research_layer": "material_only",
+  "politics_installed": false,
+  "historical_status": "NOT_RUN",
+  "structural_status": "SYNTHETIC_ENGINEERING_PROFILE",
+  "base_scenario": "intermediate8",
+  "scenario_id": "hist_vnext_h5f_f1_m09_synthetic",
+  "start": "1957Q1",
+  "ticks": 8,
+  "warmup_ticks": 3,
+  "issue_ticks": [3, 4, 5, 6],
+  "target_ticks": [4, 5, 6, 7],
+  "seeds": [1729, 1730, 1731],
+  "horizon_quarters": 1,
+  "quarters": {
+    "issue": ["1957Q4", "1958Q1", "1958Q2", "1958Q3"],
+    "target": ["1958Q1", "1958Q2", "1958Q3", "1958Q4"]
+  },
+  "arms": [
+    "delay0_persistence",
+    "delay0_linear",
+    "delay1_persistence",
+    "delay1_linear"
+  ],
+  "forecast": {
+    "commodity_id": "energy",
+    "stage": "standard",
+    "unit": "p02_energy_unit",
+    "methods": ["persistence", "linear"],
+    "report_publication": "next quarter day 10 plus delay quarters",
+    "decision_day": 15,
+    "quantity_mapping": "min(100, max(0, prediction))",
+    "quantity_cap_is": "frozen synthetic order cap, not an estimate"
+  },
+  "procurement": {
+    "actor_organization_id": "ORG-ENT-A",
+    "actor_role": "procurement_organization",
+    "sector_id": "industry",
+    "geographic_id": "national",
+    "quantity_cap": 100.0,
+    "terminal_quantity": 0.0,
+    "warmup_request": 0.0
+  },
+  "calendar": {
+    "synthetic": true,
+    "event_id": "H5F-F1-GRANT-PROCUREMENT",
+    "effective_from": "1957-01-01",
+    "issuer": "synthetic H5F-F1",
+    "scope_organization_ids": ["ORG-ENT-A"],
+    "scope_sector_ids": ["industry"],
+    "scope_geographic_ids": ["national"],
+    "permissions": ["procurement"]
+  },
+  "notes": [
+    "The 1957Q1-1958Q4 window is a model-generated synthetic profile, not a historical initial state or historical forecast.",
+    "The three seeds are a paired engineering bank, not independent historical samples and not a power calculation.",
+    "The two-point linear rule, the one-quarter delay and the 100-unit order cap are declared synthetic experimental settings.",
+    "No target or sealed-window value is read. M09 remains blocked and the legacy forecast_accuracy definition is not an error measurement."
+  ]
+}

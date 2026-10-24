@@ -1,0 +1,500 @@
+{
+  "commands": [
+    {
+      "exit_code": 0,
+      "name": "reproduce",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 0.374
+    },
+    {
+      "exit_code": 0,
+      "name": "smoke",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 1.322
+    },
+    {
+      "exit_code": 0,
+      "name": "profile",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 2.426
+    },
+    {
+      "exit_code": 2,
+      "name": "study",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 6.036
+    },
+    {
+      "exit_code": 0,
+      "name": "smoke-final",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 1.541
+    },
+    {
+      "exit_code": 0,
+      "name": "profile-final",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 2.808
+    },
+    {
+      "exit_code": 0,
+      "name": "study-final",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 7.633
+    },
+    {
+      "exit_code": 0,
+      "name": "repeat-final",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 2.781
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-smoke",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 0.368
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-profile",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 0.34
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-study",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 0.385
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-repeat",
+      "peak_rss_bytes": null,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": null,
+      "wall_seconds": 0.338
+    },
+    {
+      "exit_code": 0,
+      "name": "smoke-final2",
+      "peak_rss_bytes": 335298560,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/smoke-final2.time.txt",
+      "wall_seconds": 1.546
+    },
+    {
+      "exit_code": 0,
+      "name": "profile-final2",
+      "peak_rss_bytes": 368607232,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/profile-final2.time.txt",
+      "wall_seconds": 2.75
+    },
+    {
+      "exit_code": 0,
+      "name": "study-final2",
+      "peak_rss_bytes": 462897152,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/study-final2.time.txt",
+      "wall_seconds": 7.669
+    },
+    {
+      "exit_code": 0,
+      "name": "repeat-final2",
+      "peak_rss_bytes": 369180672,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/repeat-final2.time.txt",
+      "wall_seconds": 2.839
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-smoke-2",
+      "peak_rss_bytes": 136560640,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-smoke-2.time.txt",
+      "wall_seconds": 0.371
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-profile-2",
+      "peak_rss_bytes": 137052160,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-profile-2.time.txt",
+      "wall_seconds": 0.343
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-study-2",
+      "peak_rss_bytes": 139444224,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-study-2.time.txt",
+      "wall_seconds": 0.381
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-repeat-2",
+      "peak_rss_bytes": 136806400,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-repeat-2.time.txt",
+      "wall_seconds": 0.355
+    },
+    {
+      "exit_code": 0,
+      "name": "pytest-final",
+      "peak_rss_bytes": 1076953088,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/pytest-final.time.txt",
+      "wall_seconds": 214.794
+    },
+    {
+      "exit_code": 0,
+      "name": "ruff-final",
+      "peak_rss_bytes": 54558720,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/ruff-final.time.txt",
+      "wall_seconds": 0.033
+    },
+    {
+      "exit_code": 0,
+      "name": "uv-lock-final",
+      "peak_rss_bytes": 25673728,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/uv-lock-final.time.txt",
+      "wall_seconds": 0.061
+    },
+    {
+      "exit_code": 0,
+      "name": "baseline-verify-final",
+      "peak_rss_bytes": 128663552,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/baseline-verify-final.time.txt",
+      "wall_seconds": 0.307
+    },
+    {
+      "exit_code": 0,
+      "name": "c0-final",
+      "peak_rss_bytes": 641400832,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/c0-final.time.txt",
+      "wall_seconds": 7.895
+    },
+    {
+      "exit_code": 0,
+      "name": "c1-final",
+      "peak_rss_bytes": 650280960,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/c1-final.time.txt",
+      "wall_seconds": 8.063
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-c0c1-final",
+      "peak_rss_bytes": 221282304,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-c0c1-final.time.txt",
+      "wall_seconds": 0.95
+    },
+    {
+      "exit_code": 0,
+      "name": "acceptance-final",
+      "peak_rss_bytes": 227786752,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/acceptance-final.time.txt",
+      "wall_seconds": 1.009
+    },
+    {
+      "exit_code": 0,
+      "name": "smoke-final3",
+      "peak_rss_bytes": 335544320,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/smoke-final3.time.txt",
+      "wall_seconds": 1.606
+    },
+    {
+      "exit_code": 0,
+      "name": "profile-final3",
+      "peak_rss_bytes": 381501440,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/profile-final3.time.txt",
+      "wall_seconds": 2.856
+    },
+    {
+      "exit_code": 0,
+      "name": "study-final3",
+      "peak_rss_bytes": 463355904,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/study-final3.time.txt",
+      "wall_seconds": 7.788
+    },
+    {
+      "exit_code": 0,
+      "name": "repeat-final3",
+      "peak_rss_bytes": 368705536,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/repeat-final3.time.txt",
+      "wall_seconds": 2.816
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-smoke-3",
+      "peak_rss_bytes": 136593408,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-smoke-3.time.txt",
+      "wall_seconds": 0.377
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-profile-3",
+      "peak_rss_bytes": 137297920,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-profile-3.time.txt",
+      "wall_seconds": 0.358
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-study-3",
+      "peak_rss_bytes": 138969088,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-study-3.time.txt",
+      "wall_seconds": 0.357
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-repeat-3",
+      "peak_rss_bytes": 137166848,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-repeat-3.time.txt",
+      "wall_seconds": 0.351
+    },
+    {
+      "exit_code": 0,
+      "name": "pytest-final2",
+      "peak_rss_bytes": 1004404736,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/pytest-final2.time.txt",
+      "wall_seconds": 271.31
+    },
+    {
+      "exit_code": 0,
+      "name": "ruff-final2",
+      "peak_rss_bytes": 53624832,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/ruff-final2.time.txt",
+      "wall_seconds": 0.06
+    },
+    {
+      "exit_code": 0,
+      "name": "uv-lock-final2",
+      "peak_rss_bytes": 25821184,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/uv-lock-final2.time.txt",
+      "wall_seconds": 0.065
+    },
+    {
+      "exit_code": 0,
+      "name": "baseline-verify-final2",
+      "peak_rss_bytes": 128811008,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/baseline-verify-final2.time.txt",
+      "wall_seconds": 0.383
+    },
+    {
+      "exit_code": 0,
+      "name": "acceptance-final2",
+      "peak_rss_bytes": 228278272,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/acceptance-final2.time.txt",
+      "wall_seconds": 1.163
+    },
+    {
+      "exit_code": 0,
+      "name": "smoke-final4",
+      "peak_rss_bytes": 336150528,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/smoke-final4.time.txt",
+      "wall_seconds": 1.795
+    },
+    {
+      "exit_code": 0,
+      "name": "profile-final4",
+      "peak_rss_bytes": 374407168,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/profile-final4.time.txt",
+      "wall_seconds": 3.288
+    },
+    {
+      "exit_code": 0,
+      "name": "study-final4",
+      "peak_rss_bytes": 478560256,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/study-final4.time.txt",
+      "wall_seconds": 8.972
+    },
+    {
+      "exit_code": 0,
+      "name": "repeat-final4",
+      "peak_rss_bytes": 376586240,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/repeat-final4.time.txt",
+      "wall_seconds": 3.229
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-smoke-4",
+      "peak_rss_bytes": 136855552,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-smoke-4.time.txt",
+      "wall_seconds": 0.367
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-profile-4",
+      "peak_rss_bytes": 137330688,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-profile-4.time.txt",
+      "wall_seconds": 0.349
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-study-4",
+      "peak_rss_bytes": 139296768,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-study-4.time.txt",
+      "wall_seconds": 0.374
+    },
+    {
+      "exit_code": 0,
+      "name": "verify-repeat-4",
+      "peak_rss_bytes": 137084928,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/verify-repeat-4.time.txt",
+      "wall_seconds": 0.424
+    },
+    {
+      "exit_code": 0,
+      "name": "pytest-final3",
+      "peak_rss_bytes": 1003487232,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/pytest-final3.time.txt",
+      "wall_seconds": 243.722
+    },
+    {
+      "exit_code": 0,
+      "name": "ruff-final3",
+      "peak_rss_bytes": 52920320,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/ruff-final3.time.txt",
+      "wall_seconds": 0.033
+    },
+    {
+      "exit_code": 0,
+      "name": "uv-lock-final3",
+      "peak_rss_bytes": 25460736,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/uv-lock-final3.time.txt",
+      "wall_seconds": 0.061
+    },
+    {
+      "exit_code": 0,
+      "name": "baseline-verify-final3",
+      "peak_rss_bytes": 128614400,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/baseline-verify-final3.time.txt",
+      "wall_seconds": 0.337
+    },
+    {
+      "exit_code": 0,
+      "name": "acceptance-final3",
+      "peak_rss_bytes": 227868672,
+      "peak_rss_units": "bytes (macOS /usr/bin/time -l maximum resident set size)",
+      "scope": "command process tree, per invocation; independent of other rows",
+      "time_stats_path": "logs/acceptance-final3.time.txt",
+      "wall_seconds": 1.118
+    }
+  ],
+  "environment": {
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "note": "Arms and seeds are serial; each row is one command process tree. Unknown/absent fields are null, never zero.",
+  "schema_version": "hist_vnext_h5f_f1_m09_v1"
+}

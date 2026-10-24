@@ -1,0 +1,18 @@
+{
+  "schema_version": "hist_vnext_h5f_f1_m09_v1",
+  "phase_id": "H5F-F1",
+  "study_id": "M09",
+  "status": "COMPLETED",
+  "failed_seeds": [],
+  "checked_pairs": 48,
+  "note": "No seed was replaced or dropped. The three seeds cover 48 paired arm-target records (16 unique arm-target cells replicated three times because the selected source path is seed-invariant). The preserved study-failed-1 artifact records the pre-fix matrix-count failure separately.",
+  "preserved_failures": [
+    {
+      "path": "outputs/hist-vnext-h5f-f1-20261024T021255Z/study-failed-1",
+      "error": "arm delay0_persistence does not have 4 completed targets",
+      "cause": "pre-fix multi-seed matrix cardinality",
+      "resolution": "matrix expected count corrected; fresh packages regenerated; failure artifact retained",
+      "certificate_provenance": "The FAILED_SEEDS.json and BLOCKER_CERTIFICATE.json in study-failed-1 were added by hand when the pre-fix artifact was preserved; the runner now writes both automatically for post-loop failures (verified by a forced aggregation failure in the final review)."
+    }
+  ]
+}

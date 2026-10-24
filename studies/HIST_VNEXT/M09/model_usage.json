@@ -1,0 +1,57 @@
+{
+  "schema_version": "hist_vnext_h5f_f1_m09_v1",
+  "simulation_llm_calls": 0,
+  "simulation_note": "The forecast, procurement, kernel, and residual paths call no language model; the study is pure engine execution.",
+  "roles": [
+    {
+      "role": "implementation",
+      "configured_selector": "deepseek/deepseek-flash",
+      "configured_effort": "NOT_MEASURED",
+      "actual_selector": "deepseek/deepseek-flash",
+      "actual_effort": "NOT_MEASURED",
+      "input_tokens": "NOT_MEASURED",
+      "output_tokens": "NOT_MEASURED",
+      "cache_tokens": "NOT_MEASURED",
+      "cost": "NOT_MEASURED",
+      "note": "The in-session assistant implemented the adapter, runner, and tests directly; the plan's prescribed separate omp/MiniMax implementation invocation was not used. This is a process deviation recorded here rather than hidden; scientific artifacts are bound by source/spec/test SHAs."
+    },
+    {
+      "role": "initial_independent_review",
+      "configured_selector": "minimax-code-cn/MiniMax-M3",
+      "configured_effort": "high",
+      "actual_selector": "minimax-code-cn/MiniMax-M3",
+      "actual_effort": "high",
+      "input_tokens": "NOT_MEASURED",
+      "output_tokens": "NOT_MEASURED",
+      "cache_tokens": "NOT_MEASURED",
+      "cost": "NOT_MEASURED",
+      "task_id": "H5F1Review1",
+      "note": "Selector/effort are the project @review configuration; token and cost fields were not exposed by the review task."
+    },
+    {
+      "role": "final_independent_review",
+      "configured_selector": "minimax-code-cn/MiniMax-M3",
+      "configured_effort": "high",
+      "actual_selector": "minimax-code-cn/MiniMax-M3",
+      "actual_effort": "high",
+      "input_tokens": "NOT_MEASURED",
+      "output_tokens": "NOT_MEASURED",
+      "cache_tokens": "NOT_MEASURED",
+      "cost": "NOT_MEASURED",
+      "note": "Recorded after the final review task; token and cost fields were not exposed."
+    },
+    {
+      "role": "commit",
+      "configured_selector": "deepseek/deepseek-flash",
+      "configured_effort": "NOT_MEASURED",
+      "actual_selector": "deepseek/deepseek-flash",
+      "actual_effort": "NOT_MEASURED",
+      "input_tokens": "NOT_MEASURED",
+      "output_tokens": "NOT_MEASURED",
+      "cache_tokens": "NOT_MEASURED",
+      "cost": "NOT_MEASURED",
+      "note": "The local commit is a git operation; no model-generated scientific claim is added by it."
+    }
+  ],
+  "accounting": "Unknown usage is NOT_MEASURED, never zero. Directory list prices are not treated as paid cost."
+}
