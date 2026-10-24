@@ -1,0 +1,682 @@
+{
+  "schema_version": "hist_vnext_h5g_g1_blocker_v1",
+  "phase_id": "H5G-G1",
+  "mechanism_id": "M6",
+  "study_id": "M06",
+  "objective": "M6 外债额度/期限、跨期消费与偿付（G1 子步）",
+  "status": "BLOCKED",
+  "blocking_code": "MISSING_EXTERNAL_DEBT_CONTRACT_ADMISSION",
+  "secondary_technical_finding": "F2_USD_DRAW_FIRST_STAGE_NOT_ACTIVATED",
+  "created_utc": "2026-10-24T12:42:12Z",
+  "amended_utc": "2026-10-24T14:04:00Z (attempt-8 start; final bytes sealed in EVIDENCE_MANIFEST.json)",
+  "amendment_note": "attempt-5/6/7/8 四级修改。attempt-5：required_contract 的 quote 改为所引合同文件的逐字原文并新增 phase-contracts.json H5G 条目；admission_audit 补入 attempt-3 并标注 attempt-2 退出码口径；executor 的实际 provider/model/api/thinking 与两次会话用量改为实测值；delivery 补入监督者写出的 commands.json / model_usage.json / resource_usage.json。attempt-6：规范化 REPORT §12 与本证书的 delivery/executor 段；移除自引用的监督者文件 hash（不再在本文件内嵌 commands.json / model_usage.json / resource_usage.json 的 hash，避免自引用）；补记 patch 会话元数据（attempt-6 自身：exit 0，用量与起止时间见 executor.patch_sessions）。attempt-7：round-1 审查缺陷 D1–D7 修复——attempt-4 记录改为与 artifact 一致（只读阶段约 30 秒被监督者取消，21 read / 0 write，9 turn_start / 8 turn_end，无 agent_end，exit_code NOT_RECORDED，无 exit 文件）、attempt-6 溯源补记、悬空 exit 路径去除、07 合同行补入、quote 表头规范化。attempt-8：round-2 审查缺陷修复——B1 user_work snapshot hash/bytes 同步为实测值、B3 amendment 结构改为 attempt-5/6/7/8 四级、B4 §2 表头裸竖线去除、B5 review block 与 delivery 状态更新；B2 的监督者记录（commands.json / model_usage.json / resource_usage.json）已由监督者修正。status=BLOCKED、三维 verdict、缺失合同 null、failed seed NOT_RUN、commit=null 均未改变；最终裁决记录于 REVIEW.md，本证书不自签 PASS。",
+  "repository": {
+    "path": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "branch": "codex/audit-hsm-vnext-2026-10-11",
+    "head": "f88eb43a028b4147ca5abe0067c89a99e4ac443a",
+    "head_verified_by": "user_work_snapshot.json (VERIFIED_BY_RUN)"
+  },
+  "executor": {
+    "session": "implementation session attempt-2",
+    "selector_requested": "minimax-code-cn/MiniMax-M3",
+    "thinking_requested": "high",
+    "actual_provider": "minimax-code-cn",
+    "actual_model": "MiniMax-M3",
+    "actual_api": "anthropic-messages",
+    "actual_thinking": "high (CLI --thinking flag; the stream has no separate reasoning-token field)",
+    "actual_source": "session JSONL model-start metadata (VERIFIED_BY_RUN)",
+    "usage_tokens_and_cost": {
+      "source": "studies/HIST_VNEXT/M06/model_usage.json (provider-reported usage records in the captured session JSON streams)",
+      "attempt-1": {
+        "assistant_usage_records": 78,
+        "input_tokens": 120401,
+        "output_tokens": 35857,
+        "cache_read_tokens": 5782064,
+        "cache_write_tokens": 0,
+        "total_tokens": 5938322,
+        "cost_usd": 0.42607254,
+        "wall_seconds": 600.26,
+        "exit_code": 1,
+        "outcome": "10m technical timeout; no evidence file written"
+      },
+      "attempt-2": {
+        "assistant_usage_records": 13,
+        "input_tokens": 64368,
+        "output_tokens": 33993,
+        "cache_read_tokens": 463819,
+        "cache_write_tokens": 0,
+        "total_tokens": 562180,
+        "cost_usd": 0.08793114,
+        "wall_seconds": 339.98,
+        "exit_code": 0,
+        "outcome": "wrote REPORT.md, BLOCKER_CERTIFICATE.json, failed_seeds.json"
+      },
+      "cost_qualifier": "费用为 provider-reported usage 之和，未独立计费核验；未测项写 NOT_MEASURED，不冒充 0。"
+    },
+    "note": "实际 provider/model/api/thinking 来自 session JSONL 的 model-start 元数据与 CLI flag；配置 selector 不等于实际调用证明，但本次已有实际调用记录。未修改 .omp/config.yml，未切换 provider，未 fallback。The final round-1 PATCH repair session (attempt-7) is recorded in commands.json / model_usage.json / logs/implementation_session.attempt-7.jsonl; it is not self-declared beyond this pointer. The B1–B5 repair session (attempt-8) is recorded in commands.json / model_usage.json / logs/implementation_session.attempt-8.jsonl; the final verdict is in REVIEW.md.",
+    "prior_attempt": {
+      "session": "implementation session attempt-1",
+      "exit_code": 1,
+      "exit_file": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-1.exit.txt",
+      "exit_file_sha256": "4bf4fca02e6eeaf7f1c510b82c756e7f8a3c567a230bae1094b254adc774f38b",
+      "exit_file_bytes": 7,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_bytes": 0,
+      "outcome": "只做探索，未写任何工件即超时"
+    },
+    "patch_sessions": [
+      {
+        "session": "implementation session attempt-3",
+        "selector_requested": "minimax-code-cn/MiniMax-M3",
+        "thinking_requested": "high",
+        "exit_code": 1,
+        "exit_status": "exit 1 (10m technical timeout)",
+        "outcome": "timeout after one mechanical edit (command typo fixed); no quote/metadata patch completed",
+        "log": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-3.jsonl"
+      },
+      {
+        "session": "implementation session attempt-4",
+        "selector_requested": "minimax-code-cn/MiniMax-M3",
+        "thinking_requested": "high",
+        "exit_code": "NOT_RECORDED",
+        "exit_status": "aborted by supervisor cancellation; no exit file",
+        "exit_record": null,
+        "outcome": "ABORTED at ~30 s while still in the read phase: the session log has 21 read calls and 0 write/edit calls, 9 turn_start but only 8 turn_end, and no agent_end. The launcher's shell command substitution had evaluated backtick-delimited hash literals before omp received the prompt (supervisor-shell command-not-found lines), but the delivered prompt body remained coherent; the log contains no 'command not found', 'corrupt' or 'bad substitution' string. No file change; intended edits were applied in attempt-5.",
+        "note": "no attempt-4 exit file exists; the launcher was cancelled before its trailing echo ran; the manifest must not reference a nonexistent path.",
+        "log": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-4.jsonl"
+      },
+      {
+        "session": "implementation session attempt-5",
+        "selector_requested": "minimax-code-cn/MiniMax-M3",
+        "thinking_requested": "high",
+        "exit_code": 0,
+        "exit_status": "exit 0",
+        "outcome": "applied the contract-quote, admission-attempt and executor-usage patch",
+        "log": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-5.jsonl"
+      },
+      {
+        "session": "implementation session attempt-6",
+        "selector_requested": "minimax-code-cn/MiniMax-M3",
+        "thinking_requested": "high",
+        "exit_code": 0,
+        "exit_status": "exit 0",
+        "input_tokens": 30844,
+        "output_tokens": 7982,
+        "cache_read_tokens": 253435,
+        "cache_write_tokens": 0,
+        "total_tokens": 292261,
+        "cost_usd": 0.0340377,
+        "wall_seconds": 81.87,
+        "start_utc": "2026-10-24T13:05:31.509Z",
+        "last_message_utc": "2026-10-24T13:06:48.063Z",
+        "outcome": "normalized REPORT §12 and certificate delivery/executor; removed self-referential supervisor-file hashes; recorded patch-session metadata",
+        "log": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-6.jsonl"
+      }
+    ],
+    "usage_records_note": "All executor sessions, including this patch session, have their actual provider/model/token/cost records in model_usage.json; reviewer usage remains pending."
+  },
+  "required_contract": [
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+      "lines": "246-253",
+      "quoted_lines": [246, 248, 249, 250, 251, 252, 253],
+      "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+      "bytes": 37168,
+      "quote": [
+        "### H5G：M6外债消费平滑与M10延迟脆弱性的分卡研究",
+        "- **前置输入：** H3F及相关合同原件/测量门PASS。",
+        "- **文件白名单候选：** 新增studies/HIST_VNEXT/{M06,M10}/；experiments/hist_external.py；tests/test_hist_external_mechanisms.py。",
+        "- **测试与实验输出：** 子步G1外债额度/期限与国内credit_fraction区别，跨期消费/偿付；G2共同冲击下补贴/借款/CMEA因子，分别审查/commit；失败seed全留。",
+        "- **通过门：** first-stage在外币额度/负债真实激活；贷款不能到家庭也是反证；后期代价不越封存观察边界。",
+        "- **显式STOP：** 用国内贷款代表外债、只看当期credit或department variance替代M10、自动展开第二子步即STOP。PASS并commit后同样STOP，等待下一步授权。",
+        "- **回滚：** 新feature/spec默认关闭；切回上一个通过的legacy入口；若实现已提交，只局部revert本阶段实现，保留反证、审查和新输出；不得reset/清理用户文件。"
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md:246,248-253 (verbatim lines; line numbers checked with nl -ba)",
+      "role": "phase contract H5G: 前置输入、文件白名单、G1/G2 分步审查与提交边界、显式 STOP、回滚"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+      "lines": "17-21",
+      "quoted_lines": [17, 19, 21],
+      "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+      "bytes": 114765,
+      "quote": [
+        "**2026-10-20最新执行规则：用户已同意本交接文件各步骤的规划、实现、测试、独立复核、修复、模型使用及review PASS后的本地小提交。所有提示词取消“等待用户授权”“先确认预算/费用/token/运行上限”“仅交Plan等待批准”等前置条件。** 当前选择哪个ID，就在该ID范围内完成Plan→Coding→Independent Review→Fix→Test→Commit；不重复询问同意，不因金额/token/资源上限未预填而停止。",
+        "本条覆盖本文旧措辞以及05、phase-contracts、旧Plan/报告中被引用的同类执行批准/计算预算前置，不改写旧记录或虚构已有预算数字。保留实际selector、input/output/cache tokens、reasoning配置、费用（可获得时）、运行时间/RSS/输出字节的记录；未测到写NOT_MEASURED，不冒充0或无限额度。采用小样本profile、分批/可恢复运行和必要的技术timeout；模型不可用、实际OOM/磁盘不足、进程失败或技术review不通过仍保存证据并报告，不能把真实失败伪装成PASS。",
+        "逐步交付、文件范围、冻结文件、封存/HOLD资料、第三方资料使用边界、科学证据分级与不自动push保持；仿真里的工资/资金/运力预算和信用额度是模型约束，不属于本次删除的计算/审批条件。本次只编辑提示词，不启动任何阶段或付费请求。"
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md:17,19,21 (verbatim lines; line numbers checked with nl -ba)",
+      "role": "single-task handoff prompt: 最新计算/批准规则与用量记录义务（未在 quote 中豁免来源/技术/白名单/封存边界）"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/01_BASELINE_AND_VERSION_AUDIT.md",
+      "lines": "28-46",
+      "quoted_lines": [30, 31, 32, 33, 43, 44, 45, 46],
+      "sha256": "e46979b7dbe235c09f4caf793164a2b9e7c675fd1679f6fbbd731a704e7f4059",
+      "bytes": 10147,
+      "quote": [
+        "| BASELINE.md | 1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f |",
+        "| config/research_contract.json | 6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82 |",
+        "| uv.lock | 9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9 |",
+        "| config/ontology/f2_v1.json | 93ff304d6d90389176570d9d767ede998894ebedcc23adb35229889bd0346812 |",
+        "| C0-r1 | 92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d | e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445 | 7.2951760839205235 |",
+        "| C0-r2 | 92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d | e27ade6a36607008d4ed9251d01d12d7bbfea8ac00c8c6981671090562d30445 | 7.594965290976688 |",
+        "| C1-r1 | c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5 | 632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90 | 7.946012082975358 |",
+        "| C1-r2 | c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5 | 632ee6a64f3df7d47e827d79ec27c5e7ce72cd46014b4e8fca1415d4e68c3b90 | 7.846629000036046 |"
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/01_BASELINE_AND_VERSION_AUDIT.md:30-33,43-46 (verbatim lines; line numbers checked with nl -ba)",
+      "role": "frozen protected hashes and C0/C1 digests"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+      "lines": "23-31",
+      "quoted_lines": [27, 29, 31],
+      "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+      "bytes": 114765,
+      "quote": [
+        "标准测试：相应新增正/负对照与旧相关回归→完整pytest→ruff→baseline verify→lock check→新目录C0/C1真实重放及身份/输出哈希。默认旧digest必须精确为01记录值。若不满足，不给科学支持结论、不commit。只改文献声明的阶段也运行其source/role/time验证；确需减少重复模拟由Plan明确理由并获review认可，不能删除必需回归。",
+        "每次只提交白名单内文件；`git diff --check`与staged-path检查后本地commit，排除原始/受限数据、outputs、用户文件、`.omp/config.yml`和秘密。最终独立review PASS后完成本步骤本地小提交，无需再次询问；未通过则保留reviewable diff和具体修复/失败记录。默认不push。",
+        "结果必须包含：命令/退出/环境/输入与输出hash、失败seed和资源、每项实际状态、三维verdict、负结果、review全文或引用、commit hash或未commit原因、下一步阻断。**完成本步后STOP，不自动运行下一ID。** 下方每个代码块可独立粘贴；按当前选定的子步编号执行，不再额外索要同意；完成该ID后交付结果，不自动运行其他ID。"
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md:27,29,31 (verbatim lines; line numbers checked with nl -ba)",
+      "role": "full-regression, whitelist-commit and result-delivery contract"
+    },
+    {
+      "path": "studies/HIST_VNEXT/M06/PLAN.md",
+      "lines": "1-111",
+      "quoted_lines": [4],
+      "sha256": "7bd469084aa2ce96d7c4391154677afeff3992dbc65a1cc238296b31d8fb4557",
+      "bytes": 17660,
+      "quote": [
+        "只处理 H5G 的首个子步 G1（M6 外债额度/期限、跨期消费与偿付），不得自动开展 G2（M10 共同冲击下补贴/借款/CMEA 因子）。预检发现 H5G 要求的合同原件准入未通过，且既有 F2 测量记录显示 USD 新提款 first-stage 不激活，触发用户明确的来源/技术 STOP。本计划执行 G1 阻断证据封存、独立审查与证据限定的本地提交，不实现研究 runner、不补金融内核、不把阻断包称为 H5G 研究完成；不套用只适用于 H4 的原件豁免。"
+      ],
+      "quote_origin": "studies/HIST_VNEXT/M06/PLAN.md:4 (verbatim line; line number checked with nl -ba)",
+      "role": "canonical plan for this sealing step; byte-identical to HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/evidence/phase-contracts.json",
+      "lines": "191-199",
+      "quoted_lines": [194, 195, 197, 198],
+      "sha256": "9a81273d6a3b442f5ca48517b55a6ad84faf66873ca96e8ae80c0c28c7593374",
+      "bytes": 19362,
+      "quote": [
+        "\"dependencies\": \"H3F及相关合同原件/测量门PASS\",",
+        "\"whitelist\": \"新增studies/HIST_VNEXT/{M06,M10}/；experiments/hist_external.py；tests/test_hist_external_mechanisms.py\",",
+        "\"gate\": \"first-stage在外币额度/负债真实激活；贷款不能到家庭也是反证；后期代价不越封存观察边界\",",
+        "\"stop\": \"用国内贷款代表外债、只看当期credit或department variance替代M10、自动展开第二子步即STOP\""
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/evidence/phase-contracts.json:194,195,197,198 (verbatim lines, leading 4-space indent stripped; line numbers checked with nl -ba)",
+      "role": "machine-readable H5G contract entry: dependencies, whitelist, gate, stop"
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/07_MANUAL_HISTORICAL_DATA_DOWNLOAD_CHECKLIST.md",
+      "lines": "42,129",
+      "quoted_lines": [42, 129],
+      "sha256": "6db6bd11ead3d165d66108154b0eb610ee951312bd3289f1d5c07717ffb34929",
+      "bytes": 21432,
+      "quote": [
+        "| D17 | 分币种外债存量、提款、利息、本金、展期/到期结构、补贴及进口用途 | **H4C、H5G-G1/G2历史研究前**；H6A相关参数估计前 | 公开表先核已有版本；合同/详细债务及补贴资料需人工取得 | 不用国内企业credit_fraction代表外债；缺期限/用途不能宣称消费平滑机制已识别 |",
+        "| H5G-G1/G2：M6/M10 | 债务期限/偿付/展期、进口用途、补贴与合同价格/清算安排 | D06/D07/D17；[MNB统计入口](https://statisztika.mnb.hu/methodology)只作查找起点 | 国内企业借款、外贸总指数或通用CMEA公式 |"
+      ],
+      "quote_origin": "docs/upgrade_review/HIST_VNEXT/07_MANUAL_HISTORICAL_DATA_DOWNLOAD_CHECKLIST.md:42,129 (verbatim lines; line numbers checked with nl -ba)",
+      "role": "contract requirement: D17 (currency-specific external-debt stock/draw/interest/principal/rollover) is required before H5G-G1/G2 historical research; domestic enterprise credit_fraction, foreign-trade indices and generic CMEA formulas are prohibited substitutes"
+    }
+  ],
+  "quote_verbatim_limit": "本次 attempt 已按 nl -ba 逐行核对 05:246-253、06:17-21、06:23-31、01:28-46、evidence/phase-contracts.json:191-199、studies/HIST_VNEXT/M06/PLAN.md:4、07_MANUAL_HISTORICAL_DATA_DOWNLOAD_CHECKLIST.md:42,129。required_contract 各条 quote 为所引文件对应行的逐字内容（保留原有标点、bullet 与 markdown 记号），未从二手转述或改写；quoted_lines 列标明被摘录的具体行号，未被摘录的行（表头/空行等）不进入 quote；phase-contracts.json 条目为对应行去掉行首 4 空格缩进后的逐字内容。SHA256 与 bytes 为本次实测（shasum -a 256 / wc -c）。",
+  "prerequisite_reviews": [
+    {
+      "phase": "H3F-D0",
+      "path": "docs/phases/HIST_VNEXT/H3F-D0/REVIEW.md",
+      "sha256": "c52f3a88f416be3e7a14b8fc6e9449517b4aee44c328093360befdadc330313f",
+      "bytes": 5847,
+      "verdict": "PASS",
+      "actual_scope": "独立合成工程 PASS",
+      "covers_contract_original_admission": false
+    },
+    {
+      "phase": "H3F-D1",
+      "path": "docs/phases/HIST_VNEXT/H3F-D1/REVIEW.md",
+      "sha256": "5f9b4436f2aeff0a8ae13e000e672be160459b454ccca73134aa0950087e05fd",
+      "bytes": 2675,
+      "verdict": "PASS",
+      "actual_scope": "独立合成工程 PASS",
+      "covers_contract_original_admission": false
+    },
+    {
+      "phase": "H3F-D2",
+      "path": "docs/phases/HIST_VNEXT/H3F-D2/REVIEW.md",
+      "sha256": "e94cb3f7e8a4a9c05cb7b1880c1a10793b8f01070c951c851663ba7d90cb49f7",
+      "bytes": 4218,
+      "verdict": "PASS",
+      "actual_scope": "独立合成工程 PASS",
+      "covers_contract_original_admission": false
+    },
+    {
+      "phase": "H3F-D3",
+      "path": "docs/phases/HIST_VNEXT/H3F-D3/REVIEW.md",
+      "sha256": "fa5e1a06e4aa92283d61ebc172ffe30f8f05e0fbaaae62d82bc27feda226e432",
+      "bytes": 3445,
+      "verdict": "PASS",
+      "actual_scope": "独立合成工程 PASS；当时记载 strict full-file byte unmet",
+      "covers_contract_original_admission": false,
+      "note": "D3 的 unmet 记载与 H4B-ID/EXEC 的后续 fresh-run 清除同时保留；不扩大为历史合同许可或旧工件全字节相同"
+    },
+    {
+      "phase": "H4B-ID",
+      "path": "docs/phases/HIST_VNEXT/H4B-ID/REVIEW.md",
+      "sha256": "f8539b98adfdf062995db1769bdde0d859d9a4e2cd283440d5fefe071ab30550",
+      "bytes": 6614,
+      "verdict": "PASS",
+      "actual_scope": "已证明限定 fresh deterministic runs 的字节一致（REVIEW:55-98）",
+      "covers_contract_original_admission": false,
+      "note": "限定 fresh-run 范围；不得扩大为历史合同许可或旧工件全字节相同"
+    },
+    {
+      "phase": "H4B-EXEC",
+      "path": "docs/phases/HIST_VNEXT/H4B-EXEC/REPORT.md",
+      "sha256": "2d8e646d500eb5a48d59ebf217a29faeab4504886d81d153501c61e64397560a",
+      "bytes": 6681,
+      "verdict": "CLEARED for fresh runs",
+      "actual_scope": "REPORT:96-105 明记 CLEARED for fresh runs；REPORT:80-82 明记 historical_inputs_admitted=0、historical_comparison=NOT_RUN",
+      "covers_contract_original_admission": false,
+      "note": "存在 measurement/runtime 技术 PASS，但不能声称项目完全没有 measurement 连接"
+    },
+    {
+      "phase": "H4C",
+      "path": "docs/phases/HIST_VNEXT/H4C/ORIGINAL_COVERAGE.md",
+      "sha256": "b8d1291032633542e68477841e8de17fc09b64f067d05fdefdc528dc630d1d78",
+      "bytes": 4540,
+      "verdict": "NOT_APPLICABLE_AS_H5G_ADMISSION",
+      "actual_scope": "25-47：H4C 工程假设与原件覆盖现状（D03/D04/D05/D16 missing；D06/D07/D17 MISSING/UNVERIFIED；approved excerpt 全 null）",
+      "covers_contract_original_admission": false
+    },
+    {
+      "phase": "H4C-MEASUREMENT",
+      "path": "docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json",
+      "sha256": "44c803e513ef44cd7a0c6dc512cb7c0001691c8360e6e0d271c23052b25c8180",
+      "bytes": 2547,
+      "verdict": "NOT_APPLICABLE_AS_H5G_ADMISSION",
+      "actual_scope": "14-26：rollover NOT_IMPLEMENTED；F2 USD new draw 因旧 P02 轴映射预期为 0",
+      "covers_contract_original_admission": false
+    }
+  ],
+  "missing_contract_originals": [
+    {
+      "item": "可兑换外债的币种/债权人及借款主体",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING"
+    },
+    {
+      "item": "额度/提款条件",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING"
+    },
+    {
+      "item": "利率",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING"
+    },
+    {
+      "item": "期限/到期与偿付规则",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING"
+    },
+    {
+      "item": "适用时期/权限",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING"
+    },
+    {
+      "item": "原文定位/文件 hash/使用权",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING"
+    },
+    {
+      "item": "独立准入审查",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING"
+    },
+    {
+      "item": "独立测量 PASS",
+      "path": null,
+      "sha256": null,
+      "admission_review": null,
+      "source_id": null,
+      "status": "MISSING"
+    }
+  ],
+  "missing_originals_note": "缺失合同的 path、sha256、admission_review 一律 null，未伪造 source_id。统计表或二手文献不能自动补齐合同；本步未下载、未 OCR、未上传、未打开受限原文，未借此扩做 H3F/H4A。",
+  "admission_audit": {
+    "command": "PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root .",
+    "command_actual": "PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root .",
+    "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+    "read_only": true,
+    "exit_code": 1,
+    "structural": "PASS",
+    "historical": "BLOCKED",
+    "summary": {
+      "total_candidates": 4,
+      "total_admitted": 0,
+      "total_blocked_sources": 0,
+      "total_blocked_anchors": 63,
+      "total_sources": 4,
+      "total_works": 3,
+      "anchor_classifications": {
+        "blocked": 63
+      },
+      "authority_blocked": 5,
+      "event_candidates": 10,
+      "review_requests_required": 4,
+      "independent_pairs": 0,
+      "non_independent_pairs": 1
+    },
+    "attempts": [
+      {
+        "attempt": 1,
+        "stdout_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-1.stdout.json",
+        "stdout_sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+        "stdout_bytes": 4107,
+        "stderr_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-1.stderr.txt",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_bytes": 0,
+        "exit_code": 1,
+        "exit_code_source": "supervisor-captured (commands.json CMD-3)"
+      },
+      {
+        "attempt": 2,
+        "stdout_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-2.stdout.json",
+        "stdout_sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+        "stdout_bytes": 4107,
+        "stderr_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-2.stderr.txt",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_bytes": 0,
+        "exit_code": "NOT_RECORDED_BY_SUPERVISOR",
+        "exit_code_evidence": "stdout JSON field exit_code=1; stdout byte-identical to attempt-1 and attempt-3, whose exit codes were supervisor-captured as 1"
+      },
+      {
+        "attempt": 3,
+        "stdout_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-3.stdout.json",
+        "stdout_sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+        "stdout_bytes": 4107,
+        "stderr_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-3.stderr.txt",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_bytes": 0,
+        "exit_code": 1,
+        "exit_code_source": "supervisor-captured (commands.json CMD-7)"
+      }
+    ],
+    "byte_identical_across_attempts": true,
+    "reproduction_condition": "PYTHONHASHSEED=0",
+    "validator_modified": false,
+    "exit_one_suppressed": false,
+    "scope_limit": "证明一般来源门未过，不单独证明 H4 后续所有来源都未准入；H5G 合同缺件判断必须联合 H4C ORIGINAL_COVERAGE 的 missing/UNVERIFIED 与各前置 review 的实际范围。",
+    "not_a_first_stage_evidence": "本审计的元数据计数不是 G1 first-stage 证据；本步未运行任何 G1 仿真。"
+  },
+  "technical_finding": {
+    "code": "F2_USD_DRAW_FIRST_STAGE_NOT_ACTIVATED",
+    "status": "OPEN",
+    "scope": "限定 F2 场景；不是全部内核无外债",
+    "evidence": [
+      {
+        "path": "src/hsm_lab/engine/trade.py",
+        "sha256": "1ddaa10f23324651aedc3411a8993c1e57e81db3bdcfe1afe47d531ff6bd74cb",
+        "bytes": 95918,
+        "lines": "154-236",
+        "finding": "实有 USD reserve/principal/interest/draw 路径（USD 段落 182-236）；不得夸大为项目无任何外债实现"
+      },
+      {
+        "path": "src/hsm_lab/engine/material.py",
+        "sha256": "fe240e0b89281601519071edab14052379517eaa9891ae2a93a75428393ce888",
+        "bytes": 265672,
+        "lines": "1842-1860",
+        "finding": "以 P02 COMMODITY_INDEX 查询 F2 商品，未匹配项被跳过，故 F2 预估 USD outlay 为零"
+      },
+      {
+        "path": "tests/test_hist_pilot_b.py",
+        "sha256": "6b9e6a2001da20e47745841112d06c72b0a15305e2df9c56f162c298170a473a",
+        "bytes": 30559,
+        "lines": "261-284",
+        "finding": "非 F2 fixture 的正例代码（提款/进口支付均为 5）；本轮未运行，不能当作本轮通过"
+      }
+    ],
+    "capability_limits": [
+      "rollover NOT_IMPLEMENTED (docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json:14-26)；只作能力限制，本步不新增功能要求"
+    ],
+    "prohibition": "不得自行改用 P02 合成实验绕过 H5G 合同原件门。"
+  },
+  "object_difference": {
+    "m6_object": "对外可兑换外债：额度、期限、利率、偿付规则由合同原件决定（config/p06/cards/M6.json, sha256 047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6）",
+    "domestic_credit_object": "国内信用/家庭信贷传导为不同对象",
+    "h3g_same_tick_household_null": "只能引用为该作用域内的旧反证，不推广到所有借款/所有跨期",
+    "non_substitutability": "外债合同原件准入不能由国内信用证据补齐；H4 原件豁免不适用于 H5G"
+  },
+  "stop_reason": "H5G 要求的外债合同原件准入不存在：可兑换外债的币种/债权人/借款主体、额度/提款条件、利率、期限与偿付规则、适用时期/权限、原文定位/文件 hash/使用权、独立准入审查与独立测量 PASS 均缺失（path/sha256/admission_review 皆 null）。只读准入审计 exit 1、structural PASS / historical BLOCKED、admitted 0、blocked anchors 63、authority_blocked 5、independent_pairs 0。H3F 的独立合成工程 PASS 与 H4B 的 fresh-run 字节一致清除都不能替代合同原件准入。07_MANUAL_HISTORICAL_DATA_DOWNLOAD_CHECKLIST.md:42,129 明确把 D17 列为 H5G-G1/G2 历史研究前置，并禁止用国内企业 credit_fraction、外贸总指数或通用 CMEA 公式替代。",
+  "not_executed": [
+    {
+      "step": "G1 外债额度/期限配对",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "G1 跨期消费与偿付",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "家庭传导（H5G G1 口径）",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "G2（M10 共同冲击下补贴/借款/CMEA 因子）",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "G1/G2 仿真与 seed ensemble",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "完整 pytest / ruff / uv lock check / baseline CLI",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "新 C0/C1 replay",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "研究 runner / experiments/hist_external.py / tests/test_hist_external_mechanisms.py",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "M10 或后续 phase id",
+      "status": "NOT_RUN"
+    },
+    {
+      "step": "git commit / push / amend",
+      "status": "NOT_RUN"
+    }
+  ],
+  "frozen_digests_not_run": {
+    "note": "仅保留为未来解除前置后的必需验收，本轮未运行，不称为重放；digest 相等不等于 full-file byte 相等",
+    "C0": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+    "C1": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5"
+  },
+  "dimensions": {
+    "technical": {
+      "status": "BLOCKED_PREREQUISITE",
+      "level": "VERIFIED_BY_CODE",
+      "reason": "H5G 要求的可兑换外债合同原件准入不存在"
+    },
+    "structural": {
+      "status": "NOT_RUN",
+      "level": "VERIFIED_BY_RUN",
+      "reason": "未实现任何 G1 结构；engine/state/storage 未修改"
+    },
+    "historical": {
+      "status": "BLOCKED",
+      "level": "VERIFIED_BY_RUN",
+      "reason": "准入审计 exit 1；total_admitted=0；blocked anchors=63；independent_pairs=0"
+    }
+  },
+  "implementation": {
+    "status": "NOT_RUN",
+    "note": "本步只封存阻断证据，不进入实现；H3F 合成工程 PASS 单列保留，不能传播为 G1 PASS"
+  },
+  "experiments": {
+    "status": "NOT_RUN",
+    "note": "无 G1/G2 仿真、seed ensemble 或完整回归"
+  },
+  "seeds": {
+    "seed_status": "NOT_RUN",
+    "failed_seeds": null,
+    "note": "null 表示未执行任何 seed，不是该 seed 会失败的证据"
+  },
+  "user_work": {
+    "snapshot_path": "studies/HIST_VNEXT/M06/user_work_snapshot.json",
+    "snapshot_sha256": "5f4005bd4ff4a4eb66546ee5515d1ae18fc76924f3a8bcb5b4d1efa2f6b5dbf6",
+    "snapshot_bytes": 5225,
+    "captured_at_utc": "2026-10-24T12:29:36Z",
+    "branch": "codex/audit-hsm-vnext-2026-10-11",
+    "head": "f88eb43a028b4147ca5abe0067c89a99e4ac443a",
+    "staged_count": 0,
+    "unstaged_count": 3,
+    "untracked_count": 22,
+    "modified_user_files": [
+      {
+        "path": ".omp/config.yml",
+        "sha256": "2e90b9c6feed817a4547c7232f650e8c76c089f14f7ae22b36f23bf62dd2fe7f",
+        "bytes": 472
+      },
+      {
+        "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+        "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+        "bytes": 37168
+      },
+      {
+        "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+        "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+        "bytes": 114765
+      }
+    ],
+    "action": "未恢复、未 reset、未 stash、未暂存任何用户文件；用户文档正文与秘密未纳入本封存包"
+  },
+  "protected": {
+    "snapshot_path": "studies/HIST_VNEXT/M06/protected_hashes.preflight.json",
+    "snapshot_sha256": "cd2cd9074f1c10be66b4f7bdb6224edb1b41e7ab253e7e1657086e00c29ad7cf",
+    "snapshot_bytes": 3622,
+    "captured_at_utc": "2026-10-24T12:29:36Z",
+    "entry_count": 22,
+    "key_frozen_hashes": [
+      {
+        "path": "BASELINE.md",
+        "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+        "bytes": 64445
+      },
+      {
+        "path": "config/research_contract.json",
+        "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+        "bytes": 2908
+      },
+      {
+        "path": "uv.lock",
+        "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+        "bytes": 157941
+      },
+      {
+        "path": "config/p06/cards/M6.json",
+        "sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+        "bytes": 815
+      },
+      {
+        "path": "config/p06/cards/M10.json",
+        "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+        "bytes": 806
+      }
+    ],
+    "frozen_hashes_match_verified": true
+  },
+  "review": {
+    "status": "PATCH_ROUNDS_1_2_APPLIED; FINAL_VERDICT_DEFERRED_TO_REVIEW_MD",
+    "reviewer": "phase-reviewer",
+    "selector": "minimax-code-cn/MiniMax-M3:high",
+    "rounds": [
+      {
+        "round": 1,
+        "file": "reviews/round-1.md",
+        "verdict": "PATCH",
+        "defects": ["D1", "D2", "D3", "D4", "D5", "D6", "D7"]
+      },
+      {
+        "round": 2,
+        "file": "reviews/round-2.md",
+        "verdict": "PATCH",
+        "defects": ["B1", "B2", "B3", "B4", "B5"]
+      }
+    ],
+    "note": "Round 1 and 2 are preserved verbatim; repairs are applied. The final independent verdict and EVIDENCE_MANIFEST are recorded after round 3. This certificate does not self-sign PASS."
+  },
+  "delivery": {
+    "simulation_status": "NOT_RUN",
+    "simulation_manifests": [],
+    "research_package_complete": false,
+    "phase_completion_claimed": false,
+    "outputs_committed": false,
+    "pushed": false,
+    "commit": null,
+    "commit_reason": "本 attempt 不提交；按 PLAN §3-§4，须先取得最终独立 reviewer PASS。禁止 push、禁止 amend、禁止改动用户 index。",
+    "commit_receipt": null,
+    "commit_receipt_reason": "未提交时不创建成功收据",
+    "files_written_this_attempt": [
+      "studies/HIST_VNEXT/M06/REPORT.md",
+      "studies/HIST_VNEXT/M06/BLOCKER_CERTIFICATE.json",
+      "studies/HIST_VNEXT/M06/failed_seeds.json"
+    ],
+    "files_not_yet_written": [
+      "studies/HIST_VNEXT/M06/EVIDENCE_MANIFEST.json",
+      "studies/HIST_VNEXT/M06/REVIEW.md"
+    ],
+    "supervisor_files_written": [
+      {
+        "path": "studies/HIST_VNEXT/M06/commands.json",
+        "written_by": "supervisor",
+        "basis": "real execution records: per-command argv/cwd/env/time/exit code/stdout-stderr paths; failed and timeout attempts kept"
+      },
+      {
+        "path": "studies/HIST_VNEXT/M06/model_usage.json",
+        "written_by": "supervisor",
+        "basis": "per-role requested/actual selector, reasoning, tokens and provider-reported cost"
+      },
+      {
+        "path": "studies/HIST_VNEXT/M06/resource_usage.json",
+        "written_by": "supervisor",
+        "basis": "per-command wall time, measurable RSS, output bytes and measurement caveats"
+      }
+    ],
+    "supervisor_files_written_note": "Final byte length/SHA256 of these supervisor files are recorded in EVIDENCE_MANIFEST.json after independent review; they are intentionally not embedded here to avoid a stale self-reference.",
+    "package_completeness": "candidate evidence complete; round-1 and round-2 PATCH repairs applied; round-3 final review and EVIDENCE_MANIFEST pending"
+  },
+  "scope": {
+    "new_paths_under": "studies/HIST_VNEXT/M06/",
+    "production_behavior_changed": false,
+    "modified_paths": [],
+    "note": "本步只新增 M06 证据文件；未修改 engine/state/storage、来源 validator、任何 config、历史卡或原报告/输出；不在公共 docs/phases/ 导出。"
+  }
+}

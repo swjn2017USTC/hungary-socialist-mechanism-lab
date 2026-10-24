@@ -1,0 +1,148 @@
+{
+ "schema_version": "hist_vnext_h5g_g1_resource_usage_v1",
+ "phase_id": "H5G-G1",
+ "study_id": "M06",
+ "measured_at_utc": "2026-10-24T15:00:12Z",
+ "measurement_scope_note": "measured_at_utc is the final write time of this file; per-admission entries retain their own measurement times and the implementation-session wall times are listed per entry.",
+ "admission_audits": [
+  {
+   "attempt": 1,
+   "command": "PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root .",
+   "wall_seconds": 0.273,
+   "real_seconds": 0.26,
+   "user_seconds": 0.14,
+   "sys_seconds": 0.03,
+   "max_rss_bytes": 42631168,
+   "page_reclaims": 3588,
+   "page_faults": 338,
+   "voluntary_context_switches": 524,
+   "involuntary_context_switches": 461,
+   "instructions_retired": 1590150793,
+   "cycles_elapsed": 697234208,
+   "stdout_bytes": 4107,
+   "stderr_bytes": 0,
+   "source": "/usr/bin/time -l -o /tmp/h5g_g1_time.txt"
+  },
+  {
+   "attempt": 2,
+   "command": "same",
+   "wall_seconds": "NOT_MEASURED",
+   "max_rss_bytes": "NOT_MEASURED",
+   "stdout_bytes": 4107,
+   "stderr_bytes": 0,
+   "source": "run inside implementation session attempt-1; no OS-level record retained",
+   "note": "stdout is byte-identical to attempts 1 and 3"
+  },
+  {
+   "attempt": 3,
+   "command": "same",
+   "wall_seconds": 0.22,
+   "real_seconds": 0.22,
+   "user_seconds": 0.12,
+   "sys_seconds": 0.03,
+   "max_rss_bytes": 42418176,
+   "page_reclaims": 4036,
+   "page_faults": 428,
+   "voluntary_context_switches": 527,
+   "involuntary_context_switches": 215,
+   "instructions_retired": 28843420,
+   "cycles_elapsed": 15577836,
+   "stdout_bytes": 4107,
+   "stderr_bytes": 0,
+   "source": "/usr/bin/time -l -o /tmp/h5g_g1_attempt3_time.txt"
+  }
+ ],
+ "implementation_sessions": [
+  {
+   "session": "attempt-1",
+   "wall_seconds": 600.26,
+   "timeout_seconds": 600,
+   "stdout_bytes": 4629027,
+   "stderr_bytes": 0,
+   "max_rss_bytes": "NOT_MEASURED",
+   "cpu_seconds": "NOT_MEASURED",
+   "note": "supervising job wall time; 10m --max-time stopped it"
+  },
+  {
+   "session": "attempt-2",
+   "wall_seconds": 339.98,
+   "timeout_seconds": 600,
+   "stdout_bytes": 2272044,
+   "stderr_bytes": 0,
+   "max_rss_bytes": "NOT_MEASURED",
+   "cpu_seconds": "NOT_MEASURED",
+   "note": "supervising job wall time"
+  },
+  {
+   "session": "attempt-3",
+   "wall_seconds": 600.22,
+   "timeout_seconds": 600,
+   "stdout_bytes": 3962391,
+   "stderr_bytes": 0,
+   "max_rss_bytes": "NOT_MEASURED",
+   "cpu_seconds": "NOT_MEASURED",
+   "note": "10m technical timeout"
+  },
+  {
+   "session": "attempt-4",
+   "wall_seconds": 30.0,
+   "timeout_seconds": 1200,
+   "stdout_bytes": 841292,
+   "stderr_bytes": 0,
+   "max_rss_bytes": "NOT_MEASURED",
+   "cpu_seconds": "NOT_MEASURED",
+   "note": "aborted at ~30 s while still reading (21 read calls, 0 writes, no agent_end); supervisor cancellation; no exit file"
+  },
+  {
+   "session": "attempt-5",
+   "wall_seconds": 364.29,
+   "timeout_seconds": 1200,
+   "stdout_bytes": 3334352,
+   "stderr_bytes": 0,
+   "max_rss_bytes": "NOT_MEASURED",
+   "cpu_seconds": "NOT_MEASURED",
+   "note": "supervising job wall time"
+  },
+  {
+   "session": "attempt-6",
+   "wall_seconds": 81.87,
+   "timeout_seconds": 600,
+   "stdout_bytes": 1024751,
+   "stderr_bytes": 0,
+   "max_rss_bytes": "NOT_MEASURED",
+   "cpu_seconds": "NOT_MEASURED",
+   "note": "supervising job wall time"
+  },
+  {
+   "session": "attempt-7",
+   "wall_seconds": 147.18,
+   "timeout_seconds": 900,
+   "stdout_bytes": 2634984,
+   "stderr_bytes": 0,
+   "max_rss_bytes": "NOT_MEASURED",
+   "cpu_seconds": "NOT_MEASURED",
+   "note": "round-1 PATCH repair session; supervising job wall time"
+  },
+  {
+   "session": "attempt-8",
+   "wall_seconds": 185.02,
+   "timeout_seconds": 900,
+   "stdout_bytes": 2686406,
+   "stderr_bytes": 0,
+   "max_rss_bytes": "NOT_MEASURED",
+   "cpu_seconds": "NOT_MEASURED",
+   "note": "round-2 PATCH repair session; supervising job wall time"
+  }
+ ],
+ "sealing_supervisor": {
+  "wall_seconds": "NOT_MEASURED",
+  "cpu_seconds": "NOT_MEASURED",
+  "max_rss_bytes": "NOT_MEASURED",
+  "note": "in-session executor has no independent child-process measurement; per-file output bytes are recomputed by EVIDENCE_MANIFEST.json"
+ },
+ "disk": {
+  "free_bytes_at_seal": "NOT_MEASURED",
+  "note": "no disk-pressure event observed"
+ },
+ "measurement_limit": "ru_maxrss is a process high-water mark; it is not presented as an independent per-run RSS series."
+}

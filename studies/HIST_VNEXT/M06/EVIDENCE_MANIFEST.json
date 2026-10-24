@@ -1,0 +1,368 @@
+{
+ "schema_version": "hist_vnext_h5g_g1_evidence_v1",
+ "phase_id": "H5G-G1",
+ "mechanism_id": "M6",
+ "study_id": "M06",
+ "status": "BLOCKED",
+ "blocking_code": "MISSING_EXTERNAL_DEBT_CONTRACT_ADMISSION",
+ "head": "f88eb43a028b4147ca5abe0067c89a99e4ac443a",
+ "branch": "codex/audit-hsm-vnext-2026-10-11",
+ "built_by": "supervisor (deepseek/deepseek-flash) after independent round-4 PASS; implementation by minimax-code-cn/MiniMax-M3 attempts 2,5-8",
+ "self_excluded": "EVIDENCE_MANIFEST.json (avoids a self-hash cycle)",
+ "post_commit_excluded": "COMMIT_RECEIPT.json (delivery artifact, untracked; binds the commit hash to the committed manifest hash externally)",
+ "review_status": "PASS (round 4, scope: blocker judgment + sealed evidence accuracy + evidence-only)",
+ "review_file": "studies/HIST_VNEXT/M06/REVIEW.md",
+ "artifacts": [
+  {
+   "path": "studies/HIST_VNEXT/M06/BLOCKER_CERTIFICATE.json",
+   "sha256": "4fa4b51c2821beebaef3d2bbe419230bf3fa8dfb59b5e81435948d9dc7907352",
+   "bytes": 38028
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/PLAN.md",
+   "sha256": "7bd469084aa2ce96d7c4391154677afeff3992dbc65a1cc238296b31d8fb4557",
+   "bytes": 17660
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/REPORT.md",
+   "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2",
+   "bytes": 28506
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/REVIEW.md",
+   "sha256": "6af54a79295f6252eb968f9c7780b28c4b023372ad858c73755fcc08d2b947ab",
+   "bytes": 43681
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/commands.json",
+   "sha256": "06ccbc5e00a21869d71c1b0d7fda5e110b23cfc69da00ca07cd1c708b0a97d2f",
+   "bytes": 14960
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/failed_seeds.json",
+   "sha256": "252abbc98abb362a0ef3a2ba993cedbac2b2b76fa69542b918788e4ade3a15d1",
+   "bytes": 124
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-1.exit.txt",
+   "sha256": "4bf4fca02e6eeaf7f1c510b82c756e7f8a3c567a230bae1094b254adc774f38b",
+   "bytes": 7
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-1.jsonl",
+   "sha256": "7ec1a2dbc667d81da43a52c01850374e6789212f425b4b71bb7def8845d1dd8d",
+   "bytes": 4629027
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-1.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-2.exit.txt",
+   "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b",
+   "bytes": 7
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-2.jsonl",
+   "sha256": "c0614ea571290360445321ec6e95a5ed2a10f5d60c5a8c93acea2f9e5c713848",
+   "bytes": 2272044
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-2.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-3.exit.txt",
+   "sha256": "4bf4fca02e6eeaf7f1c510b82c756e7f8a3c567a230bae1094b254adc774f38b",
+   "bytes": 7
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-3.jsonl",
+   "sha256": "5aeda055f0a7ea81139d764ecaccb43b8c5f1ef438343ac78dac1a3511fb7ef4",
+   "bytes": 3962391
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-3.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-4.jsonl",
+   "sha256": "2e868ac6e6f4bb489dfa71373d753372eefd35dfd5f42bc6da0b90e89a00879e",
+   "bytes": 841292
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-4.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-5.exit.txt",
+   "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b",
+   "bytes": 7
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-5.jsonl",
+   "sha256": "711f49baf4478daefbba577f79f2fa3b52e07269ab331d323c9bb79ac3255efd",
+   "bytes": 3334352
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-5.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-6.exit.txt",
+   "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b",
+   "bytes": 7
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-6.jsonl",
+   "sha256": "fc7dcea1ec9cb102fe5f2f6c8fad84de81290cc820571f2607c878d7bcbc3df3",
+   "bytes": 1024751
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-6.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-7.exit.txt",
+   "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b",
+   "bytes": 7
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-7.jsonl",
+   "sha256": "2ad384d98b98ebd2f510075fda7b8fb242b25b44a34696d67ad54be35e93153b",
+   "bytes": 2634984
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-7.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-8.exit.txt",
+   "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b",
+   "bytes": 7
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-8.jsonl",
+   "sha256": "d9d1842947e24afc55c66db4f2caf9e77043c27b36a02cd5251a38b361eb2bde",
+   "bytes": 2686406
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-8.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-1.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-1.stdout.json",
+   "sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+   "bytes": 4107
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-2.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-2.stdout.json",
+   "sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+   "bytes": 4107
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-3.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-3.stdout.json",
+   "sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+   "bytes": 4107
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/model_usage.json",
+   "sha256": "5f366c70937272885eba3c82052a33b27d3935a0f0219ba03df3a1f8958c9d7d",
+   "bytes": 9564
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/protected_hashes.preflight.json",
+   "sha256": "cd2cd9074f1c10be66b4f7bdb6224edb1b41e7ab253e7e1657086e00c29ad7cf",
+   "bytes": 3622
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/resource_usage.json",
+   "sha256": "91102143ed1611ea6c532ec79dafe1534e445bab139a5718f5519957fc43598f",
+   "bytes": 4452
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/reviews/round-1.md",
+   "sha256": "8107a47e717b382d37f66037f4d655cf762255fa8318fcdf0bfa4398d1220391",
+   "bytes": 15514
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/reviews/round-2.md",
+   "sha256": "348aa1e341ac3289f5db2256c0fc6417fd1048716d205935ef41154d5f38355a",
+   "bytes": 10088
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/reviews/round-3.md",
+   "sha256": "d4303d19e647cc1572cb59eafa05f3e2ca5bd51ed4ab1c86e1ababaa65c9aa0e",
+   "bytes": 9716
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/reviews/round-4.md",
+   "sha256": "cb8b6235942587012a04c4c7bafd545466691f4d6f83b5afa3224eb9e6e75025",
+   "bytes": 6964
+  },
+  {
+   "path": "studies/HIST_VNEXT/M06/user_work_snapshot.json",
+   "sha256": "5f4005bd4ff4a4eb66546ee5515d1ae18fc76924f3a8bcb5b4d1efa2f6b5dbf6",
+   "bytes": 5225
+  }
+ ],
+ "artifact_count": 43,
+ "protected": [
+  {
+   "path": "BASELINE.md",
+   "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+   "bytes": 64445
+  },
+  {
+   "path": "config/research_contract.json",
+   "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+   "bytes": 2908
+  },
+  {
+   "path": "uv.lock",
+   "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+   "bytes": 157941
+  },
+  {
+   "path": "config/p06/cards/M6.json",
+   "sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+   "bytes": 815
+  },
+  {
+   "path": "config/p06/cards/M10.json",
+   "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+   "bytes": 806
+  },
+  {
+   "path": "HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md",
+   "sha256": "7bd469084aa2ce96d7c4391154677afeff3992dbc65a1cc238296b31d8fb4557",
+   "bytes": 17660
+  },
+  {
+   "path": "docs/upgrade_review/HIST_VNEXT/01_BASELINE_AND_VERSION_AUDIT.md",
+   "sha256": "e46979b7dbe235c09f4caf793164a2b9e7c675fd1679f6fbbd731a704e7f4059",
+   "bytes": 10147
+  },
+  {
+   "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+   "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+   "bytes": 37168
+  },
+  {
+   "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+   "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+   "bytes": 114765
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H3F-D0/REVIEW.md",
+   "sha256": "c52f3a88f416be3e7a14b8fc6e9449517b4aee44c328093360befdadc330313f",
+   "bytes": 5847
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H3F-D1/REVIEW.md",
+   "sha256": "5f9b4436f2aeff0a8ae13e000e672be160459b454ccca73134aa0950087e05fd",
+   "bytes": 2675
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H3F-D2/REVIEW.md",
+   "sha256": "e94cb3f7e8a4a9c05cb7b1880c1a10793b8f01070c951c851663ba7d90cb49f7",
+   "bytes": 4218
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H3F-D3/REVIEW.md",
+   "sha256": "fa5e1a06e4aa92283d61ebc172ffe30f8f05e0fbaaae62d82bc27feda226e432",
+   "bytes": 3445
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4B-ID/REVIEW.md",
+   "sha256": "f8539b98adfdf062995db1769bdde0d859d9a4e2cd283440d5fefe071ab30550",
+   "bytes": 6614
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4B-EXEC/REPORT.md",
+   "sha256": "2d8e646d500eb5a48d59ebf217a29faeab4504886d81d153501c61e64397560a",
+   "bytes": 6681
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4C/ORIGINAL_COVERAGE.md",
+   "sha256": "b8d1291032633542e68477841e8de17fc09b64f067d05fdefdc528dc630d1d78",
+   "bytes": 4540
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json",
+   "sha256": "44c803e513ef44cd7a0c6dc512cb7c0001691c8360e6e0d271c23052b25c8180",
+   "bytes": 2547
+  },
+  {
+   "path": "src/hsm_lab/engine/material.py",
+   "sha256": "fe240e0b89281601519071edab14052379517eaa9891ae2a93a75428393ce888",
+   "bytes": 265672
+  },
+  {
+   "path": "src/hsm_lab/engine/trade.py",
+   "sha256": "1ddaa10f23324651aedc3411a8993c1e57e81db3bdcfe1afe47d531ff6bd74cb",
+   "bytes": 95918
+  },
+  {
+   "path": "tests/test_hist_pilot_b.py",
+   "sha256": "6b9e6a2001da20e47745841112d06c72b0a15305e2df9c56f162c298170a473a",
+   "bytes": 30559
+  },
+  {
+   "path": ".omp/agents/phase-reviewer.md",
+   "sha256": "5961ba05e6b0cd42f0abcc3b74c64c959a3c47cca62fee44ad21cf6a8e632a1b",
+   "bytes": 1395
+  },
+  {
+   "path": "history/HIST_VNEXT/sources/admission.py",
+   "sha256": "b906c2c4af68ae47fc42bdf8f7f58c5c01bc0be5eb5a790c514c4335e963850f",
+   "bytes": 59299
+  }
+ ],
+ "byte_identical_pairs": [
+  {
+   "a": "HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md",
+   "b": "studies/HIST_VNEXT/M06/PLAN.md",
+   "sha256": "7bd469084aa2ce96d7c4391154677afeff3992dbc65a1cc238296b31d8fb4557",
+   "bytes": 17660,
+   "identical": true
+  }
+ ],
+ "raw_evidence_dir": "studies/HIST_VNEXT/M06/logs",
+ "simulation_status": "NOT_RUN",
+ "simulation_manifests": [],
+ "reference_replay": {
+  "C0": "NOT_RUN",
+  "C1": "NOT_RUN",
+  "frozen_C0": "92f9ea0adcfce1b0d1e078f4633f028d90202385f3276aa0d69b1fdfcc28a42d",
+  "frozen_C1": "c4810481bc8af7b261697888884efc73be55e01aa2e9e3e83ddeda3e6e0218d5"
+ },
+ "seeds": {
+  "seed_status": "NOT_RUN",
+  "failed_seeds": null
+ },
+ "scope_limit": "This manifest seals a blocked prerequisite package. It is not a research run, not a H5G acceptance, and not a contract-original admission."
+}

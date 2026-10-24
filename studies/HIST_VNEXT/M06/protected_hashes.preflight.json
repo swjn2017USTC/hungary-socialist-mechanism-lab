@@ -1,0 +1,116 @@
+{
+ "schema_version": "hist_vnext_h5g_g1_protected_hashes_v1",
+ "captured_at_utc": "2026-10-24T12:29:36Z",
+ "files": [
+  {
+   "path": "BASELINE.md",
+   "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+   "bytes": 64445
+  },
+  {
+   "path": "config/research_contract.json",
+   "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+   "bytes": 2908
+  },
+  {
+   "path": "uv.lock",
+   "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+   "bytes": 157941
+  },
+  {
+   "path": "config/p06/cards/M6.json",
+   "sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+   "bytes": 815
+  },
+  {
+   "path": "config/p06/cards/M10.json",
+   "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+   "bytes": 806
+  },
+  {
+   "path": "HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md",
+   "sha256": "7bd469084aa2ce96d7c4391154677afeff3992dbc65a1cc238296b31d8fb4557",
+   "bytes": 17660
+  },
+  {
+   "path": "docs/upgrade_review/HIST_VNEXT/01_BASELINE_AND_VERSION_AUDIT.md",
+   "sha256": "e46979b7dbe235c09f4caf793164a2b9e7c675fd1679f6fbbd731a704e7f4059",
+   "bytes": 10147
+  },
+  {
+   "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+   "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+   "bytes": 37168
+  },
+  {
+   "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+   "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+   "bytes": 114765
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H3F-D0/REVIEW.md",
+   "sha256": "c52f3a88f416be3e7a14b8fc6e9449517b4aee44c328093360befdadc330313f",
+   "bytes": 5847
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H3F-D1/REVIEW.md",
+   "sha256": "5f9b4436f2aeff0a8ae13e000e672be160459b454ccca73134aa0950087e05fd",
+   "bytes": 2675
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H3F-D2/REVIEW.md",
+   "sha256": "e94cb3f7e8a4a9c05cb7b1880c1a10793b8f01070c951c851663ba7d90cb49f7",
+   "bytes": 4218
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H3F-D3/REVIEW.md",
+   "sha256": "fa5e1a06e4aa92283d61ebc172ffe30f8f05e0fbaaae62d82bc27feda226e432",
+   "bytes": 3445
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4B-ID/REVIEW.md",
+   "sha256": "f8539b98adfdf062995db1769bdde0d859d9a4e2cd283440d5fefe071ab30550",
+   "bytes": 6614
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4B-EXEC/REPORT.md",
+   "sha256": "2d8e646d500eb5a48d59ebf217a29faeab4504886d81d153501c61e64397560a",
+   "bytes": 6681
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4C/ORIGINAL_COVERAGE.md",
+   "sha256": "b8d1291032633542e68477841e8de17fc09b64f067d05fdefdc528dc630d1d78",
+   "bytes": 4540
+  },
+  {
+   "path": "docs/phases/HIST_VNEXT/H4C/MEASUREMENT_MANIFEST.json",
+   "sha256": "44c803e513ef44cd7a0c6dc512cb7c0001691c8360e6e0d271c23052b25c8180",
+   "bytes": 2547
+  },
+  {
+   "path": "src/hsm_lab/engine/material.py",
+   "sha256": "fe240e0b89281601519071edab14052379517eaa9891ae2a93a75428393ce888",
+   "bytes": 265672
+  },
+  {
+   "path": "src/hsm_lab/engine/trade.py",
+   "sha256": "1ddaa10f23324651aedc3411a8993c1e57e81db3bdcfe1afe47d531ff6bd74cb",
+   "bytes": 95918
+  },
+  {
+   "path": "tests/test_hist_pilot_b.py",
+   "sha256": "6b9e6a2001da20e47745841112d06c72b0a15305e2df9c56f162c298170a473a",
+   "bytes": 30559
+  },
+  {
+   "path": ".omp/agents/phase-reviewer.md",
+   "sha256": "5961ba05e6b0cd42f0abcc3b74c64c959a3c47cca62fee44ad21cf6a8e632a1b",
+   "bytes": 1395
+  },
+  {
+   "path": "history/HIST_VNEXT/sources/admission.py",
+   "sha256": "b906c2c4af68ae47fc42bdf8f7f58c5c01bc0be5eb5a790c514c4335e963850f",
+   "bytes": 59299
+  }
+ ]
+}

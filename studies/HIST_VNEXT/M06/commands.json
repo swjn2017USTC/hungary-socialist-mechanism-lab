@@ -1,0 +1,263 @@
+{
+ "schema_version": "hist_vnext_h5g_g1_commands_v1",
+ "phase_id": "H5G-G1",
+ "study_id": "M06",
+ "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+ "note": "Actual commands for this sealing step in execution order. Failed/timeout attempts are kept, never overwritten. Commands run inside the MiniMax implementation sessions are recorded from their real artifacts and session logs. Patch attempts 3-8 include timeout/abort/repair rounds; attempt-4 was aborted at ~30 s while still reading (21 read calls, 0 writes, no agent_end) and wrote no files.",
+ "commands": [
+  {
+   "id": "CMD-1",
+   "time_utc": "2026-10-24T12:29:17Z",
+   "command": "python3 (in-process): create studies/HIST_VNEXT/M06/logs; shutil.copyfile HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md -> studies/HIST_VNEXT/M06/PLAN.md; assert byte-identical SHA256",
+   "purpose": "create the frozen M06 evidence directory and byte-identical canonical PLAN",
+   "exit_code": 0,
+   "wall_seconds": 0.02,
+   "outputs": [
+    "studies/HIST_VNEXT/M06/PLAN.md"
+   ],
+   "result": {
+    "sha256": "7bd469084aa2ce96d7c4391154677afeff3992dbc65a1cc238296b31d8fb4557",
+    "bytes": 17660
+   }
+  },
+  {
+   "id": "CMD-2",
+   "time_utc": "2026-10-24T12:29:36Z",
+   "command": "python3 (in-process): git rev-parse/branch/status --porcelain=v1 -z; sha256+bytes for every pre-existing dirty/untracked user path; sha256 for 22 protected/referenced files",
+   "purpose": "snapshot user work before sealing and freeze protected hashes",
+   "exit_code": 0,
+   "wall_seconds": 0.09,
+   "outputs": [
+    "studies/HIST_VNEXT/M06/user_work_snapshot.json",
+    "studies/HIST_VNEXT/M06/protected_hashes.preflight.json"
+   ],
+   "result": {
+    "user_entries": 25,
+    "unstaged": 3,
+    "untracked": 22,
+    "protected_entries": 22
+   }
+  },
+  {
+   "id": "CMD-3",
+   "time_utc": "2026-10-24T12:29:17Z",
+   "command": "PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 /usr/bin/time -l -o /tmp/h5g_g1_time.txt .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root .",
+   "purpose": "read-only admission audit attempt 1; reproduce the general source-gate blocker",
+   "exit_code": 1,
+   "wall_seconds": 0.273,
+   "time_metrics": {
+    "real": 0.26,
+    "user": 0.14,
+    "sys": 0.03,
+    "max_rss_bytes": 42631168,
+    "page_reclaims": 3588,
+    "page_faults": 338,
+    "voluntary_context_switches": 524,
+    "involuntary_context_switches": 461,
+    "instructions_retired": 1590150793,
+    "cycles_elapsed": 697234208,
+    "peak_memory_footprint": 30359984
+   },
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-1.stdout.json",
+   "stdout_sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+   "stdout_bytes": 4107,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-1.stderr.txt",
+   "stderr_bytes": 0,
+   "note": "exit 1 is the real source-gate result; validator was not modified and the exit was not suppressed."
+  },
+  {
+   "id": "CMD-4",
+   "time_utc": "2026-10-24T12:29:43Z",
+   "command": "omp --model minimax-code-cn/MiniMax-M3 --thinking high --no-prewalk --no-title --mode json --max-time 10m --auto-approve -p @studies/HIST_VNEXT/M06/PLAN.md '<G1 sealing-only prompt>'",
+   "purpose": "implementation session attempt 1 (evidence sealing by the plan-designated executor)",
+   "exit_code": 1,
+   "wall_seconds": 600.26,
+   "timeout_seconds": 600,
+   "result": "TIMEOUT: the 10m technical limit stopped the session before any evidence file was written. It performed reads and one admission reproduction (attempt-2) only. No fallback, no model switch, no timeout extension.",
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-1.jsonl",
+   "stdout_bytes": 4629027,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-1.stderr.txt",
+   "stderr_bytes": 0,
+   "exit_record": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-1.exit.txt",
+   "note": "Actual provider/model in the JSON stream: minimax-code-cn / MiniMax-M3 (api anthropic-messages)."
+  },
+  {
+   "id": "CMD-5",
+   "time_utc": "2026-10-24T12:40:07Z",
+   "command": "omp --model minimax-code-cn/MiniMax-M3 --thinking high --no-prewalk --no-title --mode json --max-time 10m --auto-approve -p @studies/HIST_VNEXT/M06/PLAN.md '<attempt-2 constrained writing prompt>'",
+   "purpose": "implementation session attempt 2; write REPORT.md, BLOCKER_CERTIFICATE.json, failed_seeds.json",
+   "exit_code": 0,
+   "wall_seconds": 339.98,
+   "timeout_seconds": 600,
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-2.jsonl",
+   "stdout_bytes": 2272044,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-2.stderr.txt",
+   "stderr_bytes": 0,
+   "exit_record": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-2.exit.txt",
+   "result": "Wrote the three candidate evidence files; did not commit and did not self-sign review.",
+   "note": "Actual provider/model in the JSON stream: minimax-code-cn / MiniMax-M3 (api anthropic-messages); 13 assistant usage records."
+  },
+  {
+   "id": "CMD-6",
+   "time_utc": "2026-10-24T12:33:00Z",
+   "command": "PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root .",
+   "purpose": "read-only admission audit attempt 2, reproduced inside implementation session attempt 1",
+   "exit_code": "NOT_RECORDED_BY_SUPERVISOR",
+   "exit_code_evidence": "stdout JSON field exit_code=1; byte-identical to attempt-1/3 which were captured with exit 1",
+   "wall_seconds": "NOT_MEASURED",
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-2.stdout.json",
+   "stdout_sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+   "stdout_bytes": 4107,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-2.stderr.txt",
+   "stderr_bytes": 0
+  },
+  {
+   "id": "CMD-7",
+   "time_utc": "2026-10-24T12:46:10Z",
+   "command": "PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 /usr/bin/time -l -o /tmp/h5g_g1_attempt3_time.txt sh -c '.venv/bin/python -B -m history.HIST_VNEXT.sources.admission --root . > ...attempt-3.stdout.json 2> ...attempt-3.stderr.txt'",
+   "purpose": "read-only admission audit attempt 3; supervisor-captured exit code and resources",
+   "exit_code": 1,
+   "wall_seconds": 0.22,
+   "time_metrics": {
+    "real": 0.22,
+    "user": 0.12,
+    "sys": 0.03,
+    "max_rss_bytes": 42418176,
+    "page_reclaims": 4036,
+    "page_faults": 428,
+    "voluntary_context_switches": 527,
+    "involuntary_context_switches": 215,
+    "instructions_retired": 28843420,
+    "cycles_elapsed": 15577836,
+    "peak_memory_footprint": 1327392
+   },
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-3.stdout.json",
+   "stdout_sha256": "b167c11008adf21294485a997d6c7c1f0f3fdeb4af224d854b7ff6222cb31419",
+   "stdout_bytes": 4107,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/preflight_admission.attempt-3.stderr.txt",
+   "stderr_bytes": 0
+  },
+  {
+   "id": "CMD-8",
+   "time_utc": "2026-10-24T12:46:30Z",
+   "command": "omp --model minimax-code-cn/MiniMax-M3 --thinking high --no-prewalk --no-title --mode json --max-time 10m --auto-approve -p '<attempt-3 patch prompt>'",
+   "purpose": "patch attempt 3: verbatim contract quotes, admission attempt-3, executor usage",
+   "exit_code": 1,
+   "wall_seconds": 600.22,
+   "timeout_seconds": 600,
+   "result": "TIMEOUT after fixing only the command typo; no quote/metadata patch completed.",
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-3.jsonl",
+   "stdout_bytes": 3962391,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-3.stderr.txt",
+   "stderr_bytes": 0,
+   "exit_record": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-3.exit.txt"
+  },
+  {
+   "id": "CMD-9",
+   "time_utc": "2026-10-24T12:57:15Z",
+   "command": "omp --model minimax-code-cn/MiniMax-M3 --thinking high --no-prewalk --no-title --mode json --max-time 20m --auto-approve -p '<attempt-4 patch prompt with backticks>'",
+   "purpose": "patch attempt 4 (aborted launcher run)",
+   "exit_code": "NOT_RECORDED",
+   "exit_code_note": "the supervising job was cancelled at ~30 s and no shell exit record was written; the session has no agent_end record",
+   "wall_seconds": 30.0,
+   "result": "ABORTED at ~30 s while still in the read phase: the session log has 21 read calls and 0 write/edit calls, 9 turn_start but only 8 turn_end, and no agent_end. The launcher's shell command substitution had evaluated backtick-delimited hash literals before omp received the prompt (supervisor-shell command-not-found lines), but the delivered prompt body remained coherent; the log contains no 'command not found', 'corrupt' or 'bad substitution' string. No file change was made by this attempt; the intended edits were applied in attempt-5.",
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-4.jsonl",
+   "stdout_bytes": 841292,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-4.stderr.txt",
+   "stderr_bytes": 0,
+   "exit_record": null,
+   "exit_record_note": "no attempt-4 exit file exists: the launcher was cancelled before its trailing `echo EXIT=$?` ran. The artifact-supported facts are the JSONL's read/write counts and the absence of agent_end; the manifest must not reference a nonexistent path."
+  },
+  {
+   "id": "CMD-10",
+   "time_utc": "2026-10-24T12:58:30Z",
+   "command": "omp --model minimax-code-cn/MiniMax-M3 --thinking high --no-prewalk --no-title --mode json --max-time 20m --auto-approve -p @/tmp/h5g_g1_patch_prompt_attempt5.md",
+   "purpose": "patch attempt 5: apply verbatim quotes, attempt-3 admission row, executor usage, supervisor-file completeness",
+   "exit_code": 0,
+   "wall_seconds": 364.29,
+   "timeout_seconds": 1200,
+   "result": "Wrote REPORT.md and BLOCKER_CERTIFICATE.json; certificate parses as JSON.",
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-5.jsonl",
+   "stdout_bytes": 3334352,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-5.stderr.txt",
+   "stderr_bytes": 0,
+   "exit_record": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-5.exit.txt"
+  },
+  {
+   "id": "CMD-11",
+   "time_utc": "2026-10-24T13:04:40Z",
+   "command": "omp --model minimax-code-cn/MiniMax-M3 --thinking high --no-prewalk --no-title --mode json --max-time 10m --auto-approve -p @/tmp/h5g_g1_patch_prompt_attempt6.md",
+   "purpose": "patch attempt 6: remove self-referential supervisor-file hashes; record patch-session metadata",
+   "exit_code": 0,
+   "wall_seconds": 81.87,
+   "timeout_seconds": 600,
+   "result": "Normalized REPORT §12 and certificate delivery/executor; certificate parses as JSON.",
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-6.jsonl",
+   "stdout_bytes": 1024751,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-6.stderr.txt",
+   "stderr_bytes": 0,
+   "exit_record": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-6.exit.txt"
+  },
+  {
+   "id": "CMD-12",
+   "time_utc": "2026-10-24T13:15:52Z",
+   "command": "omp --model minimax-code-cn/MiniMax-M3 --thinking high --no-prewalk --no-title --mode json --max-time 15m --auto-approve -p @/tmp/h5g_g1_patch_prompt_attempt7.md",
+   "purpose": "round-1 PATCH repair: D1 attempt-4 wording, D2 attempt-6 provenance/amendment, D3 dangling exit path, D6 contract row, D7 quote-header note",
+   "exit_code": 0,
+   "wall_seconds": 147.18,
+   "timeout_seconds": 900,
+   "result": "REPORT.md and BLOCKER_CERTIFICATE.json updated; certificate parses as JSON. This is the final round-1 PATCH repair session; the round-2 B1-B5 repair session (attempt-8) is recorded as CMD-13 and in model_usage.json.",
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-7.jsonl",
+   "stdout_bytes": 2634984,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-7.stderr.txt",
+   "stderr_bytes": 0,
+   "exit_record": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-7.exit.txt"
+  },
+  {
+   "id": "CMD-13",
+   "time_utc": "2026-10-24T14:04:06Z",
+   "command": "omp --model minimax-code-cn/MiniMax-M3 --thinking high --no-prewalk --no-title --mode json --max-time 15m --auto-approve -p @/tmp/h5g_g1_patch_prompt_attempt8.md",
+   "purpose": "round-2 PATCH repair: B1 user-snapshot hash, B3 amendment metadata, B4 quote header, B5 review block; B2 supervisor records fixed separately",
+   "exit_code": 0,
+   "wall_seconds": 185.02,
+   "timeout_seconds": 900,
+   "result": "REPORT.md and BLOCKER_CERTIFICATE.json updated; certificate parses as JSON.",
+   "stdout_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-8.jsonl",
+   "stdout_bytes": 2686406,
+   "stderr_path": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-8.stderr.txt",
+   "stderr_bytes": 0,
+   "exit_record": "studies/HIST_VNEXT/M06/logs/implementation_session.attempt-8.exit.txt"
+  },
+  {
+   "id": "CMD-14",
+   "time_utc": "2026-10-24T15:04:30Z",
+   "command": "python3 in-memory verification (no permanent test): load every M06 JSON; recompute byte length/SHA256 for every manifest artifact; re-hash every protected/cited source; verify BLOCKED/three-dimension verdicts, null missing contracts, failed-seeds NOT_RUN, no run digest/first-stage claim; flip one byte in an in-memory copy (expect digest mismatch); point a manifest entry at a missing file (expect missing, not empty).",
+   "purpose": "delivery integrity smoke test required by the plan before commit",
+   "exit_code": 0,
+   "wall_seconds": 0.2,
+   "result": "PASS: all artifacts and protected hashes match; 1-byte flip detected; missing reference reported missing; no JSON parse error.",
+   "outputs": [
+    "EVIDENCE_MANIFEST.json (built after this record)"
+   ]
+  },
+  {
+   "id": "CMD-15",
+   "time_utc": "2026-10-24T15:04:54Z",
+   "command": "git diff --cached --check; git diff --cached --check -- . ':(exclude)studies/HIST_VNEXT/M06/PLAN.md'; cmp HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md studies/HIST_VNEXT/M06/PLAN.md",
+   "purpose": "staged-whitespace and byte-identity check",
+   "exit_code": 0,
+   "result": "The full check exits 2 with exactly one message: studies/HIST_VNEXT/M06/PLAN.md:111 new blank line at EOF. That blank line is inherited from the canonical HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md; altering PLAN.md would break the required byte identity. Excluding only PLAN.md, git diff --cached --check exits 0. cmp confirms the two PLAN files are byte-identical. No other staged whitespace error exists.",
+   "note": "The exception is limited to the byte-identical canonical PLAN; no other staged file is exempted."
+  }
+ ],
+ "not_run": [
+  "pytest",
+  "ruff",
+  "hsm baseline verify",
+  "uv lock --check",
+  "historical_f2_replay (C0)",
+  "historical_f2_trade_scenario (C1)",
+  "any G1/G2 simulation",
+  "any seed ensemble"
+ ]
+}

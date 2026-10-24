@@ -1,0 +1,165 @@
+{
+ "schema_version": "hist_vnext_h5g_g1_user_work_snapshot_v1",
+ "phase_id": "H5G-G1",
+ "study_id": "M06",
+ "captured_at_utc": "2026-10-24T12:29:36Z",
+ "cwd": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+ "branch": "codex/audit-hsm-vnext-2026-10-11",
+ "head": "f88eb43a028b4147ca5abe0067c89a99e4ac443a",
+ "staged_count": 0,
+ "unstaged_count": 3,
+ "untracked_count": 22,
+ "entries": [
+  {
+   "status": "M",
+   "path": ".omp/config.yml",
+   "sha256": "2e90b9c6feed817a4547c7232f650e8c76c089f14f7ae22b36f23bf62dd2fe7f",
+   "bytes": 472
+  },
+  {
+   "status": "M",
+   "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+   "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+   "bytes": 37168
+  },
+  {
+   "status": "M",
+   "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+   "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+   "bytes": 114765
+  },
+  {
+   "status": "??",
+   "path": "CMEA_清算制度冻结_PLAN.md",
+   "sha256": "9523e122eb084b642226dd4da3637cf8a3b5ae1b37714f1e3c9e2d0d6f79c81d",
+   "bytes": 46043
+  },
+  {
+   "status": "??",
+   "path": "H3A_服务语义分型_PLAN.md",
+   "sha256": "77f4525cfc439bc32ee4d7a085917fa91f073d39c3c3a5762185169eda497872",
+   "bytes": 33300
+  },
+  {
+   "status": "??",
+   "path": "H3B_订单融资闭环_PLAN.md",
+   "sha256": "1a35125dcde68909431ccde0e33d3a9ebd366374166190a6ead1598121562240",
+   "bytes": 33231
+  },
+  {
+   "status": "??",
+   "path": "H3C_线路运力证书_PLAN.md",
+   "sha256": "505da6af06a792a9e5ccbbdc27610256a92caef320b2b081845e50e5b880c01f",
+   "bytes": 34442
+  },
+  {
+   "status": "??",
+   "path": "H3D_短周期时序隔离比较_PLAN.md",
+   "sha256": "44abb9824ca311214b971e8a0121d9f63430077b178474d249d3ffcd99f4da7a",
+   "bytes": 33051
+  },
+  {
+   "status": "??",
+   "path": "H3E_4Q_滚动规划_PLAN.md",
+   "sha256": "420d89a877bc17c9d14beebba124f4234b373374c1d1ae2478dcf772eb4e5ed8",
+   "bytes": 28961
+  },
+  {
+   "status": "??",
+   "path": "H3F_D1_外贸工作资本贷款_PLAN.md",
+   "sha256": "18b67e79da3cb1edca8ec675fff6e4625b9a92c87dc3a7bb5ddd65311163923d",
+   "bytes": 34459
+  },
+  {
+   "status": "??",
+   "path": "H3F_D2_出口应收与坏账反向分录_PLAN.md",
+   "sha256": "135fcc9e5e9db1bb2f3aa0eaa19830102ee5f76264990860c536a5d87d6f9e16",
+   "bytes": 45281
+  },
+  {
+   "status": "??",
+   "path": "H4A_0_来源核验与准入_PLAN.md",
+   "sha256": "1041dba4648aa93c1cec44e822c810fb403a22eb2040908c4a5a305874ba6645",
+   "bytes": 32476
+  },
+  {
+   "status": "??",
+   "path": "H4A_1_前置补完_PLAN.md",
+   "sha256": "6c6cc09dd1f5c01dd123f877a9b46f3cf7cad8a4a2fc9630e497587507643d21",
+   "bytes": 26196
+  },
+  {
+   "status": "??",
+   "path": "H4B_PILOT_A_阻断包_PLAN.md",
+   "sha256": "3a1b8684223b1524911d2248f18007270b0bd21144b0064fcb8f8ebf5e183100",
+   "bytes": 23236
+  },
+  {
+   "status": "??",
+   "path": "H4C_PILOT_B_PLAN.md",
+   "sha256": "275db3fe48bfaef28c71e4a8dac4a9147fc8beef360b8ba294bbfbadb1e50f07",
+   "bytes": 31580
+  },
+  {
+   "status": "??",
+   "path": "H5A_A1_M2_PLAN.md",
+   "sha256": "1ae544a61e2ed03dc625d1351e62229fc1d892d7c4d79866e41698158bb0768d",
+   "bytes": 30985
+  },
+  {
+   "status": "??",
+   "path": "H5C_参照历史棘轮实验_PLAN.md",
+   "sha256": "ce6cb635c04bc3fe24c6f6deccc3938fd04a50f829b840aa3b12473620c25cf0",
+   "bytes": 32836
+  },
+  {
+   "status": "??",
+   "path": "H5D_劳动制度_PLAN.md",
+   "sha256": "81148e3796adb0c7f728293931054c0979a72e9316a6c59b8a4da5765043d469",
+   "bytes": 61276
+  },
+  {
+   "status": "??",
+   "path": "H5E_地区预算阻断_PLAN.md",
+   "sha256": "1955c8d99c44a54497a8527e5b1682c8dd0b20bcf77831c668a3c7aa1cfe1766",
+   "bytes": 16976
+  },
+  {
+   "status": "??",
+   "path": "HIST_VNEXT_H5B_PLAN.md",
+   "sha256": "f8f8c9f721eac86c618909abb792e275fcd0c33a6fa850ec7f18bbaa17b68519",
+   "bytes": 39569
+  },
+  {
+   "status": "??",
+   "path": "HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md",
+   "sha256": "7bd469084aa2ce96d7c4391154677afeff3992dbc65a1cc238296b31d8fb4557",
+   "bytes": 17660
+  },
+  {
+   "status": "??",
+   "path": "LEGACY_TREASURY_PREPAY_双账观察_PLAN.md",
+   "sha256": "bfee42ba00e1ca811a9a4919fdc0ca315d1c235f90d6ba504c4e95d5ef6ea254",
+   "bytes": 29193
+  },
+  {
+   "status": "??",
+   "path": "M3劳动纪律与囤工_PLAN.md",
+   "sha256": "004757e86de472ed9d6ab10b020e02540e4ceae5f42e6199fe070cab9371c196",
+   "bytes": 15776
+  },
+  {
+   "status": "??",
+   "path": "M9_真实预测误差_PLAN.md",
+   "sha256": "387158de8d86657dde912e0a57f7a90cffbcba0a7a1998b11f61a5dbbdbbaae2",
+   "bytes": 28042
+  },
+  {
+   "status": "??",
+   "path": "docs/upgrade_review/HIST_VNEXT/09_BATCH02_YEARBOOKS_D08_D10_INTAKE.md",
+   "sha256": "89e0e00d5bf6d4ebefe3364f569d5906ab0c61684c9d6dcc673aacf89100df33",
+   "bytes": 9768
+  }
+ ],
+ "note": "Hashes of the 25 pre-existing user files at sealing start (3 modified, 22 user-untracked files). M06 evidence files are excluded from this snapshot; the directory itself was created at 12:29:17Z by CMD-1, 19 s before this snapshot. The raw git status at that moment had 23 untracked entries: these 22 user files plus studies/HIST_VNEXT/M06/. No user file is staged, modified, reset or stashed by this step."
+}
