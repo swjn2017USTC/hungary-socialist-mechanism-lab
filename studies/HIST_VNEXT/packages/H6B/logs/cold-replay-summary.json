@@ -1,0 +1,69 @@
+{
+  "schema_version": "hist_vnext_h6b_cold_replay_v1",
+  "runroot": "outputs/hist-vnext-h6b-20261025T065107Z",
+  "cold_git_checkout": "outputs/hist-vnext-h6b-20261025T065107Z/cold-git",
+  "cold_local_checkout": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local",
+  "replays": {
+    "M01": {
+      "fresh": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m01-fresh/study.json",
+        "sha256": "89b3d6619bb5d1b2eb016f75d9958bb2c9e546675fea4fc2b25545de37bde389",
+        "bytes": 676031
+      },
+      "repeat": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m01-repeat/study.json",
+        "sha256": "89b3d6619bb5d1b2eb016f75d9958bb2c9e546675fea4fc2b25545de37bde389",
+        "bytes": 676031
+      }
+    },
+    "M02": {
+      "fresh": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m02-fresh/results.json",
+        "sha256": "3e46accd0273c283f106b037cda44969a508806e4c016feeab211365e09392e0",
+        "bytes": 2128498
+      },
+      "repeat": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m02-repeat/results.json",
+        "sha256": "ffe76b4f316a6634cd451aa7bf60d38b13fb23d81e7416685c33f7c9262640a7",
+        "bytes": 2128498
+      }
+    },
+    "M04": {
+      "fresh": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m04-fresh/study.json",
+        "sha256": "92379d618ca47c0c0cde9f9cb86cc11cb6459797fbdea49ab7e105196b165930",
+        "bytes": 9510362
+      },
+      "repeat": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m04-repeat/study.json",
+        "sha256": "92379d618ca47c0c0cde9f9cb86cc11cb6459797fbdea49ab7e105196b165930",
+        "bytes": 9510362
+      }
+    },
+    "M09": {
+      "fresh": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m09-fresh/science.json",
+        "sha256": "34baafa8d18bbbbbb8583345e3c481a213e3b548628bb5f9d21ac0148ba3bada",
+        "bytes": 583264
+      },
+      "repeat": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m09-repeat/science.json",
+        "sha256": "34baafa8d18bbbbbb8583345e3c481a213e3b548628bb5f9d21ac0148ba3bada",
+        "bytes": 583264
+      }
+    },
+    "M03": {
+      "negative_controls": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m03-negative-controls/negative_controls.json",
+        "sha256": "aefcf6078fa8b7363759c229b46a4d5b31d0506973f0e1178496d19e3dd3745e",
+        "bytes": 2925
+      },
+      "run": {
+        "path": "outputs/hist-vnext-h6b-20261025T065107Z/cold-local/outputs/m03-run/labor_manifest.json",
+        "sha256": "af0e6d9cd5f1dac636c24ff7da2970722674280bdf6bca76df869771d01ed3ec",
+        "bytes": 4011
+      }
+    }
+  },
+  "note": "paths are relative to the protected run root; raw logs remain in the run root, not in the committed package."
+}

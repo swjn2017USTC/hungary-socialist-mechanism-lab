@@ -1,0 +1,68 @@
+{
+  "schema_version": "hist_vnext_h6b_model_usage_v1",
+  "sessions": [
+    {
+      "role": "planner",
+      "selector": "openai-codex/gpt-6.1-sol:high (prescribed @plan; not invoked in this session)",
+      "actual": null,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cache_tokens": null,
+      "reasoning": "NOT_MEASURED",
+      "cost": null,
+      "note": "The plan was read from HIST_VNEXT_H6B_PLAN.md; no planner model call was made in this session."
+    },
+    {
+      "role": "implementation",
+      "selector": "minimax-code-cn/MiniMax-M3:high (prescribed single-task override)",
+      "actual": "deepseek/deepseek-flash (supervisor session)",
+      "input_tokens": null,
+      "output_tokens": null,
+      "cache_tokens": null,
+      "reasoning": "NOT_MEASURED",
+      "cost": null,
+      "note": "DEVIATION: implementation executed directly in the supervisor session (deepseek/deepseek-flash) rather than a separate MiniMax task. Token/cost NOT_MEASURED, never zero."
+    },
+    {
+      "role": "independent-review-round-1",
+      "selector": "minimax-code-cn/MiniMax-M3:high via @review phase-reviewer",
+      "actual": "phase-reviewer (MiniMax-M3)",
+      "input_tokens": null,
+      "output_tokens": null,
+      "cache_tokens": null,
+      "reasoning": "NOT_MEASURED",
+      "cost": null,
+      "duration_seconds": 759,
+      "verdict": "PATCH",
+      "note": "Read-only independent review; no repo edits. It reproduced both exports, cold-git, tamper/restricted/symlink rejection, C0/C1 bundles and 1894 tests, then issued P1-P7."
+    },
+    {
+      "role": "independent-review-round-2",
+      "selector": "minimax-code-cn/MiniMax-M3:high via @review phase-reviewer",
+      "actual": "phase-reviewer (MiniMax-M3)",
+      "input_tokens": null,
+      "output_tokens": null,
+      "cache_tokens": null,
+      "reasoning": "NOT_MEASURED",
+      "cost": null,
+      "note": "Read-only second review; independently verified P1-P7, then found P8 (root binding), P9 (two asserted checks on complete cards), P10 (residual anchors). No repo edits.",
+      "duration_seconds": 591,
+      "verdict": "PATCH"
+    },
+    {
+      "role": "independent-review-round-3",
+      "selector": "minimax-code-cn/MiniMax-M3:high via @review phase-reviewer",
+      "actual": "phase-reviewer (MiniMax-M3)",
+      "input_tokens": null,
+      "output_tokens": null,
+      "cache_tokens": null,
+      "reasoning": "NOT_MEASURED",
+      "cost": null,
+      "note": "Read-only third review. Independently proved P8 root binding, six P9 single-check mutations, P10 anchors, export determinism/hygiene, 3/8 classification, user/protected files. Residuals R1-R3 recorded; R3 doc drift corrected after review.",
+      "duration_seconds": 818,
+      "verdict": "PASS"
+    }
+  ],
+  "double_count_policy": "one message_end usage record per assistant message; turn_end/agent_end copies are not added; cost.total is not summed with its components.",
+  "simulation_model_calls": 0
+}

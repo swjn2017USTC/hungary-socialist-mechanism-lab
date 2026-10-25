@@ -1,0 +1,536 @@
+{
+  "schema_version": "hist_vnext_h6b_commands_v1",
+  "head": "bd05100525f9c31bc5fedb03218b520503edada9",
+  "runroot": "outputs/hist-vnext-h6b-20261025T065107Z",
+  "commands": [
+    {
+      "id": "snapshot",
+      "argv": [
+        "python",
+        "-"
+      ],
+      "purpose": "freeze HEAD, user worktree and protected hashes",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "NOT_MEASURED; read-only snapshot"
+    },
+    {
+      "id": "h6b-tests-red",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_hist_package_contract.py"
+      ],
+      "purpose": "contract tests before implementation completed",
+      "exit_code": 1,
+      "wall_seconds": null,
+      "note": "red-before-green; initial run failed on missing run-manifest key and fixture logic"
+    },
+    {
+      "id": "git-only-main",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-m",
+        "hsm_lab.evidence.package_export",
+        "build",
+        "--root",
+        ".",
+        "--mode",
+        "git-only",
+        "--output-dir",
+        "<RUNROOT>/export-git-a"
+      ],
+      "purpose": "main checkout git-only audit",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "11 cards, 0 complete, 11 blocked; 41 legacy metrics"
+    },
+    {
+      "id": "git-only-cold",
+      "argv": [
+        "python",
+        "-B",
+        "-m",
+        "hsm_lab.evidence.package_export",
+        "build",
+        "--root",
+        ".",
+        "--mode",
+        "git-only",
+        "--output-dir",
+        "<RUNROOT>/export-cold-git"
+      ],
+      "purpose": "cold git-archive checkout audit",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "byte-identical to export-git-a (diff -r empty)"
+    },
+    {
+      "id": "local-data-main",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-m",
+        "hsm_lab.evidence.package_export",
+        "build",
+        "--root",
+        ".",
+        "--mode",
+        "local-data",
+        "--output-dir",
+        "<RUNROOT>/export-local-a"
+      ],
+      "purpose": "main checkout local-data audit",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "11 cards, 3 complete (M01/M02/M04), 8 blocked"
+    },
+    {
+      "id": "local-data-repeat",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-m",
+        "hsm_lab.evidence.package_export",
+        "build",
+        "--root",
+        ".",
+        "--mode",
+        "local-data",
+        "--output-dir",
+        "<RUNROOT>/export-local-b"
+      ],
+      "purpose": "same-input repeat export",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "byte-identical to export-local-a"
+    },
+    {
+      "id": "verify-export-git",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-m",
+        "hsm_lab.evidence.package_export",
+        "verify",
+        "--package-dir",
+        "<RUNROOT>/export-git-a"
+      ],
+      "purpose": "sealed export verify",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "status=verified, 13 files"
+    },
+    {
+      "id": "verify-export-local",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-m",
+        "hsm_lab.evidence.package_export",
+        "verify",
+        "--package-dir",
+        "<RUNROOT>/export-local-a"
+      ],
+      "purpose": "sealed export verify",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "status=verified, 13 files, 3 complete"
+    },
+    {
+      "id": "m01-profile",
+      "argv": [
+        "python",
+        "-B",
+        "-m",
+        "studies.HIST_VNEXT.M01.runner",
+        "profile",
+        "--root",
+        ".",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m01-profile"
+      ],
+      "purpose": "M01 profile smoke in cold-local checkout",
+      "exit_code": 0,
+      "wall_seconds": 18.8,
+      "note": "26 arms, 8Q profile"
+    },
+    {
+      "id": "m01-fresh",
+      "argv": [
+        "python",
+        "-B",
+        "-m",
+        "studies.HIST_VNEXT.M01.runner",
+        "study",
+        "--root",
+        ".",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m01-fresh"
+      ],
+      "purpose": "M01 fresh full study",
+      "exit_code": 0,
+      "wall_seconds": 55.91,
+      "note": "78 arms x 8Q; study.json sha256 89b3d661..."
+    },
+    {
+      "id": "m01-repeat",
+      "argv": [
+        "python",
+        "-B",
+        "-m",
+        "studies.HIST_VNEXT.M01.runner",
+        "study",
+        "--root",
+        ".",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m01-repeat"
+      ],
+      "purpose": "M01 repeat full study",
+      "exit_code": 0,
+      "wall_seconds": 57.11,
+      "note": "study.json byte-identical to fresh"
+    },
+    {
+      "id": "m02-fresh",
+      "argv": [
+        "python",
+        "-B",
+        "-m",
+        "experiments.hist_enterprise",
+        "--root",
+        ".",
+        "--spec",
+        "studies/HIST_VNEXT/M02/spec.json",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m02-fresh"
+      ],
+      "purpose": "M02 fresh full study",
+      "exit_code": 0,
+      "wall_seconds": 12.12,
+      "note": "13 arms x 3 seeds x 4Q"
+    },
+    {
+      "id": "m02-repeat",
+      "argv": [
+        "python",
+        "-B",
+        "-m",
+        "experiments.hist_enterprise",
+        "--root",
+        ".",
+        "--spec",
+        "studies/HIST_VNEXT/M02/spec.json",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m02-repeat"
+      ],
+      "purpose": "M02 repeat full study",
+      "exit_code": 0,
+      "wall_seconds": 11.25,
+      "note": "scientific digest identical to fresh"
+    },
+    {
+      "id": "m04-fresh",
+      "argv": [
+        "python",
+        "-B",
+        "studies/HIST_VNEXT/M04/runner.py",
+        "study",
+        "--spec",
+        "studies/HIST_VNEXT/M04/spec.json",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m04-fresh"
+      ],
+      "purpose": "M04 fresh full study",
+      "exit_code": 0,
+      "wall_seconds": 6.63,
+      "note": "3 arms x 3 seeds x 16Q"
+    },
+    {
+      "id": "m04-repeat",
+      "argv": [
+        "python",
+        "-B",
+        "studies/HIST_VNEXT/M04/runner.py",
+        "study",
+        "--spec",
+        "studies/HIST_VNEXT/M04/spec.json",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m04-repeat"
+      ],
+      "purpose": "M04 repeat full study",
+      "exit_code": 0,
+      "wall_seconds": 6.62,
+      "note": "study.json byte-identical to fresh"
+    },
+    {
+      "id": "m09-fresh",
+      "argv": [
+        "python",
+        "-B",
+        "-m",
+        "studies.HIST_VNEXT.M09.runner",
+        "study",
+        "--root",
+        ".",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m09-fresh"
+      ],
+      "purpose": "M09 fresh full study",
+      "exit_code": 0,
+      "wall_seconds": 7.74,
+      "note": "48 paired records"
+    },
+    {
+      "id": "m09-repeat",
+      "argv": [
+        "python",
+        "-B",
+        "-m",
+        "studies.HIST_VNEXT.M09.runner",
+        "study",
+        "--root",
+        ".",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m09-repeat"
+      ],
+      "purpose": "M09 repeat full study",
+      "exit_code": 0,
+      "wall_seconds": 7.75,
+      "note": "science.json byte-identical to fresh"
+    },
+    {
+      "id": "m03-negative-controls",
+      "argv": [
+        "python",
+        "-B",
+        "studies/HIST_VNEXT/M03/labor_runner.py",
+        "negative-controls",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m03-negative-controls"
+      ],
+      "purpose": "M03 cold-local negative controls",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "N1/N2/N3 PASS"
+    },
+    {
+      "id": "m03-run",
+      "argv": [
+        "python",
+        "-B",
+        "studies/HIST_VNEXT/M03/labor_runner.py",
+        "run",
+        "--scenario",
+        "historical_f2_replay",
+        "--enable-labor-institution",
+        "--output-dir",
+        "<RUNROOT>/cold-local/outputs/m03-run"
+      ],
+      "purpose": "M03 cold-local opt-in replay",
+      "exit_code": 0,
+      "wall_seconds": 11.13,
+      "note": "116 ticks; technical PASS; structural REPORTED_SYNTHETIC_NEGATIVE_CONTROLS"
+    },
+    {
+      "id": "m03-verify",
+      "argv": [
+        "python",
+        "-B",
+        "studies/HIST_VNEXT/M03/labor_runner.py",
+        "verify",
+        "--run-dir",
+        "<RUNROOT>/cold-local/outputs/m03-run"
+      ],
+      "purpose": "M03 read-only verify",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "verdict PASS; institutional attribution UNIDENTIFIED"
+    },
+    {
+      "id": "ruff",
+      "argv": [
+        ".venv/bin/ruff",
+        "check",
+        "--no-cache",
+        "src",
+        "tests"
+      ],
+      "purpose": "lint",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "All checks passed (post-PATCH)"
+    },
+    {
+      "id": "uv-lock",
+      "argv": [
+        "uv",
+        "lock",
+        "--check",
+        "--offline"
+      ],
+      "purpose": "lock check",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "Resolved 101 packages"
+    },
+    {
+      "id": "baseline",
+      "argv": [
+        ".venv/bin/hsm",
+        "baseline",
+        "verify",
+        "--json"
+      ],
+      "purpose": "frozen baseline",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "status=ok; SHA 1f5b233f..."
+    },
+    {
+      "id": "c0",
+      "argv": [
+        ".venv/bin/hsm",
+        "run",
+        "--scenario",
+        "historical_f2_replay",
+        "--output-dir",
+        "<RUNROOT>/C0-C1/C0",
+        "--json"
+      ],
+      "purpose": "fresh C0",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "116 ticks; digest 92f9...; parameter_hash e27a..."
+    },
+    {
+      "id": "c1",
+      "argv": [
+        ".venv/bin/hsm",
+        "run",
+        "--scenario",
+        "historical_f2_trade_scenario",
+        "--output-dir",
+        "<RUNROOT>/C0-C1/C1",
+        "--json"
+      ],
+      "purpose": "fresh C1",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "116 ticks; digest c481...; parameter_hash 632e..."
+    },
+    {
+      "id": "verify-run-identity",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-"
+      ],
+      "purpose": "verify_run_identity for fresh C0/C1",
+      "exit_code": 0,
+      "wall_seconds": 1.09,
+      "note": "Both identities match the 01 digests and hashes"
+    },
+    {
+      "id": "repro-bundles",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-"
+      ],
+      "purpose": "assemble and verify standard-scenario reproducibility bundles",
+      "exit_code": 0,
+      "wall_seconds": 16.27,
+      "note": "C0/C1 verify status=verified; digest_matches and parameter_hash_matches true"
+    },
+    {
+      "id": "h6b-review-round-1",
+      "argv": [
+        "omp",
+        "task",
+        "phase-reviewer"
+      ],
+      "purpose": "independent H6B review round 1",
+      "exit_code": 0,
+      "wall_seconds": 759,
+      "note": "verdict PATCH; findings P1-P7; reviewer repo edits = 0"
+    },
+    {
+      "id": "h6b-gate-mutations",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-"
+      ],
+      "purpose": "manual real-adapter mutations for P2",
+      "exit_code": 0,
+      "wall_seconds": null,
+      "note": "M01 null metric/degraded first stage, M02 null metric/nonbinding first stage, M04 null metric all BLOCKED; no real output modified (temp copies only)"
+    },
+    {
+      "id": "h6b-tests-green",
+      "argv": [
+        ".venv/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_hist_package_contract.py"
+      ],
+      "purpose": "final H6B contract tests after P8-P10",
+      "exit_code": 0,
+      "wall_seconds": 0.57,
+      "note": "25 passed"
+    },
+    {
+      "id": "h6b-review-round-2",
+      "argv": [
+        "omp",
+        "task",
+        "phase-reviewer"
+      ],
+      "purpose": "independent H6B review round 2",
+      "exit_code": 0,
+      "wall_seconds": 591,
+      "note": "verdict PATCH; P8-P10; reviewer repo edits = 0"
+    },
+    {
+      "id": "full-pytest",
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "purpose": "full regression after P8-P10",
+      "exit_code": 0,
+      "wall_seconds": 215.34,
+      "note": "1902 passed, 180 warnings in 214.51 s (post-P8-P10)"
+    },
+    {
+      "id": "h6b-review-round-3",
+      "argv": [
+        "omp",
+        "task",
+        "phase-reviewer"
+      ],
+      "purpose": "independent H6B review round 3",
+      "exit_code": 0,
+      "wall_seconds": 818,
+      "note": "verdict PASS; reviewer repo edits = 0; independent full suite 1902 passed in 205.75 s"
+    }
+  ],
+  "wall_time_note": "wall seconds are observed shell wall times; RSS NOT_MEASURED for H6B replays",
+  "repo": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab",
+  "python": "/Users/wahrfreiheit/OMP/hungary-socialist-mechanism-lab/.venv/bin/python"
+}

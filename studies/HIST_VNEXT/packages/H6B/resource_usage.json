@@ -1,0 +1,103 @@
+{
+  "schema_version": "hist_vnext_h6b_resources_v1",
+  "measurement_note": "wall seconds are observed shell wall times; max RSS was not sampled (NOT_MEASURED). Output bytes are recursive regular-file bytes.",
+  "commands": [
+    {
+      "id": "m01-profile",
+      "wall_seconds": 18.8,
+      "max_rss_bytes": null,
+      "output_bytes": 204964182
+    },
+    {
+      "id": "m01-fresh",
+      "wall_seconds": 55.91,
+      "max_rss_bytes": null,
+      "output_bytes": 614999802
+    },
+    {
+      "id": "m01-repeat",
+      "wall_seconds": 57.11,
+      "max_rss_bytes": null,
+      "output_bytes": 614999879
+    },
+    {
+      "id": "m02-fresh",
+      "wall_seconds": 12.12,
+      "max_rss_bytes": null,
+      "output_bytes": 24558252
+    },
+    {
+      "id": "m02-repeat",
+      "wall_seconds": 11.25,
+      "max_rss_bytes": null,
+      "output_bytes": 24558252
+    },
+    {
+      "id": "m04-fresh",
+      "wall_seconds": 6.63,
+      "max_rss_bytes": null,
+      "output_bytes": 9510362
+    },
+    {
+      "id": "m04-repeat",
+      "wall_seconds": 6.62,
+      "max_rss_bytes": null,
+      "output_bytes": 9510362
+    },
+    {
+      "id": "m09-fresh",
+      "wall_seconds": 7.74,
+      "max_rss_bytes": null,
+      "output_bytes": 778367
+    },
+    {
+      "id": "m09-repeat",
+      "wall_seconds": 7.75,
+      "max_rss_bytes": null,
+      "output_bytes": 778367
+    },
+    {
+      "id": "m03-negative-controls",
+      "wall_seconds": null,
+      "max_rss_bytes": null,
+      "output_bytes": 2925
+    },
+    {
+      "id": "m03-run",
+      "wall_seconds": 11.13,
+      "max_rss_bytes": null,
+      "output_bytes": 46511607
+    },
+    {
+      "id": "m03-verify",
+      "wall_seconds": null,
+      "max_rss_bytes": null,
+      "output_bytes": 0
+    },
+    {
+      "id": "full-pytest",
+      "wall_seconds": 215.34,
+      "max_rss_bytes": null,
+      "output_bytes": null
+    },
+    {
+      "id": "c0",
+      "wall_seconds": 16.5,
+      "max_rss_bytes": null,
+      "output_bytes": null
+    },
+    {
+      "id": "c1",
+      "wall_seconds": 16.5,
+      "max_rss_bytes": null,
+      "output_bytes": null
+    },
+    {
+      "id": "repro-bundles",
+      "wall_seconds": 16.27,
+      "max_rss_bytes": null,
+      "output_bytes": null
+    }
+  ],
+  "runroot": "outputs/hist-vnext-h6b-20261025T065107Z"
+}

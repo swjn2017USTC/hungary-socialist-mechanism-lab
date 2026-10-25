@@ -1,0 +1,23 @@
+{
+  "schema_version": "hist_vnext_h6b_failed_seeds_v1",
+  "phase_id": "H6B",
+  "failed_seeds": [],
+  "note": "No seed was replaced or dropped in the H6B fresh/repeat replays. This is not a claim that every card is complete: M03/M09 and the not-started/blocked cards have no full paired study.",
+  "preserved_failures": [
+    {
+      "phase": "H5B/M04",
+      "kind": "process_timeout",
+      "statement": "implementation-first-session timeout (exit -9, wall 3600.084 s) preserved in studies/HIST_VNEXT/M04/EVIDENCE_MANIFEST.json process_failures; not counted as a seed failure."
+    },
+    {
+      "phase": "H5F-F1/M09",
+      "kind": "study_failure",
+      "statement": "pre-fix matrix-cardinality failure preserved in study-failed-1; FAILED_SEEDS.checked_pairs=48 and preserved_failures records it."
+    },
+    {
+      "phase": "H6B",
+      "kind": "red_before_green",
+      "statement": "the first contract-test run failed before the module was complete; the final contract-file run is 25 passed and the full suite is 1902 passed. The failing and final runs are recorded in commands.json."
+    }
+  ]
+}

@@ -1,0 +1,1226 @@
+{
+  "schema_version": "hist_vnext_h6b_blockers_v1",
+  "cards": {
+    "M03": {
+      "package_status": "blocked",
+      "experiment_status": "BLOCKED",
+      "blocking_checks": {
+        "accounting_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 3080,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_ACCEPTANCE.json",
+              "sha256": "89abc79d157033766a230a3737793ecfade87645ed7c5da533b3ddb5e5fa44f3"
+            },
+            {
+              "bytes": 51278,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_EVIDENCE_MANIFEST.json",
+              "sha256": "6088067933a2a0b9fbeaed9f851ac334fe64c356c141f6bfb7eb9f0d26ad96ed"
+            },
+            {
+              "bytes": 10249,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REPORT.md",
+              "sha256": "c1b9c219d60e5dd2b73f7ac58764a3e63dda56bbe521cec3bf205b53488f4891"
+            }
+          ],
+          "level": "VERIFIED_BY_CODE",
+          "reason": "no per-tick ledger/conservation summary is sealed in the implementation manifest; only resume and legacy digest equality are recorded",
+          "status": "BLOCKED"
+        },
+        "first_stage_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 3080,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_ACCEPTANCE.json",
+              "sha256": "89abc79d157033766a230a3737793ecfade87645ed7c5da533b3ddb5e5fa44f3"
+            },
+            {
+              "bytes": 51278,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_EVIDENCE_MANIFEST.json",
+              "sha256": "6088067933a2a0b9fbeaed9f851ac334fe64c356c141f6bfb7eb9f0d26ad96ed"
+            },
+            {
+              "bytes": 10249,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REPORT.md",
+              "sha256": "c1b9c219d60e5dd2b73f7ac58764a3e63dda56bbe521cec3bf205b53488f4891"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no policy first-stage exists in the opt-in labour implementation; N2 demonstrates rule mechanics, not a treatment first stage",
+          "status": "NOT_RUN"
+        },
+        "paired_control": {
+          "evidence_refs": [
+            {
+              "bytes": 3080,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_ACCEPTANCE.json",
+              "sha256": "89abc79d157033766a230a3737793ecfade87645ed7c5da533b3ddb5e5fa44f3"
+            },
+            {
+              "bytes": 51278,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_EVIDENCE_MANIFEST.json",
+              "sha256": "6088067933a2a0b9fbeaed9f851ac334fe64c356c141f6bfb7eb9f0d26ad96ed"
+            },
+            {
+              "bytes": 10249,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REPORT.md",
+              "sha256": "c1b9c219d60e5dd2b73f7ac58764a3e63dda56bbe521cec3bf205b53488f4891"
+            }
+          ],
+          "level": "VERIFIED_BY_CODE",
+          "reason": "the accepted implementation spec has no per-seed paired treatment/control matrix; R/A/N rows are implementation checks, not paired experiments",
+          "status": "BLOCKED"
+        },
+        "reproduction_bundle": {
+          "evidence_refs": [
+            {
+              "bytes": 3080,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_ACCEPTANCE.json",
+              "sha256": "89abc79d157033766a230a3737793ecfade87645ed7c5da533b3ddb5e5fa44f3"
+            },
+            {
+              "bytes": 51278,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_EVIDENCE_MANIFEST.json",
+              "sha256": "6088067933a2a0b9fbeaed9f851ac334fe64c356c141f6bfb7eb9f0d26ad96ed"
+            },
+            {
+              "bytes": 10249,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REPORT.md",
+              "sha256": "c1b9c219d60e5dd2b73f7ac58764a3e63dda56bbe521cec3bf205b53488f4891"
+            }
+          ],
+          "level": "VERIFIED_BY_CODE",
+          "reason": "no fresh/repeat full-study replay is recorded for this implementation package",
+          "status": "BLOCKED"
+        },
+        "sensitivity_or_reason_not_run": {
+          "evidence_refs": [
+            {
+              "bytes": 3080,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_ACCEPTANCE.json",
+              "sha256": "89abc79d157033766a230a3737793ecfade87645ed7c5da533b3ddb5e5fa44f3"
+            },
+            {
+              "bytes": 51278,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_EVIDENCE_MANIFEST.json",
+              "sha256": "6088067933a2a0b9fbeaed9f851ac334fe64c356c141f6bfb7eb9f0d26ad96ed"
+            },
+            {
+              "bytes": 10249,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M03/IMPLEMENTATION_REPORT.md",
+              "sha256": "c1b9c219d60e5dd2b73f7ac58764a3e63dda56bbe521cec3bf205b53488f4891"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no preregistered sensitivity experiment exists for the labour implementation; default-off equality is compatibility, not sensitivity",
+          "status": "NOT_RUN"
+        }
+      },
+      "recorded_blockers": [
+        "paired_control",
+        "first_stage_checked",
+        "accounting_checked",
+        "sensitivity_or_reason_not_run",
+        "reproduction_bundle"
+      ]
+    },
+    "M05": {
+      "package_status": "blocked",
+      "experiment_status": "NOT_STARTED",
+      "blocking_checks": {
+        "accounting_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 570,
+              "path": "studies/M05/study_decl.json",
+              "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7"
+            },
+            {
+              "bytes": 1004,
+              "path": "config/p06/cards/M5.json",
+              "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "counterevidence": {
+          "evidence_refs": [
+            {
+              "bytes": 570,
+              "path": "studies/M05/study_decl.json",
+              "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7"
+            },
+            {
+              "bytes": 1004,
+              "path": "config/p06/cards/M5.json",
+              "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no experimental negative result exists; the declaration only records a prerequisite gap",
+          "status": "NOT_RUN"
+        },
+        "experiment_declared": {
+          "evidence_refs": [
+            {
+              "bytes": 570,
+              "path": "studies/M05/study_decl.json",
+              "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7"
+            },
+            {
+              "bytes": 1004,
+              "path": "config/p06/cards/M5.json",
+              "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "dedicated experiment not created; declaration reason: p04_coalition_prior and p04_information_prior are identified; PoliticalSession\u2192policy\u2192material targets path exists; autonomy\u00d7hardness 2\u00d72 design available",
+          "status": "NOT_RUN"
+        },
+        "first_stage_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 570,
+              "path": "studies/M05/study_decl.json",
+              "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7"
+            },
+            {
+              "bytes": 1004,
+              "path": "config/p06/cards/M5.json",
+              "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "metrics_generated": {
+          "evidence_refs": [
+            {
+              "bytes": 570,
+              "path": "studies/M05/study_decl.json",
+              "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7"
+            },
+            {
+              "bytes": 1004,
+              "path": "config/p06/cards/M5.json",
+              "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "negative_control": {
+          "evidence_refs": [
+            {
+              "bytes": 570,
+              "path": "studies/M05/study_decl.json",
+              "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7"
+            },
+            {
+              "bytes": 1004,
+              "path": "config/p06/cards/M5.json",
+              "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "paired_control": {
+          "evidence_refs": [
+            {
+              "bytes": 570,
+              "path": "studies/M05/study_decl.json",
+              "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7"
+            },
+            {
+              "bytes": 1004,
+              "path": "config/p06/cards/M5.json",
+              "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "reproduction_bundle": {
+          "evidence_refs": [
+            {
+              "bytes": 570,
+              "path": "studies/M05/study_decl.json",
+              "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7"
+            },
+            {
+              "bytes": 1004,
+              "path": "config/p06/cards/M5.json",
+              "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no run exists to replay",
+          "status": "NOT_RUN"
+        },
+        "sensitivity_or_reason_not_run": {
+          "evidence_refs": [
+            {
+              "bytes": 570,
+              "path": "studies/M05/study_decl.json",
+              "sha256": "a60fced66de21293c574a5f965e22d5e7a61225969dbdd63851c96dc21ca95a7"
+            },
+            {
+              "bytes": 1004,
+              "path": "config/p06/cards/M5.json",
+              "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED; recorded reason: p04_coalition_prior and p04_information_prior are identified; PoliticalSession\u2192policy\u2192material targets path exists; autonomy\u00d7hardness 2\u00d72 design available",
+          "status": "NOT_RUN"
+        }
+      },
+      "recorded_blockers": [
+        "p04_coalition_prior and p04_information_prior are identified; PoliticalSession\u2192policy\u2192material targets path exists; autonomy\u00d7hardness 2\u00d72 design available"
+      ]
+    },
+    "M06": {
+      "package_status": "blocked",
+      "experiment_status": "BLOCKED",
+      "blocking_checks": {
+        "accounting_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 28506,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REPORT.md",
+              "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2"
+            },
+            {
+              "bytes": 12978,
+              "path": "studies/HIST_VNEXT/M06/EVIDENCE_MANIFEST.json",
+              "sha256": "f14ac948bee88fc5e442284aed43f5ecec0a4153a7bbaa2c754a7b60a02abdb0"
+            },
+            {
+              "bytes": 43681,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REVIEW.md",
+              "sha256": "6af54a79295f6252eb968f9c7780b28c4b023372ad858c73755fcc08d2b947ab"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no simulation ledger was produced",
+          "status": "NOT_RUN"
+        },
+        "experiment_declared": {
+          "evidence_refs": [
+            {
+              "bytes": 28506,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REPORT.md",
+              "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2"
+            },
+            {
+              "bytes": 12978,
+              "path": "studies/HIST_VNEXT/M06/EVIDENCE_MANIFEST.json",
+              "sha256": "f14ac948bee88fc5e442284aed43f5ecec0a4153a7bbaa2c754a7b60a02abdb0"
+            },
+            {
+              "bytes": 43681,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REVIEW.md",
+              "sha256": "6af54a79295f6252eb968f9c7780b28c4b023372ad858c73755fcc08d2b947ab"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "blocker-only package: MISSING_EXTERNAL_DEBT_CONTRACT_ADMISSION",
+          "status": "NOT_RUN"
+        },
+        "first_stage_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 28506,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REPORT.md",
+              "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2"
+            },
+            {
+              "bytes": 12978,
+              "path": "studies/HIST_VNEXT/M06/EVIDENCE_MANIFEST.json",
+              "sha256": "f14ac948bee88fc5e442284aed43f5ecec0a4153a7bbaa2c754a7b60a02abdb0"
+            },
+            {
+              "bytes": 43681,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REVIEW.md",
+              "sha256": "6af54a79295f6252eb968f9c7780b28c4b023372ad858c73755fcc08d2b947ab"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no treatment first stage was run",
+          "status": "NOT_RUN"
+        },
+        "metrics_generated": {
+          "evidence_refs": [
+            {
+              "bytes": 28506,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REPORT.md",
+              "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2"
+            },
+            {
+              "bytes": 12978,
+              "path": "studies/HIST_VNEXT/M06/EVIDENCE_MANIFEST.json",
+              "sha256": "f14ac948bee88fc5e442284aed43f5ecec0a4153a7bbaa2c754a7b60a02abdb0"
+            },
+            {
+              "bytes": 43681,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REVIEW.md",
+              "sha256": "6af54a79295f6252eb968f9c7780b28c4b023372ad858c73755fcc08d2b947ab"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no study metrics were generated",
+          "status": "NOT_RUN"
+        },
+        "negative_control": {
+          "evidence_refs": [
+            {
+              "bytes": 28506,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REPORT.md",
+              "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2"
+            },
+            {
+              "bytes": 12978,
+              "path": "studies/HIST_VNEXT/M06/EVIDENCE_MANIFEST.json",
+              "sha256": "f14ac948bee88fc5e442284aed43f5ecec0a4153a7bbaa2c754a7b60a02abdb0"
+            },
+            {
+              "bytes": 43681,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REVIEW.md",
+              "sha256": "6af54a79295f6252eb968f9c7780b28c4b023372ad858c73755fcc08d2b947ab"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no negative control was run",
+          "status": "NOT_RUN"
+        },
+        "paired_control": {
+          "evidence_refs": [
+            {
+              "bytes": 28506,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REPORT.md",
+              "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2"
+            },
+            {
+              "bytes": 12978,
+              "path": "studies/HIST_VNEXT/M06/EVIDENCE_MANIFEST.json",
+              "sha256": "f14ac948bee88fc5e442284aed43f5ecec0a4153a7bbaa2c754a7b60a02abdb0"
+            },
+            {
+              "bytes": 43681,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REVIEW.md",
+              "sha256": "6af54a79295f6252eb968f9c7780b28c4b023372ad858c73755fcc08d2b947ab"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no paired experiment was run",
+          "status": "NOT_RUN"
+        },
+        "reproduction_bundle": {
+          "evidence_refs": [
+            {
+              "bytes": 28506,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REPORT.md",
+              "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2"
+            },
+            {
+              "bytes": 12978,
+              "path": "studies/HIST_VNEXT/M06/EVIDENCE_MANIFEST.json",
+              "sha256": "f14ac948bee88fc5e442284aed43f5ecec0a4153a7bbaa2c754a7b60a02abdb0"
+            },
+            {
+              "bytes": 43681,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REVIEW.md",
+              "sha256": "6af54a79295f6252eb968f9c7780b28c4b023372ad858c73755fcc08d2b947ab"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no simulation exists to replay",
+          "status": "NOT_RUN"
+        },
+        "sensitivity_or_reason_not_run": {
+          "evidence_refs": [
+            {
+              "bytes": 28506,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REPORT.md",
+              "sha256": "ba29122db21ae87a88ba52dc05d85c1c91854e594149e8b11a9c2b30458610a2"
+            },
+            {
+              "bytes": 12978,
+              "path": "studies/HIST_VNEXT/M06/EVIDENCE_MANIFEST.json",
+              "sha256": "f14ac948bee88fc5e442284aed43f5ecec0a4153a7bbaa2c754a7b60a02abdb0"
+            },
+            {
+              "bytes": 43681,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M06/REVIEW.md",
+              "sha256": "6af54a79295f6252eb968f9c7780b28c4b023372ad858c73755fcc08d2b947ab"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no sensitivity was run; the blocker reason is MISSING_EXTERNAL_DEBT_CONTRACT_ADMISSION",
+          "status": "NOT_RUN"
+        }
+      },
+      "recorded_blockers": [
+        "MISSING_EXTERNAL_DEBT_CONTRACT_ADMISSION"
+      ]
+    },
+    "M07": {
+      "package_status": "blocked",
+      "experiment_status": "BLOCKED",
+      "blocking_checks": {
+        "accounting_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 7850,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REPORT.md",
+              "sha256": "895c63e0106c4abae0ee7ca060280f543bba311af6d5119b7861c8a0740db6a7"
+            },
+            {
+              "bytes": 4160,
+              "path": "studies/HIST_VNEXT/M07/EVIDENCE_MANIFEST.json",
+              "sha256": "9a486fce1f4af4b7dd8a3f49d17da49e7e4f2b86b8794a2c274e3c31fbf8788f"
+            },
+            {
+              "bytes": 12378,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+              "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no simulation ledger was produced",
+          "status": "NOT_RUN"
+        },
+        "experiment_declared": {
+          "evidence_refs": [
+            {
+              "bytes": 7850,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REPORT.md",
+              "sha256": "895c63e0106c4abae0ee7ca060280f543bba311af6d5119b7861c8a0740db6a7"
+            },
+            {
+              "bytes": 4160,
+              "path": "studies/HIST_VNEXT/M07/EVIDENCE_MANIFEST.json",
+              "sha256": "9a486fce1f4af4b7dd8a3f49d17da49e7e4f2b86b8794a2c274e3c31fbf8788f"
+            },
+            {
+              "bytes": 12378,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+              "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "blocker-only package: MISSING_REGIONAL_CROSSWALK_PASS",
+          "status": "NOT_RUN"
+        },
+        "first_stage_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 7850,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REPORT.md",
+              "sha256": "895c63e0106c4abae0ee7ca060280f543bba311af6d5119b7861c8a0740db6a7"
+            },
+            {
+              "bytes": 4160,
+              "path": "studies/HIST_VNEXT/M07/EVIDENCE_MANIFEST.json",
+              "sha256": "9a486fce1f4af4b7dd8a3f49d17da49e7e4f2b86b8794a2c274e3c31fbf8788f"
+            },
+            {
+              "bytes": 12378,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+              "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no treatment first stage was run",
+          "status": "NOT_RUN"
+        },
+        "metrics_generated": {
+          "evidence_refs": [
+            {
+              "bytes": 7850,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REPORT.md",
+              "sha256": "895c63e0106c4abae0ee7ca060280f543bba311af6d5119b7861c8a0740db6a7"
+            },
+            {
+              "bytes": 4160,
+              "path": "studies/HIST_VNEXT/M07/EVIDENCE_MANIFEST.json",
+              "sha256": "9a486fce1f4af4b7dd8a3f49d17da49e7e4f2b86b8794a2c274e3c31fbf8788f"
+            },
+            {
+              "bytes": 12378,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+              "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no study metrics were generated",
+          "status": "NOT_RUN"
+        },
+        "negative_control": {
+          "evidence_refs": [
+            {
+              "bytes": 7850,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REPORT.md",
+              "sha256": "895c63e0106c4abae0ee7ca060280f543bba311af6d5119b7861c8a0740db6a7"
+            },
+            {
+              "bytes": 4160,
+              "path": "studies/HIST_VNEXT/M07/EVIDENCE_MANIFEST.json",
+              "sha256": "9a486fce1f4af4b7dd8a3f49d17da49e7e4f2b86b8794a2c274e3c31fbf8788f"
+            },
+            {
+              "bytes": 12378,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+              "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no negative control was run",
+          "status": "NOT_RUN"
+        },
+        "paired_control": {
+          "evidence_refs": [
+            {
+              "bytes": 7850,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REPORT.md",
+              "sha256": "895c63e0106c4abae0ee7ca060280f543bba311af6d5119b7861c8a0740db6a7"
+            },
+            {
+              "bytes": 4160,
+              "path": "studies/HIST_VNEXT/M07/EVIDENCE_MANIFEST.json",
+              "sha256": "9a486fce1f4af4b7dd8a3f49d17da49e7e4f2b86b8794a2c274e3c31fbf8788f"
+            },
+            {
+              "bytes": 12378,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+              "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no paired experiment was run",
+          "status": "NOT_RUN"
+        },
+        "reproduction_bundle": {
+          "evidence_refs": [
+            {
+              "bytes": 7850,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REPORT.md",
+              "sha256": "895c63e0106c4abae0ee7ca060280f543bba311af6d5119b7861c8a0740db6a7"
+            },
+            {
+              "bytes": 4160,
+              "path": "studies/HIST_VNEXT/M07/EVIDENCE_MANIFEST.json",
+              "sha256": "9a486fce1f4af4b7dd8a3f49d17da49e7e4f2b86b8794a2c274e3c31fbf8788f"
+            },
+            {
+              "bytes": 12378,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+              "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no simulation exists to replay",
+          "status": "NOT_RUN"
+        },
+        "sensitivity_or_reason_not_run": {
+          "evidence_refs": [
+            {
+              "bytes": 7850,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REPORT.md",
+              "sha256": "895c63e0106c4abae0ee7ca060280f543bba311af6d5119b7861c8a0740db6a7"
+            },
+            {
+              "bytes": 4160,
+              "path": "studies/HIST_VNEXT/M07/EVIDENCE_MANIFEST.json",
+              "sha256": "9a486fce1f4af4b7dd8a3f49d17da49e7e4f2b86b8794a2c274e3c31fbf8788f"
+            },
+            {
+              "bytes": 12378,
+              "line": 1,
+              "path": "studies/HIST_VNEXT/M07/REVIEW.md",
+              "sha256": "0e76cbfb1509196ecf24878436c088a50a1b23ac28c057057af9b8d730336d7f"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no sensitivity was run; the blocker reason is MISSING_REGIONAL_CROSSWALK_PASS",
+          "status": "NOT_RUN"
+        }
+      },
+      "recorded_blockers": [
+        "MISSING_REGIONAL_CROSSWALK_PASS"
+      ]
+    },
+    "M08": {
+      "package_status": "blocked",
+      "experiment_status": "NOT_STARTED",
+      "blocking_checks": {
+        "accounting_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 607,
+              "path": "studies/M08/study_decl.json",
+              "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9"
+            },
+            {
+              "bytes": 849,
+              "path": "config/p06/cards/M8.json",
+              "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "counterevidence": {
+          "evidence_refs": [
+            {
+              "bytes": 607,
+              "path": "studies/M08/study_decl.json",
+              "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9"
+            },
+            {
+              "bytes": 849,
+              "path": "config/p06/cards/M8.json",
+              "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no experimental negative result exists; the declaration only records a prerequisite gap",
+          "status": "NOT_RUN"
+        },
+        "experiment_declared": {
+          "evidence_refs": [
+            {
+              "bytes": 607,
+              "path": "studies/M08/study_decl.json",
+              "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9"
+            },
+            {
+              "bytes": 849,
+              "path": "config/p06/cards/M8.json",
+              "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "dedicated experiment not created; declaration reason: Political probe shows replay null (policy delta=0, digest changes) vs endogenous (autonomy delta=0.075, cultural=0.24); endogenous\u5b9e\u8d28 policy + replay negative control feasible",
+          "status": "NOT_RUN"
+        },
+        "first_stage_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 607,
+              "path": "studies/M08/study_decl.json",
+              "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9"
+            },
+            {
+              "bytes": 849,
+              "path": "config/p06/cards/M8.json",
+              "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "metrics_generated": {
+          "evidence_refs": [
+            {
+              "bytes": 607,
+              "path": "studies/M08/study_decl.json",
+              "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9"
+            },
+            {
+              "bytes": 849,
+              "path": "config/p06/cards/M8.json",
+              "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "negative_control": {
+          "evidence_refs": [
+            {
+              "bytes": 607,
+              "path": "studies/M08/study_decl.json",
+              "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9"
+            },
+            {
+              "bytes": 849,
+              "path": "config/p06/cards/M8.json",
+              "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "paired_control": {
+          "evidence_refs": [
+            {
+              "bytes": 607,
+              "path": "studies/M08/study_decl.json",
+              "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9"
+            },
+            {
+              "bytes": 849,
+              "path": "config/p06/cards/M8.json",
+              "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "reproduction_bundle": {
+          "evidence_refs": [
+            {
+              "bytes": 607,
+              "path": "studies/M08/study_decl.json",
+              "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9"
+            },
+            {
+              "bytes": 849,
+              "path": "config/p06/cards/M8.json",
+              "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no run exists to replay",
+          "status": "NOT_RUN"
+        },
+        "sensitivity_or_reason_not_run": {
+          "evidence_refs": [
+            {
+              "bytes": 607,
+              "path": "studies/M08/study_decl.json",
+              "sha256": "772a813ecfae28fbcfe0018fea0583d0c51d318bbc48aa7c1f301e72cf4c89f9"
+            },
+            {
+              "bytes": 849,
+              "path": "config/p06/cards/M8.json",
+              "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED; recorded reason: Political probe shows replay null (policy delta=0, digest changes) vs endogenous (autonomy delta=0.075, cultural=0.24); endogenous\u5b9e\u8d28 policy + replay negative control feasible",
+          "status": "NOT_RUN"
+        }
+      },
+      "recorded_blockers": [
+        "Political probe shows replay null (policy delta=0, digest changes) vs endogenous (autonomy delta=0.075, cultural=0.24); endogenous\u5b9e\u8d28 policy + replay negative control feasible"
+      ]
+    },
+    "M09": {
+      "package_status": "blocked",
+      "experiment_status": "BLOCKED",
+      "blocking_checks": {
+        "negative_control": {
+          "evidence_refs": [
+            {
+              "bytes": 11556,
+              "line": 99,
+              "path": "studies/HIST_VNEXT/M09/REPORT.md",
+              "sha256": "0857e9752962f5872e8a4aad45d6dc2207f4607ee037490af7ef69373d86573e"
+            }
+          ],
+          "level": "VERIFIED_BY_CODE",
+          "reason": "no dedicated preregistered negative-control arm/artifact is sealed; the saturated-action null is recorded, but it is not a designated control",
+          "status": "BLOCKED"
+        }
+      },
+      "recorded_blockers": [
+        "negative_control"
+      ]
+    },
+    "M10": {
+      "package_status": "blocked",
+      "experiment_status": "NOT_STARTED",
+      "blocking_checks": {
+        "accounting_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 546,
+              "path": "studies/M10/study_decl.json",
+              "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843"
+            },
+            {
+              "bytes": 806,
+              "path": "config/p06/cards/M10.json",
+              "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "counterevidence": {
+          "evidence_refs": [
+            {
+              "bytes": 546,
+              "path": "studies/M10/study_decl.json",
+              "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843"
+            },
+            {
+              "bytes": 806,
+              "path": "config/p06/cards/M10.json",
+              "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no experimental negative result exists; the declaration only records a prerequisite gap",
+          "status": "NOT_RUN"
+        },
+        "experiment_declared": {
+          "evidence_refs": [
+            {
+              "bytes": 546,
+              "path": "studies/M10/study_decl.json",
+              "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843"
+            },
+            {
+              "bytes": 806,
+              "path": "config/p06/cards/M10.json",
+              "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "dedicated experiment not created; declaration reason: P06 old arms only REPORTED_ONLY; factor decomposition requires P08D trade\u8d26 and external finance\u8d26 closure first",
+          "status": "NOT_RUN"
+        },
+        "first_stage_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 546,
+              "path": "studies/M10/study_decl.json",
+              "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843"
+            },
+            {
+              "bytes": 806,
+              "path": "config/p06/cards/M10.json",
+              "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "metrics_generated": {
+          "evidence_refs": [
+            {
+              "bytes": 546,
+              "path": "studies/M10/study_decl.json",
+              "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843"
+            },
+            {
+              "bytes": 806,
+              "path": "config/p06/cards/M10.json",
+              "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "negative_control": {
+          "evidence_refs": [
+            {
+              "bytes": 546,
+              "path": "studies/M10/study_decl.json",
+              "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843"
+            },
+            {
+              "bytes": 806,
+              "path": "config/p06/cards/M10.json",
+              "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "paired_control": {
+          "evidence_refs": [
+            {
+              "bytes": 546,
+              "path": "studies/M10/study_decl.json",
+              "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843"
+            },
+            {
+              "bytes": 806,
+              "path": "config/p06/cards/M10.json",
+              "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "reproduction_bundle": {
+          "evidence_refs": [
+            {
+              "bytes": 546,
+              "path": "studies/M10/study_decl.json",
+              "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843"
+            },
+            {
+              "bytes": 806,
+              "path": "config/p06/cards/M10.json",
+              "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no run exists to replay",
+          "status": "NOT_RUN"
+        },
+        "sensitivity_or_reason_not_run": {
+          "evidence_refs": [
+            {
+              "bytes": 546,
+              "path": "studies/M10/study_decl.json",
+              "sha256": "3695f6d0c0ad14cb4d269ea0b938faaf8c01c395332b21b88634045895295843"
+            },
+            {
+              "bytes": 806,
+              "path": "config/p06/cards/M10.json",
+              "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED; recorded reason: P06 old arms only REPORTED_ONLY; factor decomposition requires P08D trade\u8d26 and external finance\u8d26 closure first",
+          "status": "NOT_RUN"
+        }
+      },
+      "recorded_blockers": [
+        "P06 old arms only REPORTED_ONLY; factor decomposition requires P08D trade\u8d26 and external finance\u8d26 closure first"
+      ]
+    },
+    "M11": {
+      "package_status": "blocked",
+      "experiment_status": "NOT_STARTED",
+      "blocking_checks": {
+        "accounting_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 620,
+              "path": "studies/M11/study_decl.json",
+              "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540"
+            },
+            {
+              "bytes": 1341,
+              "path": "config/p06/cards/M11.json",
+              "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "counterevidence": {
+          "evidence_refs": [
+            {
+              "bytes": 620,
+              "path": "studies/M11/study_decl.json",
+              "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540"
+            },
+            {
+              "bytes": 1341,
+              "path": "config/p06/cards/M11.json",
+              "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no experimental negative result exists; the declaration only records a prerequisite gap",
+          "status": "NOT_RUN"
+        },
+        "experiment_declared": {
+          "evidence_refs": [
+            {
+              "bytes": 620,
+              "path": "studies/M11/study_decl.json",
+              "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540"
+            },
+            {
+              "bytes": 1341,
+              "path": "config/p06/cards/M11.json",
+              "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "dedicated experiment not created; declaration reason: P06 report CONDITIONAL (structural); F1 g13 not valid for F2; I/II\u4ea7\u51fa endogenous, requires exogenously fixed resources not\u5f3a\u5236 same actual output; M2/M5 enterprise chain prerequisite",
+          "status": "NOT_RUN"
+        },
+        "first_stage_checked": {
+          "evidence_refs": [
+            {
+              "bytes": 620,
+              "path": "studies/M11/study_decl.json",
+              "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540"
+            },
+            {
+              "bytes": 1341,
+              "path": "config/p06/cards/M11.json",
+              "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "metrics_generated": {
+          "evidence_refs": [
+            {
+              "bytes": 620,
+              "path": "studies/M11/study_decl.json",
+              "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540"
+            },
+            {
+              "bytes": 1341,
+              "path": "config/p06/cards/M11.json",
+              "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "negative_control": {
+          "evidence_refs": [
+            {
+              "bytes": 620,
+              "path": "studies/M11/study_decl.json",
+              "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540"
+            },
+            {
+              "bytes": 1341,
+              "path": "config/p06/cards/M11.json",
+              "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "paired_control": {
+          "evidence_refs": [
+            {
+              "bytes": 620,
+              "path": "studies/M11/study_decl.json",
+              "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540"
+            },
+            {
+              "bytes": 1341,
+              "path": "config/p06/cards/M11.json",
+              "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED",
+          "status": "NOT_RUN"
+        },
+        "reproduction_bundle": {
+          "evidence_refs": [
+            {
+              "bytes": 620,
+              "path": "studies/M11/study_decl.json",
+              "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540"
+            },
+            {
+              "bytes": 1341,
+              "path": "config/p06/cards/M11.json",
+              "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "no run exists to replay",
+          "status": "NOT_RUN"
+        },
+        "sensitivity_or_reason_not_run": {
+          "evidence_refs": [
+            {
+              "bytes": 620,
+              "path": "studies/M11/study_decl.json",
+              "sha256": "1f855ec91f9c8cffa646a44f7fc0479df90e3232d5a25bf3f28790527904d540"
+            },
+            {
+              "bytes": 1341,
+              "path": "config/p06/cards/M11.json",
+              "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887"
+            }
+          ],
+          "level": "NOT_RUN",
+          "reason": "experiment NOT_STARTED; recorded reason: P06 report CONDITIONAL (structural); F1 g13 not valid for F2; I/II\u4ea7\u51fa endogenous, requires exogenously fixed resources not\u5f3a\u5236 same actual output; M2/M5 enterprise chain prerequisite",
+          "status": "NOT_RUN"
+        }
+      },
+      "recorded_blockers": [
+        "P06 report CONDITIONAL (structural); F1 g13 not valid for F2; I/II\u4ea7\u51fa endogenous, requires exogenously fixed resources not\u5f3a\u5236 same actual output; M2/M5 enterprise chain prerequisite"
+      ]
+    }
+  },
+  "summary": {
+    "blocked": 8,
+    "blocked_cards": [
+      "M03",
+      "M05",
+      "M06",
+      "M07",
+      "M08",
+      "M09",
+      "M10",
+      "M11"
+    ],
+    "cards": 11,
+    "complete": 3,
+    "complete_cards": [
+      "M01",
+      "M02",
+      "M04"
+    ],
+    "legacy_metrics": 41
+  }
+}

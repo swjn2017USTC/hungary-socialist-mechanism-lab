@@ -1,0 +1,216 @@
+{
+  "schema_version": "hist_vnext_h6b_user_work_snapshot_v1",
+  "captured_at_utc": "2026-10-25T06:44:07Z",
+  "head": "bd05100525f9c31bc5fedb03218b520503edada9",
+  "branch": "codex/audit-hsm-vnext-2026-10-11",
+  "staged_paths": [],
+  "status_lines": [
+    " M .omp/config.yml",
+    " M docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+    " M docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+    "?? \"CMEA_\\346\\270\\205\\347\\256\\227\\345\\210\\266\\345\\272\\246\\345\\206\\273\\347\\273\\223_PLAN.md\"",
+    "?? \"H3A_\\346\\234\\215\\345\\212\\241\\350\\257\\255\\344\\271\\211\\345\\210\\206\\345\\236\\213_PLAN.md\"",
+    "?? \"H3B_\\350\\256\\242\\345\\215\\225\\350\\236\\215\\350\\265\\204\\351\\227\\255\\347\\216\\257_PLAN.md\"",
+    "?? \"H3C_\\347\\272\\277\\350\\267\\257\\350\\277\\220\\345\\212\\233\\350\\257\\201\\344\\271\\246_PLAN.md\"",
+    "?? \"H3D_\\347\\237\\255\\345\\221\\250\\346\\234\\237\\346\\227\\266\\345\\272\\217\\351\\232\\224\\347\\246\\273\\346\\257\\224\\350\\276\\203_PLAN.md\"",
+    "?? \"H3E_4Q_\\346\\273\\232\\345\\212\\250\\350\\247\\204\\345\\210\\222_PLAN.md\"",
+    "?? \"H3F_D1_\\345\\244\\226\\350\\264\\270\\345\\267\\245\\344\\275\\234\\350\\265\\204\\346\\234\\254\\350\\264\\267\\346\\254\\276_PLAN.md\"",
+    "?? \"H3F_D2_\\345\\207\\272\\345\\217\\243\\345\\272\\224\\346\\224\\266\\344\\270\\216\\345\\235\\217\\350\\264\\246\\345\\217\\215\\345\\220\\221\\345\\210\\206\\345\\275\\225_PLAN.md\"",
+    "?? \"H4A_0_\\346\\235\\245\\346\\272\\220\\346\\240\\270\\351\\252\\214\\344\\270\\216\\345\\207\\206\\345\\205\\245_PLAN.md\"",
+    "?? \"H4A_1_\\345\\211\\215\\347\\275\\256\\350\\241\\245\\345\\256\\214_PLAN.md\"",
+    "?? \"H4B_PILOT_A_\\351\\230\\273\\346\\226\\255\\345\\214\\205_PLAN.md\"",
+    "?? H4C_PILOT_B_PLAN.md",
+    "?? H5A_A1_M2_PLAN.md",
+    "?? \"H5C_\\345\\217\\202\\347\\205\\247\\345\\216\\206\\345\\217\\262\\346\\243\\230\\350\\275\\256\\345\\256\\236\\351\\252\\214_PLAN.md\"",
+    "?? \"H5D_\\345\\212\\263\\345\\212\\250\\345\\210\\266\\345\\272\\246_PLAN.md\"",
+    "?? \"H5E_\\345\\234\\260\\345\\214\\272\\351\\242\\204\\347\\256\\227\\351\\230\\273\\346\\226\\255_PLAN.md\"",
+    "?? \"H6A_\\351\\230\\273\\346\\226\\255\\345\\260\\201\\345\\255\\230_PLAN.md\"",
+    "?? HIST_VNEXT_H5B_PLAN.md",
+    "?? HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md",
+    "?? HIST_VNEXT_H6B_PLAN.md",
+    "?? \"LEGACY_TREASURY_PREPAY_\\345\\217\\214\\350\\264\\246\\350\\247\\202\\345\\257\\237_PLAN.md\"",
+    "?? \"M3\\345\\212\\263\\345\\212\\250\\347\\272\\252\\345\\276\\213\\344\\270\\216\\345\\233\\244\\345\\267\\245_PLAN.md\"",
+    "?? \"M9_\\347\\234\\237\\345\\256\\236\\351\\242\\204\\346\\265\\213\\350\\257\\257\\345\\267\\256_PLAN.md\"",
+    "?? config/inference/hist_vnext_v1/COMMIT_RECEIPT.json",
+    "?? docs/upgrade_review/HIST_VNEXT/09_BATCH02_YEARBOOKS_D08_D10_INTAKE.md",
+    "?? studies/HIST_VNEXT/M06/COMMIT_RECEIPT.json"
+  ],
+  "worktree_paths": [
+    {
+      "path": ".omp/config.yml",
+      "exists": true,
+      "sha256": "2e90b9c6feed817a4547c7232f650e8c76c089f14f7ae22b36f23bf62dd2fe7f",
+      "bytes": 472
+    },
+    {
+      "path": "CMEA_清算制度冻结_PLAN.md",
+      "exists": true,
+      "sha256": "9523e122eb084b642226dd4da3637cf8a3b5ae1b37714f1e3c9e2d0d6f79c81d",
+      "bytes": 46043
+    },
+    {
+      "path": "H3A_服务语义分型_PLAN.md",
+      "exists": true,
+      "sha256": "77f4525cfc439bc32ee4d7a085917fa91f073d39c3c3a5762185169eda497872",
+      "bytes": 33300
+    },
+    {
+      "path": "H3B_订单融资闭环_PLAN.md",
+      "exists": true,
+      "sha256": "1a35125dcde68909431ccde0e33d3a9ebd366374166190a6ead1598121562240",
+      "bytes": 33231
+    },
+    {
+      "path": "H3C_线路运力证书_PLAN.md",
+      "exists": true,
+      "sha256": "505da6af06a792a9e5ccbbdc27610256a92caef320b2b081845e50e5b880c01f",
+      "bytes": 34442
+    },
+    {
+      "path": "H3D_短周期时序隔离比较_PLAN.md",
+      "exists": true,
+      "sha256": "44abb9824ca311214b971e8a0121d9f63430077b178474d249d3ffcd99f4da7a",
+      "bytes": 33051
+    },
+    {
+      "path": "H3E_4Q_滚动规划_PLAN.md",
+      "exists": true,
+      "sha256": "420d89a877bc17c9d14beebba124f4234b373374c1d1ae2478dcf772eb4e5ed8",
+      "bytes": 28961
+    },
+    {
+      "path": "H3F_D1_外贸工作资本贷款_PLAN.md",
+      "exists": true,
+      "sha256": "18b67e79da3cb1edca8ec675fff6e4625b9a92c87dc3a7bb5ddd65311163923d",
+      "bytes": 34459
+    },
+    {
+      "path": "H3F_D2_出口应收与坏账反向分录_PLAN.md",
+      "exists": true,
+      "sha256": "135fcc9e5e9db1bb2f3aa0eaa19830102ee5f76264990860c536a5d87d6f9e16",
+      "bytes": 45281
+    },
+    {
+      "path": "H4A_0_来源核验与准入_PLAN.md",
+      "exists": true,
+      "sha256": "1041dba4648aa93c1cec44e822c810fb403a22eb2040908c4a5a305874ba6645",
+      "bytes": 32476
+    },
+    {
+      "path": "H4A_1_前置补完_PLAN.md",
+      "exists": true,
+      "sha256": "6c6cc09dd1f5c01dd123f877a9b46f3cf7cad8a4a2fc9630e497587507643d21",
+      "bytes": 26196
+    },
+    {
+      "path": "H4B_PILOT_A_阻断包_PLAN.md",
+      "exists": true,
+      "sha256": "3a1b8684223b1524911d2248f18007270b0bd21144b0064fcb8f8ebf5e183100",
+      "bytes": 23236
+    },
+    {
+      "path": "H4C_PILOT_B_PLAN.md",
+      "exists": true,
+      "sha256": "275db3fe48bfaef28c71e4a8dac4a9147fc8beef360b8ba294bbfbadb1e50f07",
+      "bytes": 31580
+    },
+    {
+      "path": "H5A_A1_M2_PLAN.md",
+      "exists": true,
+      "sha256": "1ae544a61e2ed03dc625d1351e62229fc1d892d7c4d79866e41698158bb0768d",
+      "bytes": 30985
+    },
+    {
+      "path": "H5C_参照历史棘轮实验_PLAN.md",
+      "exists": true,
+      "sha256": "ce6cb635c04bc3fe24c6f6deccc3938fd04a50f829b840aa3b12473620c25cf0",
+      "bytes": 32836
+    },
+    {
+      "path": "H5D_劳动制度_PLAN.md",
+      "exists": true,
+      "sha256": "81148e3796adb0c7f728293931054c0979a72e9316a6c59b8a4da5765043d469",
+      "bytes": 61276
+    },
+    {
+      "path": "H5E_地区预算阻断_PLAN.md",
+      "exists": true,
+      "sha256": "1955c8d99c44a54497a8527e5b1682c8dd0b20bcf77831c668a3c7aa1cfe1766",
+      "bytes": 16976
+    },
+    {
+      "path": "H6A_阻断封存_PLAN.md",
+      "exists": true,
+      "sha256": "83ab9e5c8f3925c3c8dbba7ada73cf63ef71e05ca55c5dba69c7ffcddff75053",
+      "bytes": 16446
+    },
+    {
+      "path": "HIST_VNEXT_H5B_PLAN.md",
+      "exists": true,
+      "sha256": "f8f8c9f721eac86c618909abb792e275fcd0c33a6fa850ec7f18bbaa17b68519",
+      "bytes": 39569
+    },
+    {
+      "path": "HIST_VNEXT_H5G_G1_HIST_VNEXT_H5G_PLAN.md",
+      "exists": true,
+      "sha256": "7bd469084aa2ce96d7c4391154677afeff3992dbc65a1cc238296b31d8fb4557",
+      "bytes": 17660
+    },
+    {
+      "path": "HIST_VNEXT_H6B_PLAN.md",
+      "exists": true,
+      "sha256": "af13a50b509b2236406b91a8c9fbc7105abcc0657ed44e2a5eb1888a2561ea2a",
+      "bytes": 34677
+    },
+    {
+      "path": "LEGACY_TREASURY_PREPAY_双账观察_PLAN.md",
+      "exists": true,
+      "sha256": "bfee42ba00e1ca811a9a4919fdc0ca315d1c235f90d6ba504c4e95d5ef6ea254",
+      "bytes": 29193
+    },
+    {
+      "path": "M3劳动纪律与囤工_PLAN.md",
+      "exists": true,
+      "sha256": "004757e86de472ed9d6ab10b020e02540e4ceae5f42e6199fe070cab9371c196",
+      "bytes": 15776
+    },
+    {
+      "path": "M9_真实预测误差_PLAN.md",
+      "exists": true,
+      "sha256": "387158de8d86657dde912e0a57f7a90cffbcba0a7a1998b11f61a5dbbdbbaae2",
+      "bytes": 28042
+    },
+    {
+      "path": "config/inference/hist_vnext_v1/COMMIT_RECEIPT.json",
+      "exists": true,
+      "sha256": "9b4bcb185b758c44aadc9f663fa57a10fa31cead28ee274a727925bb7a1dea5c",
+      "bytes": 2493
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+      "exists": true,
+      "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+      "bytes": 37168
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+      "exists": true,
+      "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+      "bytes": 114765
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/09_BATCH02_YEARBOOKS_D08_D10_INTAKE.md",
+      "exists": true,
+      "sha256": "89e0e00d5bf6d4ebefe3364f569d5906ab0c61684c9d6dcc673aacf89100df33",
+      "bytes": 9768
+    },
+    {
+      "path": "studies/HIST_VNEXT/M06/COMMIT_RECEIPT.json",
+      "exists": true,
+      "sha256": "6719df1075a12083450b4f1116d462f87e5033d7adeb40fb30356a6d414d263c",
+      "bytes": 1441
+    }
+  ],
+  "policy": "Read-only snapshot. User dirty/untracked paths preserved; not reset, not stashed, not cleaned, not staged.",
+  "path_encoding_note": "Paths were regenerated from git status --porcelain=v1 -z; octal-quoted CJK paths are decoded and hashed. H6B new paths are excluded."
+}

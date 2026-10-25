@@ -1,0 +1,239 @@
+{
+  "schema_version": "hist_vnext_h6b_evidence_manifest_v1",
+  "phase_id": "H6B",
+  "head": "bd05100525f9c31bc5fedb03218b520503edada9",
+  "files": [
+    {
+      "path": "src/hsm_lab/evidence/package_export.py",
+      "sha256": "c06a5b4ec9a72b292907008b2c1663ec027f10c2e01d3cd88bba2b7499c743b6",
+      "bytes": 146367
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/BLOCKERS.json",
+      "sha256": "bf66c52e8d9b25b9dc67bb27229e6e908875e6fbb058e158f9dfd3bc1c421ddc",
+      "bytes": 45697
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/PLAN.md",
+      "sha256": "af13a50b509b2236406b91a8c9fbc7105abcc0657ed44e2a5eb1888a2561ea2a",
+      "bytes": 34677
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/REPORT.md",
+      "sha256": "a498d06f2dd038267168c838e9556858ab01a4eedf1a4aba10b7bc770bd2dae1",
+      "bytes": 14065
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/REVIEW.md",
+      "sha256": "18b9d49e63592e3d0f86ba3fa1ab078d60f9f94ba7d754fc5f3f61b19c42bb98",
+      "bytes": 3309
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/commands.json",
+      "sha256": "b795f026f73bfab6fdf268d448da75539ca2e2b3b5bd1e41c4eaea5c0094c539",
+      "bytes": 13191
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/evidence_index.json",
+      "sha256": "12c96eb380baa5f99c02ae50a4ce88b4c75c1a9a18099f0db3056bdafd0c2d70",
+      "bytes": 1981
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/MANIFEST.json",
+      "sha256": "de55fb4bec0165d416bb66628362b1d74e777304fb22a454dacd6102d67f1b3d",
+      "bytes": 1674
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/README.md",
+      "sha256": "27a38fb244907a12c94d33b6c60ddf0a1838f226141386f3b874a5f150f6e8f8",
+      "bytes": 3355
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M01.json",
+      "sha256": "a563883344c6a7e3cc1838e7464c83527e96716297d32cf32d1076d80b8e8dda",
+      "bytes": 17725
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M02.json",
+      "sha256": "5fef27b6c3f942812cbcb575fb1fd1367305a7d5df4989ea150075ccd5794fc4",
+      "bytes": 18536
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M03.json",
+      "sha256": "7ac45f57170bf5e1e5558cfdbbbc81f1059b30c5d630681665d7b1baf2e76b24",
+      "bytes": 21432
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M04.json",
+      "sha256": "7acd20d77b748e5ac523f4099c1e68905dab7e1207c7d15c75b8f54cdec5c333",
+      "bytes": 17762
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M05.json",
+      "sha256": "2afc7c885a5ae18cdec3c4326a972914196292e28a5ebd72fe5ea4fd3003bbce",
+      "bytes": 15301
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M06.json",
+      "sha256": "de003a247e6002cd816aa0099417f400017bde06c9c0db0dd3b270052e7bbf6d",
+      "bytes": 17904
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M07.json",
+      "sha256": "c3cc694ab2bf829c837454da7e7fed56cd7263c04dd10a9ba5da91419933aaa7",
+      "bytes": 15043
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M08.json",
+      "sha256": "e1a26c108b777adc137d3f6fc0e871d5fcee814a58ed79f6fb68cf801be880f9",
+      "bytes": 13046
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M09.json",
+      "sha256": "1b9b5585509aa6d4562183bcb1d24f84fdbb56dbcaeb62e37538c1d478ee7459",
+      "bytes": 16831
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M10.json",
+      "sha256": "bbd028ea6b9a7995123e74c559d9bd9cf10050e308b4431e5e8360ca79150202",
+      "bytes": 16268
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/cards/M11.json",
+      "sha256": "c7191ea840fe45872e0ee5d9066838be192d4d6a0756fb39a1d02d47dd78be66",
+      "bytes": 19574
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/git-only/package.json",
+      "sha256": "86e82fc8a0c8f34101b444f9aee4b1d20763e32488a7f3790c7a0bd2b1ffe0f7",
+      "bytes": 195357
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/MANIFEST.json",
+      "sha256": "06d7d127b5e7a11d30410268ba0fa426191e4fb474b5bce1d6f8de9d67c061e1",
+      "bytes": 1675
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/README.md",
+      "sha256": "dbedd44e6f4911903e4ae47c91f742ffb51cb5b41033b7b0055ac686213480b8",
+      "bytes": 2945
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M01.json",
+      "sha256": "e41e88a87e8305887a273270c388a957b9a5a4d1108b836ffa2ec6a18e64ab22",
+      "bytes": 25778
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M02.json",
+      "sha256": "a05d3155bb35ab258488a3d5d6bf65cddbf6294e2fdc64ee1b197e60924ecbf3",
+      "bytes": 39292
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M03.json",
+      "sha256": "68694a6a66955f01991ac1d69e73f84674c633e0ae9a720d7af50b8b9d4291be",
+      "bytes": 21378
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M04.json",
+      "sha256": "27d6683a6482fdbfc6d1670d90bd10a290d7b133523dc6a1c40219cd49a75d1c",
+      "bytes": 111616
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M05.json",
+      "sha256": "2afc7c885a5ae18cdec3c4326a972914196292e28a5ebd72fe5ea4fd3003bbce",
+      "bytes": 15301
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M06.json",
+      "sha256": "de003a247e6002cd816aa0099417f400017bde06c9c0db0dd3b270052e7bbf6d",
+      "bytes": 17904
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M07.json",
+      "sha256": "c3cc694ab2bf829c837454da7e7fed56cd7263c04dd10a9ba5da91419933aaa7",
+      "bytes": 15043
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M08.json",
+      "sha256": "e1a26c108b777adc137d3f6fc0e871d5fcee814a58ed79f6fb68cf801be880f9",
+      "bytes": 13046
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M09.json",
+      "sha256": "7f5de7a5dc0f22be65e3a69a64cea1eebde327ef8a0211d3d5509c4c77781ece",
+      "bytes": 52786
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M10.json",
+      "sha256": "bbd028ea6b9a7995123e74c559d9bd9cf10050e308b4431e5e8360ca79150202",
+      "bytes": 16268
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/cards/M11.json",
+      "sha256": "c7191ea840fe45872e0ee5d9066838be192d4d6a0756fb39a1d02d47dd78be66",
+      "bytes": 19574
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/exports/local-data/package.json",
+      "sha256": "d8aa62cff509bd51ed3c9b8a0f6948f4b1c98c40c4649c17b65c2b5ee4bdf46d",
+      "bytes": 353921
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/failed_seeds.json",
+      "sha256": "5712f13ce9f7ed4873e360ce5cded091f92edb7cbdc83f1b4826b57307f242a3",
+      "bytes": 1105
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/logs/cold-replay-summary.json",
+      "sha256": "9ec9b47efe8911a7603348b383c48bb34703abe063e9ab11982c24b4593eb619",
+      "bytes": 2909
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/model_usage.json",
+      "sha256": "6be7bfe9da621c5cfcbb8f0cf7c8505457acc82dec83389184930dfbb3310a9a",
+      "bytes": 2972
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/protected_hashes.json",
+      "sha256": "d9c88f9491b0d8f61425cded2c5c45763b4f4f37756120234c99ba298ceeb19c",
+      "bytes": 3932
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/resource_usage.json",
+      "sha256": "d5646fb93ef1fa782436777063c579a2a345d677bcff14730d0f31b0049b5a68",
+      "bytes": 2289
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/reviews/round-1.md",
+      "sha256": "83c90acaa3cafccb49bda9defc2e3d2a4e88662723807bed65268bb878170f92",
+      "bytes": 14299
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/reviews/round-2.md",
+      "sha256": "bde9d5702d68dc63a761923990e33fa1c6222a304a2e337dadc4c376a4f2bd36",
+      "bytes": 10519
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/reviews/round-3.md",
+      "sha256": "e44b8bada076306c8b91d020349d3be5f446b605c18555af49d36b6ae73857e2",
+      "bytes": 9266
+    },
+    {
+      "path": "studies/HIST_VNEXT/packages/H6B/user_work_snapshot.json",
+      "sha256": "c1331e0e989cf2f1f90ee74ec11579ef289c6d6db1dfb104c6729a9fbba7438d",
+      "bytes": 8835
+    },
+    {
+      "path": "tests/test_hist_package_contract.py",
+      "sha256": "fed42ebf2ba75514cb92f8179e650c21a88683c10920f4195b731317188fb2bc",
+      "bytes": 27608
+    }
+  ],
+  "excludes_self": "studies/HIST_VNEXT/packages/H6B/EVIDENCE_MANIFEST.json",
+  "post_commit_excluded": "studies/HIST_VNEXT/packages/H6B/COMMIT_RECEIPT.json",
+  "notes": "Covers the two new code/test files and every delivered H6B file except this manifest and the post-commit receipt. Does not cover ignored run-root outputs. Exports are sealed by their own MANIFEST.json and package_digest.",
+  "package_digests": {
+    "git-only": "2216c9f1409c65f8bd8cc6e204226b651fd874c087439b0ac125105ea1f5c85c",
+    "local-data": "f4032201ed4f7b79e6f1c8305b1b46f1db6bc6547417fd46652bd4ef1d0b09c4"
+  }
+}

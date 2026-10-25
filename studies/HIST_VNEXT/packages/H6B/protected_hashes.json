@@ -1,0 +1,128 @@
+{
+  "schema_version": "hist_vnext_h6b_protected_hashes_v1",
+  "captured_at_utc": "2026-10-25T06:44:07Z",
+  "head": "bd05100525f9c31bc5fedb03218b520503edada9",
+  "files": [
+    {
+      "path": "BASELINE.md",
+      "exists": true,
+      "sha256": "1f5b233f452468701ca2d87b3ec032be4654b070ed24e5853232c997d7d61b6f",
+      "bytes": 64445
+    },
+    {
+      "path": "config/research_contract.json",
+      "exists": true,
+      "sha256": "6f54522a4b9577fc8e75cb605b0cbfafddd62a9f6b8b474719f8996ada752c82",
+      "bytes": 2908
+    },
+    {
+      "path": "uv.lock",
+      "exists": true,
+      "sha256": "9fd79b625bed399c5231e1f51b478ebf375154132a30dd9538191156218882b9",
+      "bytes": 157941
+    },
+    {
+      "path": ".omp/config.yml",
+      "exists": true,
+      "sha256": "2e90b9c6feed817a4547c7232f650e8c76c089f14f7ae22b36f23bf62dd2fe7f",
+      "bytes": 472
+    },
+    {
+      "path": "config/p06/cards/M1.json",
+      "exists": true,
+      "sha256": "7a3beaa4be817cfb745a163c579b0ec472fcfb3f55c8caaca7db15854c74352d",
+      "bytes": 1163
+    },
+    {
+      "path": "config/p06/cards/M2.json",
+      "exists": true,
+      "sha256": "0da621e51ad436103ec3c76d820701cda84e8bb0c9cb79ef0947337856990589",
+      "bytes": 904
+    },
+    {
+      "path": "config/p06/cards/M3.json",
+      "exists": true,
+      "sha256": "06adefbd144800d1ff2afd10f5f73765f6e70339d1280ba002b434bb6e32f8ba",
+      "bytes": 794
+    },
+    {
+      "path": "config/p06/cards/M4.json",
+      "exists": true,
+      "sha256": "c9e70e5ca07bca8e7865f274dc052cb1ed5aed795787a9a07f16ec37fb5323ac",
+      "bytes": 887
+    },
+    {
+      "path": "config/p06/cards/M5.json",
+      "exists": true,
+      "sha256": "cdcbbfbd8d99b8b0d55f1afeaf564d2fac5cef3cd53d7058f75943af611bd879",
+      "bytes": 1004
+    },
+    {
+      "path": "config/p06/cards/M6.json",
+      "exists": true,
+      "sha256": "047db0a8473f326c8a6a2609bc18ea42c24cb979a96f0a20cf254575dde5e6c6",
+      "bytes": 815
+    },
+    {
+      "path": "config/p06/cards/M7.json",
+      "exists": true,
+      "sha256": "f6383c8b16fa5f16e2517ec992da2524a2ba1eb31612ff4c542515f3d3399d90",
+      "bytes": 953
+    },
+    {
+      "path": "config/p06/cards/M8.json",
+      "exists": true,
+      "sha256": "f4761f7f7b3865e61d285ccdd058c91ee0cfd463964cb2b7c4b6f03e22dd0bd1",
+      "bytes": 849
+    },
+    {
+      "path": "config/p06/cards/M9.json",
+      "exists": true,
+      "sha256": "fa1b30703cda0009471e03cdf6b88b47d20a7ce525385adfdd554f595e55273c",
+      "bytes": 928
+    },
+    {
+      "path": "config/p06/cards/M10.json",
+      "exists": true,
+      "sha256": "c23d545b59432e6f9412c512824aba5af40cc242daaa4c65239c6f4ae129b880",
+      "bytes": 806
+    },
+    {
+      "path": "config/p06/cards/M11.json",
+      "exists": true,
+      "sha256": "c65318dc1d4c149d7d15b49db229c19768a282f5e6c59307197fe194d1c86887",
+      "bytes": 1341
+    },
+    {
+      "path": "config/scenarios/historical_f2_replay.json",
+      "exists": true,
+      "sha256": "c58cdc794b1409f0d4da650e324edebe0757f8bf652fc010f656a12c14f69c3c",
+      "bytes": 40900
+    },
+    {
+      "path": "config/scenarios/historical_f2_trade_scenario.json",
+      "exists": true,
+      "sha256": "3ad4510064daa6e0b6f37893eb6a5721c3ad0b34f3284175c2cde77a33397a5f",
+      "bytes": 42508
+    },
+    {
+      "path": "studies/manifest.json",
+      "exists": true,
+      "sha256": "0332e12d45ebf2ec2fbfb15e2345650288440c9c59517ac2493039a028acaafa",
+      "bytes": 5234
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/05_REVISED_IMPLEMENTATION_PLAN.md",
+      "exists": true,
+      "sha256": "bc45bc8498ad2c43e80b638b82280765c90dac6e49dfa33a5313fca37bbdd1a1",
+      "bytes": 37168
+    },
+    {
+      "path": "docs/upgrade_review/HIST_VNEXT/06_OMP_MINIMAX_HANDOFF.md",
+      "exists": true,
+      "sha256": "5fcb75b444dfaa6bacaf17b4e1b68d9ccd7ad8c45ab4f089cb4f6bcfd4ace393",
+      "bytes": 114765
+    }
+  ],
+  "policy": "Protected inputs are read-only for H6B."
+}
